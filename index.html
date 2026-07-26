@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3475 SVS Ministry Reservation</title>
+    <title>3475 Tundra Arm League</title>
     <link rel="stylesheet" href="style.css">
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="script.js?v=18" defer></script>
+    <script src="troops.js" defer></script>
 </head>
 <body>
     <header class="navbar">
-        <span class="logo fire-text">SVS Ministry</span>
-        <!-- Tambahkan Kontainer Penerjemah di Sini -->
+        <span class="logo fire-text">3475 Tundra Arm</span>
         <div class="translate-container">
             <div id="google_translate_element"></div>
         </div>
@@ -32,134 +31,126 @@
     </div>
 
     <main class="container">
-        <section id="positions-page">
-            <h1 class="page-title">SVS Ministry Position</h1>
-            
-            <div class="banner-container">
-                <img src="https://raw.githubusercontent.com/ferdinanflash/reservation/refs/heads/main/1783251176830.png" alt="SVS Banner" class="position-banner">
-            </div>
+        <!-- HALAMAN UTAMA: PILIH ALIANSI -->
+        <section id="alliance-menu-page">
+            <h1 class="page-title fire-text">3475 Tundra Arm League</h1>
+            <p class="page-subtitle">Select an Alliance or view combined Leaderboard</p>
 
-            <p class="page-subtitle">Select a position to make reservation</p>
-            <div class="list-container">
-                <div class="list-item" onclick="showSchedule('Vice President D1')"><span>Vice President D1 (Monday)</span><span class="arrow">&gt;</span></div>
-                <div class="list-item" onclick="showSchedule('Vice President D2')"><span>Vice President D2 (Tuesday)</span><span class="arrow">&gt;</span></div>
-                <div class="list-item" onclick="showSchedule('Minister of Education D4')"><span>Minister of Education D4 (Thursday)</span><span class="arrow">&gt;</span></div>
-                <div class="list-item" onclick="showSchedule('Vice President D5')"><span>Vice President D5 (Friday)</span><span class="arrow">&gt;</span></div>
+            <div class="list-container" style="margin-top: 20px;">
+                <div class="list-item" onclick="selectAlliance('ARX')">
+                    <span>🛡️ ARX Alliance</span><span class="arrow">&gt;</span>
+                </div>
+                <div class="list-item" onclick="selectAlliance('DRK')">
+                    <span>🛡️ DRK Alliance</span><span class="arrow">&gt;</span>
+                </div>
+                <div class="list-item" onclick="selectAlliance('IDN')">
+                    <span>🛡️ IDN Alliance</span><span class="arrow">&gt;</span>
+                </div>
+                <div class="list-item" onclick="selectAlliance('VNC')">
+                    <span>🛡️ VNC Alliance</span><span class="arrow">&gt;</span>
+                </div>
+                <div class="list-item" onclick="selectAlliance('ZXC')">
+                    <span>🛡️ ZXC Alliance</span><span class="arrow">&gt;</span>
+                </div>
+                
+                <!-- Tombol Gabungan Semua Troops Power -->
+                <div class="list-item" onclick="selectAlliance('ALL')" style="background: linear-gradient(135deg, #2563eb 0%, #1e1b4b 100%); border-color: #3b82f6;">
+                    <span style="color: #fcf6ba; font-weight: bold;">⚔️ ALL TROOPS POWER (GLOBAL RANK)</span>
+                    <span class="arrow" style="color: #fcf6ba;">&gt;</span>
+                </div>
             </div>
         </section>
 
-        <section id="schedule-page" class="hidden">
-            <div class="schedule-actions" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-start;">
-                <button class="btn-back" onclick="showPositions()" style="margin-bottom: 0;">&lt; Back to positions</button>
-                <button id="export-csv-btn" class="btn-apply" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); margin-bottom: 0; padding: 10px 16px; font-size: 0.9rem;" onclick="exportToCSV()">Export CSV</button>
-                <button id="toggle-reservation-btn" class="btn-apply" style="background: #dc2626; margin-bottom: 0; padding: 10px 16px; font-size: 0.9rem; display: none;" onclick="handleToggleReservation()">Close Reservation</button>
+        <!-- HALAMAN DETAIL TABLE TROOPS -->
+        <section id="troops-table-page" class="hidden">
+            <div class="schedule-actions" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: space-between;">
+                <button class="btn-back" onclick="showAllianceMenu()" style="margin-bottom: 0;">&lt; Back to Alliance Menu</button>
+                <div style="display: flex; gap: 8px;">
+                    <button id="add-entry-btn" class="btn-apply" style="margin-bottom: 0; padding: 10px 16px; font-size: 0.9rem;" onclick="openAddModal()">+ Add Player Power</button>
+                    <button class="btn-apply" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); margin-bottom: 0; padding: 10px 16px; font-size: 0.9rem;" onclick="exportToCSV()">Export CSV</button>
+                </div>
             </div>
 
-            <h1 class="page-title" id="selected-title">Position Title</h1>
-            <h3 class="section-title">Time Slot Schedule <span id="admin-indicator" style="color:#ef4444; font-size:0.8rem; display:none;">(PRESIDENT MODE)</span></h3>
-            
-            <div class="timezone-selector">
-                <label for="timezone">Display Time Zone:</label>
-                <select id="timezone" onchange="renderTimeSlots()">
-                </select>
-            </div>
+            <h1 class="page-title" id="selected-alliance-title">ARX Alliance</h1>
+            <h3 class="section-title" style="text-align: center; color: #8a8d98; font-size: 0.9rem;">
+                Troops Power Leaderboard <span id="admin-indicator" style="color:#ef4444; font-size:0.8rem; display:none;">(PRESIDENT MODE)</span>
+            </h3>
 
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
+                            <th>RANK</th>
+                            <th>ALLIANCE</th>
+                            <th>NICKNAME</th>
+                            <th>GAME ID</th>
+                            <th>TROOPS POWER</th>
                             <th>ACTION</th>
-                            <th>PREFERRED TIME (UTC)</th>
-                            <th>STATUS (APPLICANTS)</th>
-                            <th>IN-GAME NICKNAME</th>
-                            <th>IN-GAME ID</th>
                         </tr>
                     </thead>
-                    <tbody id="schedule-table-body"></tbody>
+                    <tbody id="troops-table-body">
+                        <!-- Diisi via JavaScript -->
+                    </tbody>
                 </table>
             </div>
         </section>
     </main>
 
-    <!-- Modal Daftar Menunggu -->
-    <div id="waiting-modal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeModal()">&times;</span>
-            <h2 id="modal-title">Applicants List</h2>
-            <div class="modal-table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="padding: 5px 10px; text-align: left;">NICKNAME</th>
-                            <th style="padding: 5px 10px; text-align: left;">ID</th>
-                        </tr>
-                    </thead>
-                    <tbody id="modal-table-body"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Detail Statistik (Pop-up Ikon Kaca Pembesar) -->
-    <div id="details-modal" class="modal hidden">
-        <div class="modal-content custom-form-modal" style="max-width: 360px;">
-            <span class="close-modal" onclick="closeDetailsModal()">&times;</span>
-            <h2 style="margin-bottom: 12px; font-size: 1.2rem; text-align: center;">Application Details</h2>
-            <div id="details-content" style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; text-align: left; background: #121316; padding: 15px; border-radius: 8px; border: 1px solid #334155;">
-                <!-- Diisi secara dinamis via JavaScript -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Form Apply -->
-    <div id="apply-modal" class="modal hidden">
+    <!-- MODAL FORM INPUT DATA -->
+    <div id="add-modal" class="modal hidden">
         <div class="modal-content custom-form-modal">
-            <span class="close-modal" onclick="closeApplyModal()">&times;</span>
-            <h2 style="margin-bottom: 4px; font-size: 1.4rem;">Apply for Time Slot</h2>
-            <p style="color: #8a8d98; font-size: 0.85rem; margin-bottom: 20px; line-height: 1.4;">
-                Position: <span id="form-position-title" style="color: #f1f5f9; font-weight: bold;">-</span><br>
-                Time: <span id="form-time-title" style="color: #3b82f6; font-weight: bold;">-</span>
+            <span class="close-modal" onclick="closeAddModal()">&times;</span>
+            <h2 style="margin-bottom: 4px; font-size: 1.4rem;">Add Troops Power</h2>
+            <p style="color: #8a8d98; font-size: 0.85rem; margin-bottom: 20px;">
+                Alliance: <span id="form-alliance-label" style="color: #f59e0b; font-weight: bold;">-</span>
             </p>
             
+            <div class="form-group" id="group-alliance-select" style="display: none;">
+                <label>Select Alliance</label>
+                <select id="input-alliance" style="background: #1e2230; border: 1px solid rgba(255, 255, 255, 0.1); padding: 11px 14px; border-radius: 8px; color: #f1f5f9; outline: none;">
+                    <option value="ARX">ARX</option>
+                    <option value="DRK">DRK</option>
+                    <option value="IDN">IDN</option>
+                    <option value="VNC">VNC</option>
+                    <option value="ZXC">ZXC</option>
+                </select>
+            </div>
+
             <div class="form-group">
                 <label>In-Game Nickname</label>
-                <input type="text" id="input-nickname" placeholder="Enter your nickname">
-            </div>
-            <div class="form-group">
-                <label>In-Game ID</label>
-                <input type="number" id="input-gameid" placeholder="Enter your game ID">
-            </div>
-            <div class="form-group">
-                <label>Fire Crystals Amount</label>
-                <input type="number" id="input-fc" placeholder="Fire Crystal">
-            </div>
-            <div class="form-group">
-                <label>Refined Fire Crystals Amount</label>
-                <input type="number" id="input-rfc" placeholder="Refined Fire Crystal">
-            </div>
-            <div class="form-group">
-                <label>General Speedups (Days)</label>
-                <input type="number" id="input-gensp" placeholder="General Speedup in Days">
-            </div>
-            <div class="form-group">
-                <label>Construction Speedups (Days)</label>
-                <input type="number" id="input-constsp" placeholder="Construction Speedup in Days">
-            </div>
-            <div class="form-group">
-                <label>Research Speedups (Days)</label>
-                <input type="number" id="input-ressp" placeholder="Research Speedup in Days">
-            </div>
-            <div class="form-group">
-                <label>Troops Training Speedups (Days)</label>
-                <input type="number" id="input-trainsp" placeholder="Training Speedup in Days">
+                <input type="text" id="input-nickname" placeholder="Enter nickname">
             </div>
             
-            <div class="form-actions">
-                <button class="btn-back" style="margin-bottom: 0; flex: 1; padding: 12px;" onclick="closeApplyModal()">Cancel</button>
-                <button class="btn-apply" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);" onclick="submitApplication()">Submit Application</button>
+            <div class="form-group">
+                <label>In-Game ID</label>
+                <input type="number" id="input-gameid" placeholder="Enter Game ID">
+            </div>
+
+            <div class="form-group">
+                <label>Troops Power Amount</label>
+                <input type="number" id="input-power" placeholder="e.g. 150000000">
+            </div>
+
+            <div class="form-actions" style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn-back" style="margin-bottom: 0; flex: 1; padding: 12px;" onclick="closeAddModal()">Cancel</button>
+                <button class="btn-apply" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);" onclick="submitPlayerData()">Submit Data</button>
             </div>
         </div>
     </div>
+
+    <!-- MODAL CONFIRMATION -->
+    <div id="confirm-modal" class="modal hidden">
+        <div class="modal-content custom-confirm-box">
+            <h3 id="confirm-message" style="margin-bottom: 20px; font-size: 1.1rem; line-height: 1.5; color: #f1f5f9;">Are you sure?</h3>
+            <div class="form-actions" style="margin-top: 0; display: flex; gap: 10px;">
+                <button id="confirm-cancel-btn" class="btn-back" style="margin-bottom:0; flex: 1; padding: 10px;">Cancel</button>
+                <button id="confirm-ok-btn" class="btn-apply" style="flex: 1; padding: 10px; background: #ef4444;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px;"></div>
 
     <footer class="site-footer">
         <div class="footer-section">
@@ -172,37 +163,12 @@
             </div>
         </div>
 
-        <div id="recent-log-container">
-            <div class="log-title">📢 RECENTLY ACCEPTED APPOINTMENT</div>
-            <div id="recent-log-list">
-                <div class="log-item-empty">No recent activity</div>
-            </div>
-        </div>
-        
-        <div style="display: flex; gap: 8px; justify-content: center; margin-top: 12px;">
-            <button id="edit-footer-btn" class="btn-apply" style="background:#f59e0b; font-size:0.75rem; padding:6px 12px; display:none; margin: 0;" onclick="handleEditFooter()">Edit President Info</button>
-            <button id="finish-svs-btn" class="btn-apply" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); font-size:0.75rem; padding:6px 12px; display:none; margin: 0; font-weight: bold;" onclick="handleFinishSVS()">FINISH SVS</button>
-        </div>
-
-        <!-- Teks Credit Pembuat Web -->
         <div style="margin-top: 20px; font-size: 0.75rem; color: #64748b; font-weight: 500; letter-spacing: 0.5px;">
             Created By : ACE aka DEMON
         </div>
     </footer>
 
-    <div id="confirm-modal" class="modal hidden">
-        <div class="modal-content custom-confirm-box">
-            <h3 id="confirm-message" style="margin-bottom: 20px; font-size: 1.1rem; line-height: 1.5; color: #f1f5f9;">Are you sure?</h3>
-            <div class="form-actions" style="margin-top: 0;">
-                <button id="confirm-cancel-btn" class="btn-back" style="margin-bottom:0; flex: 1; padding: 10px;">Cancel</button>
-                <button id="confirm-ok-btn" class="btn-apply" style="flex: 1; padding: 10px; background: #ef4444;">OK</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px;"></div>
-
-    <!-- Google Translate Script yang Dibatasi Bahasanya -->
+    <!-- Google Translate Script -->
     <script type="text/javascript">
         function googleTranslateElementInit() {
             new google.translate.TranslateElement({
