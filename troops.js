@@ -107,7 +107,7 @@ function handleAdminLogin() {
             "arx": "ARX",
             "drk": "DRK",
             "idn": "IDN",
-            "vnc": "VNC",
+            "vnx": "VNX",
             "zxc": "ZXC",
             "3475": "PRESIDENT" // Tetap menyimpan password utama
         };
