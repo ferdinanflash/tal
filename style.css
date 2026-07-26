@@ -10,6 +10,7 @@ body {
     background-color: #121316;
     color: #ffffff;
     overflow-x: hidden;
+    top: 0px !important;
 }
 
 /* ==================== NAVBAR & LIVE CLOCK ==================== */
@@ -204,39 +205,8 @@ body {
     font-size: 0.9rem;
 }
 
-/* ==================== MODAL & TABLES & TOAST ==================== */
+/* ==================== MODAL & TOAST STYLES ==================== */
 .hidden { display: none !important; }
-
-.table-container {
-    width: 100%;
-    margin-top: 15px;
-    border: 1px solid #2d3039;
-    background-color: #1c1d22;
-    border-radius: 8px;
-    overflow-x: auto;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 0;
-    table-layout: auto;
-}
-
-th, td {
-    padding: 8px 4px;
-    text-align: center;
-    font-size: 0.8rem;
-    border-bottom: 1px solid #2d3039;
-    word-break: break-word;
-}
-
-th {
-    background-color: #24262e;
-    color: #8a8d98;
-    font-size: 0.75rem;
-    letter-spacing: 0.5px;
-}
 
 .modal {
     position: fixed;
@@ -278,12 +248,59 @@ th {
 
 .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 6px; text-align: left; }
 .form-group label { font-size: 0.85rem; color: #94a3b8; }
-.form-group input { background: #1e2230; border: 1px solid rgba(255, 255, 255, 0.1); padding: 11px 14px; border-radius: 8px; color: #f1f5f9; outline: none; }
-.form-group input:focus { border-color: #2563eb; }
+.form-group input, .form-group select { 
+    background: #1e2230; 
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    padding: 11px 14px; 
+    border-radius: 8px; 
+    color: #f1f5f9; 
+    outline: none; 
+}
+.form-group input:focus, .form-group select:focus { border-color: #2563eb; }
 
 .toast-notification {
     background: #1e2230; color: #f1f5f9; padding: 12px 20px; border-radius: 8px; font-size: 0.9rem;
     border-left: 4px solid #3b82f6; animation: slideInToast 0.3s ease forwards; min-width: 200px;
+}
+
+/* ==================== TABLE OPTIMIZATION FOR MOBILE & DESKTOP ==================== */
+.table-container {
+    width: 100%;
+    margin-top: 15px;
+    border: 1px solid #2d3039;
+    background-color: #1c1d22;
+    border-radius: 8px;
+    overflow-x: auto; /* Memastikan tabel bisa di-scroll kesamping di HP */
+    -webkit-overflow-scrolling: touch;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px; /* Lebar minimum menjaga bentuk tabel agar tidak tertekan di HP */
+    table-layout: auto;
+}
+
+th, td {
+    padding: 10px 8px;
+    text-align: center;
+    font-size: 0.8rem;
+    border-bottom: 1px solid #2d3039;
+    white-space: nowrap; /* MENCEGAH angka Rank (#10, #11) & data lain turun/terbelah ke bawah */
+}
+
+th {
+    background-color: #24262e;
+    color: #8a8d98;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+}
+
+/* Khusus Kolom Rank agar rapi */
+td:first-child, th:first-child {
+    font-weight: bold;
+    min-width: 45px;
+    white-space: nowrap !important;
 }
 
 /* ==================== ANIMASI SVG PEDANG BERADU ==================== */
@@ -311,16 +328,16 @@ th {
 
 @keyframes swingLeftSword {
     0%, 100% { transform: rotate(0deg); }
-    30% { transform: rotate(-16deg); } 
-    50% { transform: rotate(12deg); }  
-    55% { transform: rotate(8deg); }   
+    30% { transform: rotate(-16deg); } /* Tarik ke belakang */
+    50% { transform: rotate(12deg); }  /* Bentur di tengah */
+    55% { transform: rotate(8deg); }   /* Memantul */
 }
 
 @keyframes swingRightSword {
     0%, 100% { transform: rotate(0deg); }
-    30% { transform: rotate(16deg); }  
-    50% { transform: rotate(-12deg); } 
-    55% { transform: rotate(-8deg); }  
+    30% { transform: rotate(16deg); }  /* Tarik ke belakang */
+    50% { transform: rotate(-12deg); } /* Bentur di tengah */
+    55% { transform: rotate(-8deg); }  /* Memantul */
 }
 
 @keyframes flashSpark {
@@ -336,7 +353,7 @@ th {
     }
 }
 
-/* ==================== SNOWFLAKE EFFECT ==================== */
+/* ==================== SNOWFLAKE EFFECT STYLE ==================== */
 .snowflake {
     position: fixed; 
     top: -10px; 
@@ -355,8 +372,45 @@ th {
     100% { transform: translateY(105vh) translateX(20px); }
 }
 
+/* ==================== GOOGLE TRANSLATE STYLE ==================== */
 .translate-container {
     display: inline-block;
     vertical-align: middle;
     margin: 0 10px;
+}
+
+.goog-te-gadget-simple {
+    background-color: #1e2230 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 6px 10px !important;
+    border-radius: 8px !important;
+    font-size: 0.85rem !important;
+    color: #f1f5f9 !important;
+    cursor: pointer;
+}
+
+.goog-te-gadget-simple a, 
+.goog-te-gadget-simple span {
+    color: #f1f5f9 !important;
+    text-decoration: none !important;
+}
+
+.goog-te-gadget-icon { display: none !important; }
+iframe.goog-te-banner-frame { display: none !important; }
+
+/* ==================== OPTIMISASI TAMPILAN MOBILE (HP) ==================== */
+@media screen and (max-width: 600px) {
+    th, td {
+        padding: 8px 6px;
+        font-size: 0.75rem;
+    }
+
+    .btn-apply {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+    }
+
+    .container {
+        padding: 0 5px;
+    }
 }
