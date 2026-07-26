@@ -1,0 +1,502 @@
+/* ==================== RESET AND BASE STYLES ==================== */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #121316;
+    color: #ffffff;
+    overflow-x: hidden;
+}
+
+/* ==================== NAVBAR & LIVE CLOCK ==================== */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: #18191d;
+    border-bottom: 1px solid #24262b;
+}
+
+#live-clock-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    background-color: #111827;
+    padding: 8px 16px;
+    border-bottom: 1px solid #1f2937;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.85rem;
+}
+
+.clock-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.clock-label {
+    color: #8a8d98;
+    font-weight: bold;
+}
+
+.clock-time {
+    color: #f1f5f9;
+    font-weight: bold;
+}
+
+.clock-divider {
+    color: #374151;
+    font-weight: bold;
+}
+
+/* ==================== MAIN LAYOUT CONTAINER ==================== */
+.container {
+    max-width: 800px;
+    margin: 20px auto; 
+    padding: 0 10px;
+}
+
+.page-title {
+    text-align: center;
+    font-size: 1.8rem; 
+    margin-bottom: 5px;
+}
+
+/* ==================== BANNER & SUBTITLE ==================== */
+.banner-container {
+    margin-top: 5px;       
+    margin-bottom: 2px;    
+    padding: 0;
+    line-height: 0;        
+}
+
+.position-banner {
+    display: block;
+    margin: 0 auto;
+    width: 62%;           
+    max-width: 250px;     
+    height: auto;
+    border-radius: 8px;   
+}
+
+.page-subtitle {
+    text-align: center;
+    margin-top: 6px;       
+    margin-bottom: 12px;   
+    font-size: 0.85rem;    
+    color: #8a8d98;
+}
+
+/* ==================== LIST ITEM / BUTTON POSISI ==================== */
+.list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; 
+}
+
+.list-item {
+    background: linear-gradient(135deg, #1e2230 0%, #151821 100%);
+    padding: 14px 18px; 
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 600;
+    color: #f1f5f9;
+    border: 1px solid rgba(255, 255, 255, 0.08); 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    transition: all 0.25s ease;
+    font-size: 1rem;
+}
+
+.list-item:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #252a3a 0%, #1a1e2a 100%);
+    border-color: rgba(99, 102, 241, 0.4); 
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+.list-item:active {
+    transform: translateY(1px);
+}
+
+.arrow {
+    color: #626773;
+}
+
+/* ==================== BUTTONS STYLE ==================== */
+.btn-admin {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.2); 
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+    transition: all 0.2s ease;
+}
+
+.btn-admin:hover {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.02);
+}
+
+.btn-apply {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    transition: all 0.2s ease;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    display: inline-block;
+    animation: bluePulse 2.5s infinite ease-in-out;
+}
+
+.btn-apply:hover {
+    filter: brightness(1.2);
+    transform: translateY(-1px);
+}
+
+@keyframes bluePulse {
+    0% {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        box-shadow: 0 0 4px rgba(59, 130, 246, 0.4);
+    }
+    50% {
+        background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+        box-shadow: 0 0 12px rgba(96, 165, 250, 0.9);
+        border-color: rgba(255, 255, 255, 0.6);
+    }
+    100% {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        box-shadow: 0 0 4px rgba(59, 130, 246, 0.4);
+    }
+}
+
+/* ANIMASI BERKEDIP MERAH UNTUK TOMBOL REMOVE & DROP */
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    animation: redPulse 2.5s infinite ease-in-out !important;
+}
+
+@keyframes redPulse {
+    0% {
+        background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+        box-shadow: 0 0 4px rgba(239, 68, 68, 0.4);
+    }
+    50% {
+        background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+        box-shadow: 0 0 12px rgba(248, 113, 113, 0.9);
+        border-color: rgba(255, 255, 255, 0.6);
+    }
+    100% {
+        background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+        box-shadow: 0 0 4px rgba(239, 68, 68, 0.4);
+    }
+}
+
+.btn-back {
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    margin-bottom: 15px;
+}
+
+/* ==================== GLOWING GOLD TEXT EFFECT ==================== */
+.fire-text {
+    font-weight: 900;
+    font-size: 1.5rem; 
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    display: inline-block;
+    background: linear-gradient(
+        to right, 
+        #bf953f 0%, 
+        #fcf6ba 25%, 
+        #b38728 50%, 
+        #fcf6ba 75%, 
+        #bf953f 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.7));
+    animation: goldShine 3s linear infinite;
+}
+
+@keyframes goldShine {
+    0% { background-position: 0% center; }
+    100% { background-position: -200% center; }
+}
+
+/* ==================== FOOTER COMPONENT ==================== */
+.site-footer {
+    margin-top: 35px; 
+    padding: 15px 10px;
+    text-align: center;
+    border-top: 1px solid #2b2f3a;
+    color: #8a8d98;
+    font-size: 0.9rem;
+}
+
+.footer-section .guild-name.fire-text {
+    font-size: 1.05rem; 
+    font-weight: 700;   
+}
+
+/* ==================== MODAL & TABLES & TOAST ==================== */
+.hidden { display: none !important; }
+
+.table-container {
+    width: 100%;
+    margin-top: 15px;
+    border: 1px solid #2d3039;
+    background-color: #1c1d22;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 0;
+    table-layout: auto;
+}
+
+th, td {
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 0.8rem;
+    border-bottom: 1px solid #2d3039;
+    word-break: break-word;
+}
+
+th {
+    background-color: #24262e;
+    color: #8a8d98;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+}
+
+.modal {
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #1e2026;
+    color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    width: 95%;          
+    max-width: 450px;    
+    max-height: 85vh;    
+    display: flex;       
+    flex-direction: column; 
+    position: relative;
+}
+
+.custom-form-modal { max-width: 420px; background: #151821; padding: 24px; }
+.custom-confirm-box { max-width: 320px; background: #151821; padding: 20px; text-align: center; }
+
+.close-modal {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: #8a8d98;
+}
+
+.form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.form-group label { font-size: 0.85rem; color: #94a3b8; }
+.form-group input { background: #1e2230; border: 1px solid rgba(255, 255, 255, 0.1); padding: 11px 14px; border-radius: 8px; color: #f1f5f9; outline: none; }
+.form-group input:focus { border-color: #2563eb; }
+
+.toast-notification {
+    background: #1e2230; color: #f1f5f9; padding: 12px 20px; border-radius: 8px; font-size: 0.9rem;
+    border-left: 4px solid #3b82f6; animation: slideInToast 0.3s ease forwards; min-width: 200px;
+}
+
+/* ==================== RECENTLY ACCEPTED LOG STYLE ==================== */
+#recent-log-container {
+    max-width: 340px;
+    margin: 15px auto 0 auto;
+    background: rgba(24, 25, 29, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: left;
+}
+
+.log-title {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #8a8d98;
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 4px;
+    text-align: center;
+}
+
+#recent-log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+.log-entry {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    font-family: monospace;
+    display: flex;
+    justify-content: space-between;
+    background: rgba(30, 34, 48, 0.4);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.log-user {
+    color: #3b82f6; 
+    font-weight: bold;
+}
+
+.log-entry-pos {
+    color: #eab308; 
+}
+
+.log-item-empty {
+    font-size: 0.75rem;
+    color: #4b5563;
+    text-align: center;
+    padding: 10px 0;
+    font-style: italic;
+}
+
+.modal-table-container {
+    width: 100%;
+    overflow-y: auto;    
+    overflow-x: hidden;  
+    max-height: 60vh;    
+    border: 1px solid #334155;
+    border-radius: 6px;
+    margin-top: 15px;
+}
+
+#waiting-modal table {
+    width: 100%;
+    min-width: 0;        
+    table-layout: auto;
+}
+
+.modal-table-container table th,
+#waiting-modal td {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    white-space: normal; 
+    word-break: break-all; 
+    text-align: left;
+}
+
+/* ==================== SNOWFLAKE EFFECT STYLE ==================== */
+.snowflake {
+    position: fixed; 
+    top: -10px; 
+    background-color: #ffffff; 
+    border-radius: 50%; 
+    pointer-events: none; 
+    z-index: 9999; 
+    animation-name: fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-duration: 12s; 
+}
+
+@keyframes fall {
+    0% {
+        transform: translateY(0) translateX(0);
+    }
+    100% {
+        transform: translateY(105vh) translateX(20px);
+    }
+}
+
+/* ==================== GOOGLE TRANSLATE STYLE ==================== */
+.translate-container {
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 10px;
+}
+
+.goog-te-gadget-simple {
+    background-color: #1e2230 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 6px 10px !important;
+    border-radius: 8px !important;
+    font-size: 0.85rem !important;
+    color: #f1f5f9 !important;
+    cursor: pointer;
+}
+
+.goog-te-gadget-simple a, 
+.goog-te-gadget-simple span {
+    color: #f1f5f9 !important;
+    text-decoration: none !important;
+}
+
+.goog-te-gadget-icon {
+    display: none !important; 
+}
+
+iframe.goog-te-banner-frame {
+    display: none !important;
+}
+body {
+    top: 0px !important;
+}
+
+/* ==================== OPTIMISASI TAMPILAN MOBILE (HP) ==================== */
+@media screen and (max-width: 480px) {
+    th, td {
+        padding: 6px 3px;
+        font-size: 0.72rem;
+    }
+
+    .btn-apply {
+        padding: 4px 6px;
+        font-size: 0.72rem;
+    }
+
+    .container {
+        padding: 0 5px;
+    }
+}
