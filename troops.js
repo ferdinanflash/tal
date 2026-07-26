@@ -94,7 +94,7 @@ function updateAdminUI() {
     const adminBtn = document.getElementById('admin-toggle-btn');
     const adminInd = document.getElementById('admin-indicator');
 
-    if (adminBtn) adminBtn.innerText = "Logout President";
+    if (adminBtn) adminBtn.innerText = "Logout";
     if (adminInd) adminInd.style.display = "inline";
 }
 
