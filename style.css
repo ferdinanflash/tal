@@ -68,23 +68,6 @@ body {
     margin-bottom: 5px;
 }
 
-/* ==================== BANNER & SUBTITLE ==================== */
-.banner-container {
-    margin-top: 5px;       
-    margin-bottom: 2px;    
-    padding: 0;
-    line-height: 0;        
-}
-
-.position-banner {
-    display: block;
-    margin: 0 auto;
-    width: 62%;           
-    max-width: 250px;     
-    height: auto;
-    border-radius: 8px;   
-}
-
 .page-subtitle {
     text-align: center;
     margin-top: 6px;       
@@ -118,7 +101,6 @@ body {
 
 .list-item:hover {
     transform: translateY(-2px);
-    background: linear-gradient(135deg, #252a3a 0%, #1a1e2a 100%);
     border-color: rgba(99, 102, 241, 0.4); 
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
 }
@@ -162,7 +144,6 @@ body {
     font-size: 0.8rem;
     white-space: nowrap;
     display: inline-block;
-    animation: bluePulse 2.5s infinite ease-in-out;
 }
 
 .btn-apply:hover {
@@ -170,42 +151,8 @@ body {
     transform: translateY(-1px);
 }
 
-@keyframes bluePulse {
-    0% {
-        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-        box-shadow: 0 0 4px rgba(59, 130, 246, 0.4);
-    }
-    50% {
-        background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
-        box-shadow: 0 0 12px rgba(96, 165, 250, 0.9);
-        border-color: rgba(255, 255, 255, 0.6);
-    }
-    100% {
-        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-        box-shadow: 0 0 4px rgba(59, 130, 246, 0.4);
-    }
-}
-
-/* ANIMASI BERKEDIP MERAH UNTUK TOMBOL REMOVE & DROP */
 .btn-danger {
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
-    animation: redPulse 2.5s infinite ease-in-out !important;
-}
-
-@keyframes redPulse {
-    0% {
-        background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-        box-shadow: 0 0 4px rgba(239, 68, 68, 0.4);
-    }
-    50% {
-        background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
-        box-shadow: 0 0 12px rgba(248, 113, 113, 0.9);
-        border-color: rgba(255, 255, 255, 0.6);
-    }
-    100% {
-        background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-        box-shadow: 0 0 4px rgba(239, 68, 68, 0.4);
-    }
 }
 
 .btn-back {
@@ -255,11 +202,6 @@ body {
     border-top: 1px solid #2b2f3a;
     color: #8a8d98;
     font-size: 0.9rem;
-}
-
-.footer-section .guild-name.fire-text {
-    font-size: 1.05rem; 
-    font-weight: 700;   
 }
 
 /* ==================== MODAL & TABLES & TOAST ==================== */
@@ -344,90 +286,57 @@ th {
     border-left: 4px solid #3b82f6; animation: slideInToast 0.3s ease forwards; min-width: 200px;
 }
 
-/* ==================== RECENTLY ACCEPTED LOG STYLE ==================== */
-#recent-log-container {
-    max-width: 340px;
-    margin: 15px auto 0 auto;
-    background: rgba(24, 25, 29, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    padding: 10px;
-    text-align: left;
+/* ==================== ANIMASI SVG PEDANG BERADU ==================== */
+.clash-svg {
+    width: 28px;
+    height: 28px;
+    vertical-align: middle;
+    margin-right: 6px;
+    overflow: visible;
 }
 
-.log-title {
-    font-size: 0.75rem;
-    font-weight: bold;
-    color: #8a8d98;
-    margin-bottom: 6px;
-    letter-spacing: 1px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    padding-bottom: 4px;
-    text-align: center;
+.sword-left-group {
+    transform-origin: 20px 80px;
+    animation: swingLeftSword 1.6s infinite ease-in-out;
 }
 
-#recent-log-list {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    max-height: 100px;
-    overflow-y: auto;
+.sword-right-group {
+    transform-origin: 80px 80px;
+    animation: swingRightSword 1.6s infinite ease-in-out;
 }
 
-.log-entry {
-    font-size: 0.8rem;
-    color: #cbd5e1;
-    font-family: monospace;
-    display: flex;
-    justify-content: space-between;
-    background: rgba(30, 34, 48, 0.4);
-    padding: 4px 8px;
-    border-radius: 4px;
+.spark-group {
+    animation: flashSpark 1.6s infinite ease-in-out;
 }
 
-.log-user {
-    color: #3b82f6; 
-    font-weight: bold;
+@keyframes swingLeftSword {
+    0%, 100% { transform: rotate(0deg); }
+    30% { transform: rotate(-16deg); } 
+    50% { transform: rotate(12deg); }  
+    55% { transform: rotate(8deg); }   
 }
 
-.log-entry-pos {
-    color: #eab308; 
+@keyframes swingRightSword {
+    0%, 100% { transform: rotate(0deg); }
+    30% { transform: rotate(16deg); }  
+    50% { transform: rotate(-12deg); } 
+    55% { transform: rotate(-8deg); }  
 }
 
-.log-item-empty {
-    font-size: 0.75rem;
-    color: #4b5563;
-    text-align: center;
-    padding: 10px 0;
-    font-style: italic;
+@keyframes flashSpark {
+    0%, 45%, 65%, 100% { 
+        opacity: 0; 
+        transform: scale(0.3);
+        transform-origin: 50px 45px;
+    }
+    50% { 
+        opacity: 1; 
+        transform: scale(1.3); 
+        transform-origin: 50px 45px;
+    }
 }
 
-.modal-table-container {
-    width: 100%;
-    overflow-y: auto;    
-    overflow-x: hidden;  
-    max-height: 60vh;    
-    border: 1px solid #334155;
-    border-radius: 6px;
-    margin-top: 15px;
-}
-
-#waiting-modal table {
-    width: 100%;
-    min-width: 0;        
-    table-layout: auto;
-}
-
-.modal-table-container table th,
-#waiting-modal td {
-    padding: 8px 10px;
-    font-size: 0.8rem;
-    white-space: normal; 
-    word-break: break-all; 
-    text-align: left;
-}
-
-/* ==================== SNOWFLAKE EFFECT STYLE ==================== */
+/* ==================== SNOWFLAKE EFFECT ==================== */
 .snowflake {
     position: fixed; 
     top: -10px; 
@@ -442,61 +351,12 @@ th {
 }
 
 @keyframes fall {
-    0% {
-        transform: translateY(0) translateX(0);
-    }
-    100% {
-        transform: translateY(105vh) translateX(20px);
-    }
+    0% { transform: translateY(0) translateX(0); }
+    100% { transform: translateY(105vh) translateX(20px); }
 }
 
-/* ==================== GOOGLE TRANSLATE STYLE ==================== */
 .translate-container {
     display: inline-block;
     vertical-align: middle;
     margin: 0 10px;
-}
-
-.goog-te-gadget-simple {
-    background-color: #1e2230 !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    padding: 6px 10px !important;
-    border-radius: 8px !important;
-    font-size: 0.85rem !important;
-    color: #f1f5f9 !important;
-    cursor: pointer;
-}
-
-.goog-te-gadget-simple a, 
-.goog-te-gadget-simple span {
-    color: #f1f5f9 !important;
-    text-decoration: none !important;
-}
-
-.goog-te-gadget-icon {
-    display: none !important; 
-}
-
-iframe.goog-te-banner-frame {
-    display: none !important;
-}
-body {
-    top: 0px !important;
-}
-
-/* ==================== OPTIMISASI TAMPILAN MOBILE (HP) ==================== */
-@media screen and (max-width: 480px) {
-    th, td {
-        padding: 6px 3px;
-        font-size: 0.72rem;
-    }
-
-    .btn-apply {
-        padding: 4px 6px;
-        font-size: 0.72rem;
-    }
-
-    .container {
-        padding: 0 5px;
-    }
 }
