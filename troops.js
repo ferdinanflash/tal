@@ -230,8 +230,14 @@ async function fetchData() {
 
 function renderTable() {
     const tbody = document.getElementById('troops-table-body');
+    const thAction = document.getElementById('th-action');
     if (!tbody) return;
     tbody.innerHTML = "";
+
+    // Sembunyikan / Tampilkan Header Action berdasarkan mode Admin
+    if (thAction) {
+        thAction.style.display = isAdmin ? "table-cell" : "none";
+    }
 
     if (viewMode === 'LEGION') {
         const countBattle = loadedTroopsData.filter(p => p.legion_role === 'Battle').length;
@@ -241,8 +247,13 @@ function renderTable() {
         document.getElementById('count-substitute').innerText = countSub;
     }
 
+    // Hitung jumlah kolom dinamis untuk pesan tabel kosong
+    let totalColumns = 6; // Rank, Alliance, Nickname, Game ID, Power, Time
+    if (viewMode === 'LEGION') totalColumns++;
+    if (isAdmin) totalColumns++;
+
     if (loadedTroopsData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="padding: 20px; color: #8a8d98;">No player data available.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${totalColumns}" style="padding: 20px; color: #8a8d98;">No player data available.</td></tr>`;
         return;
     }
 
@@ -277,23 +288,26 @@ function renderTable() {
             statusCellHtml = `<td><span style="padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; display: inline-flex; align-items: center; ${badgeStyle}">${badgeLabel}</span></td>`;
         }
 
-        let actionHtml = '-';
+        // HANYA buat sel <td>Action</td> jika user dalam mode Admin / President
+        let actionCellHtml = '';
         if (isAdmin) {
+            let actionBtns = '';
             if (viewMode === 'ALLIANCE') {
-                actionHtml = `
+                actionBtns = `
                     <div style="display:flex; gap:6px; justify-content:center;">
                         <button class="btn-apply" style="background:#f59e0b; padding: 3px 8px; font-size: 0.7rem; animation: none;" onclick="openEditModal(${player.id})">Edit</button>
                         <button class="btn-apply btn-danger" style="padding: 3px 8px; font-size: 0.7rem;" onclick="deletePlayerData(${player.id})">Delete</button>
                     </div>
                 `;
             } else {
-                actionHtml = `
+                actionBtns = `
                     <div style="display:flex; gap:6px; justify-content:center;">
                         <button class="btn-apply" style="background:#3b82f6; padding: 3px 8px; font-size: 0.7rem; animation: none;" onclick="toggleLegionRole(${player.id}, '${player.legion_role}')">Switch Role</button>
                         <button class="btn-apply btn-danger" style="padding: 3px 8px; font-size: 0.7rem;" onclick="removeFromLegion(${player.id})">Remove</button>
                     </div>
                 `;
             }
+            actionCellHtml = `<td>${actionBtns}</td>`;
         }
 
         row.innerHTML = `
@@ -304,7 +318,7 @@ function renderTable() {
             <td><strong style="color: #22c55e;">${formattedPower}</strong></td>
             <td><span style="color: #f59e0b; font-weight: 600;">${prefTime}</span></td>
             ${statusCellHtml}
-            <td>${actionHtml}</td>
+            ${actionCellHtml}
         `;
 
         tbody.appendChild(row);
