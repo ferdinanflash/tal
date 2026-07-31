@@ -247,6 +247,23 @@ function renderTable() {
         document.getElementById('count-substitute').innerText = countSub;
     }
 
+    // ================= KALKULASI TOTAL TOP 20 TROOPS POWER =================
+    // Urutkan data berdasarkan troops_power tertinggi
+    const sortedByPower = [...loadedTroopsData].sort((a, b) => b.troops_power - a.troops_power);
+    
+    // Ambil maksimal 20 pemain teratas
+    const top20Players = sortedByPower.slice(0, 20);
+    
+    // Hitung total power dari top 20
+    const totalTop20Power = top20Players.reduce((sum, player) => sum + (Number(player.troops_power) || 0), 0);
+    
+    // Tampilkan total power yang sudah diformat ke dalam elemen UI
+    const top20El = document.getElementById('top20-power-total');
+    if (top20El) {
+        top20El.innerText = totalTop20Power.toLocaleString('en-US');
+    }
+    // =======================================================================
+
     // Hitung jumlah kolom dinamis untuk pesan tabel kosong
     let totalColumns = 6; // Rank, Alliance, Nickname, Game ID, Power, Time
     if (viewMode === 'LEGION') totalColumns++;
