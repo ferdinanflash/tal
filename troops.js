@@ -9,6 +9,7 @@ let viewMode = 'ALLIANCE'; // 'ALLIANCE' or 'LEGION'
 let currentSelection = 'ARX'; // Alliance name or 'Legion 1' / 'Legion 2'
 let loadedTroopsData = [];
 let editingPlayerId = null;
+let editingScheduleLegion = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     if (sessionStorage.getItem('isPresidentMode') === 'true') {
@@ -17,10 +18,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     loadFooterInfo();
+    loadLegionSchedules();
     startLiveClock();
     
     setInterval(() => {
         loadFooterInfo(); 
+        loadLegionSchedules();
     }, 30000);
 });
 
@@ -93,32 +96,31 @@ function showCustomConfirm(message, onConfirm, buttonColor = '#ef4444') {
 function updateAdminUI() {
     const adminBtn = document.getElementById('admin-toggle-btn');
     const adminInd = document.getElementById('admin-indicator');
+    const adminScheduleBtns = document.querySelectorAll('.admin-schedule-btn');
 
     if (adminBtn) adminBtn.innerText = "Logout";
     if (adminInd) adminInd.style.display = "inline";
+    
+    adminScheduleBtns.forEach(btn => btn.classList.remove('hidden'));
 }
 
 function handleAdminLogin() {
     if (!isAdmin) {
         const password = prompt("Enter Password:");
         
-        // Daftar password (kiri/huruf kecil) dan pesan sambutan (kanan/huruf kapital)
         const validPasswords = {
             "arx": "ARX",
-            "drk": "DRK",
             "idn": "IDN",
             "vnx": "VNX",
             "zxc": "ZXC",
-            "3475": "PRESIDENT" // Tetap menyimpan password utama
+            "3475": "PRESIDENT"
         };
 
-        // Mengecek apakah password yang dimasukkan ada di dalam daftar
         if (validPasswords[password]) { 
             isAdmin = true;
             sessionStorage.setItem('isPresidentMode', 'true'); 
             updateAdminUI();
             
-            // Menampilkan Toast sesuai dengan password yang dipakai
             if (password === "3475") {
                 showToast("Welcome back President!", "success");
             } else {
@@ -134,6 +136,8 @@ function handleAdminLogin() {
         sessionStorage.removeItem('isPresidentMode'); 
         document.getElementById('admin-toggle-btn').innerText = "President Login";
         document.getElementById('admin-indicator').style.display = "none";
+        
+        document.querySelectorAll('.admin-schedule-btn').forEach(btn => btn.classList.add('hidden'));
         showToast("Logged out successfully.", "info");
     }
     fetchData();
@@ -187,6 +191,77 @@ function showAllianceMenu() {
     document.getElementById('alliance-menu-page').classList.remove('hidden');
 }
 
+// ================= SCHEDULE MANAGEMENT =================
+function openScheduleModal(legionName) {
+    if (!isAdmin) return;
+    editingScheduleLegion = legionName;
+    document.getElementById('schedule-modal-target').innerText = legionName;
+    document.getElementById('input-match-time').value = "";
+    document.getElementById('schedule-modal').classList.remove('hidden');
+}
+
+function closeScheduleModal() {
+    document.getElementById('schedule-modal').classList.add('hidden');
+}
+
+async function submitMatchSchedule() {
+    if (!isAdmin || !editingScheduleLegion) return;
+    const client = getSupabase();
+    if (!client) return;
+
+    const matchTime = document.getElementById('input-match-time').value;
+    if (!matchTime) {
+        showToast("Please select a match time!", "warning");
+        return;
+    }
+
+    const fieldName = editingScheduleLegion === 'Legion 1' ? 'legion1_schedule' : 'legion2_schedule';
+
+    // Update ke database (tabel footer_settings dengan id 'main')
+    const { error } = await client.from('footer_settings').update({
+        [fieldName]: matchTime
+    }).eq('id', 'main');
+
+    if (!error) {
+        showToast(`Schedule for ${editingScheduleLegion} updated!`, "success");
+        closeScheduleModal();
+        loadLegionSchedules();
+    } else {
+        // Jika kolom belum ada, beritahu admin atau buat penanganan error
+        showToast("Failed to save schedule: " + error.message, "error");
+    }
+}
+
+async function loadLegionSchedules() {
+    const client = getSupabase();
+    if (!client) return;
+
+    try {
+        const { data, error } = await client.from('footer_settings').select('legion1_schedule, legion2_schedule').eq('id', 'main').single();
+        if (data) {
+            // Legion 1 Schedule
+            const l1Container = document.getElementById('display-schedule-legion-1');
+            if (data.legion1_schedule) {
+                l1Container.querySelector('.schedule-time-val').innerText = data.legion1_schedule;
+                l1Container.style.display = "block";
+            } else {
+                l1Container.style.display = "none";
+            }
+
+            // Legion 2 Schedule
+            const l2Container = document.getElementById('display-schedule-legion-2');
+            if (data.legion2_schedule) {
+                l2Container.querySelector('.schedule-time-val').innerText = data.legion2_schedule;
+                l2Container.style.display = "block";
+            } else {
+                l2Container.style.display = "none";
+            }
+        }
+    } catch (err) {
+        // Kolom database mungkin belum ada, diamkan saja agar tidak mengganggu
+    }
+}
+
 // ================= LOAD & RENDER DATA =================
 async function fetchData() {
     const client = getSupabase();
@@ -202,7 +277,6 @@ async function fetchData() {
             if (error) throw error;
             loadedTroopsData = data || [];
         } else {
-            // LEGION MODE: Filter legion and sort Battle first, Substitute second, then highest power
             const { data, error } = await client.from('troops_power')
                 .select('*')
                 .eq('legion', currentSelection);
@@ -215,9 +289,9 @@ async function fetchData() {
                 const priorityB = rolePriority[b.legion_role] || 99;
 
                 if (priorityA !== priorityB) {
-                    return priorityA - priorityB; // Battle first
+                    return priorityA - priorityB;
                 }
-                return b.troops_power - a.troops_power; // Highest Troops Power first
+                return b.troops_power - a.troops_power;
             });
         }
 
@@ -234,7 +308,6 @@ function renderTable() {
     if (!tbody) return;
     tbody.innerHTML = "";
 
-    // Sembunyikan / Tampilkan Header Action berdasarkan mode Admin
     if (thAction) {
         thAction.style.display = isAdmin ? "table-cell" : "none";
     }
@@ -247,25 +320,75 @@ function renderTable() {
         document.getElementById('count-substitute').innerText = countSub;
     }
 
-    // ================= KALKULASI TOTAL TOP 20 TROOPS POWER =================
-    // Urutkan data berdasarkan troops_power tertinggi
-    const sortedByPower = [...loadedTroopsData].sort((a, b) => b.troops_power - a.troops_power);
-    
-    // Ambil maksimal 20 pemain teratas
-    const top20Players = sortedByPower.slice(0, 20);
-    
-    // Hitung total power dari top 20
-    const totalTop20Power = top20Players.reduce((sum, player) => sum + (Number(player.troops_power) || 0), 0);
-    
-    // Tampilkan total power yang sudah diformat ke dalam elemen UI
-    const top20El = document.getElementById('top20-power-total');
-    if (top20El) {
-        top20El.innerText = totalTop20Power.toLocaleString('en-US');
-    }
-    // =======================================================================
+    // ================= DINAMIS RENDER KOTAK RINGKASAN POWER =================
+    const summaryBoxContainer = document.getElementById('dynamic-summary-cards');
+    summaryBoxContainer.innerHTML = "";
 
-    // Hitung jumlah kolom dinamis untuk pesan tabel kosong
-    let totalColumns = 6; // Rank, Alliance, Nickname, Game ID, Power, Time
+    const sortedByPower = [...loadedTroopsData].sort((a, b) => b.troops_power - a.troops_power);
+
+    if (viewMode === 'LEGION') {
+        const top20 = sortedByPower.slice(0, 20).reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
+        const battle = loadedTroopsData.filter(p => p.legion_role === 'Battle').reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
+        const sub = loadedTroopsData.filter(p => p.legion_role === 'Substitute').reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
+
+        summaryBoxContainer.style.gridTemplateColumns = "repeat(3, 1fr)";
+        summaryBoxContainer.innerHTML = `
+            <div style="padding: 10px; background: linear-gradient(135deg, #1e2230 0%, #111827 100%); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 10px; text-align: center;">
+                <div style="font-size: 0.7rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 3px;">Top 20 Troops Power</div>
+                <div style="font-size: 1.1rem; font-weight: 900; color: #f59e0b;">${top20.toLocaleString('en-US')}</div>
+            </div>
+            <div style="padding: 10px; background: linear-gradient(135deg, #1e2230 0%, #111827 100%); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 10px; text-align: center;">
+                <div style="font-size: 0.7rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 3px;">Battle Troops Power</div>
+                <div style="font-size: 1.1rem; font-weight: 900; color: #4ade80;">${battle.toLocaleString('en-US')}</div>
+            </div>
+            <div style="padding: 10px; background: linear-gradient(135deg, #1e2230 0%, #111827 100%); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 10px; text-align: center;">
+                <div style="font-size: 0.7rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 3px;">Substitute Troops Power</div>
+                <div style="font-size: 1.1rem; font-weight: 900; color: #3b82f6;">${sub.toLocaleString('en-US')}</div>
+            </div>
+        `;
+    } else if (currentSelection !== 'ALL') {
+        const top20 = sortedByPower.slice(0, 20).reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
+        const total = loadedTroopsData.reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
+
+        summaryBoxContainer.style.gridTemplateColumns = "1fr 1fr";
+        summaryBoxContainer.innerHTML = `
+            <div style="padding: 12px; background: linear-gradient(135deg, #1e2230 0%, #111827 100%); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 10px; text-align: center;">
+                <div style="font-size: 0.75rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Top 20 Troops Power</div>
+                <div style="font-size: 1.25rem; font-weight: 900; color: #f59e0b;">${top20.toLocaleString('en-US')}</div>
+            </div>
+            <div style="padding: 12px; background: linear-gradient(135deg, #1e2230 0%, #111827 100%); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 10px; text-align: center;">
+                <div style="font-size: 0.75rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Total Troops Power</div>
+                <div style="font-size: 1.25rem; font-weight: 900; color: #3b82f6;">${total.toLocaleString('en-US')}</div>
+            </div>
+        `;
+    } else {
+        const top20 = sortedByPower.slice(0, 20).reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
+        const top50 = sortedByPower.slice(0, 50).reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
+        const top100 = sortedByPower.slice(0, 100).reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
+        const allState = loadedTroopsData.reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
+
+        summaryBoxContainer.style.gridTemplateColumns = "repeat(2, 1fr)";
+        summaryBoxContainer.innerHTML = `
+            <div style="padding: 10px; background: linear-gradient(135deg, #1e2230 0%, #111827 100%); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 10px; text-align: center;">
+                <div style="font-size: 0.7rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 3px;">Top 20 Troops Power</div>
+                <div style="font-size: 1.1rem; font-weight: 900; color: #f59e0b;">${top20.toLocaleString('en-US')}</div>
+            </div>
+            <div style="padding: 10px; background: linear-gradient(135deg, #1e2230 0%, #111827 100%); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 10px; text-align: center;">
+                <div style="font-size: 0.7rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 3px;">Top 50 Troops Power</div>
+                <div style="font-size: 1.1rem; font-weight: 900; color: #3b82f6;">${top50.toLocaleString('en-US')}</div>
+            </div>
+            <div style="padding: 10px; background: linear-gradient(135deg, #1e2230 0%, #111827 100%); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 10px; text-align: center;">
+                <div style="font-size: 0.7rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 3px;">Top 100 Troops Power</div>
+                <div style="font-size: 1.1rem; font-weight: 900; color: #a855f7;">${top100.toLocaleString('en-US')}</div>
+            </div>
+            <div style="padding: 10px; background: linear-gradient(135deg, #1e2230 0%, #111827 100%); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 10px; text-align: center;">
+                <div style="font-size: 0.7rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 3px;">All Troops Power in this State</div>
+                <div style="font-size: 1.1rem; font-weight: 900; color: #4ade80;">${allState.toLocaleString('en-US')}</div>
+            </div>
+        `;
+    }
+
+    let totalColumns = 6;
     if (viewMode === 'LEGION') totalColumns++;
     if (isAdmin) totalColumns++;
 
@@ -305,7 +428,6 @@ function renderTable() {
             statusCellHtml = `<td><span style="padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; display: inline-flex; align-items: center; ${badgeStyle}">${badgeLabel}</span></td>`;
         }
 
-        // HANYA buat sel <td>Action</td> jika user dalam mode Admin / President
         let actionCellHtml = '';
         if (isAdmin) {
             let actionBtns = '';
@@ -328,7 +450,7 @@ function renderTable() {
         }
 
         row.innerHTML = `
-            <td><strong style="color: ${index < 3 ? '#f59e0b' : '#f1f5f9'};">#${index + 1}</strong></td>
+            <td><strong style="color: ${index < 20 ? '#f59e0b' : '#f1f5f9'};">#${index + 1}</strong></td>
             <td><span style="background: #1e2230; padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #3b82f6;">${player.alliance}</span></td>
             <td><strong>${player.nickname}</strong></td>
             <td><span style="cursor:pointer; color:#3b82f6; text-decoration:underline;" onclick="copyToClipboard('${player.game_id}')">${player.game_id}</span></td>
