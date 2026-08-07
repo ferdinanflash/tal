@@ -217,7 +217,6 @@ async function submitMatchSchedule() {
 
     const fieldName = editingScheduleLegion === 'Legion 1' ? 'legion1_schedule' : 'legion2_schedule';
 
-    // Update ke database (tabel footer_settings dengan id 'main')
     const { error } = await client.from('footer_settings').update({
         [fieldName]: matchTime
     }).eq('id', 'main');
@@ -227,7 +226,6 @@ async function submitMatchSchedule() {
         closeScheduleModal();
         loadLegionSchedules();
     } else {
-        // Jika kolom belum ada, beritahu admin atau buat penanganan error
         showToast("Failed to save schedule: " + error.message, "error");
     }
 }
@@ -237,9 +235,8 @@ async function loadLegionSchedules() {
     if (!client) return;
 
     try {
-        const { data, error } = await client.from('footer_settings').select('legion1_schedule, legion2_schedule').eq('id', 'main').single();
+        const { data } = await client.from('footer_settings').select('legion1_schedule, legion2_schedule').eq('id', 'main').single();
         if (data) {
-            // Legion 1 Schedule
             const l1Container = document.getElementById('display-schedule-legion-1');
             if (data.legion1_schedule) {
                 l1Container.querySelector('.schedule-time-val').innerText = data.legion1_schedule;
@@ -248,7 +245,6 @@ async function loadLegionSchedules() {
                 l1Container.style.display = "none";
             }
 
-            // Legion 2 Schedule
             const l2Container = document.getElementById('display-schedule-legion-2');
             if (data.legion2_schedule) {
                 l2Container.querySelector('.schedule-time-val').innerText = data.legion2_schedule;
@@ -257,9 +253,7 @@ async function loadLegionSchedules() {
                 l2Container.style.display = "none";
             }
         }
-    } catch (err) {
-        // Kolom database mungkin belum ada, diamkan saja agar tidak mengganggu
-    }
+    } catch (err) {}
 }
 
 // ================= LOAD & RENDER DATA =================
@@ -387,6 +381,7 @@ function renderTable() {
             </div>
         `;
     }
+    // =========================================================
 
     let totalColumns = 6;
     if (viewMode === 'LEGION') totalColumns++;
@@ -449,9 +444,16 @@ function renderTable() {
             actionCellHtml = `<td>${actionBtns}</td>`;
         }
 
+        // Warna unik untuk setiap aliansi pada kolom tabel
+        let allianceTextColor = '#3b82f6';
+        if (player.alliance === 'ARX') allianceTextColor = '#f59e0b';
+        else if (player.alliance === 'IDN') allianceTextColor = '#22c55e';
+        else if (player.alliance === 'VNX') allianceTextColor = '#a855f7';
+        else if (player.alliance === 'ZXC') allianceTextColor = '#ef4444';
+
         row.innerHTML = `
             <td><strong style="color: ${index < 20 ? '#f59e0b' : '#f1f5f9'};">#${index + 1}</strong></td>
-            <td><span style="background: #1e2230; padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #3b82f6;">${player.alliance}</span></td>
+            <td><span style="background: #1e2230; padding: 2px 8px; border-radius: 4px; font-weight: bold; color: ${allianceTextColor}; border: 1px solid ${allianceTextColor}40;">${player.alliance}</span></td>
             <td><strong>${player.nickname}</strong></td>
             <td><span style="cursor:pointer; color:#3b82f6; text-decoration:underline;" onclick="copyToClipboard('${player.game_id}')">${player.game_id}</span></td>
             <td><strong style="color: #22c55e;">${formattedPower}</strong></td>
