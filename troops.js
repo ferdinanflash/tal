@@ -113,6 +113,7 @@ function handleAdminLogin() {
             "idn": "IDN",
             "vnx": "VNX",
             "zxc": "ZXC",
+            "cat": "CAT",
             "3475": "PRESIDENT"
         };
 
@@ -450,6 +451,7 @@ function renderTable() {
         else if (player.alliance === 'IDN') allianceTextColor = '#22c55e';
         else if (player.alliance === 'VNX') allianceTextColor = '#a855f7';
         else if (player.alliance === 'ZXC') allianceTextColor = '#ef4444';
+        else if (player.alliance === 'CAT') allianceTextColor = '#ec4899';
 
         row.innerHTML = `
             <td><strong style="color: ${index < 20 ? '#f59e0b' : '#f1f5f9'};">#${index + 1}</strong></td>
