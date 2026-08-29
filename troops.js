@@ -40,6 +40,80 @@ function staffEmailToUsername(email) {
         : email;
 }
 
+// ================= STAFF ROLE / PERMISSION CONFIG =================
+// IMPORTANT: this is a CLIENT-SIDE UI restriction only. It decides what
+// buttons/actions each signed-in username *sees*, so people without the
+// right role don't accidentally poke at things they shouldn't. It is NOT a
+// real security boundary — anyone could open devtools and call the Supabase
+// client directly, bypassing all of this. Real protection has to come from
+// Row Level Security (RLS) policies on the `troops_power` / `footer_settings`
+// tables in Supabase (e.g. checking a role claim tied to auth.uid()). Set up
+// matching RLS rules on the Supabase side so this UI restriction is actually
+// backed up by one the database enforces.
+//
+// scope:
+//   'full'     -> full access, every alliance + both legions (fallback for
+//                 any signed-in username not listed below, so existing staff
+//                 keep working exactly as before)
+//   'alliance' -> can only add/edit/delete players in the alliance(s) listed
+//   'legion'   -> can only set schedule / manage rosters for the legion(s) listed
+//   'none'     -> signed in, but no edit rights anywhere (view-only)
+//
+// Usernames are matched case-insensitively. Add more usernames below as needed.
+const STAFF_ROLES = {
+    'idn':   { scope: 'alliance', alliances: ['IDN'] },
+    'arx':   { scope: 'alliance', alliances: ['ARX'] },
+    'vnx':   { scope: 'alliance', alliances: ['VNX'] },
+    'zxc':   { scope: 'alliance', alliances: ['ZXC'] },
+    'cat':   { scope: 'alliance', alliances: ['CAT'] },
+    'tal':   { scope: 'legion', legions: ['Legion 1', 'Legion 2'] },
+    'demon': { scope: 'legion', legions: ['Legion 1', 'Legion 2'] },
+};
+
+const ALL_ALLIANCES = ['ARX', 'IDN', 'VNX', 'ZXC', 'CAT'];
+const ALL_LEGIONS = ['Legion 1', 'Legion 2'];
+const FULL_ACCESS_ROLE = { scope: 'full', alliances: ALL_ALLIANCES, legions: ALL_LEGIONS };
+
+let currentUserRole = null; // computed on login / session restore
+
+function getRoleForUsername(username) {
+    if (!username) return null;
+    const found = STAFF_ROLES[username.trim().toLowerCase()];
+    return found || FULL_ACCESS_ROLE;
+}
+
+// Can this staff member add/edit/delete players belonging to `allianceCode`?
+function canEditAlliance(allianceCode) {
+    if (!isAdmin || !currentUserRole) return false;
+    if (currentUserRole.scope === 'full') return true;
+    if (currentUserRole.scope === 'alliance') return (currentUserRole.alliances || []).includes(allianceCode);
+    return false;
+}
+
+// Can this staff member set the schedule / manage the roster of `legionName`?
+function canManageLegion(legionName) {
+    if (!isAdmin || !currentUserRole) return false;
+    if (currentUserRole.scope === 'full') return true;
+    if (currentUserRole.scope === 'legion') return (currentUserRole.legions || []).includes(legionName);
+    return false;
+}
+
+// The list of alliances this staff member is allowed to add/edit players in
+// right now — used to populate the "Select Alliance" dropdown and to decide
+// whether the "+ Add Player Power" button should show at all.
+function getMyEditableAlliances() {
+    if (!isAdmin || !currentUserRole) return [];
+    if (currentUserRole.scope === 'full') return ALL_ALLIANCES;
+    if (currentUserRole.scope === 'alliance') return currentUserRole.alliances || [];
+    return [];
+}
+
+function populateAllianceSelectOptions(list) {
+    const el = document.getElementById('input-alliance');
+    if (!el) return;
+    el.innerHTML = list.map(a => `<option value="${a}">${a}</option>`).join('');
+}
+
 let supabaseClient = null;
 let isAdmin = false;
 let currentStaffUsername = null;
@@ -120,6 +194,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 function applyAuthSession(session) {
     isAdmin = !!session;
     currentStaffUsername = session ? staffEmailToUsername(session.user.email) : null;
+    currentUserRole = isAdmin ? getRoleForUsername(currentStaffUsername) : null;
     if (isAdmin) {
         updateAdminUI();
     } else {
@@ -219,12 +294,29 @@ function showCustomConfirm(message, onConfirm, buttonColor = '#ef4444') {
 function updateAdminUI() {
     const adminBtn = document.getElementById('admin-toggle-btn');
     const adminInd = document.getElementById('admin-indicator');
-    const adminScheduleBtns = document.querySelectorAll('.admin-schedule-btn');
 
-    if (adminBtn) adminBtn.innerText = "Logout";
-    if (adminInd) adminInd.style.display = "inline";
-    
-    adminScheduleBtns.forEach(btn => btn.classList.remove('hidden'));
+    if (adminBtn) {
+        adminBtn.innerText = currentStaffUsername ? `Logout (${currentStaffUsername.toUpperCase()})` : "Logout";
+    }
+
+    if (adminInd) {
+        adminInd.style.display = "inline";
+        let modeLabel = "(ALLIANCE STAFF MODE)";
+        if (currentUserRole) {
+            if (currentUserRole.scope === 'full') modeLabel = "(FULL ACCESS STAFF)";
+            else if (currentUserRole.scope === 'alliance') modeLabel = `(${(currentUserRole.alliances || []).join('/')} STAFF ONLY)`;
+            else if (currentUserRole.scope === 'legion') modeLabel = `(${(currentUserRole.legions || []).join(' & ')} STAFF ONLY)`;
+            else modeLabel = "(VIEW ONLY)";
+        }
+        adminInd.innerText = modeLabel;
+    }
+
+    // Only reveal "Set Schedule" on the legion(s) this staff member is
+    // actually allowed to manage, not both by default.
+    const scheduleBtn1 = document.getElementById('edit-schedule-legion-1');
+    const scheduleBtn2 = document.getElementById('edit-schedule-legion-2');
+    if (scheduleBtn1) scheduleBtn1.classList.toggle('hidden', !canManageLegion('Legion 1'));
+    if (scheduleBtn2) scheduleBtn2.classList.toggle('hidden', !canManageLegion('Legion 2'));
 }
 
 function resetAdminUI() {
@@ -289,7 +381,7 @@ async function submitStaffLogin() {
 
     applyAuthSession(data.session);
     closeLoginModal();
-    showToast(`Welcome back${currentStaffUsername ? ', ' + currentStaffUsername : ''}!`, "success");
+    showToast(`Welcome back${currentStaffUsername ? ', ' + currentStaffUsername.toUpperCase() : ''}!`, "success");
     fetchData();
 }
 
@@ -323,7 +415,13 @@ function selectAlliance(alliance) {
 
     document.getElementById('th-status').style.display = "none";
     document.getElementById('legion-counter-bar').style.display = "none";
-    document.getElementById('add-entry-btn').style.display = "inline-block";
+
+    // Only show "+ Add Player Power" if this staff member can actually add
+    // to the selected alliance (or has at least one editable alliance when
+    // viewing the combined "ALL" list).
+    const myAlliances = getMyEditableAlliances();
+    const canAddHere = alliance === 'ALL' ? myAlliances.length > 0 : myAlliances.includes(alliance);
+    document.getElementById('add-entry-btn').style.display = canAddHere ? "inline-block" : "none";
     document.getElementById('add-legion-member-btn').style.display = "none";
 
     const titleEl = document.getElementById('selected-alliance-title');
@@ -346,12 +444,8 @@ function selectLegion(legionName) {
     document.getElementById('th-status').style.display = "table-cell";
     document.getElementById('legion-counter-bar').style.display = "flex";
     document.getElementById('add-entry-btn').style.display = "none";
-    
-    if (isAdmin) {
-        document.getElementById('add-legion-member-btn').style.display = "inline-block";
-    } else {
-        document.getElementById('add-legion-member-btn').style.display = "none";
-    }
+
+    document.getElementById('add-legion-member-btn').style.display = canManageLegion(legionName) ? "inline-block" : "none";
 
     document.getElementById('selected-alliance-title').innerText = `${legionName} Official Roster`;
 
@@ -365,7 +459,10 @@ function showAllianceMenu() {
 
 // ================= SCHEDULE MANAGEMENT =================
 function openScheduleModal(legionName) {
-    if (!isAdmin) return;
+    if (!canManageLegion(legionName)) {
+        showToast("You don't have permission to set this legion's schedule.", "warning");
+        return;
+    }
     editingScheduleLegion = legionName;
     document.getElementById('schedule-modal-target').innerText = legionName;
     document.getElementById('input-match-time').value = "";
@@ -377,7 +474,7 @@ function closeScheduleModal() {
 }
 
 async function submitMatchSchedule() {
-    if (!isAdmin || !editingScheduleLegion) return;
+    if (!editingScheduleLegion || !canManageLegion(editingScheduleLegion)) return;
     const client = getSupabase();
     if (!client) return;
 
@@ -749,23 +846,31 @@ function renderTable() {
 
         let actionCellHtml = '';
         if (isAdmin) {
-            let actionBtns = '';
             if (viewMode === 'ALLIANCE') {
-                actionBtns = `
-                    <div style="display:flex; gap:6px; justify-content:center;">
-                        <button class="btn-apply js-edit-player" style="background:#f59e0b; padding: 3px 8px; font-size: 0.7rem; animation: none;" data-id="${playerId}">Edit</button>
-                        <button class="btn-apply btn-danger js-delete-player" style="padding: 3px 8px; font-size: 0.7rem;" data-id="${playerId}">Delete</button>
-                    </div>
-                `;
+                if (canEditAlliance(player.alliance)) {
+                    actionCellHtml = `<td data-label="Action">
+                        <div style="display:flex; gap:6px; justify-content:center;">
+                            <button class="btn-apply js-edit-player" style="background:#f59e0b; padding: 3px 8px; font-size: 0.7rem; animation: none;" data-id="${playerId}">Edit</button>
+                            <button class="btn-apply btn-danger js-delete-player" style="padding: 3px 8px; font-size: 0.7rem;" data-id="${playerId}">Delete</button>
+                        </div>
+                    </td>`;
+                } else {
+                    // Signed in, but this staff member's role doesn't cover this
+                    // player's alliance — show the column with no actions.
+                    actionCellHtml = `<td data-label="Action" style="color:#4b5563; text-align:center;">—</td>`;
+                }
             } else {
-                actionBtns = `
-                    <div style="display:flex; gap:6px; justify-content:center;">
-                        <button class="btn-apply js-toggle-role" style="background:#3b82f6; padding: 3px 8px; font-size: 0.7rem; animation: none;" data-id="${playerId}" data-role="${safeLegionRole}">Switch Role</button>
-                        <button class="btn-apply btn-danger js-remove-legion" style="padding: 3px 8px; font-size: 0.7rem;" data-id="${playerId}">Remove</button>
-                    </div>
-                `;
+                if (canManageLegion(currentSelection)) {
+                    actionCellHtml = `<td data-label="Action">
+                        <div style="display:flex; gap:6px; justify-content:center;">
+                            <button class="btn-apply js-toggle-role" style="background:#3b82f6; padding: 3px 8px; font-size: 0.7rem; animation: none;" data-id="${playerId}" data-role="${safeLegionRole}">Switch Role</button>
+                            <button class="btn-apply btn-danger js-remove-legion" style="padding: 3px 8px; font-size: 0.7rem;" data-id="${playerId}">Remove</button>
+                        </div>
+                    </td>`;
+                } else {
+                    actionCellHtml = `<td data-label="Action" style="color:#4b5563; text-align:center;">—</td>`;
+                }
             }
-            actionCellHtml = `<td data-label="Action">${actionBtns}</td>`;
         }
 
         // Warna unik untuk setiap aliansi pada kolom tabel
@@ -795,6 +900,13 @@ function renderTable() {
 
 // ================= PLAYER MODAL & EDIT =================
 function openAddModal() {
+    if (!isAdmin) return;
+    const myAlliances = getMyEditableAlliances();
+    if (myAlliances.length === 0) {
+        showToast("You don't have permission to add players.", "warning");
+        return;
+    }
+
     editingPlayerId = null;
     document.getElementById('modal-form-title').innerText = "Add Troops Power";
     document.getElementById('modal-submit-btn').innerText = "Submit Data";
@@ -810,9 +922,12 @@ function openAddModal() {
     if (currentSelection === 'ALL' || viewMode === 'LEGION') {
         allianceLabel.innerText = "Select below";
         allianceSelectGroup.style.display = "flex";
+        // Restricted staff only get to pick from the alliance(s) their role covers.
+        populateAllianceSelectOptions(myAlliances);
     } else {
         allianceLabel.innerText = currentSelection;
         allianceSelectGroup.style.display = "none";
+        populateAllianceSelectOptions([currentSelection]);
         document.getElementById('input-alliance').value = currentSelection;
     }
 
@@ -824,6 +939,11 @@ function openEditModal(id) {
     const player = loadedTroopsData.find(p => p.id === id);
     if (!player) return;
 
+    if (!canEditAlliance(player.alliance)) {
+        showToast("You don't have permission to edit this player's alliance.", "warning");
+        return;
+    }
+
     editingPlayerId = id;
     document.getElementById('modal-form-title').innerText = "Edit Troops Power";
     document.getElementById('modal-submit-btn').innerText = "Update Data";
@@ -831,11 +951,17 @@ function openEditModal(id) {
     document.getElementById('input-nickname').value = player.nickname;
     document.getElementById('input-gameid').value = player.game_id;
     document.getElementById('input-power').value = player.troops_power;
-    document.getElementById('input-alliance').value = player.alliance;
     document.getElementById('input-preferred-time').value = player.preferred_time || "";
 
     document.getElementById('form-alliance-label').innerText = player.alliance;
     document.getElementById('group-alliance-select').style.display = "flex";
+    // A "full" scope staff member may re-assign a player to any alliance;
+    // an alliance-scoped one can only keep them in the alliance they already
+    // have permission over.
+    populateAllianceSelectOptions(
+        currentUserRole && currentUserRole.scope === 'full' ? ALL_ALLIANCES : [player.alliance]
+    );
+    document.getElementById('input-alliance').value = player.alliance;
 
     document.getElementById('add-modal').classList.remove('hidden');
 }
@@ -849,6 +975,12 @@ async function submitPlayerData() {
     if (!client) return;
 
     const alliance = document.getElementById('input-alliance').value;
+
+    if (!canEditAlliance(alliance)) {
+        showToast("You don't have permission to save players for this alliance.", "error");
+        return;
+    }
+
     const nickname = document.getElementById('input-nickname').value.trim();
     const gameId = document.getElementById('input-gameid').value.trim();
     const power = parseInt(document.getElementById('input-power').value.trim()) || 0;
@@ -904,6 +1036,11 @@ async function submitPlayerData() {
 
 function deletePlayerData(id) {
     if (!isAdmin) return;
+    const player = loadedTroopsData.find(p => p.id === id);
+    if (!player || !canEditAlliance(player.alliance)) {
+        showToast("You don't have permission to delete this player.", "warning");
+        return;
+    }
     showCustomConfirm("Are you sure you want to delete this player entry?", async () => {
         const client = getSupabase();
         if (!client) return;
@@ -921,7 +1058,10 @@ function deletePlayerData(id) {
 
 // ================= LEGION MANAGEMENT FEATURES (PRESIDENT) =================
 async function openAddLegionModal() {
-    if (!isAdmin) return;
+    if (!canManageLegion(currentSelection)) {
+        showToast("You don't have permission to manage this legion's roster.", "warning");
+        return;
+    }
     const client = getSupabase();
     if (!client) return;
 
@@ -961,7 +1101,7 @@ function closeLegionAssignModal() {
 }
 
 async function submitLegionAssignment() {
-    if (!isAdmin) return;
+    if (!canManageLegion(currentSelection)) return;
     const client = getSupabase();
     if (!client) return;
 
@@ -1006,7 +1146,7 @@ async function submitLegionAssignment() {
 }
 
 async function toggleLegionRole(id, currentRole) {
-    if (!isAdmin) return;
+    if (!canManageLegion(currentSelection)) return;
     const client = getSupabase();
     if (!client) return;
 
@@ -1038,7 +1178,7 @@ async function toggleLegionRole(id, currentRole) {
 }
 
 async function removeFromLegion(id) {
-    if (!isAdmin) return;
+    if (!canManageLegion(currentSelection)) return;
     showCustomConfirm("Remove this player from Legion roster?", async () => {
         const client = getSupabase();
         if (!client) return;
