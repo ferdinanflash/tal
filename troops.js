@@ -60,6 +60,9 @@ function staffEmailToUsername(email) {
 //   'none'     -> signed in, but no edit rights anywhere (view-only)
 //
 // Usernames are matched case-insensitively. Add more usernames below as needed.
+// NOTE: 'demon' is intentionally left out of this map — any username not
+// listed here automatically gets full access (see FULL_ACCESS_ROLE below),
+// which is exactly what "demon" should have.
 const STAFF_ROLES = {
     'idn':   { scope: 'alliance', alliances: ['IDN'] },
     'arx':   { scope: 'alliance', alliances: ['ARX'] },
@@ -67,7 +70,6 @@ const STAFF_ROLES = {
     'zxc':   { scope: 'alliance', alliances: ['ZXC'] },
     'cat':   { scope: 'alliance', alliances: ['CAT'] },
     'tal':   { scope: 'legion', legions: ['Legion 1', 'Legion 2'] },
-    'demon': { scope: 'legion', legions: ['Legion 1', 'Legion 2'] },
 };
 
 const ALL_ALLIANCES = ['ARX', 'IDN', 'VNX', 'ZXC', 'CAT'];
@@ -106,6 +108,12 @@ function getMyEditableAlliances() {
     if (currentUserRole.scope === 'full') return ALL_ALLIANCES;
     if (currentUserRole.scope === 'alliance') return currentUserRole.alliances || [];
     return [];
+}
+
+// Editing the President/Guild footer info is a global, site-wide setting
+// (not tied to one alliance or legion), so only "full" scope staff get it.
+function canEditPresidentInfo() {
+    return isAdmin && !!currentUserRole && currentUserRole.scope === 'full';
 }
 
 function populateAllianceSelectOptions(list) {
@@ -318,6 +326,10 @@ function updateAdminUI() {
     const scheduleBtn2 = document.getElementById('edit-schedule-legion-2');
     if (scheduleBtn1) scheduleBtn1.classList.toggle('hidden', !canManageLegion('Legion 1'));
     if (scheduleBtn2) scheduleBtn2.classList.toggle('hidden', !canManageLegion('Legion 2'));
+
+    // "Edit President Info" is only for full-access staff.
+    const editPresidentBtn = document.getElementById('edit-president-btn');
+    if (editPresidentBtn) editPresidentBtn.classList.toggle('hidden', !canEditPresidentInfo());
 }
 
 function resetAdminUI() {
@@ -328,6 +340,9 @@ function resetAdminUI() {
     if (adminInd) adminInd.style.display = "none";
 
     document.querySelectorAll('.admin-schedule-btn').forEach(btn => btn.classList.add('hidden'));
+
+    const editPresidentBtn = document.getElementById('edit-president-btn');
+    if (editPresidentBtn) editPresidentBtn.classList.add('hidden');
 }
 
 // ================= STAFF LOGIN (Supabase Auth) =================
@@ -1248,6 +1263,55 @@ function exportToCSV() {
 }
 
 // ================= FOOTER & CLOCK =================
+// ================= PRESIDENT / GUILD INFO (Full-access staff only) =================
+function openPresidentModal() {
+    if (!canEditPresidentInfo()) {
+        showToast("You don't have permission to edit President info.", "warning");
+        return;
+    }
+
+    const presEl = document.getElementById('display-president-name');
+    const guildEl = document.getElementById('display-guild-name');
+    document.getElementById('input-president-name').value = (presEl && presEl.innerText !== '...') ? presEl.innerText : '';
+    document.getElementById('input-guild-name').value = (guildEl && guildEl.innerText !== '...') ? guildEl.innerText : '';
+
+    document.getElementById('president-modal').classList.remove('hidden');
+}
+
+function closePresidentModal() {
+    document.getElementById('president-modal').classList.add('hidden');
+}
+
+async function submitPresidentInfo() {
+    if (!canEditPresidentInfo()) return;
+    const client = getSupabase();
+    if (!client) return;
+
+    const presidentName = document.getElementById('input-president-name').value.trim();
+    const guildName = document.getElementById('input-guild-name').value.trim();
+
+    if (!presidentName) { showToast("Please enter President name!", "warning"); return; }
+    if (!guildName) { showToast("Please enter Guild name!", "warning"); return; }
+
+    const submitBtn = document.getElementById('president-submit-btn');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Saving..."; }
+
+    const { error } = await client.from('footer_settings').update({
+        president_name: presidentName,
+        guild_name: guildName
+    }).eq('id', 'main');
+
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Save"; }
+
+    if (!error) {
+        showToast("President info updated!", "success");
+        closePresidentModal();
+        loadFooterInfo();
+    } else {
+        showToast("Failed to save: " + error.message, "error");
+    }
+}
+
 async function loadFooterInfo() {
     const cachedPresident = localStorage.getItem('cached_president_name');
     const cachedGuild = localStorage.getItem('cached_guild_name');
