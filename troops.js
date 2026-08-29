@@ -24,9 +24,25 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// Supabase Auth requires an email address, but this app only wants a plain
+// username + password. We transparently map "username" -> "username@<this>"
+// under the hood. Pick something clearly fake/internal so it can never
+// collide with a real staff email domain.
+const STAFF_EMAIL_DOMAIN = '@3475-staff.internal';
+
+function usernameToStaffEmail(username) {
+    return username.trim().toLowerCase().replace(/\s+/g, '') + STAFF_EMAIL_DOMAIN;
+}
+
+function staffEmailToUsername(email) {
+    return (email || '').endsWith(STAFF_EMAIL_DOMAIN)
+        ? email.slice(0, -STAFF_EMAIL_DOMAIN.length)
+        : email;
+}
+
 let supabaseClient = null;
 let isAdmin = false;
-let currentStaffEmail = null;
+let currentStaffUsername = null;
 let viewMode = 'ALLIANCE'; // 'ALLIANCE' or 'LEGION'
 let currentSelection = 'ARX'; // Alliance name or 'Legion 1' / 'Legion 2'
 let loadedTroopsData = [];
@@ -103,7 +119,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 function applyAuthSession(session) {
     isAdmin = !!session;
-    currentStaffEmail = session ? session.user.email : null;
+    currentStaffUsername = session ? staffEmailToUsername(session.user.email) : null;
     if (isAdmin) {
         updateAdminUI();
     } else {
@@ -232,10 +248,10 @@ function handleAdminLogin() {
         handleStaffLogout();
         return;
     }
-    document.getElementById('input-login-email').value = '';
+    document.getElementById('input-login-username').value = '';
     document.getElementById('input-login-password').value = '';
     document.getElementById('login-modal').classList.remove('hidden');
-    document.getElementById('input-login-email').focus();
+    document.getElementById('input-login-username').focus();
 }
 
 function closeLoginModal() {
@@ -246,11 +262,11 @@ async function submitStaffLogin() {
     const client = getSupabase();
     if (!client) return;
 
-    const email = document.getElementById('input-login-email').value.trim();
+    const username = document.getElementById('input-login-username').value.trim();
     const password = document.getElementById('input-login-password').value;
 
-    if (!email || !password) {
-        showToast("Please enter both email and password!", "warning");
+    if (!username || !password) {
+        showToast("Please enter both username and password!", "warning");
         return;
     }
 
@@ -258,19 +274,22 @@ async function submitStaffLogin() {
     submitBtn.disabled = true;
     submitBtn.innerText = "Signing in...";
 
-    const { data, error } = await client.auth.signInWithPassword({ email, password });
+    const { data, error } = await client.auth.signInWithPassword({
+        email: usernameToStaffEmail(username),
+        password
+    });
 
     submitBtn.disabled = false;
     submitBtn.innerText = "Sign In";
 
     if (error) {
-        showToast("Login failed: " + error.message, "error");
+        showToast("Login failed: incorrect username or password", "error");
         return;
     }
 
     applyAuthSession(data.session);
     closeLoginModal();
-    showToast(`Welcome back${currentStaffEmail ? ', ' + currentStaffEmail : ''}!`, "success");
+    showToast(`Welcome back${currentStaffUsername ? ', ' + currentStaffUsername : ''}!`, "success");
     fetchData();
 }
 
