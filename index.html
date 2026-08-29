@@ -43,7 +43,7 @@
 				<div class="translate-container">
 					<div id="google_translate_element"></div>
 				</div>
-				<button id="snow-toggle-btn" class="btn-snow-toggle" onclick="toggleSnowEffect()" title="Toggle snow effect">âï¸ ON</button>
+				<button id="snow-toggle-btn" class="btn-snow-toggle" onclick="toggleSnowEffect()" title="Toggle snow effect">❄️ ON</button>
 				<button id="admin-toggle-btn" class="btn-admin" onclick="handleAdminLogin()">Alliance Staff</button>
 			</div>
 		</header>
@@ -68,7 +68,7 @@
 
 				<div class="list-container" style="margin-top: 20px;">
 					<!-- LEGION 1 BUTTON -->
-					<div class="list-item legion-btn legion-btn-1" onclick="selectLegion('Legion 1')">
+					<div class="list-item legion-btn legion-btn-1" onclick="selectLegion('Legion 1')" role="button" tabindex="0" aria-label="Legion 1 roster">
 						<div class="legion-btn-header">
 							<span class="legion-btn-label">
 								<svg class="clash-svg" viewBox="0 0 100 100" style="color:#3b82f6;">
@@ -87,7 +87,7 @@
 					</div>
 
 					<!-- LEGION 2 BUTTON -->
-					<div class="list-item legion-btn legion-btn-2" onclick="selectLegion('Legion 2')">
+					<div class="list-item legion-btn legion-btn-2" onclick="selectLegion('Legion 2')" role="button" tabindex="0" aria-label="Legion 2 roster">
 						<div class="legion-btn-header">
 							<span class="legion-btn-label">
 								<svg class="clash-svg" viewBox="0 0 100 100" style="color:#ef4444;">
@@ -108,29 +108,29 @@
 					<div class="list-spacer"></div>
 
 					<!-- ALLIANCE & GLOBAL BUTTONS -->
-					<div class="list-item" onclick="selectAlliance('ARX')">
+					<div class="list-item" onclick="selectAlliance('ARX')" role="button" tabindex="0" aria-label="ARX Alliance">
 						<span>🛡️ ARX Alliance</span>
 						<span class="arrow">&gt;</span>
 					</div>
-					<div class="list-item" onclick="selectAlliance('IDN')">
+					<div class="list-item" onclick="selectAlliance('IDN')" role="button" tabindex="0" aria-label="IDN Alliance">
 						<span>🛡️ IDN Alliance</span>
 						<span class="arrow">&gt;</span>
 					</div>
-					<div class="list-item" onclick="selectAlliance('VNX')">
+					<div class="list-item" onclick="selectAlliance('VNX')" role="button" tabindex="0" aria-label="VNX Alliance">
 						<span>🛡️ VNX Alliance</span>
 						<span class="arrow">&gt;</span>
 					</div>
-					<div class="list-item" onclick="selectAlliance('ZXC')">
+					<div class="list-item" onclick="selectAlliance('ZXC')" role="button" tabindex="0" aria-label="ZXC Alliance">
 						<span>🛡️ ZXC Alliance</span>
 						<span class="arrow">&gt;</span>
 					</div>
-					<div class="list-item" onclick="selectAlliance('CAT')">
+					<div class="list-item" onclick="selectAlliance('CAT')" role="button" tabindex="0" aria-label="CAT Alliance">
 						<span>🛡️ CAT Alliance</span>
 						<span class="arrow">&gt;</span>
 					</div>
 
 					<!-- ALL TROOPS POWER BUTTON -->
-					<div class="list-item all-troops-btn" onclick="selectAlliance('ALL')">
+					<div class="list-item all-troops-btn" onclick="selectAlliance('ALL')" role="button" tabindex="0" aria-label="All troops power global rank">
 						<span class="all-troops-label">
 							<span class="all-troops-icon">🏆</span>
 							ALL TROOPS POWER (GLOBAL RANK)
@@ -323,6 +323,30 @@
 				<div class="form-actions">
 					<button class="btn-back" onclick="closeLegionAssignModal()">Cancel</button>
 					<button class="btn-apply" style="background: #7c3aed;" onclick="submitLegionAssignment()">Assign Player</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- ALLIANCE STAFF LOGIN MODAL (Supabase Auth) -->
+		<div id="login-modal" class="modal hidden">
+			<div class="modal-content custom-form-modal">
+				<span class="close-modal" onclick="closeLoginModal()">&times;</span>
+				<h2 class="modal-title">Alliance Staff Login</h2>
+				<p class="modal-subtitle">Sign in with your staff account to manage rosters.</p>
+
+				<div class="form-group">
+					<label>Email</label>
+					<input type="email" id="input-login-email" placeholder="staff@example.com" autocomplete="username">
+				</div>
+
+				<div class="form-group">
+					<label>Password</label>
+					<input type="password" id="input-login-password" placeholder="Enter password" autocomplete="current-password">
+				</div>
+
+				<div class="form-actions">
+					<button class="btn-back" onclick="closeLoginModal()">Cancel</button>
+					<button id="login-submit-btn" class="btn-apply" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);" onclick="submitStaffLogin()">Sign In</button>
 				</div>
 			</div>
 		</div>

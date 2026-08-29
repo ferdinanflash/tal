@@ -3,8 +3,30 @@ const SUPABASE_URL = 'https://pwqkpeykjyujhnreleax.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3cWtwZXlranl1amhucmVsZWF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMzgxNDgsImV4cCI6MjA5ODgxNDE0OH0.6u2CKOPHcMtVeA2ph0QWTqgtvs-4BQJpsz6v2kCyOEY'; 
 // =================================================================
 
+// ================= SECURITY HELPERS =================
+// Escapes a value for safe insertion into innerHTML, including inside
+// single- or double-quoted HTML attributes (covers onclick="...'${x}'...").
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// Lets any element marked role="button" (used for the non-<button> clickable
+// cards/rows in this app) be activated with the keyboard, not just a mouse.
+document.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.matches('[role="button"]')) {
+        e.preventDefault();
+        e.target.click();
+    }
+});
+
 let supabaseClient = null;
 let isAdmin = false;
+let currentStaffEmail = null;
 let viewMode = 'ALLIANCE'; // 'ALLIANCE' or 'LEGION'
 let currentSelection = 'ARX'; // Alliance name or 'Legion 1' / 'Legion 2'
 let loadedTroopsData = [];
@@ -24,23 +46,70 @@ let isTableLoading = false;
 let snowEnabled = localStorage.getItem('snowEnabled') !== 'false'; // default: on
 let snowIntervalId = null;
 
-document.addEventListener("DOMContentLoaded", () => {
-    if (sessionStorage.getItem('isPresidentMode') === 'true') {
-        isAdmin = true;
-        updateAdminUI(); 
+document.addEventListener("DOMContentLoaded", async () => {
+    const client = getSupabase();
+    if (client) {
+        // Restore session from Supabase's own (encrypted, HttpOnly-adjacent) storage
+        // instead of trusting a plain sessionStorage flag anyone could set by hand.
+        const { data: { session } } = await client.auth.getSession();
+        applyAuthSession(session);
+
+        // Keep isAdmin in sync if the session refreshes, expires, or the user
+        // signs in/out in another tab.
+        client.auth.onAuthStateChange((_event, session) => {
+            applyAuthSession(session);
+            fetchData();
+        });
     }
-    
+
     loadFooterInfo();
     loadLegionSchedules();
     startLiveClock();
     updateSnowToggleUI();
     if (snowEnabled) startSnowEffect();
-    
+
+    const tableBody = document.getElementById('troops-table-body');
+    if (tableBody) {
+        tableBody.addEventListener('click', (e) => {
+            const copyEl = e.target.closest('.js-copy-gameid');
+            if (copyEl) { copyToClipboard(copyEl.dataset.gameid); return; }
+
+            const editEl = e.target.closest('.js-edit-player');
+            if (editEl) { openEditModal(Number(editEl.dataset.id)); return; }
+
+            const deleteEl = e.target.closest('.js-delete-player');
+            if (deleteEl) { deletePlayerData(Number(deleteEl.dataset.id)); return; }
+
+            const toggleEl = e.target.closest('.js-toggle-role');
+            if (toggleEl) { toggleLegionRole(Number(toggleEl.dataset.id), toggleEl.dataset.role); return; }
+
+            const removeEl = e.target.closest('.js-remove-legion');
+            if (removeEl) { removeFromLegion(Number(removeEl.dataset.id)); return; }
+        });
+    }
+
+    const loginPasswordInput = document.getElementById('input-login-password');
+    if (loginPasswordInput) {
+        loginPasswordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') submitStaffLogin();
+        });
+    }
+
     setInterval(() => {
         loadFooterInfo(); 
         loadLegionSchedules();
     }, 30000);
 });
+
+function applyAuthSession(session) {
+    isAdmin = !!session;
+    currentStaffEmail = session ? session.user.email : null;
+    if (isAdmin) {
+        updateAdminUI();
+    } else {
+        resetAdminUI();
+    }
+}
 
 function getSupabase() {
     if (!supabaseClient) {
@@ -54,11 +123,34 @@ function getSupabase() {
 }
 
 function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        showToast(`ID ${text} copied to clipboard!`, "success");
-    }).catch(err => {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast(`ID ${text} copied to clipboard!`, "success");
+        }).catch(() => {
+            showToast("Failed to copy", "error");
+        });
+        return;
+    }
+
+    // Fallback for browsers/contexts without the async Clipboard API.
+    try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (ok) {
+            showToast(`ID ${text} copied to clipboard!`, "success");
+        } else {
+            showToast("Failed to copy", "error");
+        }
+    } catch (err) {
         showToast("Failed to copy", "error");
-    });
+    }
 }
 
 function showToast(message, type = 'info') {
@@ -119,43 +211,76 @@ function updateAdminUI() {
     adminScheduleBtns.forEach(btn => btn.classList.remove('hidden'));
 }
 
-function handleAdminLogin() {
-    if (!isAdmin) {
-        const password = prompt("Enter Password:");
-        
-        const validPasswords = {
-            "arx": "ARX",
-            "idn": "IDN",
-            "vnx": "VNX",
-            "zxc": "ZXC",
-            "cat": "CAT",
-            "3475": "PRESIDENT"
-        };
+function resetAdminUI() {
+    const adminBtn = document.getElementById('admin-toggle-btn');
+    const adminInd = document.getElementById('admin-indicator');
 
-        if (validPasswords[password]) { 
-            isAdmin = true;
-            sessionStorage.setItem('isPresidentMode', 'true'); 
-            updateAdminUI();
-            
-            if (password === "3475") {
-                showToast("Welcome back President!", "success");
-            } else {
-                showToast(`Welcome back ${validPasswords[password]}!`, "success");
-            }
-            
-        } else {
-            showToast("Incorrect password!", "error");
-            return;
-        }
-    } else {
-        isAdmin = false;
-        sessionStorage.removeItem('isPresidentMode'); 
-        document.getElementById('admin-toggle-btn').innerText = "President Login";
-        document.getElementById('admin-indicator').style.display = "none";
-        
-        document.querySelectorAll('.admin-schedule-btn').forEach(btn => btn.classList.add('hidden'));
-        showToast("Logged out successfully.", "info");
+    if (adminBtn) adminBtn.innerText = "Alliance Staff";
+    if (adminInd) adminInd.style.display = "none";
+
+    document.querySelectorAll('.admin-schedule-btn').forEach(btn => btn.classList.add('hidden'));
+}
+
+// ================= STAFF LOGIN (Supabase Auth) =================
+// Real authentication now happens on Supabase's servers via auth.signInWithPassword,
+// which returns a verified session token. Access to write endpoints must be
+// enforced with Row Level Security policies on the `troops_power` and
+// `footer_settings` tables tied to `auth.uid()` / `auth.role() = 'authenticated'` —
+// this client-side flag is only used to show/hide UI, never to authorize writes.
+function handleAdminLogin() {
+    if (isAdmin) {
+        handleStaffLogout();
+        return;
     }
+    document.getElementById('input-login-email').value = '';
+    document.getElementById('input-login-password').value = '';
+    document.getElementById('login-modal').classList.remove('hidden');
+    document.getElementById('input-login-email').focus();
+}
+
+function closeLoginModal() {
+    document.getElementById('login-modal').classList.add('hidden');
+}
+
+async function submitStaffLogin() {
+    const client = getSupabase();
+    if (!client) return;
+
+    const email = document.getElementById('input-login-email').value.trim();
+    const password = document.getElementById('input-login-password').value;
+
+    if (!email || !password) {
+        showToast("Please enter both email and password!", "warning");
+        return;
+    }
+
+    const submitBtn = document.getElementById('login-submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Signing in...";
+
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
+
+    submitBtn.disabled = false;
+    submitBtn.innerText = "Sign In";
+
+    if (error) {
+        showToast("Login failed: " + error.message, "error");
+        return;
+    }
+
+    applyAuthSession(data.session);
+    closeLoginModal();
+    showToast(`Welcome back${currentStaffEmail ? ', ' + currentStaffEmail : ''}!`, "success");
+    fetchData();
+}
+
+async function handleStaffLogout() {
+    const client = getSupabase();
+    if (client) {
+        await client.auth.signOut();
+    }
+    applyAuthSession(null);
+    showToast("Logged out successfully.", "info");
     fetchData();
 }
 
@@ -245,9 +370,14 @@ async function submitMatchSchedule() {
 
     const fieldName = editingScheduleLegion === 'Legion 1' ? 'legion1_schedule' : 'legion2_schedule';
 
+    const submitBtn = document.querySelector('#schedule-modal .btn-apply');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Saving..."; }
+
     const { error } = await client.from('footer_settings').update({
         [fieldName]: matchTime
     }).eq('id', 'main');
+
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Save Schedule"; }
 
     if (!error) {
         showToast(`Schedule for ${editingScheduleLegion} updated!`, "success");
@@ -392,10 +522,14 @@ function getDisplayData() {
     return data;
 }
 
+let searchDebounceId = null;
 function handleSearchInput(value) {
-    searchQuery = value.trim().toLowerCase();
-    currentPage = 1;
-    renderTable();
+    clearTimeout(searchDebounceId);
+    searchDebounceId = setTimeout(() => {
+        searchQuery = value.trim().toLowerCase();
+        currentPage = 1;
+        renderTable();
+    }, 200);
 }
 
 function handleSortClick(field) {
@@ -565,8 +699,17 @@ function renderTable() {
     pageData.forEach((player) => {
         const row = document.createElement('tr');
         const formattedPower = Number(player.troops_power).toLocaleString('en-US');
-        const prefTime = player.preferred_time || '-';
         const rank = player.__rank || '-';
+        const playerId = Number(player.id); // numeric, safe to inline into onclick
+
+        // Everything below comes from the database (which anyone with write
+        // access could have populated), so it's escaped before being placed
+        // into innerHTML or into a quoted onclick="...", to prevent stored XSS.
+        const safeAlliance = escapeHtml(player.alliance);
+        const safeNickname = escapeHtml(player.nickname);
+        const safeGameId = escapeHtml(player.game_id);
+        const safePrefTime = escapeHtml(player.preferred_time || '-');
+        const safeLegionRole = escapeHtml(player.legion_role);
 
         let statusCellHtml = '';
         if (viewMode === 'LEGION') {
@@ -591,15 +734,15 @@ function renderTable() {
             if (viewMode === 'ALLIANCE') {
                 actionBtns = `
                     <div style="display:flex; gap:6px; justify-content:center;">
-                        <button class="btn-apply" style="background:#f59e0b; padding: 3px 8px; font-size: 0.7rem; animation: none;" onclick="openEditModal(${player.id})">Edit</button>
-                        <button class="btn-apply btn-danger" style="padding: 3px 8px; font-size: 0.7rem;" onclick="deletePlayerData(${player.id})">Delete</button>
+                        <button class="btn-apply js-edit-player" style="background:#f59e0b; padding: 3px 8px; font-size: 0.7rem; animation: none;" data-id="${playerId}">Edit</button>
+                        <button class="btn-apply btn-danger js-delete-player" style="padding: 3px 8px; font-size: 0.7rem;" data-id="${playerId}">Delete</button>
                     </div>
                 `;
             } else {
                 actionBtns = `
                     <div style="display:flex; gap:6px; justify-content:center;">
-                        <button class="btn-apply" style="background:#3b82f6; padding: 3px 8px; font-size: 0.7rem; animation: none;" onclick="toggleLegionRole(${player.id}, '${player.legion_role}')">Switch Role</button>
-                        <button class="btn-apply btn-danger" style="padding: 3px 8px; font-size: 0.7rem;" onclick="removeFromLegion(${player.id})">Remove</button>
+                        <button class="btn-apply js-toggle-role" style="background:#3b82f6; padding: 3px 8px; font-size: 0.7rem; animation: none;" data-id="${playerId}" data-role="${safeLegionRole}">Switch Role</button>
+                        <button class="btn-apply btn-danger js-remove-legion" style="padding: 3px 8px; font-size: 0.7rem;" data-id="${playerId}">Remove</button>
                     </div>
                 `;
             }
@@ -616,11 +759,11 @@ function renderTable() {
 
         row.innerHTML = `
             <td data-label="Rank"><strong style="color: ${rank !== '-' && rank <= 20 ? '#f59e0b' : '#f1f5f9'};">#${rank}</strong></td>
-            <td data-label="Alliance"><span style="background: #1e2230; padding: 2px 8px; border-radius: 4px; font-weight: bold; color: ${allianceTextColor}; border: 1px solid ${allianceTextColor}40;">${player.alliance}</span></td>
-            <td data-label="Nickname"><strong>${player.nickname}</strong></td>
-            <td data-label="Game ID"><span style="cursor:pointer; color:#3b82f6; text-decoration:underline;" onclick="copyToClipboard('${player.game_id}')">${player.game_id}</span></td>
+            <td data-label="Alliance"><span style="background: #1e2230; padding: 2px 8px; border-radius: 4px; font-weight: bold; color: ${allianceTextColor}; border: 1px solid ${allianceTextColor}40;">${safeAlliance}</span></td>
+            <td data-label="Nickname"><strong>${safeNickname}</strong></td>
+            <td data-label="Game ID"><span class="js-copy-gameid" style="cursor:pointer; color:#3b82f6; text-decoration:underline;" data-gameid="${safeGameId}">${safeGameId}</span></td>
             <td data-label="Troops Power"><strong style="color: #22c55e;">${formattedPower}</strong></td>
-            <td data-label="Pref. Time"><span style="color: #f59e0b; font-weight: 600;">${prefTime}</span></td>
+            <td data-label="Pref. Time"><span style="color: #f59e0b; font-weight: 600;">${safePrefTime}</span></td>
             ${statusCellHtml}
             ${actionCellHtml}
         `;
@@ -696,6 +839,10 @@ async function submitPlayerData() {
     if (!gameId) { showToast("Please enter Game ID!", "warning"); return; }
     if (power <= 0) { showToast("Please enter valid Troops Power!", "warning"); return; }
 
+    const submitBtn = document.getElementById('modal-submit-btn');
+    const originalLabel = submitBtn ? submitBtn.innerText : '';
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Saving..."; }
+
     if (editingPlayerId === null) {
         const { error } = await client.from('troops_power').insert({
             alliance: alliance,
@@ -704,6 +851,8 @@ async function submitPlayerData() {
             troops_power: power,
             preferred_time: preferredTime
         });
+
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = originalLabel; }
 
         if (!error) {
             showToast("Player power added successfully!", "success");
@@ -721,6 +870,8 @@ async function submitPlayerData() {
             preferred_time: preferredTime,
             updated_at: new Date().toISOString()
         }).eq('id', editingPlayerId);
+
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = originalLabel; }
 
         if (!error) {
             showToast("Player data updated successfully!", "success");
@@ -816,10 +967,15 @@ async function submitLegionAssignment() {
         return;
     }
 
+    const submitBtn = document.querySelector('#legion-assign-modal .btn-apply');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Assigning..."; }
+
     const { error } = await client.from('troops_power').update({
         legion: currentSelection,
         legion_role: role
     }).eq('id', playerId);
+
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Assign Player"; }
 
     if (!error) {
         showToast(`Player added to ${currentSelection} as ${role}!`, "success");
@@ -883,6 +1039,16 @@ async function removeFromLegion(id) {
 }
 
 // ================= EXPORT CSV =================
+// Prevents CSV/formula injection: a field starting with = + - @ (or a tab/CR)
+// would otherwise be executed as a formula when opened in Excel/Sheets.
+function csvSafeField(value) {
+    let str = String(value ?? '');
+    if (/^[=+\-@\t\r]/.test(str)) {
+        str = `'${str}`;
+    }
+    return `"${str.replace(/"/g, '""')}"`;
+}
+
 function exportToCSV() {
     if (loadedTroopsData.length === 0) {
         showToast("No data to export!", "warning");
@@ -895,8 +1061,8 @@ function exportToCSV() {
         : ["Rank", "Alliance", "Nickname", "Game ID", "Troops Power", "Preferred Time"];
 
     const rows = loadedTroopsData.map((p, idx) => {
-        const base = [`"${idx + 1}"`, `"${p.alliance}"`, `"${p.nickname}"`, `"${p.game_id}"`, `"${p.troops_power}"`, `"${p.preferred_time || '-'}"`];
-        if (isLegion) base.push(`"${p.legion_role || '-'}"`);
+        const base = [csvSafeField(idx + 1), csvSafeField(p.alliance), csvSafeField(p.nickname), csvSafeField(p.game_id), csvSafeField(p.troops_power), csvSafeField(p.preferred_time || '-')];
+        if (isLegion) base.push(csvSafeField(p.legion_role || '-'));
         return base;
     });
 
