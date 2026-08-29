@@ -121,6 +121,7 @@ let viewMode = 'ALLIANCE'; // 'ALLIANCE' or 'LEGION'
 let currentSelection = 'ARX'; // Alliance name or 'Legion 1' / 'Legion 2'
 let loadedTroopsData = [];
 let editingPlayerId = null;
+let editingPlayerOriginalAlliance = null; // the alliance the player belonged to when Edit was opened
 let editingScheduleLegion = null;
 
 // ================= SEARCH / SORT / PAGINATION STATE =================
@@ -908,6 +909,7 @@ function openAddModal() {
     }
 
     editingPlayerId = null;
+    editingPlayerOriginalAlliance = null;
     document.getElementById('modal-form-title').innerText = "Add Troops Power";
     document.getElementById('modal-submit-btn').innerText = "Submit Data";
 
@@ -945,6 +947,7 @@ function openEditModal(id) {
     }
 
     editingPlayerId = id;
+    editingPlayerOriginalAlliance = player.alliance;
     document.getElementById('modal-form-title').innerText = "Edit Troops Power";
     document.getElementById('modal-submit-btn').innerText = "Update Data";
 
@@ -955,12 +958,10 @@ function openEditModal(id) {
 
     document.getElementById('form-alliance-label').innerText = player.alliance;
     document.getElementById('group-alliance-select').style.display = "flex";
-    // A "full" scope staff member may re-assign a player to any alliance;
-    // an alliance-scoped one can only keep them in the alliance they already
-    // have permission over.
-    populateAllianceSelectOptions(
-        currentUserRole && currentUserRole.scope === 'full' ? ALL_ALLIANCES : [player.alliance]
-    );
+    // Any staff member who's allowed to edit this player at all may move
+    // them to a different alliance, so the dropdown always offers every
+    // alliance here — not just the ones their role normally covers.
+    populateAllianceSelectOptions(ALL_ALLIANCES);
     document.getElementById('input-alliance').value = player.alliance;
 
     document.getElementById('add-modal').classList.remove('hidden');
@@ -968,6 +969,8 @@ function openEditModal(id) {
 
 function closeAddModal() {
     document.getElementById('add-modal').classList.add('hidden');
+    editingPlayerId = null;
+    editingPlayerOriginalAlliance = null;
 }
 
 async function submitPlayerData() {
@@ -976,8 +979,14 @@ async function submitPlayerData() {
 
     const alliance = document.getElementById('input-alliance').value;
 
-    if (!canEditAlliance(alliance)) {
-        showToast("You don't have permission to save players for this alliance.", "error");
+    // When adding a brand-new player, the destination alliance itself must
+    // be one this staff member is allowed to edit. When editing an existing
+    // player, what matters is whether they're allowed to touch the alliance
+    // the player currently belongs to — once that's confirmed, they're free
+    // to move the player to any alliance via the dropdown.
+    const allianceToCheck = editingPlayerId === null ? alliance : editingPlayerOriginalAlliance;
+    if (!canEditAlliance(allianceToCheck)) {
+        showToast("You don't have permission to save changes for this player.", "error");
         return;
     }
 
