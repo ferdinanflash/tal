@@ -11,6 +11,19 @@ let loadedTroopsData = [];
 let editingPlayerId = null;
 let editingScheduleLegion = null;
 
+// ================= SEARCH / SORT / PAGINATION STATE =================
+let searchQuery = '';
+let currentSortField = null; // null = use default fetch order
+let currentSortDirection = 'asc';
+let currentPage = 1;
+const PAGE_SIZE = 25;
+let lastUpdatedAt = null;
+let isTableLoading = false;
+
+// ================= SNOWFALL TOGGLE STATE =================
+let snowEnabled = localStorage.getItem('snowEnabled') !== 'false'; // default: on
+let snowIntervalId = null;
+
 document.addEventListener("DOMContentLoaded", () => {
     if (sessionStorage.getItem('isPresidentMode') === 'true') {
         isAdmin = true;
@@ -20,6 +33,8 @@ document.addEventListener("DOMContentLoaded", () => {
     loadFooterInfo();
     loadLegionSchedules();
     startLiveClock();
+    updateSnowToggleUI();
+    if (snowEnabled) startSnowEffect();
     
     setInterval(() => {
         loadFooterInfo(); 
@@ -145,9 +160,20 @@ function handleAdminLogin() {
 }
 
 // ================= NAVIGATION =================
+function resetTableControls() {
+    searchQuery = '';
+    currentSortField = null;
+    currentSortDirection = 'asc';
+    currentPage = 1;
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) searchInput.value = '';
+    updateSortArrows();
+}
+
 function selectAlliance(alliance) {
     viewMode = 'ALLIANCE';
     currentSelection = alliance;
+    resetTableControls();
     document.getElementById('alliance-menu-page').classList.add('hidden');
     document.getElementById('troops-table-page').classList.remove('hidden');
 
@@ -169,6 +195,7 @@ function selectAlliance(alliance) {
 function selectLegion(legionName) {
     viewMode = 'LEGION';
     currentSelection = legionName;
+    resetTableControls();
     document.getElementById('alliance-menu-page').classList.add('hidden');
     document.getElementById('troops-table-page').classList.remove('hidden');
 
@@ -258,9 +285,34 @@ async function loadLegionSchedules() {
 }
 
 // ================= LOAD & RENDER DATA =================
+function showTableLoadingSkeleton() {
+    isTableLoading = true;
+    const tbody = document.getElementById('troops-table-body');
+    if (!tbody) return;
+    let rows = '';
+    for (let i = 0; i < 6; i++) {
+        rows += `<tr class="skeleton-row"><td colspan="8"><div class="skeleton-bar"></div></td></tr>`;
+    }
+    tbody.innerHTML = rows;
+
+    const pagination = document.getElementById('pagination-controls');
+    if (pagination) pagination.style.display = "none";
+}
+
+function updateLastUpdatedDisplay() {
+    const el = document.getElementById('last-updated-text');
+    if (!el || !lastUpdatedAt) return;
+    const h = String(lastUpdatedAt.getHours()).padStart(2, '0');
+    const m = String(lastUpdatedAt.getMinutes()).padStart(2, '0');
+    const s = String(lastUpdatedAt.getSeconds()).padStart(2, '0');
+    el.innerText = `Last updated: ${h}:${m}:${s}`;
+}
+
 async function fetchData() {
     const client = getSupabase();
     if (!client) return;
+
+    showTableLoadingSkeleton();
 
     try {
         if (viewMode === 'ALLIANCE') {
@@ -290,11 +342,112 @@ async function fetchData() {
             });
         }
 
+        // Capture the original rank (based on the sorted fetch order) so it stays
+        // stable even when the user later searches, sorts, or paginates the table.
+        loadedTroopsData.forEach((p, i) => { p.__rank = i + 1; });
+
+        isTableLoading = false;
+        lastUpdatedAt = new Date();
         renderTable();
+        updateLastUpdatedDisplay();
     } catch (err) {
+        isTableLoading = false;
         console.error("Error fetching data:", err);
         showToast("Failed to load data.", "error");
+        const tbody = document.getElementById('troops-table-body');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="padding: 20px; color: #ef4444;">Failed to load data. Please try again.</td></tr>`;
     }
+}
+
+// ================= SEARCH / SORT / PAGINATION HELPERS =================
+function getDisplayData() {
+    let data = [...loadedTroopsData];
+
+    if (searchQuery) {
+        data = data.filter(p =>
+            (p.nickname || '').toLowerCase().includes(searchQuery) ||
+            String(p.game_id || '').toLowerCase().includes(searchQuery)
+        );
+    }
+
+    if (currentSortField) {
+        data.sort((a, b) => {
+            let valA = a[currentSortField];
+            let valB = b[currentSortField];
+
+            if (currentSortField === 'troops_power') {
+                valA = Number(valA) || 0;
+                valB = Number(valB) || 0;
+            } else {
+                valA = (valA || '').toString().toLowerCase();
+                valB = (valB || '').toString().toLowerCase();
+            }
+
+            if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+
+    return data;
+}
+
+function handleSearchInput(value) {
+    searchQuery = value.trim().toLowerCase();
+    currentPage = 1;
+    renderTable();
+}
+
+function handleSortClick(field) {
+    if (currentSortField === field) {
+        currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        currentSortField = field;
+        currentSortDirection = 'asc';
+    }
+    currentPage = 1;
+    updateSortArrows();
+    renderTable();
+}
+
+function updateSortArrows() {
+    ['alliance', 'nickname', 'game_id', 'troops_power', 'preferred_time'].forEach(f => {
+        const el = document.getElementById('sort-arrow-' + f);
+        if (!el) return;
+        el.innerText = (f === currentSortField) ? (currentSortDirection === 'asc' ? '▲' : '▼') : '';
+    });
+}
+
+function goToPrevPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        renderTable();
+    }
+}
+
+function goToNextPage() {
+    currentPage++;
+    renderTable();
+}
+
+function updatePaginationControls(totalItems) {
+    const controls = document.getElementById('pagination-controls');
+    const info = document.getElementById('pagination-info');
+    const prevBtn = document.getElementById('pagination-prev-btn');
+    const nextBtn = document.getElementById('pagination-next-btn');
+    if (!controls || !info || !prevBtn || !nextBtn) return;
+
+    const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+
+    if (totalItems <= PAGE_SIZE) {
+        controls.style.display = "none";
+        return;
+    }
+
+    controls.style.display = "flex";
+    info.innerText = `Page ${currentPage} of ${totalPages}`;
+    prevBtn.disabled = currentPage <= 1;
+    nextBtn.disabled = currentPage >= totalPages;
 }
 
 function renderTable() {
@@ -390,13 +543,30 @@ function renderTable() {
 
     if (loadedTroopsData.length === 0) {
         tbody.innerHTML = `<tr><td colspan="${totalColumns}" style="padding: 20px; color: #8a8d98;">No player data available.</td></tr>`;
+        updatePaginationControls(0);
         return;
     }
 
-    loadedTroopsData.forEach((player, index) => {
+    // Apply search filter + custom sort (if any) on top of the loaded data
+    const displayData = getDisplayData();
+
+    if (displayData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${totalColumns}" style="padding: 20px; color: #8a8d98;">No players match your search.</td></tr>`;
+        updatePaginationControls(0);
+        return;
+    }
+
+    // Clamp current page in case the filtered set got smaller
+    const totalPages = Math.max(1, Math.ceil(displayData.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const pageData = displayData.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+    pageData.forEach((player) => {
         const row = document.createElement('tr');
         const formattedPower = Number(player.troops_power).toLocaleString('en-US');
         const prefTime = player.preferred_time || '-';
+        const rank = player.__rank || '-';
 
         let statusCellHtml = '';
         if (viewMode === 'LEGION') {
@@ -406,22 +576,13 @@ function renderTable() {
                 : 'background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #fbbf24;';
             
             const swordSvgIcon = `
-                <svg class="clash-svg" viewBox="0 0 100 100" style="width: 16px; height: 16px; margin-right: 4px;">
-                    <g class="sword-left-group">
-                        <path d="M 38 62 L 78 22 L 82 26 L 42 66 Z" fill="#f1f5f9" stroke="#0f172a" stroke-width="3"/>
-                        <path d="M 28 54 C 34 50, 44 60, 46 68 C 38 68, 28 60, 28 54 Z" fill="#0f172a"/>
-                        <path d="M 33 65 L 21 77" stroke="#22c55e" stroke-width="7" stroke-linecap="round"/>
-                    </g>
-                    <g class="sword-right-group">
-                        <path d="M 62 62 L 22 22 L 18 26 L 58 66 Z" fill="#f1f5f9" stroke="#0f172a" stroke-width="3"/>
-                        <path d="M 72 54 C 66 50, 56 60, 54 68 C 62 68, 72 60, 72 54 Z" fill="#0f172a"/>
-                        <path d="M 67 65 L 79 77" stroke="#22c55e" stroke-width="7" stroke-linecap="round"/>
-                    </g>
+                <svg class="clash-svg" viewBox="0 0 100 100" style="width: 16px; height: 16px; margin-right: 4px; color:#22c55e;">
+                    <use href="#clash-sword-icon"></use>
                 </svg>`;
 
             const badgeLabel = isBattle ? `${swordSvgIcon} Battle` : '🛡️ Substitute';
 
-            statusCellHtml = `<td><span style="padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; display: inline-flex; align-items: center; ${badgeStyle}">${badgeLabel}</span></td>`;
+            statusCellHtml = `<td data-label="Status"><span style="padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; display: inline-flex; align-items: center; ${badgeStyle}">${badgeLabel}</span></td>`;
         }
 
         let actionCellHtml = '';
@@ -442,7 +603,7 @@ function renderTable() {
                     </div>
                 `;
             }
-            actionCellHtml = `<td>${actionBtns}</td>`;
+            actionCellHtml = `<td data-label="Action">${actionBtns}</td>`;
         }
 
         // Warna unik untuk setiap aliansi pada kolom tabel
@@ -454,18 +615,20 @@ function renderTable() {
         else if (player.alliance === 'CAT') allianceTextColor = '#ec4899';
 
         row.innerHTML = `
-            <td><strong style="color: ${index < 20 ? '#f59e0b' : '#f1f5f9'};">#${index + 1}</strong></td>
-            <td><span style="background: #1e2230; padding: 2px 8px; border-radius: 4px; font-weight: bold; color: ${allianceTextColor}; border: 1px solid ${allianceTextColor}40;">${player.alliance}</span></td>
-            <td><strong>${player.nickname}</strong></td>
-            <td><span style="cursor:pointer; color:#3b82f6; text-decoration:underline;" onclick="copyToClipboard('${player.game_id}')">${player.game_id}</span></td>
-            <td><strong style="color: #22c55e;">${formattedPower}</strong></td>
-            <td><span style="color: #f59e0b; font-weight: 600;">${prefTime}</span></td>
+            <td data-label="Rank"><strong style="color: ${rank !== '-' && rank <= 20 ? '#f59e0b' : '#f1f5f9'};">#${rank}</strong></td>
+            <td data-label="Alliance"><span style="background: #1e2230; padding: 2px 8px; border-radius: 4px; font-weight: bold; color: ${allianceTextColor}; border: 1px solid ${allianceTextColor}40;">${player.alliance}</span></td>
+            <td data-label="Nickname"><strong>${player.nickname}</strong></td>
+            <td data-label="Game ID"><span style="cursor:pointer; color:#3b82f6; text-decoration:underline;" onclick="copyToClipboard('${player.game_id}')">${player.game_id}</span></td>
+            <td data-label="Troops Power"><strong style="color: #22c55e;">${formattedPower}</strong></td>
+            <td data-label="Pref. Time"><span style="color: #f59e0b; font-weight: 600;">${prefTime}</span></td>
             ${statusCellHtml}
             ${actionCellHtml}
         `;
 
         tbody.appendChild(row);
     });
+
+    updatePaginationControls(displayData.length);
 }
 
 // ================= PLAYER MODAL & EDIT =================
@@ -822,4 +985,34 @@ function createSnowEffect() {
         snowflake.remove();
     }, durationSeconds * 1000);
 }
-setInterval(createSnowEffect, 200);
+
+function startSnowEffect() {
+    if (snowIntervalId) return;
+    snowIntervalId = setInterval(createSnowEffect, 200);
+}
+
+function stopSnowEffect() {
+    if (snowIntervalId) {
+        clearInterval(snowIntervalId);
+        snowIntervalId = null;
+    }
+    document.querySelectorAll('.snowflake').forEach(el => el.remove());
+}
+
+function toggleSnowEffect() {
+    snowEnabled = !snowEnabled;
+    localStorage.setItem('snowEnabled', snowEnabled ? 'true' : 'false');
+    updateSnowToggleUI();
+    if (snowEnabled) {
+        startSnowEffect();
+    } else {
+        stopSnowEffect();
+    }
+}
+
+function updateSnowToggleUI() {
+    const btn = document.getElementById('snow-toggle-btn');
+    if (!btn) return;
+    btn.innerText = snowEnabled ? '❄️ ON' : '❄️ OFF';
+    btn.classList.toggle('snow-off', !snowEnabled);
+}
