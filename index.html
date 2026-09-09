@@ -9,11 +9,31 @@
 				<link rel="stylesheet" href="style.css">
 
 					<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer=""></script>
-					<script src="troops.js?v=11" defer=""></script>
+					<!-- Modular application scripts: load in dependency order. -->
+					<script src="core.js?v=12" defer></script>
+					<script src="navigation.js?v=12" defer></script>
+					<script src="schedule.js?v=12" defer></script>
+					<script src="leaderboard.js?v=12" defer></script>
+					<script src="player.js?v=12" defer></script>
+					<script src="legion.js?v=12" defer></script>
+					<script src="export.js?v=12" defer></script>
+					<script src="footer.js?v=12" defer></script>
+					<script src="effects.js?v=12" defer></script>
 				</head>
 	<body>
+		<!-- 2.5s opening animation; intentionally runs on every refresh. -->
+		<div id="opening-animation" class="opening-animation" aria-hidden="true">
+			<div class="opening-animation-glow"></div>
+			<div class="opening-animation-content">
+				<div class="opening-animation-logo fire-text">3475</div>
+				<div class="opening-animation-title">Tundra Arm League</div>
+				<div class="opening-animation-line"></div>
+				<div class="opening-animation-subtitle">Alliance • Legion • Troops Power</div>
+			</div>
+		</div>
+
 		<!-- SHARED SVG SYMBOL: CLASHING SWORDS ICON (used via <use> to avoid repeating markup) -->
-		<svg style="position:absolute; width:0; height:0; overflow:hidden;" aria-hidden="true">
+		<svg class="svg-symbol-defs" aria-hidden="true">
 			<symbol id="clash-sword-icon" viewBox="0 0 100 100">
 				<g class="sword-left-group">
 					<path d="M 38 62 L 78 22 L 82 26 L 42 66 Z" fill="#f1f5f9" stroke="#0f172a" stroke-width="3" stroke-linejoin="round"/>
@@ -56,7 +76,7 @@
 			<div class="clock-divider">|</div>
 			<div class="clock-item">
 				<span class="clock-label">UTC-0:</span>
-				<span id="utc-clock" class="clock-time" style="color: #f59e0b;">00:00:00</span>
+				<span id="utc-clock" class="clock-time utc-clock-time">00:00:00</span>
 			</div>
 		</div>
 
@@ -66,12 +86,12 @@
 				<h1 class="page-title fire-text">Tundra Arm League</h1>
 				<p class="page-subtitle">Select Alliance, Global Leaderboard, or Legion Roster</p>
 
-				<div class="list-container" style="margin-top: 20px;">
+				<div class="list-container menu-list-container">
 					<!-- LEGION 1 BUTTON -->
 					<div class="list-item legion-btn legion-btn-1" onclick="selectLegion('Legion 1')" role="button" tabindex="0" aria-label="Legion 1 roster">
 						<div class="legion-btn-header">
 							<span class="legion-btn-label">
-								<svg class="clash-svg" viewBox="0 0 100 100" style="color:#3b82f6;">
+								<svg class="clash-svg legion-icon-blue" viewBox="0 0 100 100">
 									<use href="#clash-sword-icon"></use>
 								</svg>
 								LEGION 1 (30 Battle / 20 Sub)
@@ -90,7 +110,7 @@
 					<div class="list-item legion-btn legion-btn-2" onclick="selectLegion('Legion 2')" role="button" tabindex="0" aria-label="Legion 2 roster">
 						<div class="legion-btn-header">
 							<span class="legion-btn-label">
-								<svg class="clash-svg" viewBox="0 0 100 100" style="color:#ef4444;">
+								<svg class="clash-svg legion-icon-red" viewBox="0 0 100 100">
 									<use href="#clash-sword-icon"></use>
 								</svg>
 								LEGION 2 (30 Battle / 20 Sub)
@@ -144,36 +164,36 @@
 			<!-- TROOPS & LEGION TABLE PAGE -->
 			<section id="troops-table-page" class="hidden">
 				<div class="schedule-actions">
-					<button class="btn-back" onclick="showAllianceMenu()" style="margin-bottom: 0;">&lt; Back to Menu</button>
+					<button class="btn-back no-bottom-margin" onclick="showAllianceMenu()">&lt; Back to Menu</button>
 					<div class="schedule-actions-buttons">
-						<button id="add-entry-btn" class="btn-apply" style="margin-bottom: 0; padding: 10px 16px; font-size: 0.9rem;" onclick="openAddModal()">+ Add Player Power</button>
-						<button id="add-legion-member-btn" class="btn-apply" style="margin-bottom: 0; padding: 10px 16px; font-size: 0.9rem; background: #7c3aed; display: none;" onclick="openAddLegionModal()">+ Assign Player to Legion</button>
-						<button class="btn-apply" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); margin-bottom: 0; padding: 10px 16px; font-size: 0.9rem;" onclick="exportToCSV()">Export CSV</button>
+						<button id="add-entry-btn" class="btn-apply toolbar-action-btn" onclick="openAddModal()">+ Add Player Power</button>
+						<button id="add-legion-member-btn" class="btn-apply toolbar-action-btn legion-action-btn" onclick="openAddLegionModal()">+ Assign Player to Legion</button>
+						<button class="btn-apply toolbar-action-btn export-btn" onclick="exportToCSV()">Export CSV</button>
 					</div>
 				</div>
 
 				<h1 class="page-title" id="selected-alliance-title">ARX Alliance</h1>
-				<h3 class="section-title" style="text-align: center; color: #8a8d98; font-size: 0.9rem;">
+				<h3 class="section-title table-section-title">
 					<span id="sub-page-title">Troops Power Leaderboard</span>
-					<span id="admin-indicator" style="color:#ef4444; font-size:0.8rem; display:none;">(ALLIANCE STAFF MODE)</span>
+					<span id="admin-indicator" class="admin-indicator">(ALLIANCE STAFF MODE)</span>
 				</h3>
 
 				<!-- LEGION STATUS COUNTER BAR -->
-				<div id="legion-counter-bar" style="display: none; justify-content: center; align-items: center; gap: 15px; margin: 12px 0; font-size: 0.9rem;">
-					<span style="background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; padding: 6px 12px; border-radius: 8px; color: #4ade80; display: inline-flex; align-items: center;">
-						<svg class="clash-svg" viewBox="0 0 100 100" style="width: 20px; height: 20px; margin-right: 4px; color:#22c55e;">
+				<div id="legion-counter-bar" class="legion-counter-bar">
+					<span class="counter-badge counter-badge-battle">
+						<svg class="clash-svg counter-sword-icon" viewBox="0 0 100 100">
 							<use href="#clash-sword-icon"></use>
 						</svg>
-						<strong>Battle Main Players:</strong> <span id="count-battle" style="margin-left: 4px;">0</span> / 30
+						<strong>Battle Main Players:</strong> <span id="count-battle" class="counter-value">0</span> / 30
 					</span>
-					<span style="background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; padding: 6px 12px; border-radius: 8px; color: #fbbf24;">
+					<span class="counter-badge counter-badge-substitute">
 						🛡️ <strong>Substitute Players:</strong> <span id="count-substitute">0</span> / 20
 					</span>
 				</div>
 
 				<!-- DINAMIS POWER SUMMARY CARDS CONTAINER -->
-				<div id="dynamic-summary-cards" style="display: grid; gap: 10px; margin: 15px auto 10px auto;">
-					<!-- Dinamis diisi via troops.js -->
+				<div id="dynamic-summary-cards" class="dynamic-summary-cards">
+					<!-- Dinamis diisi via leaderboard.js -->
 				</div>
 
 				<!-- SEARCH + LAST UPDATED TOOLBAR -->
@@ -184,7 +204,7 @@
 					<span id="last-updated-text" class="last-updated-text">Last updated: -</span>
 				</div>
 
-				<div class="table-container">
+				<div class="table-container" aria-live="polite">
 					<table>
 						<thead>
 							<tr id="table-header-row">
@@ -194,8 +214,8 @@
 								<th class="sortable" onclick="handleSortClick('game_id')">GAME ID <span class="sort-arrow" id="sort-arrow-game_id"></span></th>
 								<th class="sortable" onclick="handleSortClick('troops_power')">TROOPS POWER <span class="sort-arrow" id="sort-arrow-troops_power"></span></th>
 								<th class="sortable" onclick="handleSortClick('preferred_time')">PREFERRED TIME <span class="sort-arrow" id="sort-arrow-preferred_time"></span></th>
-								<th id="th-status" style="display: none;">STATUS</th>
-								<th id="th-action" style="display: none;">ACTION</th>
+								<th id="th-status" class="hidden-table-column">STATUS</th>
+								<th id="th-action" class="hidden-table-column">ACTION</th>
 							</tr>
 						</thead>
 						<tbody id="troops-table-body">
@@ -205,7 +225,7 @@
 				</div>
 
 				<!-- PAGINATION -->
-				<div id="pagination-controls" class="pagination-controls" style="display:none;">
+				<div id="pagination-controls" class="pagination-controls hidden-pagination">
 					<button class="btn-back" onclick="goToPrevPage()" id="pagination-prev-btn">&lt; Prev</button>
 					<span id="pagination-info">Page 1 of 1</span>
 					<button class="btn-back" onclick="goToNextPage()" id="pagination-next-btn">Next &gt;</button>
@@ -236,7 +256,7 @@
 
 				<div class="form-actions">
 					<button class="btn-back" onclick="closeScheduleModal()">Cancel</button>
-					<button class="btn-apply" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);" onclick="submitMatchSchedule()">Save Schedule</button>
+					<button class="btn-apply primary-action" onclick="submitMatchSchedule()">Save Schedule</button>
 				</div>
 			</div>
 		</div>
@@ -260,7 +280,7 @@
 
 				<div class="form-actions">
 					<button class="btn-back" onclick="closePresidentModal()">Cancel</button>
-					<button id="president-submit-btn" class="btn-apply" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);" onclick="submitPresidentInfo()">Save</button>
+					<button id="president-submit-btn" class="btn-apply primary-action" onclick="submitPresidentInfo()">Save</button>
 				</div>
 			</div>
 		</div>
@@ -274,7 +294,7 @@
 					Alliance: <span id="form-alliance-label" class="modal-target-highlight">-</span>
 				</p>
 
-				<div class="form-group" id="group-alliance-select" style="display: none;">
+				<div class="form-group hidden-form-group" id="group-alliance-select">
 					<label>Select Alliance</label>
 					<select id="input-alliance">
 						<option value="ARX">ARX</option>
@@ -315,7 +335,7 @@
 
 				<div class="form-actions">
 					<button class="btn-back" onclick="closeAddModal()">Cancel</button>
-					<button id="modal-submit-btn" class="btn-apply" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);" onclick="submitPlayerData()">Submit Data</button>
+					<button id="modal-submit-btn" class="btn-apply primary-action" onclick="submitPlayerData()">Submit Data</button>
 				</div>
 			</div>
 		</div>
@@ -346,7 +366,7 @@
 
 				<div class="form-actions">
 					<button class="btn-back" onclick="closeLegionAssignModal()">Cancel</button>
-					<button class="btn-apply" style="background: #7c3aed;" onclick="submitLegionAssignment()">Assign Player</button>
+					<button class="btn-apply legion-action-btn" onclick="submitLegionAssignment()">Assign Player</button>
 				</div>
 			</div>
 		</div>
@@ -370,7 +390,7 @@
 
 				<div class="form-actions">
 					<button class="btn-back" onclick="closeLoginModal()">Cancel</button>
-					<button id="login-submit-btn" class="btn-apply" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);" onclick="submitStaffLogin()">Sign In</button>
+					<button id="login-submit-btn" class="btn-apply primary-action" onclick="submitStaffLogin()">Sign In</button>
 				</div>
 			</div>
 		</div>
@@ -378,10 +398,10 @@
 		<!-- CONFIRMATION MODAL -->
 		<div id="confirm-modal" class="modal hidden">
 			<div class="modal-content custom-confirm-box">
-				<h3 id="confirm-message" style="margin-bottom: 20px; font-size: 1.1rem; line-height: 1.5; color: #f1f5f9;">Are you sure?</h3>
-				<div class="form-actions" style="margin-top: 0;">
+				<h3 id="confirm-message" class="confirm-message">Are you sure?</h3>
+				<div class="form-actions no-top-margin">
 					<button id="confirm-cancel-btn" class="btn-back">Cancel</button>
-					<button id="confirm-ok-btn" class="btn-apply" style="background: #ef4444;">OK</button>
+					<button id="confirm-ok-btn" class="btn-apply danger-action">OK</button>
 				</div>
 			</div>
 		</div>
@@ -391,14 +411,14 @@
 
 		<footer class="site-footer">
 			<div class="footer-section">
-				<p style="color: #8a8d98; margin-bottom: 6px;">Current President</p>
+				<p class="footer-label">Current President</p>
 				<div class="footer-row">
 					<div id="display-president-name" class="fire-text">...</div>
 				</div>
-				<div class="footer-row" style="margin-top: 4px;">
+				<div class="footer-row footer-guild-row">
 					<p id="display-guild-name" class="guild-name fire-text">...</p>
 				</div>
-				<button id="edit-president-btn" class="btn-apply hidden" style="margin-top: 10px; padding: 6px 14px; font-size: 0.75rem;" onclick="openPresidentModal()">Edit President Info</button>
+				<button id="edit-president-btn" class="btn-apply hidden footer-edit-btn" onclick="openPresidentModal()">Edit President Info</button>
 			</div>
 
 			<div class="footer-note">

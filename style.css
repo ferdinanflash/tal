@@ -655,3 +655,180 @@ th.sortable:hover { color: #f1f5f9; }
     td[data-label=""]::before,
     td:not([data-label])::before { content: none; }
 }
+
+/* ==================== OPENING ANIMATION ==================== */
+body.opening-active {
+    overflow: hidden;
+}
+
+.opening-animation {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at center, #1b2233 0%, #0d0f14 55%, #08090c 100%);
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.opening-animation-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.opening-animation-glow {
+    position: absolute;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.18) 0%, rgba(59, 130, 246, 0.08) 45%, transparent 72%);
+    animation: openingGlow 2.5s ease-in-out forwards;
+}
+
+.opening-animation-content {
+    position: relative;
+    text-align: center;
+    padding: 30px;
+    animation: openingContent 2.5s ease-in-out forwards;
+}
+
+.opening-animation-logo {
+    font-size: clamp(3.2rem, 15vw, 6rem);
+    line-height: 1;
+    margin-bottom: 10px;
+    letter-spacing: 5px;
+}
+
+.opening-animation-title {
+    color: #f1f5f9;
+    font-size: clamp(1rem, 4vw, 1.5rem);
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.opening-animation-line {
+    width: 110px;
+    height: 2px;
+    margin: 14px auto 10px;
+    background: #f59e0b;
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.65);
+    animation: openingLine 1.5s ease-out 0.25s both;
+}
+
+.opening-animation-subtitle {
+    color: #94a3b8;
+    font-size: 0.75rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+@keyframes openingContent {
+    0% { opacity: 0; transform: scale(0.9) translateY(12px); }
+    18% { opacity: 1; transform: scale(1) translateY(0); }
+    78% { opacity: 1; transform: scale(1) translateY(0); }
+    100% { opacity: 0; transform: scale(1.03) translateY(-5px); }
+}
+
+@keyframes openingGlow {
+    0% { opacity: 0; transform: scale(0.65); }
+    25% { opacity: 1; transform: scale(1); }
+    75% { opacity: 0.8; transform: scale(1.12); }
+    100% { opacity: 0; transform: scale(1.25); }
+}
+
+@keyframes openingLine {
+    from { width: 0; opacity: 0; }
+    to { width: 110px; opacity: 1; }
+}
+
+/* ==================== TABLE LOADING / ERROR STATES ==================== */
+.table-state-row td {
+    padding: 28px 16px !important;
+    border-bottom: 0;
+}
+
+.table-state-content {
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #94a3b8;
+    text-align: center;
+}
+
+.table-state-content strong {
+    color: #f1f5f9;
+    font-size: 1rem;
+}
+
+.table-state-content span {
+    max-width: 520px;
+    font-size: 0.8rem;
+    word-break: break-word;
+}
+
+.table-state-icon {
+    font-size: 1.8rem;
+}
+
+.table-retry-btn {
+    margin-top: 8px;
+}
+
+.table-container[aria-busy="true"] {
+    cursor: progress;
+}
+
+.skeleton-row td {
+    padding: 14px 10px;
+}
+
+.skeleton-bar {
+    height: 18px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #20242e 25%, #2b3040 50%, #20242e 75%);
+    background-size: 200% 100%;
+    animation: skeletonLoading 1.2s ease-in-out infinite;
+}
+
+@keyframes skeletonLoading {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+
+/* ==================== HTML UTILITY / COMPONENT CLASSES ==================== */
+.svg-symbol-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.utc-clock-time { color: #f59e0b; }
+.menu-list-container { margin-top: 20px; }
+.legion-icon-blue { color: #3b82f6; }
+.legion-icon-red { color: #ef4444; }
+.no-bottom-margin { margin-bottom: 0; }
+.toolbar-action-btn { margin-bottom: 0; padding: 10px 16px; font-size: 0.9rem; }
+.legion-action-btn { background: #7c3aed; }
+.export-btn { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); }
+.primary-action { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
+.table-section-title { text-align: center; color: #8a8d98; font-size: 0.9rem; }
+.admin-indicator { color: #ef4444; font-size: 0.8rem; display: none; }
+.legion-counter-bar { display: none; justify-content: center; align-items: center; gap: 15px; margin: 12px 0; font-size: 0.9rem; }
+.counter-badge { padding: 6px 12px; border-radius: 8px; }
+.counter-badge-battle { background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #4ade80; display: inline-flex; align-items: center; }
+.counter-badge-substitute { background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #fbbf24; }
+.counter-sword-icon { width: 20px; height: 20px; margin-right: 4px; color: #22c55e; }
+.counter-value { margin-left: 4px; }
+.dynamic-summary-cards { display: grid; gap: 10px; margin: 15px auto 10px auto; }
+.hidden-table-column { display: none; }
+.hidden-pagination { display: none; }
+.hidden-form-group { display: none; }
+.confirm-message { margin-bottom: 20px; font-size: 1.1rem; line-height: 1.5; color: #f1f5f9; }
+.no-top-margin { margin-top: 0; }
+.danger-action { background: #ef4444; }
+.footer-label { color: #8a8d98; margin-bottom: 6px; }
+.footer-guild-row { margin-top: 4px; }
+.footer-edit-btn { margin-top: 10px; padding: 6px 14px; font-size: 0.75rem; }
