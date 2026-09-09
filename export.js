@@ -15,13 +15,21 @@ function exportToCSV() {
         return;
     }
 
+    // Export whatever the table is currently showing the user (same search
+    // filter + sort order as on screen), not always the full unfiltered set.
+    const exportData = getDisplayData();
+    if (exportData.length === 0) {
+        showToast("No players match your search.", "warning");
+        return;
+    }
+
     const isLegion = viewMode === 'LEGION';
     const headers = isLegion 
         ? ["Rank", "Alliance", "Nickname", "Game ID", "Troops Power", "Preferred Time", "Legion Status"]
         : ["Rank", "Alliance", "Nickname", "Game ID", "Troops Power", "Preferred Time"];
 
-    const rows = loadedTroopsData.map((p, idx) => {
-        const base = [csvSafeField(idx + 1), csvSafeField(p.alliance), csvSafeField(p.nickname), csvSafeField(p.game_id), csvSafeField(p.troops_power), csvSafeField(p.preferred_time || '-')];
+    const rows = exportData.map((p) => {
+        const base = [csvSafeField(p.__rank || '-'), csvSafeField(p.alliance), csvSafeField(p.nickname), csvSafeField(p.game_id), csvSafeField(p.troops_power), csvSafeField(p.preferred_time || '-')];
         if (isLegion) base.push(csvSafeField(p.legion_role || '-'));
         return base;
     });

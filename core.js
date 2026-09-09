@@ -188,12 +188,45 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    const loginUsernameInput = document.getElementById('input-login-username');
+    if (loginUsernameInput) {
+        loginUsernameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') submitStaffLogin();
+        });
+    }
+
     const loginPasswordInput = document.getElementById('input-login-password');
     if (loginPasswordInput) {
         loginPasswordInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') submitStaffLogin();
         });
     }
+
+    // Let Escape close whichever modal is currently open, same as clicking
+    // its own "Cancel"/"x" button (so per-modal state gets cleaned up too).
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        const closers = {
+            'schedule-modal': closeScheduleModal,
+            'president-modal': closePresidentModal,
+            'add-modal': closeAddModal,
+            'legion-assign-modal': closeLegionAssignModal,
+            'login-modal': closeLoginModal,
+        };
+        for (const [modalId, closeFn] of Object.entries(closers)) {
+            const modal = document.getElementById(modalId);
+            if (modal && !modal.classList.contains('hidden')) {
+                closeFn();
+                return;
+            }
+        }
+        // The confirm dialog isn't in `closers` above: it must resolve its
+        // pending promise via the actual Cancel button click, not just hide.
+        const confirmModal = document.getElementById('confirm-modal');
+        if (confirmModal && !confirmModal.classList.contains('hidden')) {
+            document.getElementById('confirm-cancel-btn')?.click();
+        }
+    });
 
     setInterval(() => {
         loadFooterInfo(); 

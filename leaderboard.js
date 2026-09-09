@@ -173,8 +173,11 @@ function goToPrevPage() {
 }
 
 function goToNextPage() {
-    currentPage++;
-    renderTable();
+    const totalPages = Math.max(1, Math.ceil(getDisplayData().length / PAGE_SIZE));
+    if (currentPage < totalPages) {
+        currentPage++;
+        renderTable();
+    }
 }
 
 function updatePaginationControls(totalItems) {

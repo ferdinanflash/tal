@@ -10,15 +10,15 @@
 
 					<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer=""></script>
 					<!-- Modular application scripts: load in dependency order. -->
-					<script src="core.js?v=13" defer></script>
-					<script src="navigation.js?v=13" defer></script>
-					<script src="schedule.js?v=13" defer></script>
-					<script src="leaderboard.js?v=13" defer></script>
-					<script src="player.js?v=13" defer></script>
-					<script src="legion.js?v=13" defer></script>
-					<script src="export.js?v=13" defer></script>
-					<script src="footer.js?v=13" defer></script>
-					<script src="effects.js?v=13" defer></script>
+					<script src="core.js?v=14" defer></script>
+					<script src="navigation.js?v=14" defer></script>
+					<script src="schedule.js?v=14" defer></script>
+					<script src="leaderboard.js?v=14" defer></script>
+					<script src="player.js?v=14" defer></script>
+					<script src="legion.js?v=14" defer></script>
+					<script src="export.js?v=14" defer></script>
+					<script src="footer.js?v=14" defer></script>
+					<script src="effects.js?v=14" defer></script>
 				</head>
 	<body>
 		<!-- 2.5s opening animation; intentionally runs on every refresh. -->
@@ -60,9 +60,6 @@
 		<header class="navbar">
 			<span class="logo fire-text">3475</span>
 			<div class="navbar-controls">
-				<div class="translate-container">
-					<div id="google_translate_element"></div>
-				</div>
 				<button id="snow-toggle-btn" class="btn-snow-toggle" onclick="toggleSnowEffect()" title="Toggle snow effect">❄️ ON</button>
 				<button id="admin-toggle-btn" class="btn-admin" onclick="handleAdminLogin()">Alliance Staff</button>
 			</div>
@@ -234,10 +231,10 @@
 		</main>
 
 		<!-- SCHEDULE SETTING MODAL FOR ADMIN -->
-		<div id="schedule-modal" class="modal hidden">
+		<div id="schedule-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="schedule-modal-title">
 			<div class="modal-content custom-form-modal">
 				<span class="close-modal" onclick="closeScheduleModal()">&times;</span>
-				<h2 class="modal-title">Set Match Schedule</h2>
+				<h2 id="schedule-modal-title" class="modal-title">Set Match Schedule</h2>
 				<p class="modal-subtitle">
 					Target: <span id="schedule-modal-target" class="modal-target-highlight">-</span>
 				</p>
@@ -262,10 +259,10 @@
 		</div>
 
 		<!-- PRESIDENT / GUILD INFO EDIT MODAL (Full-access staff only) -->
-		<div id="president-modal" class="modal hidden">
+		<div id="president-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="president-modal-title">
 			<div class="modal-content custom-form-modal">
 				<span class="close-modal" onclick="closePresidentModal()">&times;</span>
-				<h2 class="modal-title">Edit President Info</h2>
+				<h2 id="president-modal-title" class="modal-title">Edit President Info</h2>
 				<p class="modal-subtitle">This updates the footer shown to everyone.</p>
 
 				<div class="form-group">
@@ -286,7 +283,7 @@
 		</div>
 
 		<!-- PLAYER INPUT/EDIT MODAL -->
-		<div id="add-modal" class="modal hidden">
+		<div id="add-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-form-title">
 			<div class="modal-content custom-form-modal">
 				<span class="close-modal" onclick="closeAddModal()">&times;</span>
 				<h2 id="modal-form-title" class="modal-title">Add Troops Power</h2>
@@ -312,7 +309,7 @@
 
 				<div class="form-group">
 					<label>In-Game ID</label>
-					<input type="number" id="input-gameid" placeholder="Enter Game ID">
+					<input type="text" inputmode="numeric" pattern="[0-9]*" id="input-gameid" placeholder="Enter Game ID">
 				</div>
 
 				<div class="form-group">
@@ -341,10 +338,10 @@
 		</div>
 
 		<!-- PRESIDENT LEGION ASSIGNMENT MODAL -->
-		<div id="legion-assign-modal" class="modal hidden">
+		<div id="legion-assign-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="legion-assign-modal-title">
 			<div class="modal-content custom-form-modal">
 				<span class="close-modal" onclick="closeLegionAssignModal()">&times;</span>
-				<h2 class="modal-title">Assign Player to Legion</h2>
+				<h2 id="legion-assign-modal-title" class="modal-title">Assign Player to Legion</h2>
 				<p class="modal-subtitle">
 					Target: <span id="legion-assign-target-label" class="modal-target-highlight-purple">Legion 1</span>
 				</p>
@@ -372,10 +369,10 @@
 		</div>
 
 		<!-- ALLIANCE STAFF LOGIN MODAL (Supabase Auth, username-based) -->
-		<div id="login-modal" class="modal hidden">
+		<div id="login-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="login-modal-title">
 			<div class="modal-content custom-form-modal">
 				<span class="close-modal" onclick="closeLoginModal()">&times;</span>
-				<h2 class="modal-title">Alliance Staff Login</h2>
+				<h2 id="login-modal-title" class="modal-title">Alliance Staff Login</h2>
 				<p class="modal-subtitle">Sign in with your staff account to manage rosters.</p>
 
 				<div class="form-group">
@@ -396,7 +393,7 @@
 		</div>
 
 		<!-- CONFIRMATION MODAL -->
-		<div id="confirm-modal" class="modal hidden">
+		<div id="confirm-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-message">
 			<div class="modal-content custom-confirm-box">
 				<h3 id="confirm-message" class="confirm-message">Are you sure?</h3>
 				<div class="form-actions no-top-margin">
@@ -425,16 +422,5 @@
 				Created By : ACE aka DEMON
 			</div>
 		</footer>
-
-		<!-- Google Translate Script -->
-		<script type="text/javascript">
-			function googleTranslateElementInit() {
-			new google.translate.TranslateElement({
-			pageLanguage: 'en',
-			includedLanguages: 'en,id,vi,ru,ko,zh-CN,zh-TW,th,tl',
-			layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-			}, 'google_translate_element');
-			}
-		</script>
 	</body>
 </html>

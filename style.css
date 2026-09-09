@@ -378,32 +378,6 @@ td:first-child, th:first-child {
     100% { transform: translateY(105vh) translateX(20px); }
 }
 
-/* ==================== GOOGLE TRANSLATE STYLE ==================== */
-.translate-container {
-    display: inline-block;
-    vertical-align: middle;
-    margin: 0 10px;
-}
-
-.goog-te-gadget-simple {
-    background-color: #1e2230 !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    padding: 6px 10px !important;
-    border-radius: 8px !important;
-    font-size: 0.85rem !important;
-    color: #f1f5f9 !important;
-    cursor: pointer;
-}
-
-.goog-te-gadget-simple a, 
-.goog-te-gadget-simple span {
-    color: #f1f5f9 !important;
-    text-decoration: none !important;
-}
-
-.goog-te-gadget-icon { display: none !important; }
-iframe.goog-te-banner-frame { display: none !important; }
-
 /* ==================== OPTIMISASI TAMPILAN MOBILE (HP) ==================== */
 @media screen and (max-width: 600px) {
     th, td {
