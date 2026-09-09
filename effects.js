@@ -16,25 +16,6 @@ function initOpeningAnimation() {
     }, 2500);
 }
 
-// ================= OPENING ANIMATION =================
-// A short 2.5-second intro shown on every full page refresh.
-function initOpeningAnimation() {
-    const overlay = document.getElementById('opening-animation');
-    if (!overlay) return;
-
-    document.body.classList.add('opening-active');
-    overlay.classList.remove('opening-animation-hidden');
-    overlay.setAttribute('aria-hidden', 'false');
-
-    window.setTimeout(() => {
-        overlay.classList.add('opening-animation-hidden');
-        document.body.classList.remove('opening-active');
-        overlay.setAttribute('aria-hidden', 'true');
-        window.setTimeout(() => overlay.remove(), 300);
-    }, 2500);
-}
-
-
 function createSnowEffect() {
     const maxSnowflakes = 30; 
     if (document.querySelectorAll('.snowflake').length >= maxSnowflakes) return;

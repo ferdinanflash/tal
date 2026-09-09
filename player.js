@@ -97,6 +97,14 @@ async function submitPlayerData() {
     if (!gameId) { showToast("Please enter Game ID!", "warning"); return; }
     if (power <= 0) { showToast("Please enter valid Troops Power!", "warning"); return; }
 
+    if (editingPlayerId !== null) {
+        const confirmed = await showCustomConfirmAsync(
+            `Update ${nickname}'s player data?`,
+            '#2563eb'
+        );
+        if (!confirmed) return;
+    }
+
     const submitBtn = document.getElementById('modal-submit-btn');
     const originalLabel = submitBtn ? submitBtn.innerText : '';
     if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Saving..."; }
@@ -120,12 +128,6 @@ async function submitPlayerData() {
             showToast("Error inserting data: " + error.message, "error");
         }
     } else {
-        const confirmed = await showCustomConfirmAsync(
-            `Update ${nickname}'s player data?`,
-            '#2563eb'
-        );
-        if (!confirmed) return;
-
         const { error } = await client.from('troops_power').update({
             alliance: alliance,
             nickname: nickname,
