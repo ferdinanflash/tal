@@ -35,7 +35,9 @@ async function fetchData() {
 
     try {
         if (viewMode === 'ALLIANCE') {
-            let query = client.from(getTroopsTable()).select('*').order('troops_power', { ascending: false });
+            // Alliance-level browsing is the shared player pool: same data for
+            // both Battle Themes.
+            let query = client.from('troops_power').select('*').order('troops_power', { ascending: false });
             if (currentSelection !== 'ALL') {
                 query = query.eq('alliance', currentSelection);
             }
@@ -43,24 +45,26 @@ async function fetchData() {
             if (error) throw error;
             loadedTroopsData = data || [];
         } else {
-            let legionQuery = client.from(getTroopsTable())
-                .select('*')
-                .eq('legion', currentSelection);
+            const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
+            let legionQuery = client.from('troops_power').select('*');
 
-            // Frostdragon has one Battle Group only, and lives in its own table
-            // (troops_power_frostdragon) which never holds Substitute rows in
-            // the first place. This filter is kept as a harmless safety net.
-            if (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') {
-                legionQuery = legionQuery.eq('legion_role', 'Battle');
+            if (frost) {
+                // Frostdragon Tyrant's roster is tracked entirely via the
+                // frostdragon_role column, independent of `legion` (which stays
+                // whatever it is for Tundra Arm League for this same player).
+                legionQuery = legionQuery.eq('frostdragon_role', 'Battle');
+            } else {
+                legionQuery = legionQuery.eq('legion', currentSelection);
             }
 
             const { data, error } = await legionQuery;
             if (error) throw error;
-            
+
+            const roleField = frost ? 'frostdragon_role' : 'legion_role';
             loadedTroopsData = (data || []).sort((a, b) => {
-                const rolePriority = (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? { 'Battle': 1 } : { 'Battle': 1, 'Substitute': 2 };
-                const priorityA = rolePriority[a.legion_role] || 99;
-                const priorityB = rolePriority[b.legion_role] || 99;
+                const rolePriority = frost ? { 'Battle': 1 } : { 'Battle': 1, 'Substitute': 2 };
+                const priorityA = rolePriority[a[roleField]] || 99;
+                const priorityB = rolePriority[b[roleField]] || 99;
 
                 if (priorityA !== priorityB) {
                     return priorityA - priorityB;
@@ -219,8 +223,9 @@ function renderTable() {
     }
 
     if (viewMode === 'LEGION') {
-        const countBattle = loadedTroopsData.filter(p => p.legion_role === 'Battle').length;
-        const countSub = loadedTroopsData.filter(p => p.legion_role === 'Substitute').length;
+        const roleField = (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 'frostdragon_role' : 'legion_role';
+        const countBattle = loadedTroopsData.filter(p => p[roleField] === 'Battle').length;
+        const countSub = loadedTroopsData.filter(p => p[roleField] === 'Substitute').length;
 
         document.getElementById('count-battle').innerText = countBattle;
         document.getElementById('count-substitute').innerText = countSub;
@@ -233,9 +238,10 @@ function renderTable() {
     const sortedByPower = [...loadedTroopsData].sort((a, b) => b.troops_power - a.troops_power);
 
     if (viewMode === 'LEGION') {
+        const roleField = (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 'frostdragon_role' : 'legion_role';
         const top20 = sortedByPower.slice(0, 20).reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
-        const battle = loadedTroopsData.filter(p => p.legion_role === 'Battle').reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
-        const sub = loadedTroopsData.filter(p => p.legion_role === 'Substitute').reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
+        const battle = loadedTroopsData.filter(p => p[roleField] === 'Battle').reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
+        const sub = loadedTroopsData.filter(p => p[roleField] === 'Substitute').reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
 
         summaryBoxContainer.style.gridTemplateColumns = "repeat(3, 1fr)";
         summaryBoxContainer.innerHTML = `
@@ -333,11 +339,12 @@ function renderTable() {
         const safeNickname = escapeHtml(player.nickname);
         const safeGameId = escapeHtml(player.game_id);
         const safePrefTime = escapeHtml(player.preferred_time || '-');
-        const safeLegionRole = escapeHtml(player.legion_role);
+        const currentRoleField = (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 'frostdragon_role' : 'legion_role';
+        const safeLegionRole = escapeHtml(player[currentRoleField]);
 
         let statusCellHtml = '';
         if (viewMode === 'LEGION') {
-            const isBattle = player.legion_role === 'Battle';
+            const isBattle = player[currentRoleField] === 'Battle';
             const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
             const badgeStyle = isBattle 
                 ? 'background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; color: #4ade80;'

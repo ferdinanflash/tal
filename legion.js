@@ -9,10 +9,16 @@ async function openAddLegionModal() {
 
     document.getElementById('legion-assign-target-label').innerText = currentSelection;
 
-    const { data, error } = await client.from(getTroopsTable())
-        .select('*')
-        .or(`legion.is.null,legion.neq.${currentSelection}`)
-        .order('troops_power', { ascending: false });
+    const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
+    let availableQuery = client.from('troops_power').select('*');
+    availableQuery = frost
+        // Frostdragon roster is tracked via frostdragon_role, independent of
+        // legion/legion_role — a player already in a Tundra legion can still
+        // be added to the Frostdragon roster, and vice versa.
+        ? availableQuery.is('frostdragon_role', null)
+        : availableQuery.or(`legion.is.null,legion.neq.${currentSelection}`);
+
+    const { data, error } = await availableQuery.order('troops_power', { ascending: false });
 
     if (error) {
         showToast("Failed to load players list", "error");
@@ -56,8 +62,9 @@ async function submitLegionAssignment() {
     }
 
     const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
-    const currentBattleCount = loadedTroopsData.filter(p => p.legion_role === 'Battle').length;
-    const currentSubCount = loadedTroopsData.filter(p => p.legion_role === 'Substitute').length;
+    const roleField = frost ? 'frostdragon_role' : 'legion_role';
+    const currentBattleCount = loadedTroopsData.filter(p => p[roleField] === 'Battle').length;
+    const currentSubCount = loadedTroopsData.filter(p => p[roleField] === 'Substitute').length;
 
     if (frost && role !== 'Battle') {
         showToast("Frostdragon Tyrant does not allow substitute players.", "warning");
@@ -83,10 +90,9 @@ async function submitLegionAssignment() {
     const submitBtn = document.querySelector('#legion-assign-modal .btn-apply');
     if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Assigning..."; }
 
-    const { error } = await client.from(getTroopsTable()).update({
-        legion: currentSelection,
-        legion_role: role
-    }).eq('id', playerId);
+    const { error } = await client.from('troops_power').update(
+        frost ? { frostdragon_role: role } : { legion: currentSelection, legion_role: role }
+    ).eq('id', playerId);
 
     if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Assign Player"; }
 
@@ -131,7 +137,7 @@ async function toggleLegionRole(id, currentRole) {
     );
     if (!confirmed) return;
 
-    const { error } = await client.from(getTroopsTable()).update({
+    const { error } = await client.from('troops_power').update({
         legion_role: newRole
     }).eq('id', id);
 
@@ -145,17 +151,20 @@ async function toggleLegionRole(id, currentRole) {
 
 async function removeFromLegion(id) {
     if (!canManageLegion(currentSelection)) return;
-    showCustomConfirm("Remove this player from Legion roster?", async () => {
+    const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
+    showCustomConfirm(frost ? "Remove this player from the Frostdragon Tyrant roster?" : "Remove this player from Legion roster?", async () => {
         const client = getSupabase();
         if (!client) return;
 
-        const { error } = await client.from(getTroopsTable()).update({
-            legion: null,
-            legion_role: null
-        }).eq('id', id);
+        // Only clear the field(s) that belong to the currently active theme.
+        // Removing a player from the Frostdragon roster must never touch
+        // their Tundra legion/legion_role, and vice versa.
+        const { error } = await client.from('troops_power').update(
+            frost ? { frostdragon_role: null } : { legion: null, legion_role: null }
+        ).eq('id', id);
 
         if (!error) {
-            showToast("Player removed from Legion.", "success");
+            showToast(frost ? "Player removed from Frostdragon Tyrant roster." : "Player removed from Legion.", "success");
             fetchData();
         } else {
             showToast("Failed to remove player.", "error");

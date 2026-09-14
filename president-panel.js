@@ -14,13 +14,16 @@ function getBattleTheme() {
     return globalBattleTheme === 'frostdragon' ? 'frostdragon' : 'tundra';
 }
 
-// Tundra Arm League and Frostdragon Tyrant each keep their roster in their
-// own Supabase table now, so adding/editing/deleting/assigning a player in
-// one theme can never change or overwrite the other theme's data. Every
-// read/write in the app must go through this helper instead of hardcoding
-// 'troops_power' directly.
-function getTroopsTable() {
-    return getBattleTheme() === 'frostdragon' ? 'troops_power_frostdragon' : 'troops_power';
+// Tundra Arm League and Frostdragon Tyrant share the SAME player pool
+// (troops_power: alliance, nickname, game_id, troops_power, preferred_time).
+// Only the "which battle roster is this player in" flag is theme-specific:
+//   - Tundra uses the existing `legion` + `legion_role` columns
+//   - Frostdragon uses its own `frostdragon_role` column ('Battle' or null)
+// This keeps the two rosters independent without duplicating player data or
+// splitting it across tables — editing the Frostdragon roster only ever
+// touches `frostdragon_role`, never `legion` / `legion_role`, and vice versa.
+function getRoleField() {
+    return getBattleTheme() === 'frostdragon' ? 'frostdragon_role' : 'legion_role';
 }
 
 async function loadGlobalBattleTheme({silent = true, forceApply = true} = {}) {
@@ -131,11 +134,12 @@ async function refreshPresidentPanel() {
     const frost = getBattleTheme() === 'frostdragon';
     let players = Array.isArray(loadedTroopsData) ? loadedTroopsData : [];
 
-    // President Dashboard always represents the whole player database, not
-    // whichever alliance/legion the normal roster page happens to be showing.
+    // President Dashboard always represents the whole shared player database
+    // (same pool for both themes), not whichever alliance/legion the normal
+    // roster page happens to be showing.
     const client = getSupabase();
     if (client) {
-        const { data, error } = await client.from(getTroopsTable()).select('id,alliance,legion,legion_role,troops_power');
+        const { data, error } = await client.from('troops_power').select('id,alliance,legion,legion_role,frostdragon_role,troops_power');
         if (!error && Array.isArray(data)) players = data;
     }
 
@@ -143,9 +147,10 @@ async function refreshPresidentPanel() {
         const el = document.getElementById(id);
         if (el) el.innerText = value;
     };
+    const roleField = getRoleField();
     stat('pp-total-players', players.length);
-    stat('pp-battle-players', players.filter(p => p.legion_role === 'Battle').length);
-    stat('pp-sub-players', players.filter(p => p.legion_role === 'Substitute').length);
+    stat('pp-battle-players', players.filter(p => p[roleField] === 'Battle').length);
+    stat('pp-sub-players', frost ? 0 : players.filter(p => p.legion_role === 'Substitute').length);
     stat('pp-theme-name', frost ? 'Frostdragon Tyrant' : 'Tundra Arm League');
 
     const badge = document.getElementById('pp-theme-badge');
@@ -278,21 +283,38 @@ async function presidentRefreshData() {
 async function presidentClearAllTroops() {
     if (!canOpenPresidentPanel()) return;
     const frost = getBattleTheme() === 'frostdragon';
-    const themeLabel = frost ? 'Frostdragon Tyrant' : 'Tundra Arm League';
-    const confirmed = await showCustomConfirmAsync(`DELETE ALL PLAYER RECORDS FROM ${themeLabel} (${getTroopsTable()})? This does NOT touch the other theme's table. This cannot be undone.`, '#ef4444');
-    if (!confirmed) return;
     const client = getSupabase();
     if (!client) return;
 
-    const { error } = await client.from(getTroopsTable()).delete().not('id', 'is', null);
-    if (error) {
-        showToast('Failed to clear player data: ' + error.message, 'error');
-        return;
+    if (frost) {
+        // Frostdragon shares the same player pool as Tundra Arm League, so
+        // "Clear All" here only removes the Frostdragon roster flag
+        // (frostdragon_role) from every player. It never deletes player
+        // records and never touches Tundra's legion / legion_role columns.
+        const confirmed = await showCustomConfirmAsync("Remove ALL players from the Frostdragon Tyrant battle roster? Player records and Tundra Arm League assignments are not affected. This cannot be undone.", '#ef4444');
+        if (!confirmed) return;
+
+        const { error } = await client.from('troops_power').update({ frostdragon_role: null }).not('frostdragon_role', 'is', null);
+        if (error) {
+            showToast('Failed to clear the Frostdragon roster: ' + error.message, 'error');
+            return;
+        }
+        showToast('Frostdragon Tyrant roster cleared.', 'success');
+    } else {
+        const confirmed = await showCustomConfirmAsync('DELETE ALL PLAYER RECORDS from the shared player database? This removes players entirely (every alliance, both themes) and cannot be undone.', '#ef4444');
+        if (!confirmed) return;
+
+        const { error } = await client.from('troops_power').delete().not('id', 'is', null);
+        if (error) {
+            showToast('Failed to clear player data: ' + error.message, 'error');
+            return;
+        }
+        showToast('All player records were deleted.', 'success');
     }
+
     loadedTroopsData = [];
     if (typeof renderTable === 'function') renderTable();
     refreshPresidentPanel();
-    showToast('All player records were deleted.', 'success');
 }
 
 function presidentClearLocalSettings() {

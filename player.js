@@ -110,7 +110,7 @@ async function submitPlayerData() {
     if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Saving..."; }
 
     if (editingPlayerId === null) {
-        const { error } = await client.from(getTroopsTable()).insert({
+        const { error } = await client.from('troops_power').insert({
             alliance: alliance,
             nickname: nickname,
             game_id: gameId,
@@ -128,7 +128,7 @@ async function submitPlayerData() {
             showToast("Error inserting data: " + error.message, "error");
         }
     } else {
-        const { error } = await client.from(getTroopsTable()).update({
+        const { error } = await client.from('troops_power').update({
             alliance: alliance,
             nickname: nickname,
             game_id: gameId,
@@ -160,7 +160,7 @@ function deletePlayerData(id) {
         const client = getSupabase();
         if (!client) return;
 
-        const { error } = await client.from(getTroopsTable()).delete().eq('id', id);
+        const { error } = await client.from('troops_power').delete().eq('id', id);
 
         if (!error) {
             showToast("Player data removed.", "success");
