@@ -11,5 +11,21 @@ The application JavaScript is split by responsibility so new features can be add
 - `export.js` — CSV export
 - `footer.js` — President/Guild footer settings and live clock
 - `effects.js` — opening animation and snow effect
+- `president-panel.js` — President dashboard, global Battle Theme switch, `getTroopsTable()`
 
 Scripts are loaded in dependency order from `index.html`.
+
+## Battle Theme data separation
+
+Tundra Arm League and Frostdragon Tyrant each read/write their own Supabase
+table so editing one theme's roster never touches the other:
+
+- Tundra Arm League -> `troops_power`
+- Frostdragon Tyrant -> `troops_power_frostdragon` (same columns; see
+  `supabase_frostdragon_table.sql`)
+
+Every place in the app that used to call `client.from('troops_power')` now
+calls `client.from(getTroopsTable())` (defined in `president-panel.js`),
+which picks the right table based on the currently active global Battle
+Theme. When adding a new feature that reads/writes player roster rows,
+always go through `getTroopsTable()` instead of hardcoding a table name.

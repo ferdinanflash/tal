@@ -35,7 +35,7 @@ async function fetchData() {
 
     try {
         if (viewMode === 'ALLIANCE') {
-            let query = client.from('troops_power').select('*').order('troops_power', { ascending: false });
+            let query = client.from(getTroopsTable()).select('*').order('troops_power', { ascending: false });
             if (currentSelection !== 'ALL') {
                 query = query.eq('alliance', currentSelection);
             }
@@ -43,14 +43,13 @@ async function fetchData() {
             if (error) throw error;
             loadedTroopsData = data || [];
         } else {
-            let legionQuery = client.from('troops_power')
+            let legionQuery = client.from(getTroopsTable())
                 .select('*')
                 .eq('legion', currentSelection);
 
-            // Frostdragon has one Battle Group only. Existing Substitute rows
-            // are intentionally preserved in the database so switching back to
-            // Tundra does not destroy roster data, but they are not part of the
-            // Frostdragon Battle view.
+            // Frostdragon has one Battle Group only, and lives in its own table
+            // (troops_power_frostdragon) which never holds Substitute rows in
+            // the first place. This filter is kept as a harmless safety net.
             if (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') {
                 legionQuery = legionQuery.eq('legion_role', 'Battle');
             }

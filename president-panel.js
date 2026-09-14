@@ -14,6 +14,15 @@ function getBattleTheme() {
     return globalBattleTheme === 'frostdragon' ? 'frostdragon' : 'tundra';
 }
 
+// Tundra Arm League and Frostdragon Tyrant each keep their roster in their
+// own Supabase table now, so adding/editing/deleting/assigning a player in
+// one theme can never change or overwrite the other theme's data. Every
+// read/write in the app must go through this helper instead of hardcoding
+// 'troops_power' directly.
+function getTroopsTable() {
+    return getBattleTheme() === 'frostdragon' ? 'troops_power_frostdragon' : 'troops_power';
+}
+
 async function loadGlobalBattleTheme({silent = true, forceApply = true} = {}) {
     const client = getSupabase();
     if (!client || battleThemeLoading) return;
@@ -126,7 +135,7 @@ async function refreshPresidentPanel() {
     // whichever alliance/legion the normal roster page happens to be showing.
     const client = getSupabase();
     if (client) {
-        const { data, error } = await client.from('troops_power').select('id,alliance,legion,legion_role,troops_power');
+        const { data, error } = await client.from(getTroopsTable()).select('id,alliance,legion,legion_role,troops_power');
         if (!error && Array.isArray(data)) players = data;
     }
 
@@ -268,12 +277,14 @@ async function presidentRefreshData() {
 
 async function presidentClearAllTroops() {
     if (!canOpenPresidentPanel()) return;
-    const confirmed = await showCustomConfirmAsync('DELETE ALL PLAYER RECORDS FROM troops_power? This cannot be undone.', '#ef4444');
+    const frost = getBattleTheme() === 'frostdragon';
+    const themeLabel = frost ? 'Frostdragon Tyrant' : 'Tundra Arm League';
+    const confirmed = await showCustomConfirmAsync(`DELETE ALL PLAYER RECORDS FROM ${themeLabel} (${getTroopsTable()})? This does NOT touch the other theme's table. This cannot be undone.`, '#ef4444');
     if (!confirmed) return;
     const client = getSupabase();
     if (!client) return;
 
-    const { error } = await client.from('troops_power').delete().not('id', 'is', null);
+    const { error } = await client.from(getTroopsTable()).delete().not('id', 'is', null);
     if (error) {
         showToast('Failed to clear player data: ' + error.message, 'error');
         return;

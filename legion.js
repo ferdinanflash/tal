@@ -9,7 +9,7 @@ async function openAddLegionModal() {
 
     document.getElementById('legion-assign-target-label').innerText = currentSelection;
 
-    const { data, error } = await client.from('troops_power')
+    const { data, error } = await client.from(getTroopsTable())
         .select('*')
         .or(`legion.is.null,legion.neq.${currentSelection}`)
         .order('troops_power', { ascending: false });
@@ -83,7 +83,7 @@ async function submitLegionAssignment() {
     const submitBtn = document.querySelector('#legion-assign-modal .btn-apply');
     if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Assigning..."; }
 
-    const { error } = await client.from('troops_power').update({
+    const { error } = await client.from(getTroopsTable()).update({
         legion: currentSelection,
         legion_role: role
     }).eq('id', playerId);
@@ -131,7 +131,7 @@ async function toggleLegionRole(id, currentRole) {
     );
     if (!confirmed) return;
 
-    const { error } = await client.from('troops_power').update({
+    const { error } = await client.from(getTroopsTable()).update({
         legion_role: newRole
     }).eq('id', id);
 
@@ -149,7 +149,7 @@ async function removeFromLegion(id) {
         const client = getSupabase();
         if (!client) return;
 
-        const { error } = await client.from('troops_power').update({
+        const { error } = await client.from(getTroopsTable()).update({
             legion: null,
             legion_role: null
         }).eq('id', id);
