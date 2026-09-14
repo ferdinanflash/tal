@@ -154,6 +154,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         const { data: { session } } = await client.auth.getSession();
         applyAuthSession(session);
 
+        // Load the site-wide Battle Theme from Supabase before the first data
+        // render. President-selected theme is global; never use localStorage
+        // as the source of truth for Battle mode.
+        if (typeof loadGlobalBattleTheme === 'function') {
+            await loadGlobalBattleTheme({ silent: true, forceApply: true });
+        }
+
         // Keep isAdmin in sync if the session refreshes, expires, or the user
         // signs in/out in another tab.
         client.auth.onAuthStateChange((_event, session) => {
@@ -378,6 +385,10 @@ function updateAdminUI() {
     // "Edit President Info" is only for full-access staff.
     const editPresidentBtn = document.getElementById('edit-president-btn');
     if (editPresidentBtn) editPresidentBtn.classList.toggle('hidden', !canEditPresidentInfo());
+
+    // President Panel is the central control center for full-access staff.
+    const presidentPanelBtn = document.getElementById('president-panel-btn');
+    if (presidentPanelBtn) presidentPanelBtn.classList.toggle('hidden', !canOpenPresidentPanel());
 }
 
 function resetAdminUI() {
@@ -391,6 +402,10 @@ function resetAdminUI() {
 
     const editPresidentBtn = document.getElementById('edit-president-btn');
     if (editPresidentBtn) editPresidentBtn.classList.add('hidden');
+
+    const presidentPanelBtn = document.getElementById('president-panel-btn');
+    if (presidentPanelBtn) presidentPanelBtn.classList.add('hidden');
+    document.getElementById('president-panel')?.classList.add('hidden');
 }
 
 // ================= STAFF LOGIN (Supabase Auth) =================

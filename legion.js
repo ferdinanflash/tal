@@ -55,15 +55,19 @@ async function submitLegionAssignment() {
         return;
     }
 
+    const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
     const currentBattleCount = loadedTroopsData.filter(p => p.legion_role === 'Battle').length;
     const currentSubCount = loadedTroopsData.filter(p => p.legion_role === 'Substitute').length;
 
-    if (role === 'Battle' && currentBattleCount >= 30) {
-        showToast("Battle quota is full! (Maximum 30 players)", "warning");
+    if (frost && role !== 'Battle') {
+        showToast("Frostdragon Tyrant does not allow substitute players.", "warning");
         return;
     }
-
-    if (role === 'Substitute' && currentSubCount >= 20) {
+    if (role === 'Battle' && currentBattleCount >= (frost ? 100 : 30)) {
+        showToast(`Battle quota is full! (Maximum ${frost ? 100 : 30} players)`, "warning");
+        return;
+    }
+    if (!frost && role === 'Substitute' && currentSubCount >= 20) {
         showToast("Substitute quota is full! (Maximum 20 players)", "warning");
         return;
     }
@@ -100,12 +104,17 @@ async function toggleLegionRole(id, currentRole) {
     const client = getSupabase();
     if (!client) return;
 
+    const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
+    if (frost) {
+        showToast("Frostdragon Tyrant uses Battle only. There is no substitute role.", "info");
+        return;
+    }
     const newRole = currentRole === 'Battle' ? 'Substitute' : 'Battle';
 
     const currentBattleCount = loadedTroopsData.filter(p => p.legion_role === 'Battle').length;
     const currentSubCount = loadedTroopsData.filter(p => p.legion_role === 'Substitute').length;
 
-    if (newRole === 'Battle' && currentBattleCount >= 30) {
+    if (newRole === 'Battle' && currentBattleCount >= ((typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 100 : 30)) {
         showToast("Failed to switch! Battle quota reached 30 players.", "warning");
         return;
     }

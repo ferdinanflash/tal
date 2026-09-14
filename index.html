@@ -3,22 +3,23 @@
 	<head>
 		<meta charset="UTF-8">
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<title>3475 Tundra Arm League</title>
-				<meta name="description" content="3475 Tundra Arm League - Alliance troops power leaderboard, legion roster, and match scheduling.">
+				<title>3475 Battle League</title>
+				<meta name="description" content="3475 3475 Battle League - Alliance troops power leaderboard, legion roster, and match scheduling.">
 				<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E">
 				<link rel="stylesheet" href="style.css">
 
 					<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer=""></script>
 					<!-- Modular application scripts: load in dependency order. -->
-					<script src="core.js?v=14" defer></script>
-					<script src="navigation.js?v=14" defer></script>
-					<script src="schedule.js?v=14" defer></script>
-					<script src="leaderboard.js?v=14" defer></script>
-					<script src="player.js?v=14" defer></script>
-					<script src="legion.js?v=14" defer></script>
-					<script src="export.js?v=14" defer></script>
-					<script src="footer.js?v=14" defer></script>
-					<script src="effects.js?v=14" defer></script>
+					<script src="core.js?v=15" defer></script>
+					<script src="navigation.js?v=15" defer></script>
+					<script src="schedule.js?v=15" defer></script>
+					<script src="leaderboard.js?v=15" defer></script>
+					<script src="player.js?v=15" defer></script>
+					<script src="legion.js?v=15" defer></script>
+					<script src="export.js?v=15" defer></script>
+					<script src="footer.js?v=15" defer></script>
+					<script src="effects.js?v=15" defer></script>
+					<script src="president-panel.js?v=2" defer></script>
 				</head>
 	<body>
 		<!-- 2.5s opening animation; intentionally runs on every refresh. -->
@@ -62,6 +63,7 @@
 			<div class="navbar-controls">
 				<button id="snow-toggle-btn" class="btn-snow-toggle" onclick="toggleSnowEffect()" title="Toggle snow effect">❄️ ON</button>
 				<button id="admin-toggle-btn" class="btn-admin" onclick="handleAdminLogin()">Alliance Staff</button>
+				<button id="president-panel-btn" class="btn-admin president-panel-top-btn hidden" onclick="openPresidentPanel()">👑 PRESIDENT PANEL</button>
 			</div>
 		</header>
 
@@ -80,8 +82,8 @@
 		<main class="container">
 			<!-- MAIN MENU: ALLIANCE & LEGION SELECTION -->
 			<section id="alliance-menu-page">
-				<h1 class="page-title fire-text">Tundra Arm League</h1>
-				<p class="page-subtitle">Select Alliance, Global Leaderboard, or Legion Roster</p>
+				<h1 class="page-title fire-text" id="battle-theme-page-title">Tundra Arm League</h1>
+				<p class="page-subtitle" id="battle-theme-page-subtitle">Select Alliance, Global Leaderboard, or Battle Group</p>
 
 				<div class="list-container menu-list-container">
 					<!-- LEGION 1 BUTTON -->
@@ -336,6 +338,89 @@
 				</div>
 			</div>
 		</div>
+
+		<!-- PRESIDENT PANEL -->
+		<section id="president-panel" class="president-panel hidden" aria-label="President Panel">
+			<div class="pp-header">
+				<div>
+					<div class="pp-kicker">FULL ACCESS CONTROL CENTER</div>
+					<h2>👑 PRESIDENT PANEL</h2>
+					<p>Central control for the five alliances, player roster, battle and system settings.</p>
+				</div>
+				<div id="pp-theme-badge" class="pp-theme-badge">❄️ TUNDRA ARM LEAGUE</div>
+			</div>
+
+			<div class="pp-toolbar">
+				<button class="btn-back" onclick="closePresidentPanel()">&lt; Back</button>
+				<button class="btn-apply" onclick="presidentRefreshData()">↻ Refresh</button>
+				<button class="btn-apply export-btn" onclick="exportPresidentSnapshot()">⇩ Export CSV</button>
+			</div>
+
+			<div class="pp-stats">
+				<div class="pp-stat"><span>Total Players</span><strong id="pp-total-players">—</strong></div>
+				<div class="pp-stat"><span>Battle</span><strong id="pp-battle-players">0</strong></div>
+				<div class="pp-stat"><span>Substitute</span><strong id="pp-sub-players">0</strong></div>
+				<div class="pp-stat"><span>Active Theme</span><strong id="pp-theme-name">Tundra Arm League</strong></div>
+			</div>
+
+			<div class="pp-grid">
+				<div class="pp-card pp-wide pp-theme-card">
+					<h3>🎨 Switch Theme</h3>
+					<p><b>Only Battle changes.</b> Player data, five alliances, leaderboard and other site information remain intact.</p>
+					<div class="pp-theme-options">
+						<button id="pp-tundra-btn" class="pp-theme-option" onclick="switchBattleTheme('tundra')"><span>❄️</span><b>Tundra Arm League</b><small>2 Legions · each 30 Battle + 20 Substitute</small></button>
+						<button id="pp-frostdragon-btn" class="pp-theme-option" onclick="switchBattleTheme('frostdragon')"><span>🐉</span><b>Frostdragon Tyrant</b><small>1 Battle Group · 100 Players · No Substitute</small></button>
+					</div>
+					<div class="pp-feature-note">Switching theme does not delete or rewrite player records.</div>
+				</div>
+
+				<div class="pp-card">
+					<h3>👥 Player Management</h3>
+					<p>Open the existing player database and manage all five alliances.</p>
+					<div class="pp-actions-grid">
+						<button class="btn-apply" onclick="presidentOpenAlliance('ARX')">ARX</button><button class="btn-apply" onclick="presidentOpenAlliance('IDN')">IDN</button>
+						<button class="btn-apply" onclick="presidentOpenAlliance('VNX')">VNX</button><button class="btn-apply" onclick="presidentOpenAlliance('ZXC')">ZXC</button>
+						<button class="btn-apply" onclick="presidentOpenAlliance('CAT')">CAT</button><button class="btn-apply" onclick="presidentOpenAlliance('ALL')">ALL</button>
+					</div>
+				</div>
+
+				<div class="pp-card">
+					<h3>⚔️ Battle / Legion Management</h3>
+					<p id="pp-battle-description">Manage the existing Legion rosters and player assignments.</p>
+					<div class="pp-actions-row"><button class="btn-apply legion-action-btn" onclick="presidentOpenBattle('Legion 1')">Open Battle 1</button><button id="pp-legion2-btn" class="btn-apply legion-action-btn" onclick="presidentOpenBattle('Legion 2')">Open Battle 2</button></div>
+				</div>
+
+				<div class="pp-card">
+					<h3>🏆 Global Leaderboard</h3>
+					<p>View the complete Troops Power ranking across ARX, IDN, VNX, ZXC and CAT.</p>
+					<button class="btn-apply" onclick="presidentOpenAlliance('ALL')">Open Global Ranking</button>
+				</div>
+
+				<div class="pp-card">
+					<h3>📅 Battle Schedule</h3>
+					<p>Use the existing schedule system for the active Battle group(s).</p>
+					<div class="pp-actions-row"><button class="btn-apply" onclick="presidentOpenSchedule('Legion 1')">Schedule 1</button><button id="pp-schedule2-btn" class="btn-apply" onclick="presidentOpenSchedule('Legion 2')">Schedule 2</button></div>
+				</div>
+
+				<div class="pp-card">
+					<h3>👤 Staff / Access Control</h3>
+					<p>Review the access scopes currently configured in this website.</p>
+					<div id="pp-role-list" class="pp-role-list"></div>
+				</div>
+
+				<div class="pp-card">
+					<h3>⚙️ System Settings</h3>
+					<p>Site presentation and President/Guild information.</p>
+					<div class="pp-actions-row"><button class="btn-apply" onclick="toggleSnowEffect(); refreshPresidentPanel()">Toggle Snow</button><button class="btn-apply" onclick="presidentOpenInfo()">President / Guild</button></div>
+				</div>
+
+				<div class="pp-card pp-wide pp-maintenance">
+					<h3>🧹 Data Maintenance</h3>
+					<p>Administrative maintenance of the existing <code>troops_power</code> data. Destructive actions require confirmation.</p>
+					<div class="pp-actions-row"><button class="btn-back pp-danger-outline" onclick="presidentClearAllTroops()">Delete ALL Player Data</button><button class="btn-back pp-danger-outline" onclick="presidentClearLocalSettings()">Reset Local Settings</button></div>
+				</div>
+			</div>
+		</section>
 
 		<!-- PRESIDENT LEGION ASSIGNMENT MODAL -->
 		<div id="legion-assign-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="legion-assign-modal-title">

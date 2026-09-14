@@ -43,14 +43,23 @@ async function fetchData() {
             if (error) throw error;
             loadedTroopsData = data || [];
         } else {
-            const { data, error } = await client.from('troops_power')
+            let legionQuery = client.from('troops_power')
                 .select('*')
                 .eq('legion', currentSelection);
 
+            // Frostdragon has one Battle Group only. Existing Substitute rows
+            // are intentionally preserved in the database so switching back to
+            // Tundra does not destroy roster data, but they are not part of the
+            // Frostdragon Battle view.
+            if (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') {
+                legionQuery = legionQuery.eq('legion_role', 'Battle');
+            }
+
+            const { data, error } = await legionQuery;
             if (error) throw error;
             
             loadedTroopsData = (data || []).sort((a, b) => {
-                const rolePriority = { 'Battle': 1, 'Substitute': 2 };
+                const rolePriority = (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? { 'Battle': 1 } : { 'Battle': 1, 'Substitute': 2 };
                 const priorityA = rolePriority[a.legion_role] || 99;
                 const priorityB = rolePriority[b.legion_role] || 99;
 
@@ -330,6 +339,7 @@ function renderTable() {
         let statusCellHtml = '';
         if (viewMode === 'LEGION') {
             const isBattle = player.legion_role === 'Battle';
+            const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
             const badgeStyle = isBattle 
                 ? 'background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; color: #4ade80;'
                 : 'background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #fbbf24;';
@@ -339,7 +349,7 @@ function renderTable() {
                     <use href="#clash-sword-icon"></use>
                 </svg>`;
 
-            const badgeLabel = isBattle ? `${swordSvgIcon} Battle` : '🛡️ Substitute';
+            const badgeLabel = isBattle ? `${swordSvgIcon} Battle` : (frost ? '' : '🛡️ Substitute');
 
             statusCellHtml = `<td data-label="Status"><span style="padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; display: inline-flex; align-items: center; ${badgeStyle}">${badgeLabel}</span></td>`;
         }

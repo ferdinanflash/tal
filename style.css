@@ -806,3 +806,40 @@ body.opening-active {
 .footer-label { color: #8a8d98; margin-bottom: 6px; }
 .footer-guild-row { margin-top: 4px; }
 .footer-edit-btn { margin-top: 10px; padding: 6px 14px; font-size: 0.75rem; }
+
+/* ================= PRESIDENT PANEL ================= */
+.president-panel-top-btn { border-color: #a855f7; background: linear-gradient(135deg, #7c3aed, #312e81); }
+.president-panel { margin: 0 auto 28px; max-width: 1120px; padding: 22px; border: 1px solid rgba(168,85,247,.45); border-radius: 18px; background: linear-gradient(145deg, rgba(21,24,33,.98), rgba(12,15,23,.98)); box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.pp-header { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.pp-kicker { font-size:.7rem; letter-spacing:.16em; color:#a78bfa; font-weight:800; }
+.pp-header h2 { margin:5px 0; font-size:1.7rem; }
+.pp-header p,.pp-card p { color:#8a8d98; margin:0; }
+.pp-theme-badge,.pp-lock { padding:8px 12px; border-radius:10px; border:1px solid rgba(168,85,247,.45); color:#ddd6fe; font-size:.75rem; font-weight:800; }
+.pp-toolbar { display:flex; gap:8px; flex-wrap:wrap; margin:18px 0; }
+.pp-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+.pp-stat { padding:14px; border-radius:12px; background:#111827; border:1px solid #252b38; }
+.pp-stat span { display:block; color:#8a8d98; font-size:.7rem; text-transform:uppercase; font-weight:700; }
+.pp-stat strong { display:block; margin-top:4px; font-size:1.15rem; }
+.pp-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.pp-card { padding:16px; border:1px solid #252b38; border-radius:14px; background:rgba(17,24,39,.72); }
+.pp-card h3 { margin:0 0 7px; font-size:1rem; }
+.pp-wide { grid-column:1/-1; }
+.pp-card select { width:100%; margin-top:12px; padding:11px; border-radius:9px; border:1px solid #374151; background:#0f172a; color:#f8fafc; }
+.pp-feature-note { margin-top:9px; color:#c4b5fd; font-size:.78rem; }
+.pp-role-list { margin-top:10px; max-height:180px; overflow:auto; }
+.pp-role-row { display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px solid #202633; font-size:.72rem; }
+.pp-role-row span { color:#a5b4fc; text-align:right; }
+.pp-actions-row { display:flex; gap:7px; flex-wrap:wrap; margin-top:10px; }
+.pp-danger-outline { border:1px solid #7f1d1d; color:#fecaca; margin-top:7px; }
+.pp-maintenance { border-color:rgba(239,68,68,.35); }
+.theme-frostdragon .legion-btn-1 { background:linear-gradient(135deg,#581c87,#1e1b4b); border-color:#a855f7; }
+.theme-frostdragon .legion-btn-1 .legion-btn-label { color:#e9d5ff; }
+.theme-frostdragon .counter-badge-battle { border-color:#a855f7 !important; background:rgba(168,85,247,.16) !important; }
+.theme-frostdragon .page-title { color:#e9d5ff; }
+@media (max-width:700px) {
+  .pp-header { align-items:flex-start; flex-direction:column; }
+  .pp-stats { grid-template-columns:repeat(2,1fr); }
+  .pp-grid { grid-template-columns:1fr; }
+  .pp-wide { grid-column:auto; }
+  .president-panel { padding:14px; }
+}

@@ -37,6 +37,9 @@ function selectAlliance(alliance) {
 }
 
 function selectLegion(legionName) {
+    if (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') {
+        legionName = 'Legion 1';
+    }
     viewMode = 'LEGION';
     currentSelection = legionName;
     resetTableControls();
