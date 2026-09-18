@@ -340,7 +340,8 @@
 		</div>
 
 		<!-- PRESIDENT PANEL -->
-		<section id="president-panel" class="president-panel hidden" aria-label="President Panel">
+		<section id="president-panel" class="president-panel hidden" aria-label="President Panel" onclick="if(event.target===this) closePresidentPanel()">
+		<div class="pp-modal-content">
 			<div class="pp-header">
 				<div>
 					<div class="pp-kicker">FULL ACCESS CONTROL CENTER</div>
@@ -420,6 +421,7 @@
 					<div class="pp-actions-row"><button class="btn-back pp-danger-outline" onclick="presidentClearAllTroops()">Delete ALL Player Data</button><button class="btn-back pp-danger-outline" onclick="presidentClearLocalSettings()">Reset Local Settings</button></div>
 				</div>
 			</div>
+		</div>
 		</section>
 
 		<!-- PRESIDENT LEGION ASSIGNMENT MODAL -->

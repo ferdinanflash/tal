@@ -243,8 +243,10 @@ function applyBattleTheme() {
     if (l2) l2.classList.toggle('hidden', frost);
     if (s2) s2.classList.toggle('hidden', frost);
 
-    if (title) title.innerText = 'Tundra Arm League';
-    if (subtitle) subtitle.innerText = 'Select Alliance, Global Leaderboard, or Legion Roster';
+    if (title) title.innerText = frost ? 'Frostdragon Tyrant' : 'Tundra Arm League';
+    if (subtitle) subtitle.innerText = frost
+        ? 'Select Alliance, Global Leaderboard, or Battle Group'
+        : 'Select Alliance, Global Leaderboard, or Legion Roster';
 
     const counter = document.querySelector('.counter-badge-battle');
     const subCounter = document.querySelector('.counter-badge-substitute');
