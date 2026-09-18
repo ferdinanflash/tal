@@ -116,6 +116,9 @@ body {
     outline-offset: 2px;
 }
 
+.alliance-item { position: relative; justify-content: center; text-align: center; }
+.alliance-item .arrow { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); }
+
 .arrow {
     color: #626773;
 }
@@ -216,7 +219,7 @@ body {
 
 .modal {
     position: fixed;
-    z-index: 2000;
+    z-index: 2200;
     left: 0;
     top: 0;
     width: 100%;
