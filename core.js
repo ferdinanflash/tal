@@ -219,6 +219,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             'add-modal': closeAddModal,
             'legion-assign-modal': closeLegionAssignModal,
             'login-modal': closeLoginModal,
+            'redeem-modal': closeRedeemModal,
         };
         for (const [modalId, closeFn] of Object.entries(closers)) {
             const modal = document.getElementById(modalId);
