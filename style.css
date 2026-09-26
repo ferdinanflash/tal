@@ -998,6 +998,7 @@ body.opening-active {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    flex-shrink: 0;
 }
 .redeem-result-row {
     padding: 6px 10px;
