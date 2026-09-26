@@ -505,9 +505,21 @@
 				</div>
 
 				<div class="form-group">
+					<label>Premium Alliance Redeem</label>
+					<div id="redeem-alliance-quickload" class="redeem-alliance-quickload">
+						<button type="button" class="btn-alliance-load" data-alliance="ARX" onclick="loadAllianceFidsForRedeem('ARX', this)">ARX</button>
+						<button type="button" class="btn-alliance-load" data-alliance="IDN" onclick="loadAllianceFidsForRedeem('IDN', this)">IDN</button>
+						<button type="button" class="btn-alliance-load" data-alliance="ZXC" onclick="loadAllianceFidsForRedeem('ZXC', this)">ZXC</button>
+						<button type="button" class="btn-alliance-load" data-alliance="VNX" onclick="loadAllianceFidsForRedeem('VNX', this)">VNX</button>
+						<button type="button" class="btn-alliance-load" data-alliance="CAT" onclick="loadAllianceFidsForRedeem('CAT', this)">CAT</button>
+					</div>
+					<p id="redeem-alliance-status" class="redeem-hint" style="margin:6px 0 0; text-align:left;"></p>
+				</div>
+
+				<div class="form-group">
 					<label for="redeem-fid-input">Player ID (FID)<span class="required-mark" aria-hidden="true">*</span></label>
 					<textarea id="redeem-fid-input" rows="4" placeholder="123456789&#10;987654321&#10;..." required aria-required="true"></textarea>
-					<p class="redeem-hint" style="margin:4px 0 0;">One Player ID per line to redeem for multiple accounts at once.</p>
+					<p class="redeem-hint" style="margin:4px 0 0;">One Player ID per line to redeem for multiple accounts at once, or pick an alliance above to auto-fill every ID in that alliance.</p>
 				</div>
 
 				<div class="form-group">

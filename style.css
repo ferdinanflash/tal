@@ -932,6 +932,51 @@ body.opening-active {
 
 .required-mark { color: #ef4444; margin-left: 3px; font-weight: 700; }
 
+/* Premium Alliance Redeem — quick-load buttons that pull every Player ID
+   for the chosen alliance straight from Supabase (`troops_power.game_id`)
+   into the FID textarea above. */
+.redeem-alliance-quickload {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.btn-alliance-load {
+    appearance: none;
+    flex: 1 1 auto;
+    min-width: 56px;
+    background: linear-gradient(180deg, rgba(32, 27, 17, 0.92) 0%, rgba(12, 10, 6, 0.95) 100%);
+    border: 1px solid rgba(245, 197, 107, 0.4);
+    border-radius: 7px;
+    padding: 7px 8px;
+    color: #f3d9a4;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
+}
+.btn-alliance-load:hover:not(:disabled) {
+    border-color: rgba(245, 197, 107, 0.9);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+    transform: translateY(-1px);
+}
+.btn-alliance-load:focus-visible {
+    outline: 2px solid #f5c56b;
+    outline-offset: 2px;
+}
+.btn-alliance-load.is-active {
+    border-color: #f5c56b;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.35), inset 0 0 8px rgba(245, 158, 11, 0.12);
+    color: #ffe9bd;
+}
+.btn-alliance-load:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+.redeem-alliance-status.is-error { color: #fca5a5; }
+.redeem-alliance-status.is-success { color: #86efac; }
+
 .redeem-result-status {
     display: none;
     margin: -6px 0 10px;
@@ -965,6 +1010,7 @@ body.opening-active {
 .redeem-result-row.is-success { color: #86efac; background: rgba(34, 197, 94, 0.08); }
 .redeem-result-row.is-error { color: #fca5a5; background: rgba(239, 68, 68, 0.08); }
 .redeem-result-row.is-info { color: #93c5fd; background: rgba(37, 99, 235, 0.08); }
+.redeem-result-row.is-skipped { color: #94a3b8; background: rgba(148, 163, 184, 0.06); font-style: italic; }
 
 .redeem-hint {
     margin-top: 4px;

@@ -75,6 +75,17 @@ function redeemMessageKeyFor(upstream) {
     return map[msg] || null;
 }
 
+// These two upstream messages mean the *code itself* is bad (wrong/unknown
+// code, or expired) rather than something specific to one FID — every
+// remaining FID in the batch would fail the exact same way. So once one of
+// these comes back, the rest of the batch is skipped instead of firing
+// requests that can't possibly succeed, to avoid hammering the server (and
+// Century Games' own rate limit) for nothing.
+function redeemCodeIsFatalForBatch(upstream) {
+    const msg = String((upstream && upstream.msg) || '').trim().toUpperCase();
+    return ['CDK NOT FOUND', 'CDK NOT FOUND.', 'NOT FOUND', 'TIME ERROR', 'TIME ERROR.'].includes(msg);
+}
+
 // Parses the FID textarea: one ID per line (commas/spaces also accepted),
 // de-duplicated, keeping first-seen order.
 function parseRedeemFidList(raw) {
@@ -164,6 +175,19 @@ async function submitRedeemCode() {
                 // "Already used" isn't really a failure for this FID (the
                 // account already has the reward), so mark it distinctly.
                 rows[i] = { fid, status: key === 'You\'ve already redeemed this code.' ? 'info' : 'error', message };
+
+                // Code is invalid/expired: every FID after this one would
+                // get the exact same answer, so stop the batch here instead
+                // of burning through the rest of the list for nothing.
+                if (redeemCodeIsFatalForBatch(upstream)) {
+                    for (let j = i + 1; j < fids.length; j++) {
+                        rows[j] = { fid: fids[j], status: 'skipped', message: 'Skipped — code is invalid or expired.' };
+                    }
+                    renderRedeemResultList(rows);
+                    setRedeemStatus('redeem-result-status', `Stopped: ${message} (checked ${i + 1}/${fids.length}).`, 'error');
+                    setRedeemButtonBusy(submitBtn, false);
+                    return;
+                }
             }
         } catch (e) {
             console.error('submitRedeemCode failed for fid', fid, e);
@@ -185,6 +209,83 @@ function resetRedeemForm() {
     if (codeInput) codeInput.value = '';
     setRedeemStatus('redeem-result-status', '', null);
     renderRedeemResultList([]);
+    setRedeemAllianceStatus('', null);
+    setActiveAllianceLoadButton(null);
+}
+
+// ================= PREMIUM ALLIANCE REDEEM =================
+// Reads every Player ID (`game_id`) straight from Supabase's `troops_power`
+// table for the chosen alliance (ARX / IDN / ZXC / VNX / CAT) and drops
+// them into the FID textarea, so staff can redeem a code for a whole
+// alliance in one go instead of copy-pasting IDs by hand.
+
+function setRedeemAllianceStatus(message, type) {
+    const el = document.getElementById('redeem-alliance-status');
+    if (!el) return;
+    el.textContent = message || '';
+    el.classList.remove('is-success', 'is-error');
+    if (type) el.classList.add(type === 'success' ? 'is-success' : 'is-error');
+}
+
+function setActiveAllianceLoadButton(activeBtn) {
+    document.querySelectorAll('#redeem-alliance-quickload .btn-alliance-load').forEach((btn) => {
+        btn.classList.toggle('is-active', btn === activeBtn);
+    });
+}
+
+function setAllianceLoadButtonsBusy(isBusy) {
+    document.querySelectorAll('#redeem-alliance-quickload .btn-alliance-load').forEach((btn) => {
+        btn.disabled = isBusy;
+    });
+}
+
+async function loadAllianceFidsForRedeem(allianceCode, buttonEl) {
+    const fidInput = document.getElementById('redeem-fid-input');
+    if (!fidInput) return;
+
+    const client = getSupabase();
+    if (!client) {
+        setRedeemAllianceStatus('Could not connect to the database.', 'error');
+        return;
+    }
+
+    setAllianceLoadButtonsBusy(true);
+    setActiveAllianceLoadButton(buttonEl || null);
+    setRedeemAllianceStatus(`Loading ${allianceCode} Player IDs…`, null);
+
+    try {
+        const { data, error } = await client
+            .from('troops_power')
+            .select('game_id')
+            .eq('alliance', allianceCode);
+
+        if (error) throw error;
+
+        // De-dupe and drop anything that isn't a real ID (blank/malformed
+        // rows), keeping first-seen order, same rule as parseRedeemFidList.
+        const seen = new Set();
+        const fids = [];
+        for (const row of (data || [])) {
+            const fid = String(row.game_id ?? '').trim();
+            if (!fid || seen.has(fid)) continue;
+            seen.add(fid);
+            fids.push(fid);
+        }
+
+        if (fids.length === 0) {
+            fidInput.value = '';
+            setRedeemAllianceStatus(`No Player IDs found for ${allianceCode}.`, 'error');
+            return;
+        }
+
+        fidInput.value = fids.join('\n');
+        setRedeemAllianceStatus(`Loaded ${fids.length} Player ID${fids.length === 1 ? '' : 's'} from ${allianceCode}.`, 'success');
+    } catch (e) {
+        console.error('loadAllianceFidsForRedeem failed for alliance', allianceCode, e);
+        setRedeemAllianceStatus(`Failed to load ${allianceCode} Player IDs. Please try again.`, 'error');
+    } finally {
+        setAllianceLoadButtonsBusy(false);
+    }
 }
 
 function openRedeemModal() {
