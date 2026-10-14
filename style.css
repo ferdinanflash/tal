@@ -1095,3 +1095,11 @@ body.redeem-modal-open { overflow: hidden; }
 /* alliance shield icon (SVG replacing emoji) */
 .alliance-name { display: inline-flex; align-items: center; gap: 8px; }
 .alliance-shield { width: 20px; height: 20px; flex: none; color: #f59e0b; }
+
+/* Frostdragon SVG icon next to the battle group label */
+.frostdragon-svg { width: 20px; height: 20px; flex: none; vertical-align: middle; margin-right: 6px; color: #7dd3fc; }
+
+.pp-badge-icon { width: 16px; height: 16px; vertical-align: -3px; margin-right: 6px; }
+
+/* inline UI icons replacing emoji */
+.ui-icon { width: 1.1em; height: 1.1em; vertical-align: -0.18em; flex: none; }

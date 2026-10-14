@@ -154,7 +154,11 @@ async function refreshPresidentPanel() {
     stat('pp-theme-name', frost ? 'Frostdragon Tyrant' : 'Tundra Arm League');
 
     const badge = document.getElementById('pp-theme-badge');
-    if (badge) badge.innerText = frost ? '🐉 FROSTDRAGON TYRANT' : '❄️ TUNDRA ARM LEAGUE';
+    if (badge) {
+        // SVG icons (from index.html's sprite) instead of emoji.
+        badge.innerHTML = `<svg class="pp-badge-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#${frost ? 'frostdragon-icon' : 'tundra-snow-icon'}"></use></svg>`
+            + (frost ? 'FROSTDRAGON TYRANT' : 'TUNDRA ARM LEAGUE');
+    }
 
     const desc = document.getElementById('pp-battle-description');
     if (desc) desc.innerText = frost
@@ -234,10 +238,21 @@ function applyBattleTheme() {
     const subtitle = document.querySelector('#alliance-menu-page .page-subtitle');
 
     if (l1) {
-        const label = frost ? '🐉 FROSTDRAGON TYRANT (100 Battle)' : '⚔️ LEGION 1 (30 Battle / 20 Sub)';
-        const icon = l1.querySelector('svg');
+        const label = frost ? 'FROSTDRAGON TYRANT (100 Battle)' : 'LEGION 1 (30 Battle / 20 Sub)';
+        const icon = l1.querySelector('svg:not(.frostdragon-svg)');
         l1.innerHTML = '';
         if (icon) l1.appendChild(icon);
+        if (frost) {
+            // SVG dragon (replaces the old 🐉 emoji); symbol lives in index.html's sprite.
+            const dragon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            dragon.setAttribute('class', 'frostdragon-svg');
+            dragon.setAttribute('viewBox', '0 0 24 24');
+            dragon.setAttribute('aria-hidden', 'true');
+            const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+            use.setAttribute('href', '#frostdragon-icon');
+            dragon.appendChild(use);
+            l1.appendChild(dragon);
+        }
         l1.appendChild(document.createTextNode(label));
     }
     if (l2) l2.classList.toggle('hidden', frost);
@@ -250,14 +265,14 @@ function applyBattleTheme() {
 
     const counter = document.querySelector('.counter-badge-battle');
     const subCounter = document.querySelector('.counter-badge-substitute');
-    if (counter) counter.innerHTML = `<strong>⚔️ Battle Players:</strong> <span id="count-battle" class="counter-value">0</span> / ${frost ? 100 : 30}`;
+    if (counter) counter.innerHTML = `<strong>${'<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#swords-icon"></use></svg>'} Battle Players:</strong> <span id="count-battle" class="counter-value">0</span> / ${frost ? 100 : 30}`;
     if (subCounter) subCounter.style.display = frost ? 'none' : 'inline-flex';
 
     const roleSelect = document.getElementById('select-legion-role');
     if (roleSelect) {
         roleSelect.innerHTML = frost
-            ? '<option value="Battle">⚔️ Battle (Maximum 100)</option>'
-            : '<option value="Battle">⚔️ Battle (Maximum 30)</option><option value="Substitute">🛡️ Substitute (Maximum 20)</option>';
+            ? '<option value="Battle">Battle (Maximum 100)</option>'
+            : '<option value="Battle">Battle (Maximum 30)</option><option value="Substitute">Substitute (Maximum 20)</option>';
     }
 
     // If the current page is Legion 2 while Frostdragon is activated, return to

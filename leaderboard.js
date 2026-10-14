@@ -355,7 +355,7 @@ function renderTable() {
                     <use href="#clash-sword-icon"></use>
                 </svg>`;
 
-            const badgeLabel = isBattle ? `${swordSvgIcon} Battle` : (frost ? '' : '🛡️ Substitute');
+            const badgeLabel = isBattle ? `${swordSvgIcon} Battle` : (frost ? '' : '<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#alliance-shield-icon"></use></svg> Substitute');
 
             statusCellHtml = `<td data-label="Status"><span style="padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; display: inline-flex; align-items: center; ${badgeStyle}">${badgeLabel}</span></td>`;
         }
