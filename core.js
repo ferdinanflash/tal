@@ -216,6 +216,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const closers = {
             'schedule-modal': closeScheduleModal,
             'president-modal': closePresidentModal,
+            'duplicate-id-modal': closeDuplicateIdModal,
             'add-modal': closeAddModal,
             'legion-assign-modal': closeLegionAssignModal,
             'login-modal': closeLoginModal,
@@ -314,7 +315,7 @@ function showToast(message, type = 'info') {
         toast.style.transform = 'translateY(-10px)';
         toast.style.transition = 'all 0.3s ease';
         setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, message.length > 60 ? 4500 : 3000);
 }
 
 function showCustomConfirm(message, onConfirm, buttonColor = '#ef4444') {

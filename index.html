@@ -10,11 +10,11 @@
 
 					<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer=""></script>
 					<!-- Modular application scripts: load in dependency order. -->
-					<script src="core.js?v=16" defer></script>
+					<script src="core.js?v=17" defer></script>
 					<script src="navigation.js?v=16" defer></script>
 					<script src="schedule.js?v=16" defer></script>
 					<script src="leaderboard.js?v=16" defer></script>
-					<script src="player.js?v=16" defer></script>
+					<script src="player.js?v=18" defer></script>
 					<script src="legion.js?v=16" defer></script>
 					<script src="export.js?v=16" defer></script>
 					<script src="footer.js?v=16" defer></script>
@@ -477,6 +477,28 @@
 				<div class="form-actions">
 					<button class="btn-back" onclick="closeLoginModal()">Cancel</button>
 					<button id="login-submit-btn" class="btn-apply primary-action" onclick="submitStaffLogin()">Sign In</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- DUPLICATE GAME ID MODAL -->
+		<div id="duplicate-id-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="dup-title">
+			<div class="modal-content custom-confirm-box duplicate-id-box">
+				<div class="dup-icon" aria-hidden="true">&#9888;</div>
+				<h3 id="dup-title" class="confirm-message">Duplicate Game ID</h3>
+				<p id="dup-message" class="dup-message"></p>
+				<div class="dup-details">
+					<div><span>Game ID</span><strong id="dup-game-id">-</strong></div>
+					<div><span>Nickname</span><strong id="dup-nickname">-</strong></div>
+					<div><span>Alliance</span><strong id="dup-alliance">-</strong></div>
+					<div><span>Troops Power</span><strong id="dup-power">-</strong></div>
+				</div>
+				<p id="dup-move-note" class="dup-note hidden"></p>
+				<p id="dup-no-permission" class="dup-note hidden">You can't edit this alliance. Please contact that alliance's staff.</p>
+				<div class="form-actions no-top-margin">
+					<button type="button" class="btn-back" onclick="closeDuplicateIdModal()">Cancel</button>
+					<button type="button" id="dup-move-btn" class="btn-apply hidden" onclick="moveDuplicatePlayer()">Move</button>
+					<button type="button" id="dup-edit-btn" class="btn-apply" onclick="editDuplicatePlayer()">Edit Player Data</button>
 				</div>
 			</div>
 		</div>

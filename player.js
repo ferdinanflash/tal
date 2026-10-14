@@ -34,9 +34,9 @@ function openAddModal() {
     document.getElementById('add-modal').classList.remove('hidden');
 }
 
-function openEditModal(id) {
+function openEditModal(id, playerOverride = null) {
     if (!isAdmin) return;
-    const player = loadedTroopsData.find(p => p.id === id);
+    const player = playerOverride || loadedTroopsData.find(p => p.id === id);
     if (!player) return;
 
     if (!canEditAlliance(player.alliance)) {
@@ -96,6 +96,18 @@ async function submitPlayerData() {
     if (!nickname) { showToast("Please enter Nickname!", "warning"); return; }
     if (!gameId) { showToast("Please enter Game ID!", "warning"); return; }
     if (power <= 0) { showToast("Please enter valid Troops Power!", "warning"); return; }
+
+    // Duplicate Game ID check (queries the DB, since the table on screen only
+    // holds the currently viewed alliance).
+    const duplicate = await findDuplicateGameId(client, gameId, editingPlayerId);
+    if (duplicate && duplicate.error) {
+        showToast("Could not verify Game ID: " + duplicate.error.message, "error");
+        return;
+    }
+    if (duplicate) {
+        showDuplicateIdModal(duplicate, alliance);
+        return;
+    }
 
     if (editingPlayerId !== null) {
         const confirmed = await showCustomConfirmAsync(
@@ -171,3 +183,123 @@ function deletePlayerData(id) {
     }, '#ef4444');
 }
 
+
+
+// ================= DUPLICATE GAME ID CHECK =================
+let duplicatePlayerRecord = null;
+let duplicateMoveTarget = null; // alliance this staff can move the existing player into
+
+// Returns the existing player row that already uses `gameId` (ignoring the row
+// currently being edited), `null` when the ID is free, or `{ error }` on failure.
+async function findDuplicateGameId(client, gameId, excludeId = null) {
+    let query = client.from('troops_power')
+        .select('*')
+        .eq('game_id', gameId)
+        .limit(1);
+    if (excludeId !== null) query = query.neq('id', excludeId);
+
+    const { data, error } = await query;
+    if (error) return { error };
+    return data && data.length ? data[0] : null;
+}
+
+function showDuplicateIdModal(existing, targetAlliance) {
+    duplicatePlayerRecord = existing;
+    const sameAlliance = existing.alliance === targetAlliance;
+    const canEdit = canEditAlliance(existing.alliance);
+
+    document.getElementById('dup-game-id').textContent = existing.game_id;
+    document.getElementById('dup-nickname').textContent = existing.nickname || '-';
+    document.getElementById('dup-alliance').textContent = existing.alliance || '-';
+    document.getElementById('dup-power').textContent =
+        Number(existing.troops_power || 0).toLocaleString('en-US');
+
+    document.getElementById('dup-message').textContent = sameAlliance
+        ? `This Game ID is already registered in ${existing.alliance}.`
+        : `This Game ID is already registered in another alliance (${existing.alliance}).`;
+
+    // Exception: staff who can't edit the other alliance may still pull the
+    // player into an alliance they do manage.
+    const myAlliances = getMyEditableAlliances();
+    duplicateMoveTarget = null;
+    if (!canEdit && myAlliances.length) {
+        duplicateMoveTarget = myAlliances.includes(targetAlliance) ? targetAlliance : myAlliances[0];
+    }
+
+    document.getElementById('dup-no-permission').classList.toggle('hidden', canEdit || !!duplicateMoveTarget);
+    document.getElementById('dup-edit-btn').classList.toggle('hidden', !canEdit);
+    const moveBtn = document.getElementById('dup-move-btn');
+    moveBtn.classList.toggle('hidden', !duplicateMoveTarget);
+    if (duplicateMoveTarget) moveBtn.textContent = `Move to ${duplicateMoveTarget}`;
+    document.getElementById('dup-move-note').classList.toggle('hidden', !duplicateMoveTarget);
+    if (duplicateMoveTarget) {
+        document.getElementById('dup-move-note').textContent =
+            `You can't edit ${existing.alliance}, but you can move this player to ${duplicateMoveTarget}.`;
+    }
+
+    showToast(
+        `ID ${existing.game_id} is already registered in ${existing.alliance} (${existing.nickname || 'unknown'}).`,
+        'warning'
+    );
+    document.getElementById('duplicate-id-modal').classList.remove('hidden');
+}
+
+function closeDuplicateIdModal() {
+    document.getElementById('duplicate-id-modal').classList.add('hidden');
+    duplicatePlayerRecord = null;
+    duplicateMoveTarget = null;
+}
+
+// Staff without edit rights on the player's current alliance move the player
+// into their own alliance, then land in the Edit form to update the data.
+async function moveDuplicatePlayer() {
+    const existing = duplicatePlayerRecord;
+    const target = duplicateMoveTarget;
+    if (!existing || !target) return;
+    if (!canEditAlliance(target)) {
+        showToast("You don't have permission to move players into this alliance.", "warning");
+        return;
+    }
+
+    const confirmed = await showCustomConfirmAsync(
+        `Move ${existing.nickname || existing.game_id} from ${existing.alliance} to ${target}?`,
+        '#2563eb'
+    );
+    if (!confirmed) return;
+
+    const client = getSupabase();
+    if (!client) return;
+    const btn = document.getElementById('dup-move-btn');
+    btn.disabled = true;
+    const { data, error } = await client.from('troops_power')
+        .update({ alliance: target, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
+        .select()
+        .single();
+    btn.disabled = false;
+
+    if (error || !data) {
+        showToast("Failed to move player: " + (error ? error.message : "not allowed"), "error");
+        return;
+    }
+
+    showToast(`${data.nickname || data.game_id} moved from ${existing.alliance} to ${target}.`, "success");
+    closeDuplicateIdModal();
+    closeAddModal();
+    fetchData();
+    openEditModal(data.id, data);
+}
+
+// "Edit Player Data": jump to the existing record instead of creating a duplicate.
+function editDuplicatePlayer() {
+    const existing = duplicatePlayerRecord;
+    if (!existing) return;
+    if (!canEditAlliance(existing.alliance)) {
+        showToast("You don't have permission to edit this player's alliance.", "warning");
+        return;
+    }
+    closeDuplicateIdModal();
+    closeAddModal();
+    openEditModal(existing.id, existing);
+    showToast(`Editing existing player: ${existing.nickname || existing.game_id}`, 'info');
+}
