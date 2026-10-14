@@ -232,15 +232,16 @@ function showDuplicateIdModal(existing, targetAlliance) {
     moveBtn.classList.toggle('hidden', !duplicateMoveTarget);
     if (duplicateMoveTarget) moveBtn.textContent = `Move to ${duplicateMoveTarget}`;
     document.getElementById('dup-move-note').classList.toggle('hidden', !duplicateMoveTarget);
+    document.getElementById('dup-flow').classList.toggle('hidden', !duplicateMoveTarget);
+    if (duplicateMoveTarget) {
+        document.getElementById('dup-flow-from').textContent = existing.alliance;
+        document.getElementById('dup-flow-to').textContent = duplicateMoveTarget;
+    }
     if (duplicateMoveTarget) {
         document.getElementById('dup-move-note').textContent =
-            `You can't edit ${existing.alliance}, but you can move this player to ${duplicateMoveTarget}.`;
+            `You can't edit ${existing.alliance}, but you can move this player into your alliance.`;
     }
 
-    showToast(
-        `ID ${existing.game_id} is already registered in ${existing.alliance} (${existing.nickname || 'unknown'}).`,
-        'warning'
-    );
     document.getElementById('duplicate-id-modal').classList.remove('hidden');
 }
 

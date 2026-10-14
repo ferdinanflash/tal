@@ -1065,3 +1065,33 @@ body.redeem-modal-open { overflow: hidden; }
 .dup-details span { color: #94a3b8; }
 .dup-details strong { color: #f1f5f9; word-break: break-all; text-align: right; }
 .dup-note { color: #f59e0b; font-size: 0.8rem; margin-bottom: 14px; }
+.duplicate-id-box .dup-message,
+.duplicate-id-box .dup-note { text-align: center; }
+.duplicate-id-box .dup-details { width: 100%; box-sizing: border-box; }
+
+/* duplicate modal polish */
+.duplicate-id-box .dup-icon {
+    width: 52px; height: 52px; margin: 0 auto 10px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(245, 158, 11, 0.15); color: #f59e0b;
+}
+.dup-badge {
+    display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 700;
+    background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4);
+}
+.dup-badge-to { background: rgba(37, 99, 235, 0.18); color: #60a5fa; border-color: rgba(96, 165, 250, 0.45); }
+.dup-flow { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+.dup-flow.hidden { display: none !important; }
+.dup-arrow { color: #94a3b8; font-size: 1.2rem; }
+.btn-back.dup-cancel { background: transparent; border-color: transparent; color: #94a3b8; }
+.btn-back.dup-cancel:hover { background: rgba(255, 255, 255, 0.06); color: #f1f5f9; }
+.dup-primary { flex: 1.4 !important; font-weight: 700; }
+
+/* theme switch icons (SVG replacing emoji) */
+.pp-theme-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(168, 85, 247, 0.15); color: #c4b5fd; margin-bottom: 6px; }
+#pp-frostdragon-btn .pp-theme-icon { background: rgba(56, 189, 248, 0.15); color: #7dd3fc; }
+#pp-tundra-btn .pp-theme-icon { background: rgba(147, 197, 253, 0.15); color: #bfdbfe; }
+
+/* alliance shield icon (SVG replacing emoji) */
+.alliance-name { display: inline-flex; align-items: center; gap: 8px; }
+.alliance-shield { width: 20px; height: 20px; flex: none; color: #f59e0b; }
