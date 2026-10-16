@@ -34,7 +34,10 @@ function exportToCSV() {
         const base = [csvSafeField(p.__rank || '-'), csvSafeField(p.alliance), csvSafeField(p.nickname), csvSafeField(p.game_id), csvSafeField(p.troops_power), csvSafeField(p.preferred_time || '-')];
         if (isLegion) {
             base.push(csvSafeField(p[roleField] || '-'));
-            if (frost) base.push(csvSafeField(p.frostdragon_task || '-'));
+            if (frost) {
+                const taskList = typeof parseFdtTasks === 'function' ? parseFdtTasks(p.frostdragon_task) : String(p.frostdragon_task || '').split(',').map(t => t.trim()).filter(Boolean);
+                base.push(csvSafeField(taskList.length ? taskList.join(', ') : '-'));
+            }
         }
         return base;
     });

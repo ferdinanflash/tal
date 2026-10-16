@@ -1,19 +1,42 @@
 // Frostdragon Tyrant tools: task assignments, roster summary, schedule and lock.
 const FDT_TASKS = ['Rally Captain','Tyrant Candidate','Capital Reinforcer','Spire Life','Spire Shield','Spire Lethality','Spire Attack','Dragonite Collector','Capital Defense'];
+// Stored as a comma-separated string in the existing text column. This remains
+// backward-compatible with records that only have one task assigned.
+function parseFdtTasks(value) {
+  if (Array.isArray(value)) return value.filter(t => FDT_TASKS.includes(t));
+  return String(value || '').split(',').map(t => t.trim()).filter(t => FDT_TASKS.includes(t));
+}
+function formatFdtTaskChips(value) {
+  const tasks = parseFdtTasks(value);
+  return tasks.length ? tasks.map(t => `<span class="fdt-task-chip">${escapeHtml(t)}</span>`).join(' ') : '<span class="fdt-task-empty">—</span>';
+}
 let fdtSettings = { open: null, deadline: null, locked: false };
 let fdtClockTimer = null;
 
-async function updateFrostdragonTask(playerId, task) {
+async function updateFrostdragonTask(playerId, tasks) {
   if (!isAdmin) return;
   if (fdtSettings.locked) { showToast('Frostdragon roster is locked.', 'warning'); fetchData(); return; }
-  if (task && !FDT_TASKS.includes(task)) return;
-  const { error } = await getSupabase().from('troops_power').update({frostdragon_task: task || null}).eq('id', playerId);
-  if (error) { showToast('Unable to save task: ' + error.message, 'error'); return; }
+  const normalized = [...new Set(parseFdtTasks(tasks))];
+  const storedValue = normalized.length ? normalized.join(', ') : null;
+  const { error } = await getSupabase().from('troops_power').update({frostdragon_task: storedValue}).eq('id', playerId);
+  if (error) { showToast('Unable to save task: ' + error.message, 'error'); fetchData(); return; }
   const p = loadedTroopsData.find(x => Number(x.id) === Number(playerId));
-  if (p) p.frostdragon_task = task || null;
-  showToast('Frostdragon task saved.', 'success');
+  if (p) p.frostdragon_task = storedValue;
+  const chips = document.getElementById(`fdt-task-chips-${playerId}`);
+  if (chips) chips.innerHTML = formatFdtTaskChips(storedValue);
+  const picker = chips?.parentElement?.querySelector('.fdt-task-picker');
+  const summary = picker?.querySelector('summary');
+  if (summary) summary.textContent = `Select tasks (${normalized.length})`;
+  showToast('Frostdragon tasks saved.', 'success');
   refreshFdtSummary();
-  renderTable();
+}
+async function toggleFrostdragonTask(playerId, task, checked) {
+  if (!FDT_TASKS.includes(task)) return;
+  const player = loadedTroopsData.find(x => Number(x.id) === Number(playerId));
+  if (!player) return;
+  const tasks = new Set(parseFdtTasks(player.frostdragon_task));
+  if (checked) tasks.add(task); else tasks.delete(task);
+  await updateFrostdragonTask(playerId, [...tasks]);
 }
 async function loadFdtSettings() {
   const client = getSupabase(); if (!client) return;
@@ -70,7 +93,7 @@ async function refreshFdtSummary() {
     if(error)throw error;
     const players=(data||[]).filter(p=>p.frostdragon_role==='Battle');
     const alliances=[...new Set((data||[]).map(p=>p.alliance).filter(Boolean))].slice(0,5);
-    const tasks=Object.fromEntries(FDT_TASKS.map(t=>[t,players.filter(p=>p.frostdragon_task===t).length]));
+    const tasks=Object.fromEntries(FDT_TASKS.map(t=>[t,players.filter(p=>parseFdtTasks(p.frostdragon_task).includes(t)).length]));
     const tyrants=tasks['Tyrant Candidate'], captains=tasks['Rally Captain'];
     const cards=[`Roster: ${players.length} / 500`, `Total power: ${players.reduce((s,p)=>s+(Number(p.troops_power)||0),0).toLocaleString('en-US')}`, ...alliances.map(a=>`${a}: ${players.filter(p=>p.alliance===a).length} / 100`), ...FDT_TASKS.map(t=>`${t}: ${tasks[t]}`)];
     el.innerHTML=cards.map(t=>`<div style="padding:10px;border-radius:8px;background:rgba(15,23,42,.75);border:1px solid #334155">${escapeHtml(t)}</div>`).join('');

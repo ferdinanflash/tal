@@ -344,10 +344,13 @@ function renderTable() {
         const currentRoleField = (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 'frostdragon_role' : 'legion_role';
         const safeLegionRole = escapeHtml(player[currentRoleField]);
 
-        const frostTaskOptions = ['', 'Rally Captain', 'Tyrant Candidate', 'Capital Reinforcer', 'Spire Life', 'Spire Shield', 'Spire Lethality', 'Spire Attack', 'Dragonite Collector', 'Capital Defense'];
+        const frostTaskOptions = ['Rally Captain', 'Tyrant Candidate', 'Capital Reinforcer', 'Spire Life', 'Spire Shield', 'Spire Lethality', 'Spire Attack', 'Dragonite Collector', 'Capital Defense'];
         const isFrostView = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
-        const safeTask = escapeHtml(player.frostdragon_task || '');
-        const taskCellHtml = (viewMode === 'LEGION' && isFrostView) ? `<td data-label="Frostdragon Task">${isAdmin ? `<select aria-label="Frostdragon task for ${safeNickname}" onchange="updateFrostdragonTask(${playerId}, this.value)" style="max-width:190px" ${typeof fdtSettings !== "undefined" && fdtSettings.locked ? "disabled" : ""}><option value="">Unassigned</option>${frostTaskOptions.filter(Boolean).map(t => `<option value="${t}" ${player.frostdragon_task === t ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (safeTask || '—')}</td>` : '';
+        const selectedFdtTasks = typeof parseFdtTasks === 'function' ? parseFdtTasks(player.frostdragon_task) : String(player.frostdragon_task || '').split(',').map(t => t.trim()).filter(Boolean);
+        const taskChips = typeof formatFdtTaskChips === 'function' ? formatFdtTaskChips(player.frostdragon_task) : escapeHtml(player.frostdragon_task || '—');
+        const fdtDisabled = typeof fdtSettings !== "undefined" && fdtSettings.locked ? 'disabled' : '';
+        const taskPicker = isAdmin ? `<details class="fdt-task-picker" ${fdtDisabled ? '' : ''}><summary ${fdtDisabled ? 'aria-disabled="true"' : ''}>Select tasks (${selectedFdtTasks.length})</summary><div class="fdt-task-options">${frostTaskOptions.map(t => `<label><input type="checkbox" value="${t}" ${selectedFdtTasks.includes(t) ? 'checked' : ''} ${fdtDisabled} onchange="toggleFrostdragonTask(${playerId}, '${t}', this.checked)"><span>${t}</span></label>`).join('')}</div></details>` : '';
+        const taskCellHtml = (viewMode === 'LEGION' && isFrostView) ? `<td data-label="Frostdragon Task"><div class="fdt-task-cell"><div id="fdt-task-chips-${playerId}" class="fdt-task-chips">${taskChips}</div>${taskPicker}</div></td>` : '';
         let statusCellHtml = '';
         if (viewMode === 'LEGION') {
             const isBattle = player[currentRoleField] === 'Battle';
