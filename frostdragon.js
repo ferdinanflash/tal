@@ -104,7 +104,20 @@ async function refreshFdtSummary() {
     if(warnings.length)el.insertAdjacentHTML('afterbegin',`<div style="grid-column:1/-1;padding:10px;color:#fecaca;background:#7f1d1d55;border-radius:8px">${warnings.map(escapeHtml).join('<br>')}</div>`);
   }catch(e){console.warn('FDT summary failed',e);}
 }
-function toggleFdtGuide(){document.getElementById('fdt-guide')?.classList.toggle('hidden');}
+function toggleFdtGuide(forceOpen) {
+  const modal = document.getElementById('fdt-guide-modal');
+  if (!modal) return;
+  const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : modal.classList.contains('hidden');
+  modal.classList.toggle('hidden', !shouldOpen);
+  document.body.classList.toggle('fdt-guide-open', shouldOpen);
+  if (shouldOpen) {
+    const closeButton = modal.querySelector('.close-modal');
+    closeButton?.focus();
+  }
+}
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') toggleFdtGuide(false);
+});
 document.addEventListener('DOMContentLoaded',()=>{
   if(fdtClockTimer)clearInterval(fdtClockTimer);
   fdtClockTimer=setInterval(updateFdtClock,1000);
