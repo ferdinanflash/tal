@@ -8,7 +8,9 @@
 				<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E">
 				<link rel="stylesheet" href="style.css?v=10">
 
-					<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer=""></script>
+
+
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer=""></script>
 					<!-- Modular application scripts: load in dependency order. -->
 					<script src="core.js?v=17" defer></script>
 					<script src="navigation.js?v=16" defer></script>
@@ -133,6 +135,12 @@
 						</div>
 					</div>
 
+					<!-- FDT GUIDE (Frostdragon theme only) -->
+					<div class="list-item hidden" id="fdt-guide-menu-btn" onclick="toggleFdtGuide(true)" role="button" tabindex="0" aria-label="Open FDT Guide" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFdtGuide(true)}">
+						<span class="alliance-name">🐉 FDT Guide</span>
+						<span class="arrow">&gt;</span>
+					</div>
+
 					<div class="list-spacer"></div>
 
 					<!-- ALLIANCE & GLOBAL BUTTONS -->
@@ -237,25 +245,6 @@
                       <h4>Mid-battle / Rearmament</h4>
                       <label><input type="checkbox"> Rotate Spire assignments every 30 minutes</label>
                       <label><input type="checkbox"> Save healing resources for Rearmament and prepare teleport plan</label>
-                    </div>
-                    <div id="fdt-guide-modal" class="modal hidden fdt-guide-modal" role="dialog" aria-modal="true" aria-labelledby="fdt-guide-title" onclick="if(event.target===this) toggleFdtGuide(false)">
-                      <div class="modal-content fdt-guide-modal-content">
-                        <button class="close-modal" type="button" aria-label="Close FDT Guide" onclick="toggleFdtGuide(false)">&times;</button>
-                        <div class="fdt-guide-modal-header">
-                          <div class="fdt-guide-kicker">FROSTDRAGON TYRANT</div>
-                          <h2 id="fdt-guide-title">🐉 FDT Guide</h2>
-                          <p>Battle preparation, assignments and phase-by-phase reminders.</p>
-                        </div>
-                        <div class="fdt-guide-body">
-                          <section class="fdt-guide-section"><h3>1. Before battle</h3><ul><li>Confirm exactly one Tyrant Candidate and coordinate rally leadership.</li><li>Assign Rally Captains, Capital Reinforcers, Capital Defense and Spire teams.</li><li>Plan Dragonite collection routes and agree on communication calls.</li><li>Confirm alliance membership and lock the roster before the sending phase/deadline.</li></ul></section>
-                          <section class="fdt-guide-section"><h3>2. Timeline</h3><ul><li>Battlefield opens at the configured UTC time.</li><li>Capital opens at +1 hour.</li><li>Dragonite gathering starts at +1 hour 15 minutes.</li><li>Dragonite refresh and Spire rotations follow 30-minute intervals.</li><li>Rearmament begins after the battle; verify the exact transition time in-game.</li></ul></section>
-                          <section class="fdt-guide-section"><h3>3. Spire assignments</h3><p>Use the roster tasks to assign Life, Shield, Lethality and Attack coverage. Guides may use different names for Spire effects (including Health, Defense, Dragonbane or Blade). Confirm the current in-game names and bonuses before relying on a specific effect.</p></section>
-                          <section class="fdt-guide-section"><h3>4. Tyrant Candidate and rewards</h3><p>Keep the plan focused on one candidate and coordinate rally leadership. Reward conditions can change, so confirm the live event rules before finalizing the candidate.</p></section>
-                          <section class="fdt-guide-section"><h3>5. Common mistakes</h3><ul><li>Assigning multiple Tyrant Candidates or too many Rally Captains.</li><li>Leaving Spire roles or Capital Defense uncovered.</li><li>Failing to coordinate Dragonite routes and refresh timing.</li><li>Using healing resources too early instead of saving a plan for Rearmament.</li><li>Staying in Dragon Crypt expecting Shield to work there; verify the mechanic in-game.</li></ul></section>
-                          <section class="fdt-guide-section"><h3>6. Scoring note</h3><p>Available guides disagree about personal Carnage/Casualty points. This guide does not assume a personal point system; confirm the rules shown by the current event.</p></section>
-                        </div>
-                        <div class="fdt-guide-modal-footer"><span>Tip: verify event-specific mechanics in-game before battle.</span><button class="btn-apply" type="button" onclick="toggleFdtGuide(false)">Close guide</button></div>
-                      </div>
                     </div>
                 </section>
 				<div class="table-container" aria-live="polite">
@@ -636,6 +625,26 @@
 				Created By : ACE aka DEMON
 			</div>
 		</footer>
+<div id="fdt-guide-modal" class="modal hidden fdt-guide-modal" role="dialog" aria-modal="true" aria-labelledby="fdt-guide-title" onclick="if(event.target===this) toggleFdtGuide(false)">
+                      <div class="modal-content fdt-guide-modal-content">
+                        <button class="close-modal" type="button" aria-label="Close FDT Guide" onclick="toggleFdtGuide(false)">&times;</button>
+                        <div class="fdt-guide-modal-header">
+                          <div class="fdt-guide-kicker">FROSTDRAGON TYRANT</div>
+                          <h2 id="fdt-guide-title">🐉 FDT Guide</h2>
+                          <p>Battle preparation, assignments and phase-by-phase reminders.</p>
+                        </div>
+                        <div class="fdt-guide-body">
+                          <section class="fdt-guide-section"><h3>1. Before battle</h3><ul><li>Confirm exactly one Tyrant Candidate and coordinate rally leadership.</li><li>Assign Rally Captains, Capital Reinforcers, Capital Defense and Spire teams.</li><li>Plan Dragonite collection routes and agree on communication calls.</li><li>Confirm alliance membership and lock the roster before the sending phase/deadline.</li></ul></section>
+                          <section class="fdt-guide-section"><h3>2. Timeline</h3><ul><li>Battlefield opens at the configured UTC time.</li><li>Capital opens at +1 hour.</li><li>Dragonite gathering starts at +1 hour 15 minutes.</li><li>Dragonite refresh and Spire rotations follow 30-minute intervals.</li><li>Rearmament begins after the battle; verify the exact transition time in-game.</li></ul></section>
+                          <section class="fdt-guide-section"><h3>3. Spire assignments</h3><p>Use the roster tasks to assign Life, Shield, Lethality and Attack coverage. Guides may use different names for Spire effects (including Health, Defense, Dragonbane or Blade). Confirm the current in-game names and bonuses before relying on a specific effect.</p></section>
+                          <section class="fdt-guide-section"><h3>4. Tyrant Candidate and rewards</h3><p>Keep the plan focused on one candidate and coordinate rally leadership. Reward conditions can change, so confirm the live event rules before finalizing the candidate.</p></section>
+                          <section class="fdt-guide-section"><h3>5. Common mistakes</h3><ul><li>Assigning multiple Tyrant Candidates or too many Rally Captains.</li><li>Leaving Spire roles or Capital Defense uncovered.</li><li>Failing to coordinate Dragonite routes and refresh timing.</li><li>Using healing resources too early instead of saving a plan for Rearmament.</li><li>Staying in Dragon Crypt expecting Shield to work there; verify the mechanic in-game.</li></ul></section>
+                          <section class="fdt-guide-section"><h3>6. Scoring note</h3><p>Available guides disagree about personal Carnage/Casualty points. This guide does not assume a personal point system; confirm the rules shown by the current event.</p></section>
+                        </div>
+                        <div class="fdt-guide-modal-footer"><span>Tip: verify event-specific mechanics in-game before battle.</span><button class="btn-apply" type="button" onclick="toggleFdtGuide(false)">Close guide</button></div>
+                      </div>
+                    </div>
+
 	<script src="frostdragon.js"></script>
 </body>
 </html>

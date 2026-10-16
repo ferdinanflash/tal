@@ -263,6 +263,8 @@ function applyBattleTheme() {
         ? 'Select Alliance, Global Leaderboard, or Battle Group'
         : 'Select Alliance, Global Leaderboard, or Legion Roster';
 
+    if (typeof syncFdtUi === 'function') syncFdtUi();
+
     const counter = document.querySelector('.counter-badge-battle');
     const subCounter = document.querySelector('.counter-badge-substitute');
     if (counter) counter.innerHTML = `<strong>${'<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#swords-icon"></use></svg>'} Battle Players:</strong> <span id="count-battle" class="counter-value">0</span> / ${frost ? 100 : 30}`;

@@ -33,6 +33,7 @@ function selectAlliance(alliance) {
         titleEl.innerText = `${alliance} Alliance Troops Power`;
     }
 
+    if (typeof syncFdtUi === 'function') syncFdtUi();
     fetchData();
 }
 
@@ -54,12 +55,14 @@ function selectLegion(legionName) {
 
     document.getElementById('selected-alliance-title').innerText = `${legionName} Official Roster`;
 
+    if (typeof syncFdtUi === 'function') syncFdtUi();
     fetchData();
 }
 
 function showAllianceMenu() {
     document.getElementById('troops-table-page').classList.add('hidden');
     document.getElementById('alliance-menu-page').classList.remove('hidden');
+    if (typeof syncFdtUi === 'function') syncFdtUi();
 }
 
 // ================= SCHEDULE MANAGEMENT =================

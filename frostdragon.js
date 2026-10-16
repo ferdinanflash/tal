@@ -123,3 +123,20 @@ document.addEventListener('DOMContentLoaded',()=>{
   fdtClockTimer=setInterval(updateFdtClock,1000);
   setInterval(()=>{if(typeof getBattleTheme==='function'&&getBattleTheme()==='frostdragon'){loadFdtSettings();refreshFdtSummary();}},60000);
 });
+
+// Show/hide the FDT UI based on theme + current page.
+// - "FDT Guide" button on the main menu: Frostdragon theme only.
+// - Command Center (#fdt-tools) on the roster page: Frostdragon theme only.
+function syncFdtUi() {
+  const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
+  document.getElementById('fdt-guide-menu-btn')?.classList.toggle('hidden', !frost);
+  const onRoster = typeof viewMode !== 'undefined' && viewMode === 'LEGION'
+    && !document.getElementById('troops-table-page')?.classList.contains('hidden');
+  const tools = document.getElementById('fdt-tools');
+  const showTools = frost && onRoster;
+  if (tools) tools.classList.toggle('hidden', !showTools);
+  const admin = document.getElementById('fdt-admin-controls');
+  if (admin) admin.classList.toggle('hidden', !(typeof canOpenPresidentPanel === 'function' && canOpenPresidentPanel()));
+  if (showTools) { loadFdtSettings(); refreshFdtSummary(); }
+  if (!frost) toggleFdtGuide(false);
+}
