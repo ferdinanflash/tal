@@ -49,6 +49,11 @@ function closeLegionAssignModal() {
 }
 
 async function submitLegionAssignment() {
+    if (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon' && typeof fdtSettings !== 'undefined' && fdtSettings.locked) {
+        showToast('Frostdragon roster is locked. Unlock it in President Panel to make changes.', 'warning');
+        return;
+    }
+
     if (!canManageLegion(currentSelection)) return;
     const client = getSupabase();
     if (!client) return;
@@ -106,6 +111,11 @@ async function submitLegionAssignment() {
 }
 
 async function toggleLegionRole(id, currentRole) {
+    if (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon' && typeof fdtSettings !== 'undefined' && fdtSettings.locked) {
+        showToast('Frostdragon roster is locked. Unlock it in President Panel to make changes.', 'warning');
+        return;
+    }
+
     if (!canManageLegion(currentSelection)) return;
     const client = getSupabase();
     if (!client) return;
@@ -150,6 +160,11 @@ async function toggleLegionRole(id, currentRole) {
 }
 
 async function removeFromLegion(id) {
+    if (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon' && typeof fdtSettings !== 'undefined' && fdtSettings.locked) {
+        showToast('Frostdragon roster is locked. Unlock it in President Panel to make changes.', 'warning');
+        return;
+    }
+
     if (!canManageLegion(currentSelection)) return;
     const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
     showCustomConfirm(frost ? "Remove this player from the Frostdragon Tyrant roster?" : "Remove this player from Legion roster?", async () => {

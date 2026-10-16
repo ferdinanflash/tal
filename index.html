@@ -212,6 +212,42 @@
 					<span id="last-updated-text" class="last-updated-text">Last updated: -</span>
 				</div>
 
+				<section id="fdt-tools" class="hidden" style="margin:14px 0;padding:16px;border:1px solid #38bdf8;border-radius:14px;background:rgba(8,47,73,.28)">
+                    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">
+                      <div><h2 style="margin:0">🐉 Frostdragon Tyrant Command Center</h2><small>One battle group · five alliances · 100 roster slots per alliance</small></div>
+                      <button class="btn-apply" type="button" onclick="toggleFdtGuide()">FDT Guide</button>
+                    </div>
+                    <div id="fdt-admin-controls" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:end">
+                      <label>Battlefield open (UTC)<input id="fdt-open-time" type="datetime-local" style="display:block"></label>
+                      <label>Roster deadline (UTC)<input id="fdt-deadline" type="datetime-local" style="display:block"></label>
+                      <button class="btn-apply" onclick="saveFdtSettings()">Save schedule</button>
+                      <button class="btn-apply" onclick="toggleFdtLock()" id="fdt-lock-btn">Lock roster</button>
+                    </div>
+                    <div id="fdt-countdown" style="margin-top:12px;font-weight:700">Battlefield schedule not set.</div>
+                    <div id="fdt-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px"></div>
+                    <div id="fdt-checklist" style="margin-top:14px"><h3>Admin phase checklist</h3>
+                      <h4>Before Battlefield opens</h4>
+                      <label><input type="checkbox"> Confirm exactly one Tyrant Candidate</label>
+                      <label><input type="checkbox"> Assign Rally Captains and Capital Reinforcers</label>
+                      <label><input type="checkbox"> Assign Spire teams (Life / Shield / Lethality / Attack)</label>
+                      <label><input type="checkbox"> Confirm alliance membership and lock roster at the deadline</label>
+                      <h4>Capital opening / Dragonite gathering</h4>
+                      <label><input type="checkbox"> Share Dragonite collection routes and refresh timing</label>
+                      <label><input type="checkbox"> Coordinate Capital Defense and reinforcement calls</label>
+                      <h4>Mid-battle / Rearmament</h4>
+                      <label><input type="checkbox"> Rotate Spire assignments every 30 minutes</label>
+                      <label><input type="checkbox"> Save healing resources for Rearmament and prepare teleport plan</label>
+                    </div>
+                    <div id="fdt-guide" class="hidden" style="margin-top:14px;line-height:1.6">
+                      <h3>FDT Guide</h3>
+                      <p><b>Before battle:</b> confirm the Tyrant Candidate, assign rally captains and Spire teams, agree Dragonite routes, and prepare healing/teleports.</p>
+                      <p><b>Timeline:</b> Battlefield opens at the configured UTC time; Capital opens +1 hour; Dragonite gathering starts +1h15m. Dragonite refreshes and Spire rotations occur every 30 minutes. Rearmament follows the battle.</p>
+                      <p><b>Spire effects:</b> assign teams around the Life, Shield, Lethality and Attack roles shown by this roster. Spire naming/effect terminology differs between guides; verify in-game before relying on exact bonuses.</p>
+                      <p><b>Tyrant reward:</b> nominate one candidate only and coordinate rally leadership. Verify current reward conditions in-game before finalizing assignments.</p>
+                      <p><b>Common mistakes:</b> multiple Tyrant Candidates; too many Rally Captains; unassigned Spire roles; poor Dragonite routing; wasting healing before Rearmament; staying in Dragon Crypt expecting Shield to work there.</p>
+                      <p><b>Scoring:</b> guides disagree about personal Carnage/Casualty points. This guide does not assume a personal point system; confirm the live event rules.</p>
+                    </div>
+                </section>
 				<div class="table-container" aria-live="polite">
 					<table>
 						<thead>
@@ -222,6 +258,7 @@
 								<th class="sortable" onclick="handleSortClick('game_id')">GAME ID <span class="sort-arrow" id="sort-arrow-game_id"></span></th>
 								<th class="sortable" onclick="handleSortClick('troops_power')">TROOPS POWER <span class="sort-arrow" id="sort-arrow-troops_power"></span></th>
 								<th class="sortable" onclick="handleSortClick('preferred_time')">PREFERRED TIME <span class="sort-arrow" id="sort-arrow-preferred_time"></span></th>
+                                <th id="th-frostdragon-task" class="hidden-table-column">FROSTDRAGON TASK</th>
 								<th id="th-status" class="hidden-table-column">STATUS</th>
 								<th id="th-action" class="hidden-table-column">ACTION</th>
 							</tr>
@@ -589,5 +626,6 @@
 				Created By : ACE aka DEMON
 			</div>
 		</footer>
-	</body>
+	<script src="frostdragon.js"></script>
+</body>
 </html>

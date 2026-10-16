@@ -27,12 +27,15 @@ function exportToCSV() {
     const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
     const roleField = frost ? 'frostdragon_role' : 'legion_role';
     const headers = isLegion 
-        ? ["Rank", "Alliance", "Nickname", "Game ID", "Troops Power", "Preferred Time", "Legion Status"]
+        ? (frost ? ["Rank", "Alliance", "Nickname", "Game ID", "Troops Power", "Preferred Time", "Frostdragon Role", "Frostdragon Task"] : ["Rank", "Alliance", "Nickname", "Game ID", "Troops Power", "Preferred Time", "Legion Status"])
         : ["Rank", "Alliance", "Nickname", "Game ID", "Troops Power", "Preferred Time"];
 
     const rows = exportData.map((p) => {
         const base = [csvSafeField(p.__rank || '-'), csvSafeField(p.alliance), csvSafeField(p.nickname), csvSafeField(p.game_id), csvSafeField(p.troops_power), csvSafeField(p.preferred_time || '-')];
-        if (isLegion) base.push(csvSafeField(p[roleField] || '-'));
+        if (isLegion) {
+            base.push(csvSafeField(p[roleField] || '-'));
+            if (frost) base.push(csvSafeField(p.frostdragon_task || '-'));
+        }
         return base;
     });
 

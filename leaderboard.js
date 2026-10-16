@@ -221,6 +221,8 @@ function renderTable() {
     if (thAction) {
         thAction.style.display = isAdmin ? "table-cell" : "none";
     }
+    const taskHeader = document.getElementById('th-frostdragon-task');
+    if (taskHeader) taskHeader.style.display = (viewMode === 'LEGION' && typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 'table-cell' : 'none';
 
     if (viewMode === 'LEGION') {
         const roleField = (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 'frostdragon_role' : 'legion_role';
@@ -342,6 +344,10 @@ function renderTable() {
         const currentRoleField = (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 'frostdragon_role' : 'legion_role';
         const safeLegionRole = escapeHtml(player[currentRoleField]);
 
+        const frostTaskOptions = ['', 'Rally Captain', 'Tyrant Candidate', 'Capital Reinforcer', 'Spire Life', 'Spire Shield', 'Spire Lethality', 'Spire Attack', 'Dragonite Collector', 'Capital Defense'];
+        const isFrostView = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
+        const safeTask = escapeHtml(player.frostdragon_task || '');
+        const taskCellHtml = (viewMode === 'LEGION' && isFrostView) ? `<td data-label="Frostdragon Task">${isAdmin ? `<select aria-label="Frostdragon task for ${safeNickname}" onchange="updateFrostdragonTask(${playerId}, this.value)" style="max-width:190px" ${typeof fdtSettings !== "undefined" && fdtSettings.locked ? "disabled" : ""}><option value="">Unassigned</option>${frostTaskOptions.filter(Boolean).map(t => `<option value="${t}" ${player.frostdragon_task === t ? 'selected' : ''}>${t}</option>`).join('')}</select>` : (safeTask || '—')}</td>` : '';
         let statusCellHtml = '';
         if (viewMode === 'LEGION') {
             const isBattle = player[currentRoleField] === 'Battle';
@@ -404,6 +410,7 @@ function renderTable() {
             <td data-label="Game ID"><span class="js-copy-gameid" style="cursor:pointer; color:#3b82f6; text-decoration:underline;" data-gameid="${safeGameId}">${safeGameId}</span></td>
             <td data-label="Troops Power"><strong style="color: #22c55e;">${formattedPower}</strong></td>
             <td data-label="Pref. Time"><span style="color: #f59e0b; font-weight: 600;">${safePrefTime}</span></td>
+            ${taskCellHtml}
             ${statusCellHtml}
             ${actionCellHtml}
         `;
