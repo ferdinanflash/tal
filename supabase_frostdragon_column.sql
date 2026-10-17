@@ -1,5 +1,6 @@
 -- Frostdragon Tyrant tools migration. Run once in Supabase SQL Editor.
 alter table public.troops_power
+  add column if not exists frostdragon_role text,
   add column if not exists frostdragon_task text;
 alter table public.footer_settings
   add column if not exists frostdragon_battlefield_open_utc timestamptz,

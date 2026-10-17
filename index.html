@@ -223,7 +223,7 @@
 				<section id="fdt-tools" class="hidden" style="margin:14px 0;padding:16px;border:1px solid #38bdf8;border-radius:14px;background:rgba(8,47,73,.28)">
                     <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">
                       <div><h2 style="margin:0">🐉 Frostdragon Tyrant Command Center</h2><small>One battle group · up to 60 combatants per alliance</small></div>
-                      <button class="btn-apply" type="button" onclick="toggleFdtGuide()">FDT Guide</button>
+                      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-apply" type="button" onclick="toggleFdtStatus(true)">Real Time Status</button><button class="btn-apply" type="button" onclick="toggleFdtGuide()">FDT Guide</button></div>
                     </div>
                     <div id="fdt-admin-controls" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:end">
                       <label>Battlefield open (UTC)<input id="fdt-open-time" type="datetime-local" style="display:block"></label>
@@ -237,8 +237,9 @@
                       <h4>Before Battlefield opens</h4>
                       <label><input type="checkbox"> Confirm exactly one Tyrant Candidate</label>
                       <label><input type="checkbox"> Assign Rally Captains and Capital Reinforcers</label>
-                      <label><input type="checkbox"> Assign Spire teams (Life / Shield / Lethality / Attack)</label>
-                      <label><input type="checkbox"> Confirm alliance membership and lock roster at the deadline</label>
+                      <label><input type="checkbox"> Assign Spire teams (Life / Shield / Dragonbane / Blade)</label>
+                      <label><input type="checkbox"> Confirm members joined before sign-up ended and dispatch at most 60 per alliance</label>
+                      <label><input type="checkbox"> Lock roster at the deadline</label>
                       <h4>Capital opening / Dragonite gathering</h4>
                       <label><input type="checkbox"> Share Dragonite collection routes and refresh timing</label>
                       <label><input type="checkbox"> Coordinate Capital Defense and reinforcement calls</label>
@@ -635,7 +636,7 @@
                         </div>
                         <div class="fdt-guide-body">
 <section class="fdt-guide-section"><h3>1. Before battle</h3><ul><li>Sign-up (48h): the Alliance Leader or an R4 registers. Only a limited number of top alliances per Zone qualify.</li><li>Members must already be in the alliance before sign-up ends, or they cannot be dispatched.</li><li>Dispatch (48h): R4/R5 select up to 60 combatants per alliance. Players not dispatched can still help by healing troops.</li><li>Eve of Battle (59h): finalize the Tyrant candidate, Rally Captains, Spire teams, Dragonite collectors and communication calls.</li></ul></section>
-<section class="fdt-guide-section"><h3>2. Battle timeline</h3><ul><li>Battlefield is open for 7 hours. Cities start in the Border Region.</li><li>The Capital becomes vulnerable 1 hour after opening, leaving a 6-hour Capital battle.</li><li>Dragonite gathering appears 15 minutes after the Capital opens and refreshes every 30 minutes.</li><li>Spires alternate 30 minutes vulnerable and 30 minutes protected.</li><li>Rearmament follows the battle for 55 hours: +500% Healing Speed and -30% Healing Costs.</li></ul></section>
+<section class="fdt-guide-section"><h3>2. Battle timeline</h3><ul><li>Battlefield is open for 7 hours. Cities start in the Border Region.</li><li>The Capital becomes vulnerable 1 hour after opening, leaving a 6-hour Capital battle.</li><li>Frostdragon Escorts appear in the Border Region when the Capital opens and refresh every 30 minutes.</li><li>Dragonite gathering appears 15 minutes after the Capital opens and also refreshes every 30 minutes.</li><li>Spires alternate 30 minutes vulnerable and 30 minutes protected.</li><li>Rearmament follows the battle for 55 hours: +500% Healing Speed and -30% Healing Costs.</li></ul></section>
 <section class="fdt-guide-section"><h3>3. Spires (30-minute alliance buff)</h3><p>Life Spire: +20% Troop Health. Shield Spire: +20% Troop Defense. Dragonbane Spire: +20% Troop Lethality. Blade Spire: +20% Troop Attack. The alliance that dominates a Spire during its vulnerable period gets the buff for 30 minutes.</p></section>
 <section class="fdt-guide-section"><h3>4. Becoming Frostdragon Tyrant</h3><p>The Chief with the longest total Capital occupation time wins; on a tie, whoever reached that time first. Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days.</p></section>
 <section class="fdt-guide-section"><h3>5. Common mistakes</h3><ul><li>Rotating random Rally Captains, which splits occupation time.</li><li>Ignoring Spires or leaving Capital Defense uncovered.</li><li>Not assigning anyone to Dragonite gathering and its 30-minute refresh.</li><li>Staying in the Dragon Crypt expecting a Shield: Shields are removed there and cannot be activated.</li><li>Spending all healing resources before Rearmament.</li></ul></section>
@@ -644,6 +645,19 @@
 <div class="fdt-guide-modal-footer"><span>Tip: verify event-specific mechanics in-game before battle.</span><button class="btn-apply" type="button" onclick="toggleFdtGuide(false)">Close guide</button></div>
                       </div>
                     </div>
+
+<div id="fdt-status-modal" class="modal hidden fdt-guide-modal" role="dialog" aria-modal="true" aria-labelledby="fdt-status-title" onclick="if(event.target===this) toggleFdtStatus(false)">
+<div class="modal-content fdt-guide-modal-content">
+<button class="close-modal" type="button" aria-label="Close Real Time Status" onclick="toggleFdtStatus(false)">&times;</button>
+<div class="fdt-guide-modal-header">
+<div class="fdt-guide-kicker">FROSTDRAGON TYRANT</div>
+<h2 id="fdt-status-title">📡 Real Time Status</h2>
+<p>What is happening right now. Updates every second (UTC schedule).</p>
+</div>
+<div class="fdt-guide-body"><div id="fdt-status" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px" aria-live="polite"></div></div>
+<div class="fdt-guide-modal-footer"><span>Based on the Battlefield open time set in the Command Center.</span><button class="btn-apply" type="button" onclick="toggleFdtStatus(false)">Close</button></div>
+</div>
+</div>
 
 	<script src="frostdragon.js"></script>
 </body>

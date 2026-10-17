@@ -75,6 +75,7 @@ async function toggleFdtLock() {
   showToast(next?'Frostdragon roster locked.':'Frostdragon roster unlocked.','success');
 }
 function updateFdtClock() {
+  updateFdtStatus();
   const el=document.getElementById('fdt-countdown'); if(!el)return;
   if(!fdtSettings.open){el.textContent='Battlefield schedule not set.';return;}
   const now=Date.now(), open=new Date(fdtSettings.open).getTime();
@@ -84,16 +85,18 @@ function updateFdtClock() {
   const MIN=60000;
   // Official timeline: battlefield 7h; Capital opens +1h (6h contest); Dragonite gathering
   // appears 15 min after the Capital opens; Rearmament follows the battle for 55h.
-  const phases=[['Battlefield opens',0],['Capital opens',60],['Dragonite gathering starts',75],['Battle ends / Rearmament starts',420],['Rearmament ends',420+55*60]];
+  const phases=[['Battlefield opens',0],['Capital opens / Frostdragon Escorts appear',60],['Dragonite gathering starts',75],['Battle ends / Rearmament starts',420],['Rearmament ends',420+55*60]];
   const capital=open+60*MIN, gathering=open+75*MIN, battleEnd=open+420*MIN;
   const upcoming=phases.map(([name,mins])=>({name,time:open+mins*MIN})).find(x=>x.time>now);
   const fmt=t=>new Date(t).toLocaleString('en-GB',{timeZone:'UTC',hour12:false})+' UTC';
   const countdown=t=>{let s=Math.max(0,Math.floor((t-now)/1000));return `${Math.floor(s/3600)}h ${Math.floor(s%3600/60)}m ${s%60}s`;};
   let text=upcoming?`${upcoming.name}: ${fmt(upcoming.time)} · in ${countdown(upcoming.time)}`:`Rearmament ended: ${fmt(open+(420+55*60)*MIN)}.`;
   if(now<battleEnd){
-    const base=now>=gathering?gathering:gathering;
-    const next=now<gathering?gathering:gathering+(Math.floor((now-gathering)/(30*MIN))+1)*30*MIN;
-    if(next<battleEnd) text+=`<br>${now<gathering?'First Dragonite gathering':'Next Dragonite refresh'}: ${fmt(next)} · in ${countdown(next)}`;
+    // Dragonite gathering: first at +75 min, then every 30 min. Frostdragon Escorts: first at +60 min, then every 30 min.
+    const nextCycle=(first)=>now<first?first:first+(Math.floor((now-first)/(30*MIN))+1)*30*MIN;
+    const nextEscort=nextCycle(capital), nextDragonite=nextCycle(gathering);
+    if(nextEscort<battleEnd) text+=`<br>${now<capital?'First Frostdragon Escorts':'Next Frostdragon Escorts refresh'}: ${fmt(nextEscort)} · in ${countdown(nextEscort)}`;
+    if(nextDragonite<battleEnd) text+=`<br>${now<gathering?'First Dragonite gathering':'Next Dragonite refresh'}: ${fmt(nextDragonite)} · in ${countdown(nextDragonite)}`;
     if(now<capital) text+=`<br>Capital Battle: ${fmt(capital)} – ${fmt(battleEnd)} (6 hours)`;
     text+=`<br><small>Spires alternate 30 min vulnerable / 30 min protected — confirm the exact cycle start in-game.</small>`;
   } else if(now<battleEnd+55*60*MIN){
@@ -130,8 +133,19 @@ function toggleFdtGuide(forceOpen) {
     closeButton?.focus();
   }
 }
+function toggleFdtStatus(forceOpen) {
+  const modal = document.getElementById('fdt-status-modal');
+  if (!modal) return;
+  const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : modal.classList.contains('hidden');
+  modal.classList.toggle('hidden', !shouldOpen);
+  document.body.classList.toggle('fdt-guide-open', shouldOpen);
+  if (shouldOpen) {
+    updateFdtStatus();
+    modal.querySelector('.close-modal')?.focus();
+  }
+}
 document.addEventListener('keydown', event => {
-  if (event.key === 'Escape') toggleFdtGuide(false);
+  if (event.key === 'Escape') { toggleFdtGuide(false); toggleFdtStatus(false); }
 });
 document.addEventListener('DOMContentLoaded',()=>{
   if(fdtClockTimer)clearInterval(fdtClockTimer);
@@ -153,5 +167,75 @@ function syncFdtUi() {
   const admin = document.getElementById('fdt-admin-controls');
   if (admin) admin.classList.toggle('hidden', !(typeof canOpenPresidentPanel === 'function' && canOpenPresidentPanel()));
   if (showTools) { loadFdtSettings(); refreshFdtSummary(); }
+  if (!showTools) toggleFdtStatus(false);
   if (!frost) toggleFdtGuide(false);
+}
+
+// Live status board: what is happening right now, derived from the battlefield open time.
+// Official phases are back-to-back: Sign-up 48h, Dispatch 48h, Eve of Battle 59h, Battlefield 7h, Rearmament 55h.
+function updateFdtStatus() {
+  const el = document.getElementById('fdt-status'); if (!el) return;
+  if (document.getElementById('fdt-status-modal')?.classList.contains('hidden')) return; // render only while open
+  const MIN = 60000, HOUR = 60 * MIN;
+  const chip = (label, state, detail) => {
+    const colors = { active: ['#22c55e', 'rgba(34,197,94,.14)'], soon: ['#f59e0b', 'rgba(245,158,11,.12)'], idle: ['#64748b', 'rgba(15,23,42,.75)'], locked: ['#ef4444', 'rgba(239,68,68,.12)'] };
+    const [border, bg] = colors[state] || colors.idle;
+    const dot = { active: '🟢', soon: '🟡', idle: '⚪', locked: '🔴' }[state] || '⚪';
+    return `<div style="padding:10px;border-radius:8px;background:${bg};border:1px solid ${border}"><div style="font-size:.72rem;opacity:.75;text-transform:uppercase;letter-spacing:.04em">${label}</div><div style="font-weight:700;margin-top:2px">${dot} ${detail}</div></div>`;
+  };
+  const rosterChip = chip('Roster', fdtSettings.locked ? 'locked' : 'active', fdtSettings.locked ? 'Locked' : 'Open for changes');
+  if (!fdtSettings.open) {
+    el.innerHTML = chip('Event phase', 'idle', 'Schedule not set') + rosterChip;
+    return;
+  }
+  const now = Date.now(), open = new Date(fdtSettings.open).getTime();
+  const dur = ms => { const s = Math.max(0, Math.floor(ms / 1000)); const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return (d ? d + 'd ' : '') + h + 'h ' + m + 'm'; };
+  const capital = open + HOUR, gathering = open + 75 * MIN, battleEnd = open + 7 * HOUR, rearmEnd = battleEnd + 55 * HOUR;
+  const phases = [
+    ['Alliance Sign-up', open - 155 * HOUR, open - 107 * HOUR],
+    ['Combatant Dispatch', open - 107 * HOUR, open - 59 * HOUR],
+    ['Eve of Battle', open - 59 * HOUR, open],
+    ['Battlefield', open, battleEnd],
+    ['Rearmament', battleEnd, rearmEnd]
+  ];
+  const cur = phases.find(([, s, e]) => now >= s && now < e);
+  const chips = [];
+  if (cur) chips.push(chip('Event phase', 'active', `${cur[0]} · ends in ${dur(cur[2] - now)}`));
+  else if (now < phases[0][1]) chips.push(chip('Event phase', 'soon', `Sign-up starts in ${dur(phases[0][1] - now)}`));
+  else chips.push(chip('Event phase', 'idle', 'Event finished'));
+
+  const inBattle = now >= open && now < battleEnd;
+  if (now < open) {
+    chips.push(chip('Battlefield', 'soon', `Opens in ${dur(open - now)}`));
+  } else if (inBattle) {
+    chips.push(chip('Battlefield', 'active', `Open · closes in ${dur(battleEnd - now)}`));
+  } else {
+    chips.push(chip('Battlefield', 'idle', 'Closed'));
+  }
+
+  if (now < capital) chips.push(chip('Frostdragon Capital', 'soon', now < open ? 'Locked · opens 1h after battlefield' : `Locked · opens in ${dur(capital - now)}`));
+  else if (inBattle) chips.push(chip('Frostdragon Capital', 'active', `Open for battle · ends in ${dur(battleEnd - now)}`));
+  else chips.push(chip('Frostdragon Capital', 'idle', 'Closed'));
+
+  const cycle = (first, name) => {
+    if (now < first) return chip(name, 'soon', now < open ? 'Not started' : `Starts in ${dur(first - now)}`);
+    if (inBattle) { const next = first + (Math.floor((now - first) / (30 * MIN)) + 1) * 30 * MIN; return chip(name, 'active', `Active · refresh in ${dur(Math.min(next, battleEnd) - now)}`); }
+    return chip(name, 'idle', 'Ended');
+  };
+  chips.push(cycle(capital, 'Frostdragon Escorts'));
+  chips.push(cycle(gathering, 'Dragonite gathering'));
+
+  if (inBattle && now >= capital) chips.push(chip('Spires', 'active', 'In play · 30 min vulnerable / 30 min protected'));
+  else chips.push(chip('Spires', now < capital ? 'soon' : 'idle', now < capital ? 'Not in play yet' : 'Closed'));
+
+  if (now >= battleEnd && now < rearmEnd) chips.push(chip('Rearmament bonus', 'active', `+500% Healing Speed, -30% Healing Cost · ${dur(rearmEnd - now)} left`));
+  else if (now < battleEnd) chips.push(chip('Rearmament bonus', 'idle', 'Starts when the battle ends'));
+  else chips.push(chip('Rearmament bonus', 'idle', 'Ended'));
+
+  if (fdtSettings.deadline) {
+    const dl = new Date(fdtSettings.deadline).getTime();
+    chips.push(chip('Roster deadline', now < dl ? 'soon' : 'idle', now < dl ? `In ${dur(dl - now)}` : 'Passed'));
+  }
+  chips.push(rosterChip);
+  el.innerHTML = chips.join('');
 }
