@@ -162,7 +162,7 @@ async function refreshPresidentPanel() {
 
     const desc = document.getElementById('pp-battle-description');
     if (desc) desc.innerText = frost
-        ? 'One Battle Group only. Maximum 100 players. No Substitute/Reserve.'
+        ? 'One Battle Group. Each alliance can dispatch up to 60 combatants. No Substitute/Reserve.'
         : 'Two Legion rosters. Each Legion supports 30 Battle + 20 Substitute.';
 
     const l2 = document.getElementById('pp-legion2-btn');
@@ -202,7 +202,7 @@ function switchBattleTheme(theme) {
     }
 
     const message = nextTheme === 'frostdragon'
-        ? 'Switch Battle to Frostdragon Tyrant? It will use 1 group, maximum 100 Battle players and no Substitute.'
+        ? 'Switch Battle to Frostdragon Tyrant? It will use 1 group, up to 60 combatants per alliance and no Substitute.'
         : 'Switch Battle back to Tundra Arm League? It will use Legion 1 + Legion 2, each 30 Battle + 20 Substitute.';
 
     showCustomConfirm(message, async () => {
@@ -238,7 +238,7 @@ function applyBattleTheme() {
     const subtitle = document.querySelector('#alliance-menu-page .page-subtitle');
 
     if (l1) {
-        const label = frost ? 'FROSTDRAGON TYRANT (100 Battle)' : 'LEGION 1 (30 Battle / 20 Sub)';
+        const label = frost ? 'FROSTDRAGON TYRANT (60 per alliance)' : 'LEGION 1 (30 Battle / 20 Sub)';
         const icon = l1.querySelector('svg:not(.frostdragon-svg)');
         l1.innerHTML = '';
         if (icon) l1.appendChild(icon);
@@ -267,13 +267,13 @@ function applyBattleTheme() {
 
     const counter = document.querySelector('.counter-badge-battle');
     const subCounter = document.querySelector('.counter-badge-substitute');
-    if (counter) counter.innerHTML = `<strong>${'<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#swords-icon"></use></svg>'} Battle Players:</strong> <span id="count-battle" class="counter-value">0</span> / ${frost ? 100 : 30}`;
+    if (counter) counter.innerHTML = `<strong>${'<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#swords-icon"></use></svg>'} Battle Players:</strong> <span id="count-battle" class="counter-value">0</span>${frost ? ' (max 60 per alliance)' : ' / 30'}`;
     if (subCounter) subCounter.style.display = frost ? 'none' : 'inline-flex';
 
     const roleSelect = document.getElementById('select-legion-role');
     if (roleSelect) {
         roleSelect.innerHTML = frost
-            ? '<option value="Battle">Battle (Maximum 100)</option>'
+            ? '<option value="Battle">Combatant (Maximum 60 per alliance)</option>'
             : '<option value="Battle">Battle (Maximum 30)</option><option value="Substitute">Substitute (Maximum 20)</option>';
     }
 

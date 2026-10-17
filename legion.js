@@ -75,8 +75,19 @@ async function submitLegionAssignment() {
         showToast("Frostdragon Tyrant does not allow substitute players.", "warning");
         return;
     }
-    if (role === 'Battle' && currentBattleCount >= (frost ? 100 : 30)) {
-        showToast(`Battle quota is full! (Maximum ${frost ? 100 : 30} players)`, "warning");
+    if (frost) {
+        // Official rule: each alliance can dispatch up to 60 combatants.
+        const picked = loadedTroopsData.find(p => Number(p.id) === Number(playerId));
+        const limit = typeof FDT_MAX_PER_ALLIANCE !== 'undefined' ? FDT_MAX_PER_ALLIANCE : 60;
+        if (picked) {
+            const allianceCount = loadedTroopsData.filter(p => p.alliance === picked.alliance && p.frostdragon_role === 'Battle').length;
+            if (allianceCount >= limit) {
+                showToast(`${picked.alliance} already has ${limit} combatants (Frostdragon Tyrant maximum per alliance).`, "warning");
+                return;
+            }
+        }
+    } else if (role === 'Battle' && currentBattleCount >= 30) {
+        showToast("Battle quota is full! (Maximum 30 players)", "warning");
         return;
     }
     if (!frost && role === 'Substitute' && currentSubCount >= 20) {

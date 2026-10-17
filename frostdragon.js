@@ -1,10 +1,16 @@
 // Frostdragon Tyrant tools: task assignments, roster summary, schedule and lock.
-const FDT_TASKS = ['Rally Captain','Tyrant Candidate','Capital Reinforcer','Spire Life','Spire Shield','Spire Lethality','Spire Attack','Dragonite Collector','Capital Defense'];
+const FDT_TASKS = ['Rally Captain','Tyrant Candidate','Capital Reinforcer','Spire Life','Spire Shield','Spire Dragonbane','Spire Blade','Dragonite Collector','Capital Defense'];
+// Official limit: an eligible alliance can dispatch up to 60 combatants (Century Games Help Center).
+const FDT_MAX_PER_ALLIANCE = 60;
+// Official Spire names: Life (+Health), Shield (+Defense), Dragonbane (+Lethality), Blade (+Attack).
+// Older saved values used the effect names; map them so existing assignments are not lost.
+const FDT_LEGACY_TASKS = { 'Spire Lethality': 'Spire Dragonbane', 'Spire Attack': 'Spire Blade' };
+const normalizeFdtTask = t => FDT_LEGACY_TASKS[t] || t;
 // Stored as a comma-separated string in the existing text column. This remains
 // backward-compatible with records that only have one task assigned.
 function parseFdtTasks(value) {
-  if (Array.isArray(value)) return value.filter(t => FDT_TASKS.includes(t));
-  return String(value || '').split(',').map(t => t.trim()).filter(t => FDT_TASKS.includes(t));
+  if (Array.isArray(value)) return value.map(normalizeFdtTask).filter(t => FDT_TASKS.includes(t));
+  return String(value || '').split(',').map(t => normalizeFdtTask(t.trim())).filter(t => FDT_TASKS.includes(t));
 }
 function formatFdtTaskChips(value) {
   const tasks = parseFdtTasks(value);
@@ -75,15 +81,24 @@ function updateFdtClock() {
   if(!fdtSettings.locked && fdtSettings.deadline && now>=new Date(fdtSettings.deadline).getTime() && canOpenPresidentPanel()) {
     toggleFdtLock();
   }
-  const phases=[['Battlefield opens',0],['Capital opens',60],['Dragonite gathering starts',75]];
-  const gathering=open+75*60000;
-  const upcoming=phases.map(([name,mins])=>({name,time:open+mins*60000})).find(x=>x.time>now);
+  const MIN=60000;
+  // Official timeline: battlefield 7h; Capital opens +1h (6h contest); Dragonite gathering
+  // appears 15 min after the Capital opens; Rearmament follows the battle for 55h.
+  const phases=[['Battlefield opens',0],['Capital opens',60],['Dragonite gathering starts',75],['Battle ends / Rearmament starts',420],['Rearmament ends',420+55*60]];
+  const capital=open+60*MIN, gathering=open+75*MIN, battleEnd=open+420*MIN;
+  const upcoming=phases.map(([name,mins])=>({name,time:open+mins*MIN})).find(x=>x.time>now);
   const fmt=t=>new Date(t).toLocaleString('en-GB',{timeZone:'UTC',hour12:false})+' UTC';
   const countdown=t=>{let s=Math.max(0,Math.floor((t-now)/1000));return `${Math.floor(s/3600)}h ${Math.floor(s%3600/60)}m ${s%60}s`;};
-  let text=upcoming?`${upcoming.name}: ${fmt(upcoming.time)} · in ${countdown(upcoming.time)}`:`Battlefield opened: ${fmt(open)}.`;
-  if(now>=gathering){const next=gathering+(Math.floor((now-gathering)/1800000)+1)*1800000;text+=`<br>Next Dragonite refresh / Spire rotation: ${fmt(next)} · in ${countdown(next)}`;}
-  else text+=`<br>Dragonite gathering and first rotation: ${fmt(gathering)} · in ${countdown(gathering)}`;
-  text+=`<br>Rearmament: after battle ends; configure/confirm the end time in-game.`;
+  let text=upcoming?`${upcoming.name}: ${fmt(upcoming.time)} · in ${countdown(upcoming.time)}`:`Rearmament ended: ${fmt(open+(420+55*60)*MIN)}.`;
+  if(now<battleEnd){
+    const base=now>=gathering?gathering:gathering;
+    const next=now<gathering?gathering:gathering+(Math.floor((now-gathering)/(30*MIN))+1)*30*MIN;
+    if(next<battleEnd) text+=`<br>${now<gathering?'First Dragonite gathering':'Next Dragonite refresh'}: ${fmt(next)} · in ${countdown(next)}`;
+    if(now<capital) text+=`<br>Capital Battle: ${fmt(capital)} – ${fmt(battleEnd)} (6 hours)`;
+    text+=`<br><small>Spires alternate 30 min vulnerable / 30 min protected — confirm the exact cycle start in-game.</small>`;
+  } else if(now<battleEnd+55*60*MIN){
+    text+=`<br>Rearmament active: +500% Healing Speed, -30% Healing Costs (participating States).`;
+  }
   el.innerHTML=text;
 }
 async function refreshFdtSummary() {
@@ -95,12 +110,12 @@ async function refreshFdtSummary() {
     const alliances=[...new Set((data||[]).map(p=>p.alliance).filter(Boolean))].slice(0,5);
     const tasks=Object.fromEntries(FDT_TASKS.map(t=>[t,players.filter(p=>parseFdtTasks(p.frostdragon_task).includes(t)).length]));
     const tyrants=tasks['Tyrant Candidate'], captains=tasks['Rally Captain'];
-    const cards=[`Roster: ${players.length} / 500`, `Total power: ${players.reduce((s,p)=>s+(Number(p.troops_power)||0),0).toLocaleString('en-US')}`, ...alliances.map(a=>`${a}: ${players.filter(p=>p.alliance===a).length} / 100`), ...FDT_TASKS.map(t=>`${t}: ${tasks[t]}`)];
+    const cards=[`Roster: ${players.length}`, `Total power: ${players.reduce((s,p)=>s+(Number(p.troops_power)||0),0).toLocaleString('en-US')}`, ...alliances.map(a=>`${a}: ${players.filter(p=>p.alliance===a).length} / ${FDT_MAX_PER_ALLIANCE}`), ...FDT_TASKS.map(t=>`${t}: ${tasks[t]}`)];
     el.innerHTML=cards.map(t=>`<div style="padding:10px;border-radius:8px;background:rgba(15,23,42,.75);border:1px solid #334155">${escapeHtml(t)}</div>`).join('');
     let warnings=[];
     if(tyrants>1)warnings.push(`⚠ ${tyrants} Tyrant Candidates assigned; keep to one.`);
-    if(captains>5)warnings.push(`⚠ ${captains} Rally Captains assigned; this exceeds the suggested planning limit of five. Review assignments.`);
-    if(players.length>500)warnings.push('⚠ More than 500 players assigned; expected capacity is 100 per alliance across five alliances.');
+    if(captains>0&&tyrants===0)warnings.push('⚠ No Tyrant Candidate assigned yet. Only the rally captain earns Capital occupation time.');
+    alliances.forEach(a=>{const n=players.filter(p=>p.alliance===a).length;if(n>FDT_MAX_PER_ALLIANCE)warnings.push(`⚠ ${a} has ${n} combatants; an alliance can dispatch at most ${FDT_MAX_PER_ALLIANCE}.`);});
     if(warnings.length)el.insertAdjacentHTML('afterbegin',`<div style="grid-column:1/-1;padding:10px;color:#fecaca;background:#7f1d1d55;border-radius:8px">${warnings.map(escapeHtml).join('<br>')}</div>`);
   }catch(e){console.warn('FDT summary failed',e);}
 }
