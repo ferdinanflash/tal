@@ -56,7 +56,15 @@ function redeemUpstreamIsSuccess(upstream) {
 // of shown as an error (see redeemWithTimeoutRetry below).
 function redeemUpstreamIsTimeout(upstream) {
     const msg = String((upstream && upstream.msg) || '').trim().toUpperCase();
-    return msg === 'TIMEOUT' || msg === 'TIMEOUT.';
+    // Real reply is "TIMEOUT RETRY." (err_code 40004); plain "Timeout" also kept.
+    return msg.startsWith('TIMEOUT');
+}
+
+// "USER INFO ERROR" = Player ID doesn't exist. The edge function deletes it
+// from troops_power and reports back via `removed` in the response.
+function redeemUpstreamIsUserInfoError(upstream) {
+    const msg = String((upstream && upstream.msg) || '').trim().toUpperCase();
+    return msg.startsWith('USER INFO ERROR');
 }
 
 function redeemMessageKeyFor(upstream) {
@@ -102,6 +110,43 @@ function parseRedeemFidList(raw) {
     return out;
 }
 
+// Player names come from the `troops_power` table (same table the alliance
+// quick-load reads). They are fetched once per submit, BEFORE any redeem call,
+// because an ID that answers USER INFO ERROR gets deleted from that table.
+const REDEEM_NAME_COLUMNS = ['nickname'];
+let redeemNameByFid = new Map();
+
+function pickRedeemName(row) {
+    for (const col of REDEEM_NAME_COLUMNS) {
+        const v = row && row[col];
+        if (v !== undefined && v !== null && String(v).trim()) {
+            const name = String(v).trim();
+            return typeof capZalgo === 'function' ? capZalgo(name) : name;
+        }
+    }
+    return '';
+}
+
+async function loadRedeemNames(fids) {
+    redeemNameByFid = new Map();
+    const client = getSupabase();
+    if (!client) return;
+    for (let i = 0; i < fids.length; i += 100) {
+        const chunk = fids.slice(i, i + 100);
+        try {
+            const { data, error } = await client.from('troops_power').select('game_id, nickname').in('game_id', chunk);
+            if (error) throw error;
+            for (const row of (data || [])) {
+                const fid = String(row.game_id ?? '').trim();
+                const name = pickRedeemName(row);
+                if (fid && name && !redeemNameByFid.has(fid)) redeemNameByFid.set(fid, name);
+            }
+        } catch (e) {
+            console.error('loadRedeemNames failed', e);
+        }
+    }
+}
+
 function renderRedeemResultList(rows) {
     const list = document.getElementById('redeem-result-list');
     if (!list) return;
@@ -109,7 +154,8 @@ function renderRedeemResultList(rows) {
     for (const row of rows) {
         const li = document.createElement('li');
         li.className = `redeem-result-row is-${row.status}`;
-        li.textContent = `${row.fid} — ${row.message}`;
+        const name = redeemNameByFid.get(row.fid);
+        li.textContent = name ? `${name} — ${row.message}` : `${row.fid} — ${row.message}`;
         list.appendChild(li);
     }
 }
@@ -155,6 +201,7 @@ async function submitRedeemCode() {
     }
 
     setRedeemButtonBusy(submitBtn, true, 'Redeeming…');
+    await loadRedeemNames(fids);
     const rows = fids.map((fid) => ({ fid, status: 'pending', message: 'Waiting…' }));
     renderRedeemResultList(rows);
 
@@ -163,12 +210,20 @@ async function submitRedeemCode() {
         setRedeemStatus('redeem-result-status', `Redeeming ${i + 1}/${fids.length}…`, null);
         try {
             const result = await redeemWithTimeoutRetry(fid, cdk, () => {
-                rows[i] = { fid, status: 'pending', message: 'Server timed out, retrying in 2s…' };
+                rows[i] = { fid, status: 'pending', message: 'Server Busy — retrying in 2s…' };
                 renderRedeemResultList(rows);
             });
             const upstream = (result && result.data) || {};
             if (result.ok && redeemUpstreamIsSuccess(upstream)) {
                 rows[i] = { fid, status: 'success', message: 'Code redeemed! Check your in-game mail.' };
+            } else if (redeemUpstreamIsUserInfoError(upstream)) {
+                rows[i] = {
+                    fid,
+                    status: 'error',
+                    message: result.removed
+                        ? 'Player ID not in this state (USER INFO ERROR) — removed from the database'
+                        : 'Player ID not in this state (USER INFO ERROR), but it could not be removed from the database',
+                };
             } else {
                 const key = redeemMessageKeyFor(upstream);
                 const message = key || (upstream.msg ? `Server said: ${escapeHtml(upstream.msg)}` : 'Something went wrong. Please try again.');
