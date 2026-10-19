@@ -1108,6 +1108,7 @@ body.redeem-modal-open { overflow: hidden; }
 .fdt-task-cell { display:flex; flex-direction:column; align-items:flex-start; gap:7px; min-width:160px; }
 .fdt-task-chips { display:flex; flex-wrap:wrap; gap:4px; }
 .fdt-task-chip { display:inline-flex; align-items:center; border:1px solid rgba(125,211,252,.45); background:rgba(14,165,233,.13); color:#bae6fd; border-radius:999px; padding:3px 7px; font-size:.68rem; line-height:1.25; white-space:nowrap; }
+.fdt-task-chip--dragonite { border-color:rgba(167,139,250,.6); background:rgba(139,92,246,.16); color:#ddd6fe; }
 .fdt-task-chip--alliance { border-color:rgba(250,204,21,.55); background:rgba(250,204,21,.14); color:#fde68a; font-weight:600; }
 .fdt-task-empty { opacity:.65; }
 .fdt-task-picker { position:relative; font-size:.75rem; }

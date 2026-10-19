@@ -239,6 +239,7 @@
                       <label>Roster deadline (UTC)<input id="fdt-deadline" type="datetime-local" style="display:block"></label>
                       <button class="btn-apply" onclick="saveFdtSettings()">Save schedule</button>
                       <button class="btn-apply" onclick="toggleFdtLock()" id="fdt-lock-btn">Lock roster</button>
+                      <button class="btn-apply" type="button" onclick="autoAssignDragoniteCollectors()" title="Lowest-power players become Dragonite Collectors and multitask until Dragonite opens">🐲 Auto-assign Dragonite</button>
                     </div>
                     <div id="fdt-countdown" style="margin-top:12px;font-weight:700">Battlefield schedule not set.</div>
                     <div id="fdt-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px"></div>
@@ -659,7 +660,7 @@
 <li><strong>Spire Shield</strong>: take and hold the Shield Spire (+20% Troop Defense) during its vulnerable window, and keep enough troops there to stop the enemy from retaking it.</li>
 <li><strong>Spire Dragonbane</strong>: take and hold the Dragonbane Spire (+20% Troop Lethality) during its vulnerable window. Move on to the next objective once the window closes.</li>
 <li><strong>Spire Blade</strong>: take and hold the Blade Spire (+20% Troop Attack) during its vulnerable window, and rally or reinforce as needed to keep it.</li>
-<li><strong>Dragonite Collector</strong>: gather Dragonite as soon as it appears (15 minutes after the Capital opens) and check again at every 30-minute refresh. Escort or hide gatherers if enemies are nearby.</li>
+<li><strong>Dragonite Collector</strong>: gather Dragonite as soon as it appears (15 minutes after the Capital opens) and check again at every 30-minute refresh. Escort or hide gatherers if enemies are nearby. Collectors are the lowest-power players and multitask: until Dragonite opens (75 minutes after the Battlefield opens) they carry out their other duty, usually Capital Reinforcer.</li>
 <li><strong>Alliance A / Alliance B</strong>: your battle group. Players join the Capital, Spires and Dragonite calls of their own group. A player belongs to only one group.</li>
 </ul></section>
 </div>

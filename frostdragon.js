@@ -4,6 +4,14 @@ const FDT_TASKS = ['Rally Captain','Tyrant Candidate','Capital Reinforcer','Spir
 const FDT_ALLIANCE_TASKS = ['Alliance A','Alliance B'];
 // Official limit: an eligible alliance can dispatch up to 60 combatants (Century Games Help Center).
 const FDT_MAX_PER_ALLIANCE = 60;
+// Dragonite gathering is a small support job: only a handful of gatherers per group are useful.
+const FDT_DRAGONITE_TASK = 'Dragonite Collector';
+const FDT_DRAGONITE_DEFAULT_PER_GROUP = 8;
+const FDT_DRAGONITE_SOFT_MAX_PER_GROUP = 10;
+// Dragonite only appears 75 min after the Battlefield opens, so collectors multitask until then.
+const FDT_PRE_DRAGONITE_TASK = 'Capital Reinforcer';
+// Candidates holding these key roles are never pulled into Dragonite duty.
+const FDT_DRAGONITE_EXCLUDED = ['Rally Captain','Tyrant Candidate'];
 // Official Spire names: Life (+Health), Shield (+Defense), Dragonbane (+Lethality), Blade (+Attack).
 // Older saved values used the effect names; map them so existing assignments are not lost.
 const FDT_LEGACY_TASKS = { 'Spire Lethality': 'Spire Dragonbane', 'Spire Attack': 'Spire Blade' };
@@ -16,7 +24,8 @@ function parseFdtTasks(value) {
 }
 function formatFdtTaskChips(value) {
   const tasks = parseFdtTasks(value);
-  return tasks.length ? tasks.map(t => `<span class="fdt-task-chip${FDT_ALLIANCE_TASKS.includes(t) ? ' fdt-task-chip--alliance' : ''}">${escapeHtml(t)}</span>`).join(' ') : '<span class="fdt-task-empty">—</span>';
+  const multi = tasks.includes(FDT_DRAGONITE_TASK) && tasks.some(t => !FDT_ALLIANCE_TASKS.includes(t) && t !== FDT_DRAGONITE_TASK);
+  return tasks.length ? tasks.map(t => `<span class="fdt-task-chip${FDT_ALLIANCE_TASKS.includes(t) ? ' fdt-task-chip--alliance' : ''}${t === FDT_DRAGONITE_TASK ? ' fdt-task-chip--dragonite' : ''}"${t === FDT_DRAGONITE_TASK && multi ? ' title="Multitask: other duties until Dragonite opens (75 min after Battlefield opens)"' : ''}>${escapeHtml(t)}${t === FDT_DRAGONITE_TASK && multi ? ' ⇄' : ''}</span>`).join(' ') : '<span class="fdt-task-empty">—</span>';
 }
 let fdtSettings = { open: null, deadline: null, locked: false };
 let fdtClockTimer = null;
@@ -375,6 +384,57 @@ function downloadFdtChartImage() {
     if (typeof showToast === 'function') showToast('Unable to download chart image.', 'error');
   }
 }
+
+// Re-arrange Dragonite Collectors: the lowest-power Battle players of each alliance group (A / B / none)
+// become collectors; everyone else loses the task. Collectors keep their other tasks and, if they have
+// no other role, get Capital Reinforcer so they multitask until Dragonite opens (+75 min).
+function planFdtDragoniteCollectors(perGroup) {
+  const battle = (typeof loadedTroopsData !== 'undefined' ? loadedTroopsData : []).filter(p => p.frostdragon_role === 'Battle');
+  const power = p => Number(p.troops_power) || 0;
+  const groupKey = p => FDT_ALLIANCE_TASKS.find(g => parseFdtTasks(p.frostdragon_task).includes(g)) || 'No group';
+  const picked = new Set();
+  [...FDT_ALLIANCE_TASKS, 'No group'].forEach(g => {
+    battle.filter(p => groupKey(p) === g && !parseFdtTasks(p.frostdragon_task).some(t => FDT_DRAGONITE_EXCLUDED.includes(t)))
+      .sort((a, b) => power(a) - power(b))
+      .slice(0, perGroup)
+      .forEach(p => picked.add(Number(p.id)));
+  });
+  const changes = [];
+  battle.forEach(p => {
+    const before = parseFdtTasks(p.frostdragon_task);
+    const tasks = new Set(before);
+    if (picked.has(Number(p.id))) {
+      tasks.add(FDT_DRAGONITE_TASK);
+      const hasOtherRole = [...tasks].some(t => !FDT_ALLIANCE_TASKS.includes(t) && t !== FDT_DRAGONITE_TASK);
+      if (!hasOtherRole) tasks.add(FDT_PRE_DRAGONITE_TASK);
+    } else tasks.delete(FDT_DRAGONITE_TASK);
+    const after = FDT_TASKS.filter(t => tasks.has(t));
+    if (before.slice().sort().join() !== after.slice().sort().join()) changes.push({ player: p, after });
+  });
+  return { picked, changes, total: picked.size };
+}
+async function autoAssignDragoniteCollectors() {
+  if (!isAdmin) { showToast('Staff access required.', 'warning'); return; }
+  if (fdtSettings.locked) { showToast('Frostdragon roster is locked.', 'warning'); return; }
+  const raw = prompt(`Dragonite Collectors per alliance group (lowest power first). Recommended 5–${FDT_DRAGONITE_SOFT_MAX_PER_GROUP}:`, String(FDT_DRAGONITE_DEFAULT_PER_GROUP));
+  if (raw === null) return;
+  const perGroup = parseInt(raw, 10);
+  if (!Number.isFinite(perGroup) || perGroup < 0 || perGroup > FDT_MAX_PER_ALLIANCE) { showToast('Enter a number between 0 and ' + FDT_MAX_PER_ALLIANCE + '.', 'warning'); return; }
+  const plan = planFdtDragoniteCollectors(perGroup);
+  if (!plan.changes.length) { showToast('Dragonite Collectors are already arranged this way.', 'info'); return; }
+  if (!confirm(`Re-arrange Dragonite Collectors?\n\n• ${plan.total} lowest-power players become collectors (multitask until Dragonite opens, default duty: ${FDT_PRE_DRAGONITE_TASK}).\n• ${plan.changes.length} players will be updated.\n• Everyone else loses the Dragonite Collector task.`)) return;
+  const results = await Promise.all(plan.changes.map(async ({ player, after }) => {
+    const value = after.length ? after.join(', ') : null;
+    const { error } = await getSupabase().from('troops_power').update({ frostdragon_task: value }).eq('id', player.id);
+    if (!error) player.frostdragon_task = value;
+    return !error;
+  }));
+  const failed = results.filter(ok => !ok).length;
+  showToast(failed ? `${failed} updates failed; the rest were saved.` : `Dragonite Collectors updated (${plan.total} players).`, failed ? 'error' : 'success');
+  if (typeof fetchData === 'function') fetchData();
+  if (typeof renderTable === 'function') renderTable();
+  refreshFdtSummary();
+}
 async function toggleFrostdragonTask(playerId, task, checked) {
   if (!FDT_TASKS.includes(task)) return;
   const player = loadedTroopsData.find(x => Number(x.id) === Number(playerId));
@@ -462,6 +522,7 @@ async function refreshFdtSummary() {
     if(tyrants>1)warnings.push(`⚠ ${tyrants} Tyrant Candidates assigned; keep to one.`);
     if(captains>0&&tyrants===0)warnings.push('⚠ No Tyrant Candidate assigned yet. Only the rally captain earns Capital occupation time.');
     FDT_ALLIANCE_TASKS.forEach(t=>{if(tasks[t]>FDT_MAX_PER_ALLIANCE)warnings.push(`⚠ ${t} has ${tasks[t]} combatants; an alliance can dispatch at most ${FDT_MAX_PER_ALLIANCE}.`);});
+    FDT_ALLIANCE_TASKS.forEach(g=>{const n=players.filter(p=>{const t=parseFdtTasks(p.frostdragon_task);return t.includes(g)&&t.includes(FDT_DRAGONITE_TASK);}).length;if(n>FDT_DRAGONITE_SOFT_MAX_PER_GROUP)warnings.push(`⚠ ${g} has ${n} Dragonite Collectors; ${FDT_DRAGONITE_SOFT_MAX_PER_GROUP} or fewer is enough. Use "Auto-assign Dragonite" to re-balance.`);});
     players.forEach(p=>{if(parseFdtTasks(p.frostdragon_task).filter(t=>FDT_ALLIANCE_TASKS.includes(t)).length>1)warnings.push(`⚠ ${p.nickname} is in more than one alliance group.`);});
     alliances.forEach(a=>{const n=players.filter(p=>p.alliance===a).length;if(n>FDT_MAX_PER_ALLIANCE)warnings.push(`⚠ ${a} has ${n} combatants; an alliance can dispatch at most ${FDT_MAX_PER_ALLIANCE}.`);});
     if(warnings.length)el.insertAdjacentHTML('afterbegin',`<div style="grid-column:1/-1;padding:10px;color:#fecaca;background:#7f1d1d55;border-radius:8px">${warnings.map(escapeHtml).join('<br>')}</div>`);
