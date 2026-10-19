@@ -1136,3 +1136,10 @@ body.redeem-modal-open { overflow: hidden; }
 .fdt-guide-modal-footer span { color: #94a3b8; font-size: .78rem; }
 body.fdt-guide-open { overflow: hidden; }
 @media (max-width: 600px) { .fdt-guide-modal { padding: 8px; align-items: center; } .fdt-guide-modal-content { width: 100%; max-height: 92vh; border-radius: 14px; } .fdt-guide-modal-header { padding: 20px 58px 16px 16px; } .fdt-guide-body { padding: 12px; } .fdt-guide-section { padding: 12px; } .fdt-guide-modal-footer { padding: 12px; align-items: flex-start; flex-direction: column; } .fdt-guide-modal-footer .btn-apply { width: 100%; } }
+
+/* Frostdragon: "View by Alliance" filter in the roster toolbar */
+.alliance-filter-container { display:flex; align-items:center; gap:8px; }
+.alliance-filter-container.hidden { display:none; }
+.alliance-filter-container label { font-size:.78rem; color:#94a3b8; font-weight:600; white-space:nowrap; }
+.alliance-filter-select { background:#1e2230; border:1px solid rgba(125,211,252,.45); color:#f1f5f9; padding:9px 12px; border-radius:8px; font-size:.88rem; outline:none; cursor:pointer; }
+.alliance-filter-select:focus { border-color:#38bdf8; }

@@ -36,7 +36,42 @@ async function updateFrostdragonTask(playerId, tasks) {
   const summary = picker?.querySelector('summary');
   if (summary) summary.textContent = `Select tasks (${normalized.length})`;
   showToast('Frostdragon tasks saved.', 'success');
+  updateFdtAllianceFilterUi();
   refreshFdtSummary();
+}
+// ---- "View by Alliance" filter (Frostdragon roster only) ----
+function isFdtAllianceFilterActive() {
+  return !!fdtAllianceFilter
+    && typeof viewMode !== 'undefined' && viewMode === 'LEGION'
+    && typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
+}
+function getFdtAllianceScoped(list) {
+  if (!isFdtAllianceFilterActive()) return list;
+  return list.filter(p => parseFdtTasks(p.frostdragon_task).includes(fdtAllianceFilter));
+}
+function handleFdtAllianceFilter(value) {
+  fdtAllianceFilter = FDT_ALLIANCE_TASKS.includes(value) ? value : '';
+  currentPage = 1;
+  renderTable();
+}
+function updateFdtAllianceFilterUi() {
+  const wrap = document.getElementById('fdt-alliance-filter-wrap');
+  const select = document.getElementById('fdt-alliance-filter');
+  if (!wrap || !select) return;
+  const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
+  const onRoster = typeof viewMode !== 'undefined' && viewMode === 'LEGION'
+    && !document.getElementById('troops-table-page')?.classList.contains('hidden');
+  const show = frost && onRoster;
+  wrap.classList.toggle('hidden', !show);
+  if (!show) { fdtAllianceFilter = ''; select.value = ''; return; }
+  const battlePlayers = loadedTroopsData.filter(p => p.frostdragon_role === 'Battle');
+  const total = battlePlayers.length;
+  Array.from(select.options).forEach(opt => {
+    if (!opt.value) { opt.textContent = `All Alliances (${total})`; return; }
+    const n = battlePlayers.filter(p => parseFdtTasks(p.frostdragon_task).includes(opt.value)).length;
+    opt.textContent = `${opt.value} (${n})`;
+  });
+  select.value = fdtAllianceFilter;
 }
 async function toggleFrostdragonTask(playerId, task, checked) {
   if (!FDT_TASKS.includes(task)) return;
@@ -169,6 +204,7 @@ function syncFdtUi() {
   document.getElementById('fdt-guide-menu-btn')?.classList.toggle('hidden', !frost);
   const onRoster = typeof viewMode !== 'undefined' && viewMode === 'LEGION'
     && !document.getElementById('troops-table-page')?.classList.contains('hidden');
+  updateFdtAllianceFilterUi();
   const tools = document.getElementById('fdt-tools');
   const showTools = frost && onRoster;
   if (tools) tools.classList.toggle('hidden', !showTools);

@@ -134,6 +134,7 @@ let editingScheduleLegion = null;
 
 // ================= SEARCH / SORT / PAGINATION STATE =================
 let searchQuery = '';
+let fdtAllianceFilter = ''; // Frostdragon roster: '' = all, or 'Alliance A' / 'Alliance B' / 'Alliance C'
 let currentSortField = null; // null = use default fetch order
 let currentSortDirection = 'asc';
 let currentPage = 1;

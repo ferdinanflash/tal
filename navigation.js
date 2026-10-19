@@ -5,6 +5,9 @@ function resetTableControls() {
     currentPage = 1;
     const searchInput = document.getElementById('search-input');
     if (searchInput) searchInput.value = '';
+    fdtAllianceFilter = '';
+    const allianceFilter = document.getElementById('fdt-alliance-filter');
+    if (allianceFilter) allianceFilter.value = '';
     updateSortArrows();
 }
 

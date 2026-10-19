@@ -125,6 +125,10 @@ function getDisplayData() {
         );
     }
 
+    if (typeof isFdtAllianceFilterActive === 'function' && isFdtAllianceFilterActive()) {
+        data = getFdtAllianceScoped(data);
+    }
+
     if (currentSortField) {
         data.sort((a, b) => {
             let valA = a[currentSortField];
@@ -223,6 +227,7 @@ function renderTable() {
     }
     const taskHeader = document.getElementById('th-frostdragon-task');
     if (taskHeader) taskHeader.style.display = (viewMode === 'LEGION' && typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 'table-cell' : 'none';
+    if (typeof updateFdtAllianceFilterUi === 'function') updateFdtAllianceFilterUi();
 
     if (viewMode === 'LEGION') {
         const roleField = (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 'frostdragon_role' : 'legion_role';
@@ -241,9 +246,12 @@ function renderTable() {
 
     if (viewMode === 'LEGION') {
         const roleField = (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 'frostdragon_role' : 'legion_role';
-        const top20 = sortedByPower.slice(0, 20).reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
-        const battle = loadedTroopsData.filter(p => p[roleField] === 'Battle').reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
-        const sub = loadedTroopsData.filter(p => p[roleField] === 'Substitute').reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
+        // When "View by Alliance" is active (Frostdragon), the power cards follow the selected alliance.
+        const summaryData = (typeof getFdtAllianceScoped === 'function') ? getFdtAllianceScoped(loadedTroopsData) : loadedTroopsData;
+        const summarySorted = [...summaryData].sort((a, b) => b.troops_power - a.troops_power);
+        const top20 = summarySorted.slice(0, 20).reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
+        const battle = summaryData.filter(p => p[roleField] === 'Battle').reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
+        const sub = summaryData.filter(p => p[roleField] === 'Substitute').reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
 
         summaryBoxContainer.style.gridTemplateColumns = "repeat(3, 1fr)";
         summaryBoxContainer.innerHTML = `
@@ -317,7 +325,7 @@ function renderTable() {
     const displayData = getDisplayData();
 
     if (displayData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${totalColumns}" style="padding: 20px; color: #8a8d98;">No players match your search.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${totalColumns}" style="padding: 20px; color: #8a8d98;">No players match your search or filter.</td></tr>`;
         updatePaginationControls(0);
         return;
     }
