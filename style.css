@@ -1146,8 +1146,6 @@ body.fdt-guide-open { overflow: hidden; }
 
 /* ==================== FDT ROSTER: VIEW AS CHART ==================== */
 .fdt-chart-toggle-btn { padding:9px 14px; font-size:.85rem; white-space:nowrap; }
-#troops-table-page.fdt-chart-mode .table-container,
-#troops-table-page.fdt-chart-mode #pagination-controls { display:none !important; }
 .fdt-chart-view { margin:14px 0; }
 .fdt-chart-view.hidden { display:none; }
 .fdt-chart-head { display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:flex-end; margin-bottom:12px; }
@@ -1190,3 +1188,16 @@ body.fdt-guide-open { overflow: hidden; }
 .fdt-task-players th { color:#94a3b8; font-size:.68rem; text-transform:uppercase; }
 .fdt-task-players td:last-child, .fdt-task-players th:last-child { text-align:right; }
 .fdt-group-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+
+/* FDT chart modal (own interface + PNG image tab) */
+.fdt-chart-modal-content { width:min(1180px,100%); max-width:1180px; max-height:min(92vh,1000px); display:flex; flex-direction:column; }
+.fdt-chart-modal-content .fdt-guide-body { flex:1; min-height:0; }
+.fdt-chart-modal .fdt-chart-view { margin:0; }
+.fdt-chart-tabs { display:flex; gap:6px; margin-top:12px; }
+.fdt-chart-tab { background:rgba(15,23,42,.8); border:1px solid rgba(125,211,252,.3); color:#bae6fd; padding:7px 14px; border-radius:8px; font-size:.82rem; cursor:pointer; }
+.fdt-chart-tab.active { background:rgba(14,165,233,.28); border-color:#38bdf8; color:#fff; font-weight:700; }
+.fdt-chart-image-wrap { text-align:center; }
+.fdt-chart-image-wrap.hidden { display:none; }
+.fdt-chart-image-wrap img { max-width:100%; height:auto; border-radius:10px; border:1px solid rgba(125,211,252,.3); }
+.fdt-footer-btns { display:flex; gap:8px; flex-wrap:wrap; }
+@media (max-width:600px) { .fdt-footer-btns { width:100%; } .fdt-footer-btns .btn-apply { flex:1; } }

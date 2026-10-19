@@ -6,7 +6,7 @@
 				<title>3475 Battle League</title>
 				<meta name="description" content="3475 3475 Battle League - Alliance troops power leaderboard, legion roster, and match scheduling.">
 				<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E">
-				<link rel="stylesheet" href="style.css?v=13">
+				<link rel="stylesheet" href="style.css?v=14">
 
 
 
@@ -258,9 +258,6 @@
                       <label><input type="checkbox"> Save healing resources for Rearmament and prepare teleport plan</label>
                     </div>
                 </section>
-				<!-- FDT ROSTER: VIEW AS CHART -->
-				<section id="fdt-chart-view" class="fdt-chart-view hidden" aria-live="polite"></section>
-
 				<div class="table-container" aria-live="polite">
 					<table>
 						<thead>
@@ -659,6 +656,25 @@
                       </div>
                     </div>
 
+<div id="fdt-chart-modal" class="modal hidden fdt-guide-modal fdt-chart-modal" role="dialog" aria-modal="true" aria-labelledby="fdt-chart-title" onclick="if(event.target===this) toggleFdtChartView(false)">
+<div class="modal-content fdt-guide-modal-content fdt-chart-modal-content">
+<button class="close-modal" type="button" aria-label="Close chart" onclick="toggleFdtChartView(false)">&times;</button>
+<div class="fdt-guide-modal-header">
+<div class="fdt-guide-kicker">FROSTDRAGON TYRANT</div>
+<h2 id="fdt-chart-title">📊 Roster Chart</h2>
+<div class="fdt-chart-tabs" role="tablist">
+<button id="fdt-chart-tab-chart" class="fdt-chart-tab active" type="button" role="tab" aria-selected="true" onclick="setFdtChartTab('chart')">📊 Chart</button>
+<button id="fdt-chart-tab-image" class="fdt-chart-tab" type="button" role="tab" aria-selected="false" onclick="setFdtChartTab('image')">🖼 Image</button>
+</div>
+</div>
+<div class="fdt-guide-body">
+<div id="fdt-chart-view" class="fdt-chart-view" aria-live="polite"></div>
+<div id="fdt-chart-image-wrap" class="fdt-chart-image-wrap hidden"><img id="fdt-chart-image" alt="Frostdragon roster chart"></div>
+</div>
+<div class="fdt-guide-modal-footer"><span>Follows the "View by Alliance" filter. Image tab = ready-to-share PNG.</span><div class="fdt-footer-btns"><button class="btn-apply" type="button" onclick="downloadFdtChartImage()">⬇ Download PNG</button><button class="btn-apply" type="button" onclick="toggleFdtChartView(false)">Close</button></div></div>
+</div>
+</div>
+
 <div id="fdt-status-modal" class="modal hidden fdt-guide-modal" role="dialog" aria-modal="true" aria-labelledby="fdt-status-title" onclick="if(event.target===this) toggleFdtStatus(false)">
 <div class="modal-content fdt-guide-modal-content">
 <button class="close-modal" type="button" aria-label="Close Real Time Status" onclick="toggleFdtStatus(false)">&times;</button>
@@ -672,6 +688,6 @@
 </div>
 </div>
 
-	<script src="frostdragon.js?v=4"></script>
+	<script src="frostdragon.js?v=5"></script>
 </body>
 </html>

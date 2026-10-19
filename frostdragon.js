@@ -63,7 +63,7 @@ function updateFdtAllianceFilterUi() {
     && !document.getElementById('troops-table-page')?.classList.contains('hidden');
   const show = frost && onRoster;
   wrap.classList.toggle('hidden', !show);
-  if (!show) { fdtAllianceFilter = ''; select.value = ''; fdtChartMode = false; applyFdtChartMode(); return; }
+  if (!show) { fdtAllianceFilter = ''; select.value = ''; if (isFdtChartOpen()) toggleFdtChartView(false); return; }
   const battlePlayers = loadedTroopsData.filter(p => p.frostdragon_role === 'Battle');
   const total = battlePlayers.length;
   Array.from(select.options).forEach(opt => {
@@ -76,12 +76,53 @@ function updateFdtAllianceFilterUi() {
 }
 
 // ---- "View as Chart" (Frostdragon roster only) ----
-// Pure SVG/CSS charts (no extra library). Data = Battle roster, scoped by the "View by Alliance" filter.
-let fdtChartMode = false;
+// Opens its own chart interface (modal) with two tabs: interactive Chart and a rendered Image (PNG) that can be downloaded.
+// Pure SVG/CSS/Canvas (no extra library). Data = Battle roster, scoped by the "View by Alliance" filter.
 const FDT_ALLIANCE_COLORS = { 'Alliance A': '#38bdf8', 'Alliance B': '#a78bfa', 'Alliance C': '#fbbf24', none: '#64748b' };
+let fdtChartTab = 'chart';
+let fdtChartImageUrl = '';
+
+function fdtRosterContextOk() {
+  const page = document.getElementById('troops-table-page');
+  const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
+  return !!(frost && typeof viewMode !== 'undefined' && viewMode === 'LEGION' && page && !page.classList.contains('hidden'));
+}
+function isFdtChartOpen() {
+  const modal = document.getElementById('fdt-chart-modal');
+  return !!modal && !modal.classList.contains('hidden');
+}
 function toggleFdtChartView(force) {
-  fdtChartMode = typeof force === 'boolean' ? force : !fdtChartMode;
-  applyFdtChartMode();
+  const modal = document.getElementById('fdt-chart-modal');
+  if (!modal) return;
+  const open = typeof force === 'boolean' ? force : modal.classList.contains('hidden');
+  if (open && !fdtRosterContextOk()) return;
+  modal.classList.toggle('hidden', !open);
+  document.body.classList.toggle('fdt-guide-open', open);
+  if (open) {
+    fdtChartTab = 'chart';
+    applyFdtChartMode();
+    modal.querySelector('.close-modal')?.focus();
+  }
+}
+// Called on every roster re-render: keeps an open chart in sync with the data / filter.
+function applyFdtChartMode() {
+  if (!isFdtChartOpen()) return;
+  if (!fdtRosterContextOk()) { toggleFdtChartView(false); return; }
+  renderFdtCharts();
+  setFdtChartTab(fdtChartTab);
+}
+function setFdtChartTab(tab) {
+  fdtChartTab = tab === 'image' ? 'image' : 'chart';
+  const isImage = fdtChartTab === 'image';
+  document.getElementById('fdt-chart-view')?.classList.toggle('hidden', isImage);
+  document.getElementById('fdt-chart-image-wrap')?.classList.toggle('hidden', !isImage);
+  [['chart', 'fdt-chart-tab-chart'], ['image', 'fdt-chart-tab-image']].forEach(([name, id]) => {
+    const b = document.getElementById(id);
+    if (!b) return;
+    b.classList.toggle('active', fdtChartTab === name);
+    b.setAttribute('aria-selected', String(fdtChartTab === name));
+  });
+  if (isImage) showFdtChartImage();
 }
 function fdtCompactPower(n) {
   n = Number(n) || 0;
@@ -90,20 +131,34 @@ function fdtCompactPower(n) {
   if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
   return String(n);
 }
-function applyFdtChartMode() {
-  const page = document.getElementById('troops-table-page');
-  const view = document.getElementById('fdt-chart-view');
-  const btn = document.getElementById('fdt-chart-toggle-btn');
-  const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
-  const onRoster = typeof viewMode !== 'undefined' && viewMode === 'LEGION' && page && !page.classList.contains('hidden');
-  const active = !!(fdtChartMode && frost && onRoster);
-  if (page) page.classList.toggle('fdt-chart-mode', active);
-  if (view) view.classList.toggle('hidden', !active);
-  if (btn) {
-    btn.textContent = active ? '📋 View as Table' : '📊 View as Chart';
-    btn.setAttribute('aria-pressed', String(active));
-  }
-  if (active) renderFdtCharts();
+
+// Shared data for the HTML chart and the PNG image.
+function getFdtChartData() {
+  const all = (typeof loadedTroopsData !== 'undefined' ? loadedTroopsData : []).filter(p => p.frostdragon_role === 'Battle');
+  const scoped = getFdtAllianceScoped(all);
+  const power = p => Number(p.troops_power) || 0;
+  const byPower = (a, b) => power(b) - power(a);
+  const groupOf = p => FDT_ALLIANCE_TASKS.find(g => parseFdtTasks(p.frostdragon_task).includes(g));
+  const groupRows = FDT_ALLIANCE_TASKS.map(g => {
+    const members = all.filter(p => parseFdtTasks(p.frostdragon_task).includes(g));
+    return { label: g, count: members.length, power: members.reduce((s, p) => s + power(p), 0) };
+  });
+  const unassigned = all.filter(p => !groupOf(p));
+  if (unassigned.length) groupRows.push({ label: 'No group', count: unassigned.length, power: unassigned.reduce((s, p) => s + power(p), 0) });
+  const roleTasks = FDT_TASKS.filter(t => !FDT_ALLIANCE_TASKS.includes(t));
+  const taskCounts = roleTasks.map(t => ({ label: t, players: scoped.filter(p => parseFdtTasks(p.frostdragon_task).includes(t)).sort(byPower) }));
+  taskCounts.push({ label: 'No role task', players: scoped.filter(p => !parseFdtTasks(p.frostdragon_task).some(t => roleTasks.includes(t))).sort(byPower) });
+  return {
+    all, scoped, power, groupOf, groupRows, taskCounts,
+    top: [...scoped].sort(byPower).slice(0, 15),
+    scopeLabel: fdtAllianceFilter || 'All Alliances',
+    scopedPower: scoped.reduce((s, p) => s + power(p), 0)
+  };
+}
+const fdtColorOf = label => FDT_ALLIANCE_COLORS[label] || FDT_ALLIANCE_COLORS.none;
+
+function toggleFdtTaskDetails(open) {
+  document.querySelectorAll('#fdt-chart-view .fdt-task-detail').forEach(d => { d.open = !!open; });
 }
 function fdtBarRows(rows, max, opts = {}) {
   // rows: [{label, value, color, display, sub}]
@@ -117,81 +172,205 @@ function fdtBarRows(rows, max, opts = {}) {
     </div>`;
   }).join('');
 }
-function toggleFdtTaskDetails(open) {
-  document.querySelectorAll('#fdt-chart-view .fdt-task-detail').forEach(d => { d.open = !!open; });
-}
 function renderFdtCharts() {
   const view = document.getElementById('fdt-chart-view');
   if (!view) return;
   const openTasks = Array.from(view.querySelectorAll('.fdt-task-detail[open] .fdt-bar-label')).map(el => el.textContent);
-  const all = (typeof loadedTroopsData !== 'undefined' ? loadedTroopsData : []).filter(p => p.frostdragon_role === 'Battle');
-  const scoped = getFdtAllianceScoped(all);
-  const power = p => Number(p.troops_power) || 0;
-  const scopeLabel = fdtAllianceFilter || 'All Alliances';
-
-  if (!all.length) {
+  const d = getFdtChartData();
+  const { power, groupOf } = d;
+  if (!d.all.length) {
     view.innerHTML = '<div class="fdt-chart-empty">No Battle roster players yet. Assign players to the Frostdragon roster to see charts.</div>';
     return;
   }
+  const maxCount = Math.max(FDT_MAX_PER_ALLIANCE, ...d.groupRows.map(g => g.count));
+  const maxGroupPower = Math.max(1, ...d.groupRows.map(g => g.power));
+  const countChart = fdtBarRows(d.groupRows.map(g => ({ label: g.label, value: g.count, color: fdtColorOf(g.label), display: `${g.count} / ${FDT_MAX_PER_ALLIANCE}` })), maxCount, { cap: FDT_MAX_PER_ALLIANCE });
+  const powerChart = fdtBarRows(d.groupRows.map(g => ({ label: g.label, value: g.power, color: fdtColorOf(g.label), display: fdtCompactPower(g.power), sub: g.power.toLocaleString('en-US') })), maxGroupPower);
 
-  // Chart 1: alliance groups (always shows all 3 so groups can be compared)
-  const groupRows = FDT_ALLIANCE_TASKS.map(g => {
-    const members = all.filter(p => parseFdtTasks(p.frostdragon_task).includes(g));
-    return { label: g, count: members.length, power: members.reduce((s, p) => s + power(p), 0) };
-  });
-  const unassigned = all.filter(p => !parseFdtTasks(p.frostdragon_task).some(t => FDT_ALLIANCE_TASKS.includes(t)));
-  if (unassigned.length) groupRows.push({ label: 'No group', count: unassigned.length, power: unassigned.reduce((s, p) => s + power(p), 0) });
-  const maxCount = Math.max(FDT_MAX_PER_ALLIANCE, ...groupRows.map(g => g.count));
-  const maxGroupPower = Math.max(1, ...groupRows.map(g => g.power));
-  const countChart = fdtBarRows(groupRows.map(g => ({
-    label: g.label, value: g.count, color: FDT_ALLIANCE_COLORS[g.label] || FDT_ALLIANCE_COLORS.none,
-    display: `${g.count} / ${FDT_MAX_PER_ALLIANCE}`
-  })), maxCount, { cap: FDT_MAX_PER_ALLIANCE });
-  const powerChart = fdtBarRows(groupRows.map(g => ({
-    label: g.label, value: g.power, color: FDT_ALLIANCE_COLORS[g.label] || FDT_ALLIANCE_COLORS.none,
-    display: fdtCompactPower(g.power), sub: g.power.toLocaleString('en-US')
-  })), maxGroupPower);
-
-  // Chart 2: task distribution within the current scope, with the players of each task
-  const roleTasks = FDT_TASKS.filter(t => !FDT_ALLIANCE_TASKS.includes(t));
-  const groupOf = p => FDT_ALLIANCE_TASKS.find(g => parseFdtTasks(p.frostdragon_task).includes(g));
-  const byPower = (a, b) => power(b) - power(a);
-  const taskCounts = roleTasks.map(t => ({ label: t, players: scoped.filter(p => parseFdtTasks(p.frostdragon_task).includes(t)).sort(byPower) }));
-  taskCounts.push({ label: 'No role task', players: scoped.filter(p => !parseFdtTasks(p.frostdragon_task).some(t => roleTasks.includes(t))).sort(byPower) });
-  const maxTask = Math.max(1, ...taskCounts.map(t => t.players.length));
+  const maxTask = Math.max(1, ...d.taskCounts.map(t => t.players.length));
   const playerList = list => list.length ? `<table class="fdt-task-players"><thead><tr><th>#</th><th>Nickname</th><th>Game ID</th><th>Group</th><th>Troops Power</th></tr></thead><tbody>${
-    list.map((p, i) => { const g = groupOf(p); return `<tr><td>${i + 1}</td><td>${escapeHtml(p.nickname || '-')}</td><td>${escapeHtml(p.game_id || '-')}</td><td><span class="fdt-group-dot" style="background:${FDT_ALLIANCE_COLORS[g] || FDT_ALLIANCE_COLORS.none}"></span>${escapeHtml(g || '—')}</td><td>${power(p).toLocaleString('en-US')}</td></tr>`; }).join('')
+    list.map((p, i) => { const g = groupOf(p); return `<tr><td>${i + 1}</td><td>${escapeHtml(p.nickname || '-')}</td><td>${escapeHtml(p.game_id || '-')}</td><td><span class="fdt-group-dot" style="background:${fdtColorOf(g)}"></span>${escapeHtml(g || '—')}</td><td>${power(p).toLocaleString('en-US')}</td></tr>`; }).join('')
   }</tbody></table>` : '<div class="fdt-chart-empty">No players assigned.</div>';
-  const taskChart = taskCounts.map(t => `<details class="fdt-task-detail"><summary>${fdtBarRows([{
+  const taskChart = d.taskCounts.map(t => `<details class="fdt-task-detail"><summary>${fdtBarRows([{
       label: t.label, value: t.players.length, color: t.label === 'No role task' ? '#64748b' : '#0ea5e9',
       display: `${t.players.length}`, sub: t.players.length ? fdtCompactPower(t.players.reduce((s, p) => s + power(p), 0)) : ''
     }], maxTask)}</summary>${playerList(t.players)}</details>`).join('');
 
-  // Chart 3: top players by power within the current scope
-  const top = [...scoped].sort((a, b) => power(b) - power(a)).slice(0, 15);
-  const maxTop = Math.max(1, ...top.map(power));
-  const topChart = fdtBarRows(top.map((p, i) => ({
-    label: `${i + 1}. ${p.nickname || '-'}`, value: power(p),
-    color: FDT_ALLIANCE_COLORS[groupOf(p)] || FDT_ALLIANCE_COLORS.none,
+  const maxTop = Math.max(1, ...d.top.map(power));
+  const topChart = fdtBarRows(d.top.map((p, i) => ({
+    label: `${i + 1}. ${p.nickname || '-'}`, value: power(p), color: fdtColorOf(groupOf(p)),
     display: fdtCompactPower(power(p)), sub: p.alliance || ''
   })), maxTop);
-
-  const scopedPower = scoped.reduce((s, p) => s + power(p), 0);
-  const legend = [...FDT_ALLIANCE_TASKS, 'No group'].map(g => `<span class="fdt-legend-item"><i style="background:${FDT_ALLIANCE_COLORS[g] || FDT_ALLIANCE_COLORS.none}"></i>${g}</span>`).join('');
+  const legend = [...FDT_ALLIANCE_TASKS, 'No group'].map(g => `<span class="fdt-legend-item"><i style="background:${fdtColorOf(g)}"></i>${g}</span>`).join('');
 
   view.innerHTML = `
     <div class="fdt-chart-head">
-      <div><h3>📊 Roster Chart · ${escapeHtml(scopeLabel)}</h3>
-      <small>${scoped.length} combatants · total power ${scopedPower.toLocaleString('en-US')}</small></div>
+      <div><h3>${escapeHtml(d.scopeLabel)}</h3>
+      <small>${d.scoped.length} combatants · total power ${d.scopedPower.toLocaleString('en-US')}</small></div>
       <div class="fdt-legend">${legend}</div>
     </div>
     <div class="fdt-chart-grid">
       <div class="fdt-chart-card"><h4>Combatants per alliance group</h4><small>Marker = limit of ${FDT_MAX_PER_ALLIANCE} per alliance</small>${countChart}</div>
       <div class="fdt-chart-card"><h4>Total troops power per alliance group</h4>${powerChart}</div>
-      <div class="fdt-chart-card fdt-chart-card--wide"><div class="fdt-card-head"><div><h4>Task distribution &amp; players</h4><small>${escapeHtml(scopeLabel)} · click a task to see its players</small></div><div class="fdt-card-actions"><button type="button" class="fdt-mini-btn" onclick="toggleFdtTaskDetails(true)">Expand all</button><button type="button" class="fdt-mini-btn" onclick="toggleFdtTaskDetails(false)">Collapse all</button></div></div>${taskChart}</div>
-      <div class="fdt-chart-card"><h4>Top 15 players by troops power</h4><small>Color = alliance group</small>${topChart}</div>
+      <div class="fdt-chart-card fdt-chart-card--wide"><div class="fdt-card-head"><div><h4>Task distribution &amp; players</h4><small>${escapeHtml(d.scopeLabel)} · click a task to see its players</small></div><div class="fdt-card-actions"><button type="button" class="fdt-mini-btn" onclick="toggleFdtTaskDetails(true)">Expand all</button><button type="button" class="fdt-mini-btn" onclick="toggleFdtTaskDetails(false)">Collapse all</button></div></div>${taskChart}</div>
+      <div class="fdt-chart-card fdt-chart-card--wide"><h4>Top 15 players by troops power</h4><small>Color = alliance group</small>${topChart}</div>
     </div>`;
-  view.querySelectorAll('.fdt-task-detail').forEach(d => { if (openTasks.includes(d.querySelector('.fdt-bar-label')?.textContent)) d.open = true; });
+  view.querySelectorAll('.fdt-task-detail').forEach(el => {
+    if (openTasks.includes(el.querySelector('.fdt-bar-label')?.textContent)) el.open = true;
+  });
+}
+
+// ---- Image (PNG) rendering: drawn directly on a canvas so the result is a clean standalone picture ----
+function buildFdtChartCanvas() {
+  const d = getFdtChartData();
+  const SCALE = 2, W = 1400, PAD = 36, GAP = 18;
+  const FONT = '"Segoe UI", Tahoma, Arial, sans-serif';
+  const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+  const MAX_PLAYERS_PER_TASK = 12;
+
+  const draw = (ctx, H) => {
+    const rr = (x, y, w, h, r) => { r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
+    const txt = (s, x, y, o = {}) => {
+      const { size = 14, weight = '400', color = '#e2e8f0', align = 'left', maxW } = o;
+      ctx.font = `${weight} ${size}px ${FONT}`; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'middle';
+      let t = String(s);
+      if (maxW && ctx.measureText(t).width > maxW) {
+        while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+        t += '…';
+      }
+      ctx.fillText(t, x, y);
+    };
+    const card = (x, y, w, h, title, sub) => {
+      rr(x, y, w, h, 12); ctx.fillStyle = 'rgba(15,23,42,0.85)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(125,211,252,0.3)'; ctx.lineWidth = 1; ctx.stroke();
+      if (title) txt(title, x + 16, y + 24, { size: 16, weight: '700', color: '#f1f5f9' });
+      if (sub) txt(sub, x + 16, y + 44, { size: 12, color: '#94a3b8' });
+    };
+    const bars = (x, y, w, rows, max, cap) => {
+      const lw = Math.round(w * 0.3), vw = 96, bx = x + lw + 10, bw = w - lw - vw - 20;
+      rows.forEach((r, i) => {
+        const cy = y + i * 30 + 15;
+        txt(r.label, x, cy, { size: 13, color: '#cbd5e1', maxW: lw });
+        rr(bx, cy - 8, bw, 16, 6); ctx.fillStyle = 'rgba(51,65,85,0.6)'; ctx.fill();
+        if (max > 0 && r.value > 0) { rr(bx, cy - 8, Math.max(6, bw * r.value / max), 16, 6); ctx.fillStyle = r.color; ctx.fill(); }
+        if (cap) { ctx.fillStyle = '#ef4444'; ctx.fillRect(bx + bw * Math.min(1, cap / max) - 1, cy - 10, 2, 20); }
+        txt(r.display, x + w, cy, { size: 13, weight: '700', align: 'right' });
+      });
+    };
+
+    if (H) {
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, '#0b1220'); g.addColorStop(1, '#111827');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    }
+    let y = PAD;
+    // Header
+    txt('FROSTDRAGON TYRANT', PAD, y + 8, { size: 12, weight: '700', color: '#38bdf8' });
+    txt('Roster Chart — ' + d.scopeLabel, PAD, y + 38, { size: 30, weight: '700', color: '#e0f2fe' });
+    txt(`${d.scoped.length} combatants  ·  total power ${d.scopedPower.toLocaleString('en-US')}  ·  ${stamp}`, PAD, y + 70, { size: 14, color: '#94a3b8' });
+    let lx = W - PAD;
+    ['No group', 'Alliance C', 'Alliance B', 'Alliance A'].forEach(label => {
+      ctx.font = `400 13px ${FONT}`;
+      const tw = ctx.measureText(label).width;
+      lx -= tw; txt(label, lx, y + 38, { size: 13, color: '#cbd5e1' });
+      lx -= 16; ctx.fillStyle = fdtColorOf(label); rr(lx, y + 32, 12, 12, 3); ctx.fill();
+      lx -= 18;
+    });
+    y += 100;
+
+    if (!d.all.length) {
+      card(PAD, y, W - 2 * PAD, 80, 'No Battle roster players yet.', 'Assign players to the Frostdragon roster to see the chart.');
+      return y + 80 + PAD;
+    }
+
+    // Section 1: alliance groups (two cards)
+    const cw = (W - 2 * PAD - GAP) / 2;
+    const h1 = 62 + d.groupRows.length * 30 + 14;
+    const maxCount = Math.max(FDT_MAX_PER_ALLIANCE, ...d.groupRows.map(g => g.count));
+    const maxGroupPower = Math.max(1, ...d.groupRows.map(g => g.power));
+    card(PAD, y, cw, h1, 'Combatants per alliance group', `Red marker = limit of ${FDT_MAX_PER_ALLIANCE} per alliance`);
+    bars(PAD + 16, y + 62, cw - 32, d.groupRows.map(g => ({ label: g.label, value: g.count, color: fdtColorOf(g.label), display: `${g.count} / ${FDT_MAX_PER_ALLIANCE}` })), maxCount, FDT_MAX_PER_ALLIANCE);
+    card(PAD + cw + GAP, y, cw, h1, 'Total troops power per alliance group', 'Battle roster');
+    bars(PAD + cw + GAP + 16, y + 62, cw - 32, d.groupRows.map(g => ({ label: g.label, value: g.power, color: fdtColorOf(g.label), display: fdtCompactPower(g.power) })), maxGroupPower);
+    y += h1 + GAP + 8;
+
+    // Section 2: task cards with players
+    txt('Task distribution & players', PAD, y + 10, { size: 20, weight: '700', color: '#e0f2fe' });
+    y += 34;
+    const tw = (W - 2 * PAD - 2 * GAP) / 3;
+    const maxTask = Math.max(1, ...d.taskCounts.map(t => t.players.length));
+    const cardH = t => 62 + Math.max(1, Math.min(MAX_PLAYERS_PER_TASK, t.players.length) + (t.players.length > MAX_PLAYERS_PER_TASK ? 1 : 0)) * 22 + 12;
+    for (let i = 0; i < d.taskCounts.length; i += 3) {
+      const row = d.taskCounts.slice(i, i + 3);
+      const rowH = Math.max(...row.map(cardH));
+      row.forEach((t, c) => {
+        const x = PAD + c * (tw + GAP), n = t.players.length;
+        const total = t.players.reduce((s, p) => s + d.power(p), 0);
+        card(x, y, tw, rowH, null);
+        txt(t.label, x + 16, y + 22, { size: 15, weight: '700', color: '#f1f5f9', maxW: tw - 130 });
+        txt(n ? `${n}  ·  ${fdtCompactPower(total)}` : '0', x + tw - 16, y + 22, { size: 13, weight: '700', color: '#7dd3fc', align: 'right' });
+        rr(x + 16, y + 38, tw - 32, 6, 3); ctx.fillStyle = 'rgba(51,65,85,0.6)'; ctx.fill();
+        if (n) { rr(x + 16, y + 38, Math.max(6, (tw - 32) * n / maxTask), 6, 3); ctx.fillStyle = t.label === 'No role task' ? '#64748b' : '#0ea5e9'; ctx.fill(); }
+        let py = y + 62;
+        if (!n) txt('No players assigned', x + 16, py + 8, { size: 12, color: '#64748b' });
+        t.players.slice(0, MAX_PLAYERS_PER_TASK).forEach((p, k) => {
+          ctx.fillStyle = fdtColorOf(d.groupOf(p)); ctx.beginPath(); ctx.arc(x + 22, py + 8, 4, 0, Math.PI * 2); ctx.fill();
+          txt(`${k + 1}. ${p.nickname || '-'}`, x + 34, py + 8, { size: 13, maxW: tw - 34 - 90 });
+          txt(fdtCompactPower(d.power(p)), x + tw - 16, py + 8, { size: 12, color: '#94a3b8', align: 'right' });
+          py += 22;
+        });
+        if (n > MAX_PLAYERS_PER_TASK) txt(`+${n - MAX_PLAYERS_PER_TASK} more`, x + 34, py + 8, { size: 12, color: '#64748b' });
+      });
+      y += rowH + GAP;
+    }
+
+    // Section 3: top players
+    y += 6;
+    const h3 = 62 + d.top.length * 30 + 14;
+    const maxTop = Math.max(1, ...d.top.map(d.power));
+    card(PAD, y, W - 2 * PAD, h3, 'Top 15 players by troops power', 'Color = alliance group');
+    bars(PAD + 16, y + 62, W - 2 * PAD - 32, d.top.map((p, i) => ({
+      label: `${i + 1}. ${p.nickname || '-'}${p.alliance ? '  (' + p.alliance + ')' : ''}`,
+      value: d.power(p), color: fdtColorOf(d.groupOf(p)), display: fdtCompactPower(d.power(p))
+    })), maxTop);
+    y += h3 + GAP;
+    txt('Frostdragon Tyrant roster · generated from the roster tool', PAD, y + 8, { size: 12, color: '#64748b' });
+    return y + 30 + PAD / 2;
+  };
+
+  const measure = document.createElement('canvas'); measure.width = W; measure.height = 10;
+  const H = Math.ceil(draw(measure.getContext('2d'), 0));
+  const canvas = document.createElement('canvas');
+  canvas.width = W * SCALE; canvas.height = H * SCALE;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(SCALE, SCALE);
+  draw(ctx, H);
+  return canvas;
+}
+function showFdtChartImage() {
+  const img = document.getElementById('fdt-chart-image');
+  if (!img) return;
+  try {
+    fdtChartImageUrl = buildFdtChartCanvas().toDataURL('image/png');
+    img.src = fdtChartImageUrl;
+  } catch (e) {
+    console.warn('FDT chart image failed', e);
+    if (typeof showToast === 'function') showToast('Unable to generate chart image.', 'error');
+  }
+}
+function downloadFdtChartImage() {
+  try {
+    const url = buildFdtChartCanvas().toDataURL('image/png');
+    const scope = (fdtAllianceFilter || 'All_Alliances').replace(/\s+/g, '_');
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `FDT_Roster_Chart_${scope}_${new Date().toISOString().slice(0, 10)}.png`;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    if (typeof showToast === 'function') showToast('Chart image downloaded.', 'success');
+  } catch (e) {
+    console.warn('FDT chart download failed', e);
+    if (typeof showToast === 'function') showToast('Unable to download chart image.', 'error');
+  }
 }
 async function toggleFrostdragonTask(playerId, task, checked) {
   if (!FDT_TASKS.includes(task)) return;
@@ -308,7 +487,7 @@ function toggleFdtStatus(forceOpen) {
   }
 }
 document.addEventListener('keydown', event => {
-  if (event.key === 'Escape') { toggleFdtGuide(false); toggleFdtStatus(false); }
+  if (event.key === 'Escape') { toggleFdtGuide(false); toggleFdtStatus(false); toggleFdtChartView(false); }
 });
 document.addEventListener('DOMContentLoaded',()=>{
   if(fdtClockTimer)clearInterval(fdtClockTimer);
