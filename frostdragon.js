@@ -78,7 +78,7 @@ function updateFdtAllianceFilterUi() {
 // ---- "View as Chart" (Frostdragon roster only) ----
 // Opens its own chart interface (modal) with two tabs: interactive Chart and a rendered Image (PNG) that can be downloaded.
 // Pure SVG/CSS/Canvas (no extra library). Data = Battle roster, scoped by the "View by Alliance" filter.
-const FDT_ALLIANCE_COLORS = { 'Alliance A': '#38bdf8', 'Alliance B': '#a78bfa', none: '#64748b' };
+const FDT_ALLIANCE_COLORS = { 'Alliance A': '#ef4444', 'Alliance B': '#3b82f6', none: '#64748b' };
 let fdtChartTab = 'chart';
 let fdtChartImageUrl = '';
 
@@ -139,6 +139,9 @@ function getFdtChartData() {
   const power = p => Number(p.troops_power) || 0;
   const byPower = (a, b) => power(b) - power(a);
   const groupOf = p => FDT_ALLIANCE_TASKS.find(g => parseFdtTasks(p.frostdragon_task).includes(g));
+  // Display order: Alliance A first, then Alliance B, then players without a group; highest power first inside each group.
+  const groupIndex = p => { const i = FDT_ALLIANCE_TASKS.indexOf(groupOf(p)); return i < 0 ? FDT_ALLIANCE_TASKS.length : i; };
+  const byGroupThenPower = (a, b) => groupIndex(a) - groupIndex(b) || byPower(a, b);
   const groupRows = FDT_ALLIANCE_TASKS.map(g => {
     const members = all.filter(p => parseFdtTasks(p.frostdragon_task).includes(g));
     return { label: g, count: members.length, power: members.reduce((s, p) => s + power(p), 0) };
@@ -146,11 +149,11 @@ function getFdtChartData() {
   const unassigned = all.filter(p => !groupOf(p));
   if (unassigned.length) groupRows.push({ label: 'No group', count: unassigned.length, power: unassigned.reduce((s, p) => s + power(p), 0) });
   const roleTasks = FDT_TASKS.filter(t => !FDT_ALLIANCE_TASKS.includes(t));
-  const taskCounts = roleTasks.map(t => ({ label: t, players: scoped.filter(p => parseFdtTasks(p.frostdragon_task).includes(t)).sort(byPower) }));
-  taskCounts.push({ label: 'No role task', players: scoped.filter(p => !parseFdtTasks(p.frostdragon_task).some(t => roleTasks.includes(t))).sort(byPower) });
+  const taskCounts = roleTasks.map(t => ({ label: t, players: scoped.filter(p => parseFdtTasks(p.frostdragon_task).includes(t)).sort(byGroupThenPower) }));
+  taskCounts.push({ label: 'No role task', players: scoped.filter(p => !parseFdtTasks(p.frostdragon_task).some(t => roleTasks.includes(t))).sort(byGroupThenPower) });
   return {
     all, scoped, power, groupOf, groupRows, taskCounts,
-    top: [...scoped].sort(byPower).slice(0, 15),
+    top: [...scoped].sort(byPower).slice(0, 15).sort(byGroupThenPower),
     scopeLabel: fdtAllianceFilter || 'All Alliances',
     scopedPower: scoped.reduce((s, p) => s + power(p), 0)
   };
@@ -210,7 +213,7 @@ function renderFdtCharts() {
       <div class="fdt-legend">${legend}</div>
     </div>
     <div class="fdt-chart-grid">
-      <div class="fdt-chart-card"><h4>Combatants per alliance group</h4><small>Marker = limit of ${FDT_MAX_PER_ALLIANCE} per alliance</small>${countChart}</div>
+      <div class="fdt-chart-card"><h4>Combatants per alliance group</h4><small>Yellow marker = limit of ${FDT_MAX_PER_ALLIANCE} per alliance</small>${countChart}</div>
       <div class="fdt-chart-card"><h4>Total troops power per alliance group</h4>${powerChart}</div>
       <div class="fdt-chart-card fdt-chart-card--wide"><div class="fdt-card-head"><div><h4>Task distribution &amp; players</h4><small>${escapeHtml(d.scopeLabel)} · click a task to see its players</small></div><div class="fdt-card-actions"><button type="button" class="fdt-mini-btn" onclick="toggleFdtTaskDetails(true)">Expand all</button><button type="button" class="fdt-mini-btn" onclick="toggleFdtTaskDetails(false)">Collapse all</button></div></div>${taskChart}</div>
       <div class="fdt-chart-card fdt-chart-card--wide"><h4>Top 15 players by troops power</h4><small>Color = alliance group</small>${topChart}</div>
@@ -252,7 +255,7 @@ function buildFdtChartCanvas() {
         txt(r.label, x, cy, { size: 13, color: '#cbd5e1', maxW: lw });
         rr(bx, cy - 8, bw, 16, 6); ctx.fillStyle = 'rgba(51,65,85,0.6)'; ctx.fill();
         if (max > 0 && r.value > 0) { rr(bx, cy - 8, Math.max(6, bw * r.value / max), 16, 6); ctx.fillStyle = r.color; ctx.fill(); }
-        if (cap) { ctx.fillStyle = '#ef4444'; ctx.fillRect(bx + bw * Math.min(1, cap / max) - 1, cy - 10, 2, 20); }
+        if (cap) { ctx.fillStyle = '#fbbf24'; ctx.fillRect(bx + bw * Math.min(1, cap / max) - 1, cy - 10, 2, 20); }
         txt(r.display, x + w, cy, { size: 13, weight: '700', align: 'right' });
       });
     };
@@ -287,7 +290,7 @@ function buildFdtChartCanvas() {
     const h1 = 62 + d.groupRows.length * 30 + 14;
     const maxCount = Math.max(FDT_MAX_PER_ALLIANCE, ...d.groupRows.map(g => g.count));
     const maxGroupPower = Math.max(1, ...d.groupRows.map(g => g.power));
-    card(PAD, y, cw, h1, 'Combatants per alliance group', `Red marker = limit of ${FDT_MAX_PER_ALLIANCE} per alliance`);
+    card(PAD, y, cw, h1, 'Combatants per alliance group', `Yellow marker = limit of ${FDT_MAX_PER_ALLIANCE} per alliance`);
     bars(PAD + 16, y + 62, cw - 32, d.groupRows.map(g => ({ label: g.label, value: g.count, color: fdtColorOf(g.label), display: `${g.count} / ${FDT_MAX_PER_ALLIANCE}` })), maxCount, FDT_MAX_PER_ALLIANCE);
     card(PAD + cw + GAP, y, cw, h1, 'Total troops power per alliance group', 'Battle roster');
     bars(PAD + cw + GAP + 16, y + 62, cw - 32, d.groupRows.map(g => ({ label: g.label, value: g.power, color: fdtColorOf(g.label), display: fdtCompactPower(g.power) })), maxGroupPower);
@@ -327,7 +330,7 @@ function buildFdtChartCanvas() {
     y += 6;
     const h3 = 62 + d.top.length * 30 + 14;
     const maxTop = Math.max(1, ...d.top.map(d.power));
-    card(PAD, y, W - 2 * PAD, h3, 'Top 15 players by troops power', 'Color = alliance group');
+    card(PAD, y, W - 2 * PAD, h3, 'Top 15 players by troops power', 'Red = Alliance A · Blue = Alliance B (A first, then B)');
     bars(PAD + 16, y + 62, W - 2 * PAD - 32, d.top.map((p, i) => ({
       label: `${i + 1}. ${p.nickname || '-'}${p.alliance ? '  (' + p.alliance + ')' : ''}`,
       value: d.power(p), color: fdtColorOf(d.groupOf(p)), display: fdtCompactPower(d.power(p))
