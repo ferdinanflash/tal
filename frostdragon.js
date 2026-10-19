@@ -1,5 +1,7 @@
 // Frostdragon Tyrant tools: task assignments, roster summary, schedule and lock.
-const FDT_TASKS = ['Rally Captain','Tyrant Candidate','Capital Reinforcer','Spire Life','Spire Shield','Spire Dragonbane','Spire Blade','Dragonite Collector','Capital Defense'];
+const FDT_TASKS = ['Rally Captain','Tyrant Candidate','Capital Reinforcer','Spire Life','Spire Shield','Spire Dragonbane','Spire Blade','Dragonite Collector','Capital Defense','Alliance A','Alliance B','Alliance C'];
+// Alliance group tasks: every battle player belongs to exactly one of these groups, in addition to their role tasks above.
+const FDT_ALLIANCE_TASKS = ['Alliance A','Alliance B','Alliance C'];
 // Official limit: an eligible alliance can dispatch up to 60 combatants (Century Games Help Center).
 const FDT_MAX_PER_ALLIANCE = 60;
 // Official Spire names: Life (+Health), Shield (+Defense), Dragonbane (+Lethality), Blade (+Attack).
@@ -14,7 +16,7 @@ function parseFdtTasks(value) {
 }
 function formatFdtTaskChips(value) {
   const tasks = parseFdtTasks(value);
-  return tasks.length ? tasks.map(t => `<span class="fdt-task-chip">${escapeHtml(t)}</span>`).join(' ') : '<span class="fdt-task-empty">—</span>';
+  return tasks.length ? tasks.map(t => `<span class="fdt-task-chip${FDT_ALLIANCE_TASKS.includes(t) ? ' fdt-task-chip--alliance' : ''}">${escapeHtml(t)}</span>`).join(' ') : '<span class="fdt-task-empty">—</span>';
 }
 let fdtSettings = { open: null, deadline: null, locked: false };
 let fdtClockTimer = null;
@@ -41,7 +43,11 @@ async function toggleFrostdragonTask(playerId, task, checked) {
   const player = loadedTroopsData.find(x => Number(x.id) === Number(playerId));
   if (!player) return;
   const tasks = new Set(parseFdtTasks(player.frostdragon_task));
-  if (checked) tasks.add(task); else tasks.delete(task);
+  if (checked) {
+    // A player can only belong to one alliance group (A / B / C).
+    if (FDT_ALLIANCE_TASKS.includes(task)) FDT_ALLIANCE_TASKS.forEach(t => tasks.delete(t));
+    tasks.add(task);
+  } else tasks.delete(task);
   await updateFrostdragonTask(playerId, [...tasks]);
 }
 async function loadFdtSettings() {
@@ -118,6 +124,8 @@ async function refreshFdtSummary() {
     let warnings=[];
     if(tyrants>1)warnings.push(`⚠ ${tyrants} Tyrant Candidates assigned; keep to one.`);
     if(captains>0&&tyrants===0)warnings.push('⚠ No Tyrant Candidate assigned yet. Only the rally captain earns Capital occupation time.');
+    FDT_ALLIANCE_TASKS.forEach(t=>{if(tasks[t]>FDT_MAX_PER_ALLIANCE)warnings.push(`⚠ ${t} has ${tasks[t]} combatants; an alliance can dispatch at most ${FDT_MAX_PER_ALLIANCE}.`);});
+    players.forEach(p=>{if(parseFdtTasks(p.frostdragon_task).filter(t=>FDT_ALLIANCE_TASKS.includes(t)).length>1)warnings.push(`⚠ ${p.nickname} is in more than one alliance group.`);});
     alliances.forEach(a=>{const n=players.filter(p=>p.alliance===a).length;if(n>FDT_MAX_PER_ALLIANCE)warnings.push(`⚠ ${a} has ${n} combatants; an alliance can dispatch at most ${FDT_MAX_PER_ALLIANCE}.`);});
     if(warnings.length)el.insertAdjacentHTML('afterbegin',`<div style="grid-column:1/-1;padding:10px;color:#fecaca;background:#7f1d1d55;border-radius:8px">${warnings.map(escapeHtml).join('<br>')}</div>`);
   }catch(e){console.warn('FDT summary failed',e);}

@@ -344,7 +344,7 @@ function renderTable() {
         const currentRoleField = (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 'frostdragon_role' : 'legion_role';
         const safeLegionRole = escapeHtml(player[currentRoleField]);
 
-        const frostTaskOptions = (typeof FDT_TASKS !== 'undefined') ? FDT_TASKS : ['Rally Captain', 'Tyrant Candidate', 'Capital Reinforcer', 'Spire Life', 'Spire Shield', 'Spire Dragonbane', 'Spire Blade', 'Dragonite Collector', 'Capital Defense'];
+        const frostTaskOptions = (typeof FDT_TASKS !== 'undefined') ? FDT_TASKS : ['Rally Captain', 'Tyrant Candidate', 'Capital Reinforcer', 'Spire Life', 'Spire Shield', 'Spire Dragonbane', 'Spire Blade', 'Dragonite Collector', 'Capital Defense', 'Alliance A', 'Alliance B', 'Alliance C'];
         const isFrostView = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
         const selectedFdtTasks = typeof parseFdtTasks === 'function' ? parseFdtTasks(player.frostdragon_task) : String(player.frostdragon_task || '').split(',').map(t => t.trim()).filter(Boolean);
         const taskChips = typeof formatFdtTaskChips === 'function' ? formatFdtTaskChips(player.frostdragon_task) : escapeHtml(player.frostdragon_task || '—');
