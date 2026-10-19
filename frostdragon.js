@@ -117,9 +117,13 @@ function fdtBarRows(rows, max, opts = {}) {
     </div>`;
   }).join('');
 }
+function toggleFdtTaskDetails(open) {
+  document.querySelectorAll('#fdt-chart-view .fdt-task-detail').forEach(d => { d.open = !!open; });
+}
 function renderFdtCharts() {
   const view = document.getElementById('fdt-chart-view');
   if (!view) return;
+  const openTasks = Array.from(view.querySelectorAll('.fdt-task-detail[open] .fdt-bar-label')).map(el => el.textContent);
   const all = (typeof loadedTroopsData !== 'undefined' ? loadedTroopsData : []).filter(p => p.frostdragon_role === 'Battle');
   const scoped = getFdtAllianceScoped(all);
   const power = p => Number(p.troops_power) || 0;
@@ -148,18 +152,24 @@ function renderFdtCharts() {
     display: fdtCompactPower(g.power), sub: g.power.toLocaleString('en-US')
   })), maxGroupPower);
 
-  // Chart 2: task distribution within the current scope
+  // Chart 2: task distribution within the current scope, with the players of each task
   const roleTasks = FDT_TASKS.filter(t => !FDT_ALLIANCE_TASKS.includes(t));
-  const taskCounts = roleTasks.map(t => ({ label: t, value: scoped.filter(p => parseFdtTasks(p.frostdragon_task).includes(t)).length }));
-  const noTask = scoped.filter(p => !parseFdtTasks(p.frostdragon_task).some(t => roleTasks.includes(t))).length;
-  taskCounts.push({ label: 'No role task', value: noTask });
-  const maxTask = Math.max(1, ...taskCounts.map(t => t.value));
-  const taskChart = fdtBarRows(taskCounts.map(t => ({ ...t, color: t.label === 'No role task' ? '#64748b' : '#0ea5e9', display: String(t.value) })), maxTask);
+  const groupOf = p => FDT_ALLIANCE_TASKS.find(g => parseFdtTasks(p.frostdragon_task).includes(g));
+  const byPower = (a, b) => power(b) - power(a);
+  const taskCounts = roleTasks.map(t => ({ label: t, players: scoped.filter(p => parseFdtTasks(p.frostdragon_task).includes(t)).sort(byPower) }));
+  taskCounts.push({ label: 'No role task', players: scoped.filter(p => !parseFdtTasks(p.frostdragon_task).some(t => roleTasks.includes(t))).sort(byPower) });
+  const maxTask = Math.max(1, ...taskCounts.map(t => t.players.length));
+  const playerList = list => list.length ? `<table class="fdt-task-players"><thead><tr><th>#</th><th>Nickname</th><th>Game ID</th><th>Group</th><th>Troops Power</th></tr></thead><tbody>${
+    list.map((p, i) => { const g = groupOf(p); return `<tr><td>${i + 1}</td><td>${escapeHtml(p.nickname || '-')}</td><td>${escapeHtml(p.game_id || '-')}</td><td><span class="fdt-group-dot" style="background:${FDT_ALLIANCE_COLORS[g] || FDT_ALLIANCE_COLORS.none}"></span>${escapeHtml(g || '—')}</td><td>${power(p).toLocaleString('en-US')}</td></tr>`; }).join('')
+  }</tbody></table>` : '<div class="fdt-chart-empty">No players assigned.</div>';
+  const taskChart = taskCounts.map(t => `<details class="fdt-task-detail"><summary>${fdtBarRows([{
+      label: t.label, value: t.players.length, color: t.label === 'No role task' ? '#64748b' : '#0ea5e9',
+      display: `${t.players.length}`, sub: t.players.length ? fdtCompactPower(t.players.reduce((s, p) => s + power(p), 0)) : ''
+    }], maxTask)}</summary>${playerList(t.players)}</details>`).join('');
 
   // Chart 3: top players by power within the current scope
   const top = [...scoped].sort((a, b) => power(b) - power(a)).slice(0, 15);
   const maxTop = Math.max(1, ...top.map(power));
-  const groupOf = p => FDT_ALLIANCE_TASKS.find(g => parseFdtTasks(p.frostdragon_task).includes(g));
   const topChart = fdtBarRows(top.map((p, i) => ({
     label: `${i + 1}. ${p.nickname || '-'}`, value: power(p),
     color: FDT_ALLIANCE_COLORS[groupOf(p)] || FDT_ALLIANCE_COLORS.none,
@@ -178,9 +188,10 @@ function renderFdtCharts() {
     <div class="fdt-chart-grid">
       <div class="fdt-chart-card"><h4>Combatants per alliance group</h4><small>Marker = limit of ${FDT_MAX_PER_ALLIANCE} per alliance</small>${countChart}</div>
       <div class="fdt-chart-card"><h4>Total troops power per alliance group</h4>${powerChart}</div>
-      <div class="fdt-chart-card"><h4>Task distribution</h4><small>${escapeHtml(scopeLabel)}</small>${taskChart}</div>
+      <div class="fdt-chart-card fdt-chart-card--wide"><div class="fdt-card-head"><div><h4>Task distribution &amp; players</h4><small>${escapeHtml(scopeLabel)} · click a task to see its players</small></div><div class="fdt-card-actions"><button type="button" class="fdt-mini-btn" onclick="toggleFdtTaskDetails(true)">Expand all</button><button type="button" class="fdt-mini-btn" onclick="toggleFdtTaskDetails(false)">Collapse all</button></div></div>${taskChart}</div>
       <div class="fdt-chart-card"><h4>Top 15 players by troops power</h4><small>Color = alliance group</small>${topChart}</div>
     </div>`;
+  view.querySelectorAll('.fdt-task-detail').forEach(d => { if (openTasks.includes(d.querySelector('.fdt-bar-label')?.textContent)) d.open = true; });
 }
 async function toggleFrostdragonTask(playerId, task, checked) {
   if (!FDT_TASKS.includes(task)) return;

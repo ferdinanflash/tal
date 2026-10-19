@@ -1172,3 +1172,21 @@ body.fdt-guide-open { overflow: hidden; }
   .fdt-chart-grid { grid-template-columns:1fr; }
   .fdt-bar-row { grid-template-columns:minmax(70px,34%) 1fr auto; }
 }
+
+.fdt-chart-card--wide { grid-column:1 / -1; }
+.fdt-card-head { display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:flex-start; }
+.fdt-card-actions { display:flex; gap:6px; }
+.fdt-mini-btn { background:#1e2230; border:1px solid rgba(125,211,252,.45); color:#bae6fd; padding:4px 10px; border-radius:6px; font-size:.72rem; cursor:pointer; }
+.fdt-mini-btn:hover { border-color:#38bdf8; }
+.fdt-task-detail { border-top:1px solid rgba(51,65,85,.6); }
+.fdt-task-detail:first-of-type { border-top:0; }
+.fdt-task-detail > summary { cursor:pointer; list-style:none; padding:2px 0; }
+.fdt-task-detail > summary::-webkit-details-marker { display:none; }
+.fdt-task-detail > summary .fdt-bar-label::before { content:"▸ "; color:#38bdf8; }
+.fdt-task-detail[open] > summary .fdt-bar-label::before { content:"▾ "; }
+.fdt-task-detail .fdt-chart-empty { margin:6px 0 8px; padding:8px; font-size:.78rem; }
+.fdt-task-players { width:100%; border-collapse:collapse; margin:6px 0 10px; font-size:.78rem; display:block; overflow-x:auto; }
+.fdt-task-players th, .fdt-task-players td { padding:5px 10px; text-align:left; border-bottom:1px solid rgba(51,65,85,.5); white-space:nowrap; }
+.fdt-task-players th { color:#94a3b8; font-size:.68rem; text-transform:uppercase; }
+.fdt-task-players td:last-child, .fdt-task-players th:last-child { text-align:right; }
+.fdt-group-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
