@@ -1,7 +1,7 @@
 // Frostdragon Tyrant tools: task assignments, roster summary, schedule and lock.
-const FDT_TASKS = ['Rally Captain','Tyrant Candidate','Capital Reinforcer','Spire Life','Spire Shield','Spire Dragonbane','Spire Blade','Dragonite Collector','Capital Defense','Alliance A','Alliance B','Alliance C'];
+const FDT_TASKS = ['Rally Captain','Tyrant Candidate','Capital Reinforcer','Spire Life','Spire Shield','Spire Dragonbane','Spire Blade','Dragonite Collector','Capital Defense','Alliance A','Alliance B'];
 // Alliance group tasks: every battle player belongs to exactly one of these groups, in addition to their role tasks above.
-const FDT_ALLIANCE_TASKS = ['Alliance A','Alliance B','Alliance C'];
+const FDT_ALLIANCE_TASKS = ['Alliance A','Alliance B'];
 // Official limit: an eligible alliance can dispatch up to 60 combatants (Century Games Help Center).
 const FDT_MAX_PER_ALLIANCE = 60;
 // Official Spire names: Life (+Health), Shield (+Defense), Dragonbane (+Lethality), Blade (+Attack).
@@ -78,7 +78,7 @@ function updateFdtAllianceFilterUi() {
 // ---- "View as Chart" (Frostdragon roster only) ----
 // Opens its own chart interface (modal) with two tabs: interactive Chart and a rendered Image (PNG) that can be downloaded.
 // Pure SVG/CSS/Canvas (no extra library). Data = Battle roster, scoped by the "View by Alliance" filter.
-const FDT_ALLIANCE_COLORS = { 'Alliance A': '#38bdf8', 'Alliance B': '#a78bfa', 'Alliance C': '#fbbf24', none: '#64748b' };
+const FDT_ALLIANCE_COLORS = { 'Alliance A': '#38bdf8', 'Alliance B': '#a78bfa', none: '#64748b' };
 let fdtChartTab = 'chart';
 let fdtChartImageUrl = '';
 
@@ -268,7 +268,7 @@ function buildFdtChartCanvas() {
     txt('Roster Chart — ' + d.scopeLabel, PAD, y + 38, { size: 30, weight: '700', color: '#e0f2fe' });
     txt(`${d.scoped.length} combatants  ·  total power ${d.scopedPower.toLocaleString('en-US')}  ·  ${stamp}`, PAD, y + 70, { size: 14, color: '#94a3b8' });
     let lx = W - PAD;
-    ['No group', 'Alliance C', 'Alliance B', 'Alliance A'].forEach(label => {
+    ['No group', 'Alliance B', 'Alliance A'].forEach(label => {
       ctx.font = `400 13px ${FONT}`;
       const tw = ctx.measureText(label).width;
       lx -= tw; txt(label, lx, y + 38, { size: 13, color: '#cbd5e1' });
@@ -378,7 +378,7 @@ async function toggleFrostdragonTask(playerId, task, checked) {
   if (!player) return;
   const tasks = new Set(parseFdtTasks(player.frostdragon_task));
   if (checked) {
-    // A player can only belong to one alliance group (A / B / C).
+    // A player can only belong to one alliance group (A / B).
     if (FDT_ALLIANCE_TASKS.includes(task)) FDT_ALLIANCE_TASKS.forEach(t => tasks.delete(t));
     tasks.add(task);
   } else tasks.delete(task);
