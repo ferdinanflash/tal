@@ -226,7 +226,6 @@ function buildFdtChartCanvas() {
   const SCALE = 2, W = 1400, PAD = 36, GAP = 18;
   const FONT = '"Segoe UI", Tahoma, Arial, sans-serif';
   const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
-  const MAX_PLAYERS_PER_TASK = 12;
 
   const draw = (ctx, H) => {
     const rr = (x, y, w, h, r) => { r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
@@ -299,30 +298,30 @@ function buildFdtChartCanvas() {
     y += 34;
     const tw = (W - 2 * PAD - 2 * GAP) / 3;
     const maxTask = Math.max(1, ...d.taskCounts.map(t => t.players.length));
-    const cardH = t => 62 + Math.max(1, Math.min(MAX_PLAYERS_PER_TASK, t.players.length) + (t.players.length > MAX_PLAYERS_PER_TASK ? 1 : 0)) * 22 + 12;
-    for (let i = 0; i < d.taskCounts.length; i += 3) {
-      const row = d.taskCounts.slice(i, i + 3);
-      const rowH = Math.max(...row.map(cardH));
-      row.forEach((t, c) => {
-        const x = PAD + c * (tw + GAP), n = t.players.length;
-        const total = t.players.reduce((s, p) => s + d.power(p), 0);
-        card(x, y, tw, rowH, null);
-        txt(t.label, x + 16, y + 22, { size: 15, weight: '700', color: '#f1f5f9', maxW: tw - 130 });
-        txt(n ? `${n}  ·  ${fdtCompactPower(total)}` : '0', x + tw - 16, y + 22, { size: 13, weight: '700', color: '#7dd3fc', align: 'right' });
-        rr(x + 16, y + 38, tw - 32, 6, 3); ctx.fillStyle = 'rgba(51,65,85,0.6)'; ctx.fill();
-        if (n) { rr(x + 16, y + 38, Math.max(6, (tw - 32) * n / maxTask), 6, 3); ctx.fillStyle = t.label === 'No role task' ? '#64748b' : '#0ea5e9'; ctx.fill(); }
-        let py = y + 62;
-        if (!n) txt('No players assigned', x + 16, py + 8, { size: 12, color: '#64748b' });
-        t.players.slice(0, MAX_PLAYERS_PER_TASK).forEach((p, k) => {
-          ctx.fillStyle = fdtColorOf(d.groupOf(p)); ctx.beginPath(); ctx.arc(x + 22, py + 8, 4, 0, Math.PI * 2); ctx.fill();
-          txt(`${k + 1}. ${p.nickname || '-'}`, x + 34, py + 8, { size: 13, maxW: tw - 34 - 90 });
-          txt(fdtCompactPower(d.power(p)), x + tw - 16, py + 8, { size: 12, color: '#94a3b8', align: 'right' });
-          py += 22;
-        });
-        if (n > MAX_PLAYERS_PER_TASK) txt(`+${n - MAX_PLAYERS_PER_TASK} more`, x + 34, py + 8, { size: 12, color: '#64748b' });
+    // Every player is listed (no cap). Cards are packed into the shortest of 3 columns so long lists don't leave big gaps.
+    const cardH = t => 62 + Math.max(1, t.players.length) * 22 + 12;
+    const colY = [y, y, y];
+    // Place the longest cards first so the three columns end up roughly the same height.
+    [...d.taskCounts].sort((a, b) => cardH(b) - cardH(a)).forEach(t => {
+      const c = colY.indexOf(Math.min(...colY));
+      const x = PAD + c * (tw + GAP), cy0 = colY[c], h = cardH(t), n = t.players.length;
+      const total = t.players.reduce((s, p) => s + d.power(p), 0);
+      card(x, cy0, tw, h, null);
+      txt(t.label, x + 16, cy0 + 22, { size: 15, weight: '700', color: '#f1f5f9', maxW: tw - 130 });
+      txt(n ? `${n}  ·  ${fdtCompactPower(total)}` : '0', x + tw - 16, cy0 + 22, { size: 13, weight: '700', color: '#7dd3fc', align: 'right' });
+      rr(x + 16, cy0 + 38, tw - 32, 6, 3); ctx.fillStyle = 'rgba(51,65,85,0.6)'; ctx.fill();
+      if (n) { rr(x + 16, cy0 + 38, Math.max(6, (tw - 32) * n / maxTask), 6, 3); ctx.fillStyle = t.label === 'No role task' ? '#64748b' : '#0ea5e9'; ctx.fill(); }
+      let py = cy0 + 62;
+      if (!n) txt('No players assigned', x + 16, py + 8, { size: 12, color: '#64748b' });
+      t.players.forEach((p, k) => {
+        ctx.fillStyle = fdtColorOf(d.groupOf(p)); ctx.beginPath(); ctx.arc(x + 22, py + 8, 4, 0, Math.PI * 2); ctx.fill();
+        txt(`${k + 1}. ${p.nickname || '-'}`, x + 34, py + 8, { size: 13, maxW: tw - 34 - 90 });
+        txt(fdtCompactPower(d.power(p)), x + tw - 16, py + 8, { size: 12, color: '#94a3b8', align: 'right' });
+        py += 22;
       });
-      y += rowH + GAP;
-    }
+      colY[c] = cy0 + h + GAP;
+    });
+    y = Math.max(...colY);
 
     // Section 3: top players
     y += 6;
@@ -341,9 +340,10 @@ function buildFdtChartCanvas() {
   const measure = document.createElement('canvas'); measure.width = W; measure.height = 10;
   const H = Math.ceil(draw(measure.getContext('2d'), 0));
   const canvas = document.createElement('canvas');
-  canvas.width = W * SCALE; canvas.height = H * SCALE;
+  const scale = Math.min(SCALE, 15000 / H); // stay under browser canvas size limits on very long rosters
+  canvas.width = Math.round(W * scale); canvas.height = Math.round(H * scale);
   const ctx = canvas.getContext('2d');
-  ctx.scale(SCALE, SCALE);
+  ctx.scale(scale, scale);
   draw(ctx, H);
   return canvas;
 }
