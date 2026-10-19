@@ -1143,3 +1143,32 @@ body.fdt-guide-open { overflow: hidden; }
 .alliance-filter-container label { font-size:.78rem; color:#94a3b8; font-weight:600; white-space:nowrap; }
 .alliance-filter-select { background:#1e2230; border:1px solid rgba(125,211,252,.45); color:#f1f5f9; padding:9px 12px; border-radius:8px; font-size:.88rem; outline:none; cursor:pointer; }
 .alliance-filter-select:focus { border-color:#38bdf8; }
+
+/* ==================== FDT ROSTER: VIEW AS CHART ==================== */
+.fdt-chart-toggle-btn { padding:9px 14px; font-size:.85rem; white-space:nowrap; }
+#troops-table-page.fdt-chart-mode .table-container,
+#troops-table-page.fdt-chart-mode #pagination-controls { display:none !important; }
+.fdt-chart-view { margin:14px 0; }
+.fdt-chart-view.hidden { display:none; }
+.fdt-chart-head { display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:flex-end; margin-bottom:12px; }
+.fdt-chart-head h3 { margin:0; color:#e0f2fe; }
+.fdt-chart-head small { color:#94a3b8; }
+.fdt-legend { display:flex; flex-wrap:wrap; gap:12px; font-size:.75rem; color:#cbd5e1; }
+.fdt-legend-item { display:inline-flex; align-items:center; gap:5px; }
+.fdt-legend-item i { width:10px; height:10px; border-radius:3px; display:inline-block; }
+.fdt-chart-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:12px; }
+.fdt-chart-card { padding:14px; border:1px solid rgba(125,211,252,.3); border-radius:12px; background:rgba(15,23,42,.7); text-align:left; }
+.fdt-chart-card h4 { margin:0 0 2px; font-size:.92rem; color:#f1f5f9; }
+.fdt-chart-card > small { display:block; color:#94a3b8; font-size:.72rem; margin-bottom:8px; }
+.fdt-bar-row { display:grid; grid-template-columns:minmax(80px,32%) 1fr auto; gap:8px; align-items:center; margin-top:7px; }
+.fdt-bar-label { font-size:.78rem; color:#cbd5e1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fdt-bar-track { position:relative; height:16px; background:rgba(51,65,85,.55); border-radius:6px; overflow:hidden; }
+.fdt-bar-fill { height:100%; border-radius:6px; transition:width .35s ease; }
+.fdt-bar-cap { position:absolute; top:0; bottom:0; width:2px; background:#ef4444; }
+.fdt-bar-value { font-size:.78rem; font-weight:700; color:#f1f5f9; min-width:56px; text-align:right; white-space:nowrap; }
+.fdt-bar-value small { display:block; font-size:.62rem; font-weight:400; color:#94a3b8; }
+.fdt-chart-empty { padding:18px; color:#94a3b8; text-align:center; border:1px dashed #334155; border-radius:10px; }
+@media (max-width:600px) {
+  .fdt-chart-grid { grid-template-columns:1fr; }
+  .fdt-bar-row { grid-template-columns:minmax(70px,34%) 1fr auto; }
+}
