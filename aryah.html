@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Love Animation - Aryah</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #0f0c20;
+      overflow: hidden;
+      font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Container Utama */
+    .container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Animasi Hati (Love) */
+    .heart {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      background-color: #ff3366;
+      transform: rotate(-45deg);
+      animation: beat 1.2s infinite ease-in-out;
+      box-shadow: 0 0 40px #ff3366, 0 0 80px #ff3366;
+    }
+
+    .heart::before,
+    .heart::after {
+      content: "";
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      background-color: #ff3366;
+      border-radius: 50%;
+    }
+
+    .heart::before {
+      top: -60px;
+      left: 0;
+    }
+
+    .heart::after {
+      left: 60px;
+      top: 0;
+    }
+
+    /* Teks Nama "Aryah" */
+    .name {
+      position: absolute;
+      z-index: 10;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.5),
+                   0 0 20px #ff3366,
+                   0 0 30px #ff99bb;
+      letter-spacing: 2px;
+      animation: pulseText 1.2s infinite ease-in-out;
+      pointer-events: none;
+    }
+
+    /* Keyframes Animasi Heartbeat */
+    @keyframes beat {
+      0% {
+        transform: rotate(-45deg) scale(1);
+      }
+      25% {
+        transform: rotate(-45deg) scale(1.15);
+      }
+      30% {
+        transform: rotate(-45deg) scale(1.05);
+      }
+      45% {
+        transform: rotate(-45deg) scale(1.25);
+      }
+      70% {
+        transform: rotate(-45deg) scale(1);
+      }
+      100% {
+        transform: rotate(-45deg) scale(1);
+      }
+    }
+
+    /* Keyframes Animasi Teks */
+    @keyframes pulseText {
+      0%, 100% {
+        transform: scale(1);
+      }
+      25% {
+        transform: scale(1.1);
+      }
+      45% {
+        transform: scale(1.18);
+      }
+    }
+
+    /* Partikel Hati Kecil Berterbangan */
+    .particle {
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      background-color: #ff6699;
+      transform: rotate(-45deg);
+      opacity: 0;
+      animation: floatUp 4s infinite linear;
+      pointer-events: none;
+    }
+
+    .particle::before,
+    .particle::after {
+      content: "";
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      background-color: #ff6699;
+      border-radius: 50%;
+    }
+
+    .particle::before {
+      top: -7.5px;
+      left: 0;
+    }
+
+    .particle::after {
+      left: 7.5px;
+      top: 0;
+    }
+
+    @keyframes floatUp {
+      0% {
+        transform: translateY(100vh) rotate(-45deg) scale(0.3);
+        opacity: 0;
+      }
+      20% {
+        opacity: 0.8;
+      }
+      80% {
+        opacity: 0.8;
+      }
+      100% {
+        transform: translateY(-20vh) rotate(-45deg) scale(1.2);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="heart"></div>
+    <div class="name">Aryah</div>
+  </div>
+
+  <!-- JavaScript untuk menghasilkan partikel hati berterbangan secara otomatis -->
+  <script>
+    function createParticles() {
+      const particleCount = 20;
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        
+        // Posisi horizontal acak
+        particle.style.left = Math.random() * 100 + 'vw';
+        
+        // Durasi & delay animasi acak
+        const duration = Math.random() * 3 + 3; // 3 - 6 detik
+        const delay = Math.random() * 5; // 0 - 5 detik
+        const size = Math.random() * 15 + 8; // ukuran bervariasi
+
+        particle.style.animationDuration = duration + 's';
+        particle.style.animationDelay = delay + 's';
+        particle.style.width = size + 'px';
+        particle.style.height = size + 'px';
+
+        document.body.appendChild(particle);
+      }
+    }
+
+    createParticles();
+  </script>
+</body>
+</html>
