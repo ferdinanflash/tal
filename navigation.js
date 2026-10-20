@@ -56,7 +56,8 @@ function selectLegion(legionName) {
 
     document.getElementById('add-legion-member-btn').style.display = canManageLegion(legionName) ? "inline-block" : "none";
 
-    document.getElementById('selected-alliance-title').innerText = `${legionName} Official Roster`;
+    const isFdtTheme = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
+    document.getElementById('selected-alliance-title').innerText = isFdtTheme ? 'FDT Roster' : `${legionName} Official Roster`;
 
     if (typeof syncFdtUi === 'function') syncFdtUi();
     fetchData();

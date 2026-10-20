@@ -253,7 +253,8 @@ function renderTable() {
         const battle = summaryData.filter(p => p[roleField] === 'Battle').reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
         const sub = summaryData.filter(p => p[roleField] === 'Substitute').reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
 
-        summaryBoxContainer.style.gridTemplateColumns = "repeat(3, 1fr)";
+        const isFdtSummary = roleField === 'frostdragon_role'; // Frostdragon has no substitutes
+        summaryBoxContainer.style.gridTemplateColumns = isFdtSummary ? "repeat(2, 1fr)" : "repeat(3, 1fr)";
         summaryBoxContainer.innerHTML = `
             <div style="padding: 10px; background: linear-gradient(135deg, #1e2230 0%, #111827 100%); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 10px; text-align: center;">
                 <div style="font-size: 0.7rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 3px;">Top 20 Troops Power</div>
@@ -263,10 +264,12 @@ function renderTable() {
                 <div style="font-size: 0.7rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 3px;">Battle Troops Power</div>
                 <div style="font-size: 1.1rem; font-weight: 900; color: #4ade80;">${battle.toLocaleString('en-US')}</div>
             </div>
+            ${isFdtSummary ? '' : `
             <div style="padding: 10px; background: linear-gradient(135deg, #1e2230 0%, #111827 100%); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 10px; text-align: center;">
                 <div style="font-size: 0.7rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 3px;">Substitute Troops Power</div>
                 <div style="font-size: 1.1rem; font-weight: 900; color: #3b82f6;">${sub.toLocaleString('en-US')}</div>
             </div>
+            `}
         `;
     } else if (currentSelection !== 'ALL') {
         const top20 = sortedByPower.slice(0, 20).reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);

@@ -1211,3 +1211,30 @@ body.fdt-guide-open { overflow: hidden; }
 .fdt-chart-image-wrap img { max-width:100%; height:auto; border-radius:10px; border:1px solid rgba(125,211,252,.3); }
 .fdt-footer-btns { display:flex; gap:8px; flex-wrap:wrap; }
 @media (max-width:600px) { .fdt-footer-btns { width:100%; } .fdt-footer-btns .btn-apply { flex:1; } }
+
+/* FDT Guide buttons: running RGB border */
+@property --fdt-rgb-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+.fdt-rgb-border {
+  border: 2px solid transparent !important;
+  background:
+    linear-gradient(135deg, #1e3a8a 0%, #172554 100%) padding-box,
+    conic-gradient(from var(--fdt-rgb-angle), #ff0040, #ff9a00, #f6ff00, #00ff6a, #00d5ff, #3b4bff, #c800ff, #ff0040) border-box !important;
+  animation: fdt-rgb-spin 3s linear infinite;
+  box-shadow: 0 0 10px rgba(56,189,248,.25);
+}
+.fdt-rgb-border.list-item { background:
+    linear-gradient(135deg, #1e2230 0%, #151821 100%) padding-box,
+    conic-gradient(from var(--fdt-rgb-angle), #ff0040, #ff9a00, #f6ff00, #00ff6a, #00d5ff, #3b4bff, #c800ff, #ff0040) border-box !important; }
+@keyframes fdt-rgb-spin { to { --fdt-rgb-angle: 360deg; } }
+@media (prefers-reduced-motion: reduce) { .fdt-rgb-border { animation-duration: 12s; } }
+
+/* Shared chart image page (?fdt=image) */
+body.fdt-shared-open { overflow:hidden; }
+#fdt-shared-image { position:fixed; inset:0; z-index:2147483000; display:flex; flex-direction:column; background:#0b1220; color:#e0f2fe; }
+.fdt-shared-bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; padding:10px 12px; background:rgba(2,6,23,.9); border-bottom:1px solid rgba(125,211,252,.25); }
+.fdt-shared-actions { display:flex; flex-wrap:wrap; gap:6px; }
+.fdt-shared-actions button { background:rgba(15,23,42,.9); color:#bae6fd; border:1px solid rgba(125,211,252,.35); border-radius:8px; padding:7px 11px; font-size:.82rem; cursor:pointer; }
+.fdt-shared-actions button:hover { background:rgba(14,165,233,.25); color:#fff; }
+.fdt-shared-body { flex:1; overflow:auto; padding:10px; -webkit-overflow-scrolling:touch; }
+.fdt-shared-body img { display:block; width:100%; max-width:none; height:auto; border-radius:10px; }
+.fdt-shared-msg { padding:40px 16px; text-align:center; color:#94a3b8; }

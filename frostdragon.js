@@ -433,6 +433,99 @@ function showFdtChartImage() {
     if (typeof showToast === 'function') showToast('Unable to generate chart image.', 'error');
   }
 }
+// ---- Share link: a URL that opens a full-screen, freshly rendered image of the roster chart ----
+// Link format: <site>/?fdt=image[&alliance=Alliance%20A]. The page loads the live roster (public read, same as the
+// roster page), renders the PNG on a canvas and shows only that image. Opening the link again = newest data.
+function buildFdtShareUrl() {
+  const u = new URL(location.href);
+  u.search = ''; u.hash = '';
+  u.searchParams.set('fdt', 'image');
+  if (fdtAllianceFilter) u.searchParams.set('alliance', fdtAllianceFilter);
+  return u.toString();
+}
+async function fdtCopyText(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return true; }
+  } catch (e) { /* fall through */ }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    const ok = document.execCommand('copy'); document.body.removeChild(ta); return ok;
+  } catch (e) { return false; }
+}
+async function shareFdtChartLink() {
+  const url = buildFdtShareUrl();
+  const title = 'FDT Roster Chart — ' + (fdtAllianceFilter || 'All Alliances');
+  if (navigator.share) {
+    try { await navigator.share({ title, text: title, url }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; /* otherwise fall back to copy */ }
+  }
+  if (await fdtCopyText(url)) showToast('Share link copied.', 'success');
+  else window.prompt('Copy this link:', url);
+}
+async function copyFdtChartLink() {
+  const url = buildFdtShareUrl();
+  if (await fdtCopyText(url)) showToast('Share link copied.', 'success');
+  else window.prompt('Copy this link:', url);
+}
+async function openFdtSharedImage(alliance) {
+  const old = document.getElementById('fdt-shared-image'); if (old) old.remove();
+  const wrap = document.createElement('div');
+  wrap.id = 'fdt-shared-image';
+  wrap.innerHTML = `<div class="fdt-shared-bar"><strong>🐉 FDT Roster Chart</strong>
+    <span class="fdt-shared-actions">
+      <button type="button" id="fdt-shared-out" aria-label="Zoom out">−</button>
+      <button type="button" id="fdt-shared-level">100%</button>
+      <button type="button" id="fdt-shared-in" aria-label="Zoom in">+</button>
+      <button type="button" id="fdt-shared-refresh">⟳ Refresh</button>
+      <button type="button" id="fdt-shared-dl">⬇ PNG</button>
+      <button type="button" id="fdt-shared-site">Open site</button>
+    </span></div>
+    <div class="fdt-shared-body" id="fdt-shared-body"><div class="fdt-shared-msg" id="fdt-shared-msg">Loading roster chart…</div></div>`;
+  document.body.appendChild(wrap);
+  document.body.classList.add('fdt-shared-open');
+  let zoom = 1, imgUrl = '';
+  const body = wrap.querySelector('#fdt-shared-body');
+  const applyZoom = () => {
+    const img = body.querySelector('img'); if (img) img.style.width = (zoom * 100) + '%';
+    wrap.querySelector('#fdt-shared-level').textContent = Math.round(zoom * 100) + '%';
+  };
+  const setZoom = z => { zoom = Math.min(4, Math.max(0.5, Math.round(z * 100) / 100)); applyZoom(); };
+  const load = async () => {
+    body.innerHTML = '<div class="fdt-shared-msg">Loading roster chart…</div>';
+    try {
+      const client = getSupabase(); if (!client) throw new Error('Supabase not available');
+      const { data, error } = await client.from('troops_power').select('*').eq('frostdragon_role', 'Battle');
+      if (error) throw error;
+      loadedTroopsData = data || [];
+      fdtAllianceFilter = FDT_ALLIANCE_TASKS.includes(alliance) ? alliance : '';
+      imgUrl = buildFdtChartCanvas().toDataURL('image/png');
+      body.innerHTML = '<img alt="Frostdragon roster chart">';
+      body.querySelector('img').src = imgUrl;
+      applyZoom();
+    } catch (e) {
+      console.warn('FDT shared image failed', e);
+      body.innerHTML = '<div class="fdt-shared-msg">Unable to load the roster chart. Please try again.</div>';
+    }
+  };
+  wrap.querySelector('#fdt-shared-out').onclick = () => setZoom(zoom - 0.25);
+  wrap.querySelector('#fdt-shared-in').onclick = () => setZoom(zoom + 0.25);
+  wrap.querySelector('#fdt-shared-level').onclick = () => setZoom(1);
+  wrap.querySelector('#fdt-shared-refresh').onclick = load;
+  wrap.querySelector('#fdt-shared-dl').onclick = () => {
+    if (!imgUrl) return;
+    const a = document.createElement('a');
+    a.href = imgUrl; a.download = `FDT_Roster_Chart_${(FDT_ALLIANCE_TASKS.includes(alliance) ? alliance : 'All_Alliances').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.png`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  };
+  wrap.querySelector('#fdt-shared-site').onclick = () => { location.href = location.origin + location.pathname; };
+  await load();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const q = new URLSearchParams(location.search);
+  if (q.get('fdt') === 'image') openFdtSharedImage(q.get('alliance') || '');
+});
 function downloadFdtChartImage() {
   try {
     const url = buildFdtChartCanvas().toDataURL('image/png');

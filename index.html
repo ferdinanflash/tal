@@ -6,16 +6,16 @@
 				<title>3475 Battle League</title>
 				<meta name="description" content="3475 3475 Battle League - Alliance troops power leaderboard, legion roster, and match scheduling.">
 				<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E">
-				<link rel="stylesheet" href="style.css?v=15">
+				<link rel="stylesheet" href="style.css?v=16">
 
 
 
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer=""></script>
 					<!-- Modular application scripts: load in dependency order. -->
 					<script src="core.js?v=18" defer></script>
-					<script src="navigation.js?v=17" defer></script>
+					<script src="navigation.js?v=18" defer></script>
 					<script src="schedule.js?v=16" defer></script>
-					<script src="leaderboard.js?v=18" defer></script>
+					<script src="leaderboard.js?v=19" defer></script>
 					<script src="player.js?v=19" defer></script>
 					<script src="legion.js?v=16" defer></script>
 					<script src="export.js?v=16" defer></script>
@@ -136,7 +136,7 @@
 					</div>
 
 					<!-- FDT GUIDE (Frostdragon theme only) -->
-					<div class="list-item hidden" id="fdt-guide-menu-btn" onclick="toggleFdtGuide(true)" role="button" tabindex="0" aria-label="Open FDT Guide" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFdtGuide(true)}">
+					<div class="list-item hidden fdt-rgb-border" id="fdt-guide-menu-btn" onclick="toggleFdtGuide(true)" role="button" tabindex="0" aria-label="Open FDT Guide" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFdtGuide(true)}">
 						<span class="alliance-name">🐉 FDT Guide</span>
 						<span class="arrow">&gt;</span>
 					</div>
@@ -232,7 +232,7 @@
 				<section id="fdt-tools" class="hidden" style="margin:14px 0;padding:16px;border:1px solid #38bdf8;border-radius:14px;background:rgba(8,47,73,.28)">
                     <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">
                       <div><h2 style="margin:0">🐉 Frostdragon Tyrant Command Center</h2><small>One battle group · up to 60 combatants per alliance</small></div>
-                      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-apply" type="button" onclick="toggleFdtStatus(true)">Real Time Status</button><button class="btn-apply" type="button" onclick="toggleFdtGuide()">FDT Guide</button></div>
+                      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-apply" type="button" onclick="toggleFdtStatus(true)">Real Time Status</button><button class="btn-apply fdt-rgb-border" type="button" onclick="toggleFdtGuide()">FDT Guide</button></div>
                     </div>
                     <div id="fdt-admin-controls" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:end">
                       <label>Battlefield open (UTC)<input id="fdt-open-time" type="datetime-local" style="display:block"></label>
@@ -688,7 +688,7 @@
 <div id="fdt-chart-view" class="fdt-chart-view" aria-live="polite"></div>
 <div id="fdt-chart-image-wrap" class="fdt-chart-image-wrap hidden"><img id="fdt-chart-image" alt="Frostdragon roster chart"></div>
 </div>
-<div class="fdt-guide-modal-footer"><span>Follows the "View by Alliance" filter. Image tab = ready-to-share PNG.</span><div class="fdt-footer-btns"><button class="btn-apply" type="button" onclick="downloadFdtChartImage()">⬇ Download PNG</button><button class="btn-apply" type="button" onclick="toggleFdtChartView(false)">Close</button></div></div>
+<div class="fdt-guide-modal-footer"><span>Follows the "View by Alliance" filter. Image tab = ready-to-share PNG.</span><div class="fdt-footer-btns"><button class="btn-apply" type="button" onclick="shareFdtChartLink()" title="Share a link that opens this chart image (always latest data)">🔗 Share link</button><button class="btn-apply" type="button" onclick="downloadFdtChartImage()">⬇ Download PNG</button><button class="btn-apply" type="button" onclick="toggleFdtChartView(false)">Close</button></div></div>
 </div>
 </div>
 
@@ -705,6 +705,6 @@
 </div>
 </div>
 
-	<script src="frostdragon.js?v=7"></script>
+	<script src="frostdragon.js?v=8"></script>
 </body>
 </html>
