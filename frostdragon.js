@@ -2,6 +2,8 @@
 const FDT_TASKS = ['Rally Captain','Tyrant Candidate','Capital Reinforcer','Spire Life','Spire Shield','Spire Dragonbane','Spire Blade','Dragonite Collector','Capital Defense','Alliance A','Alliance B'];
 // Alliance group tasks: every battle player belongs to exactly one of these groups, in addition to their role tasks above.
 const FDT_ALLIANCE_TASKS = ['Alliance A','Alliance B'];
+const FDT_SPIRE_TASKS = ['Spire Life','Spire Shield','Spire Dragonbane','Spire Blade'];
+const FDT_RALLY_LEAD_NOTE = 'Rally Lead = highest power in each Spire, per alliance';
 // Official limit: an eligible alliance can dispatch up to 60 combatants (Century Games Help Center).
 const FDT_MAX_PER_ALLIANCE = 60;
 // Dragonite gathering is a small support job: only a handful of gatherers per group are useful.
@@ -213,8 +215,18 @@ function getFdtChartData() {
   const roleTasks = FDT_TASKS.filter(t => !FDT_ALLIANCE_TASKS.includes(t));
   const taskCounts = roleTasks.map(t => ({ label: t, players: scoped.filter(p => parseFdtTasks(p.frostdragon_task).includes(t)).sort(byGroupThenPower) }));
   taskCounts.push({ label: 'No role task', players: scoped.filter(p => !parseFdtTasks(p.frostdragon_task).some(t => roleTasks.includes(t))).sort(byGroupThenPower) });
+  // Rally Lead = the highest-power player of each Spire team, per alliance group (shown with a crown).
+  const rallyLeads = {};
+  FDT_SPIRE_TASKS.forEach(t => {
+    rallyLeads[t] = new Set();
+    [...FDT_ALLIANCE_TASKS, ''].forEach(g => {
+      const team = all.filter(p => parseFdtTasks(p.frostdragon_task).includes(t) && (groupOf(p) || '') === g).sort(byPower);
+      if (team.length) rallyLeads[t].add(String(team[0].id));
+    });
+  });
+  const isRallyLead = (p, label) => !!(rallyLeads[label] && rallyLeads[label].has(String(p.id)));
   return {
-    all, scoped, power, groupOf, groupRows, taskCounts,
+    all, scoped, power, groupOf, groupRows, taskCounts, isRallyLead,
     top: [...scoped].sort(byPower).slice(0, 15).sort(byGroupThenPower),
     scopeLabel: fdtAllianceFilter || 'All Alliances',
     scopedPower: scoped.reduce((s, p) => s + power(p), 0)
@@ -253,20 +265,20 @@ function renderFdtCharts() {
   const powerChart = fdtBarRows(d.groupRows.map(g => ({ label: g.label, value: g.power, color: fdtColorOf(g.label), display: fdtCompactPower(g.power), sub: g.power.toLocaleString('en-US') })), maxGroupPower);
 
   const maxTask = Math.max(1, ...d.taskCounts.map(t => t.players.length));
-  const playerList = list => list.length ? `<table class="fdt-task-players"><thead><tr><th>#</th><th>Nickname</th><th>Alliance</th><th>Game ID</th><th>Group</th><th>Troops Power</th></tr></thead><tbody>${
-    list.map((p, i) => { const g = groupOf(p); return `<tr><td>${i + 1}</td><td>${escapeHtml(p.nickname || '-')}</td><td>${escapeHtml(p.alliance || '-')}</td><td>${escapeHtml(p.game_id || '-')}</td><td><span class="fdt-group-dot" style="background:${fdtColorOf(g)}"></span>${escapeHtml(g || '—')}</td><td>${power(p).toLocaleString('en-US')}</td></tr>`; }).join('')
+  const playerList = (list, label) => list.length ? `<table class="fdt-task-players"><thead><tr><th>#</th><th>Nickname</th><th>Alliance</th><th>Game ID</th><th>Group</th><th>Troops Power</th></tr></thead><tbody>${
+    list.map((p, i) => { const g = groupOf(p); return `<tr><td>${i + 1}</td><td>${escapeHtml(p.nickname || '-')}${d.isRallyLead(p, label) ? ' <span class="fdt-rally-crown" title="Rally Lead">👑</span>' : ''}</td><td>${escapeHtml(p.alliance || '-')}</td><td>${escapeHtml(p.game_id || '-')}</td><td><span class="fdt-group-dot" style="background:${fdtColorOf(g)}"></span>${escapeHtml(g || '—')}</td><td>${power(p).toLocaleString('en-US')}</td></tr>`; }).join('')
   }</tbody></table>` : '<div class="fdt-chart-empty">No players assigned.</div>';
   const taskChart = d.taskCounts.map(t => `<details class="fdt-task-detail"><summary>${fdtBarRows([{
       label: t.label, value: t.players.length, color: t.label === 'No role task' ? '#64748b' : '#0ea5e9',
       display: `${t.players.length}`, sub: t.players.length ? fdtCompactPower(t.players.reduce((s, p) => s + power(p), 0)) : ''
-    }], maxTask)}</summary>${playerList(t.players)}</details>`).join('');
+    }], maxTask)}</summary>${playerList(t.players, t.label)}</details>`).join('');
 
   const maxTop = Math.max(1, ...d.top.map(power));
   const topChart = fdtBarRows(d.top.map((p, i) => ({
     label: `${i + 1}. ${p.nickname || '-'}`, value: power(p), color: fdtColorOf(groupOf(p)),
     display: fdtCompactPower(power(p)), sub: p.alliance || ''
   })), maxTop);
-  const legend = [...FDT_ALLIANCE_TASKS, 'No group'].map(g => `<span class="fdt-legend-item"><i style="background:${fdtColorOf(g)}"></i>${g}</span>`).join('');
+  const legend = [...FDT_ALLIANCE_TASKS, 'No group'].map(g => `<span class="fdt-legend-item"><i style="background:${fdtColorOf(g)}"></i>${g}</span>`).join('') + `<span class="fdt-legend-item fdt-legend-crown">👑 ${FDT_RALLY_LEAD_NOTE}</span>`;
 
   view.innerHTML = `
     <div class="fdt-chart-head">
@@ -309,6 +321,13 @@ function buildFdtChartCanvas() {
       ctx.strokeStyle = 'rgba(125,211,252,0.3)'; ctx.lineWidth = 1; ctx.stroke();
       if (title) txt(title, x + 16, y + 24, { size: 16, weight: '700', color: '#f1f5f9' });
       if (sub) txt(sub, x + 16, y + 44, { size: 12, color: '#94a3b8' });
+    };
+    // Vector crown (no emoji font needed) used to mark the Rally Lead of each Spire.
+    const crown = (cx, cy, w = 14) => {
+      const h = w * 0.75, t = cy - h / 2;
+      ctx.beginPath(); ctx.moveTo(cx, cy + h / 2); ctx.lineTo(cx, t + h * 0.25); ctx.lineTo(cx + w * 0.25, t + h * 0.55);
+      ctx.lineTo(cx + w * 0.5, t); ctx.lineTo(cx + w * 0.75, t + h * 0.55); ctx.lineTo(cx + w, t + h * 0.25); ctx.lineTo(cx + w, cy + h / 2); ctx.closePath();
+      ctx.fillStyle = '#fbbf24'; ctx.fill(); ctx.strokeStyle = '#b45309'; ctx.lineWidth = 1; ctx.stroke();
     };
     const bars = (x, y, w, rows, max, cap) => {
       const lw = Math.round(w * 0.3), vw = 96, bx = x + lw + 10, bw = w - lw - vw - 20;
@@ -360,6 +379,10 @@ function buildFdtChartCanvas() {
 
     // Section 2: task cards with players
     txt('Task distribution & players', PAD, y + 10, { size: 20, weight: '700', color: '#e0f2fe' });
+    ctx.font = `400 13px ${FONT}`;
+    const leadNoteW = ctx.measureText(FDT_RALLY_LEAD_NOTE).width;
+    txt(FDT_RALLY_LEAD_NOTE, W - PAD, y + 10, { size: 13, color: '#fcd34d', align: 'right' });
+    crown(W - PAD - leadNoteW - 22, y + 10);
     y += 34;
     const tw = (W - 2 * PAD - 2 * GAP) / 3;
     const maxTask = Math.max(1, ...d.taskCounts.map(t => t.players.length));
@@ -384,12 +407,15 @@ function buildFdtChartCanvas() {
         const tag = p.alliance ? ` (${p.alliance})` : '';
         ctx.font = `400 12px ${FONT}`;
         const tagW = tag ? ctx.measureText(tag).width : 0;
-        const nameMax = tw - 34 - 62 - tagW;
+        const lead = d.isRallyLead(p, t.label);
+        const off = lead ? 20 : 0;
+        const nameMax = tw - 34 - 62 - tagW - off;
         const nameStr = `${k + 1}. ${p.nickname || '-'}`;
         ctx.font = `400 13px ${FONT}`;
         const nameW = Math.min(ctx.measureText(nameStr).width, nameMax);
-        txt(nameStr, x + 34, py + 8, { size: 13, maxW: nameMax });
-        if (tag) txt(tag, x + 34 + nameW, py + 8, { size: 12, color: '#7dd3fc' });
+        if (lead) crown(x + 34, py + 8);
+        txt(nameStr, x + 34 + off, py + 8, { size: 13, maxW: nameMax });
+        if (tag) txt(tag, x + 34 + off + nameW, py + 8, { size: 12, color: '#7dd3fc' });
         txt(fdtCompactPower(d.power(p)), x + tw - 16, py + 8, { size: 12, color: '#94a3b8', align: 'right' });
         py += 22;
       });
