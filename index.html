@@ -6,7 +6,7 @@
 				<title>3475 Battle League</title>
 				<meta name="description" content="3475 3475 Battle League - Alliance troops power leaderboard, legion roster, and match scheduling.">
 				<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E">
-				<link rel="stylesheet" href="style.css?v=17">
+				<link rel="stylesheet" href="style.css?v=18">
 
 
 
@@ -694,7 +694,7 @@
 <div class="fdt-chart-tabs" role="tablist">
 <button id="fdt-chart-tab-chart" class="fdt-chart-tab active" type="button" role="tab" aria-selected="true" onclick="setFdtChartTab('chart')">📊 Chart</button>
 <button id="fdt-chart-tab-image" class="fdt-chart-tab" type="button" role="tab" aria-selected="false" onclick="setFdtChartTab('image')">🖼 Image</button>
-<button id="fdt-chart-edit-btn" class="fdt-chart-tab fdt-chart-edit-btn hidden" type="button" aria-pressed="false" title="Edit group, tasks or remove players directly from the chart" onclick="toggleFdtChartEdit()">✏️ Live Edit</button>
+<button id="fdt-chart-edit-btn" class="fdt-chart-tab fdt-chart-edit-btn hidden" type="button" aria-pressed="false" title="Edit group, tasks, assign or remove players directly from the chart or image" onclick="toggleFdtChartEdit()">✏️ Live Edit</button>
 <div class="fdt-zoom-controls" role="group" aria-label="Zoom">
 <button type="button" class="fdt-zoom-btn" id="fdt-zoom-out" aria-label="Zoom out" title="Zoom out" onclick="fdtZoomBy(-1)">−</button>
 <button type="button" class="fdt-zoom-level" id="fdt-zoom-level" aria-label="Reset zoom to 100%" title="Reset zoom" onclick="fdtZoomReset()">100%</button>
@@ -704,7 +704,7 @@
 </div>
 <div class="fdt-guide-body">
 <div id="fdt-chart-view" class="fdt-chart-view" aria-live="polite"></div>
-<div id="fdt-chart-image-wrap" class="fdt-chart-image-wrap hidden"><img id="fdt-chart-image" alt="Frostdragon roster chart"></div>
+<div id="fdt-chart-image-wrap" class="fdt-chart-image-wrap hidden"><div id="fdt-image-edit-bar" class="fdt-image-edit-bar hidden"><span>✏️ Live Edit — click a player in the image to edit. Changes save instantly.</span><button type="button" class="fdt-mini-btn fdt-edit-assign" onclick="openAddLegionModal()">+ Assign Player</button></div><img id="fdt-chart-image" alt="Frostdragon roster chart" onclick="onFdtImageClick(event)"></div>
 </div>
 <div class="fdt-guide-modal-footer"><span>Follows the "View by Alliance" filter. Image tab = ready-to-share PNG. Live Edit saves each change instantly.</span><div class="fdt-footer-btns"><button class="btn-apply" type="button" onclick="shareFdtChartLink()" title="Share a link that opens this chart image (always latest data)">🔗 Share link</button><button class="btn-apply" type="button" onclick="downloadFdtChartImage()">⬇ Download PNG</button><button class="btn-apply" type="button" onclick="toggleFdtChartView(false)">Close</button></div></div>
 </div>
@@ -723,6 +723,6 @@
 </div>
 </div>
 
-	<script src="frostdragon.js?v=9"></script>
+	<script src="frostdragon.js?v=10"></script>
 </body>
 </html>

@@ -96,6 +96,8 @@ let fdtChartTab = 'chart';
 let fdtChartImageUrl = '';
 // ---- Live Edit (Chart tab): change group / tasks or remove players right inside the roster chart ----
 let fdtChartEdit = false;
+let fdtImageHits = { W: 1400, H: 1, list: [] };
+let fdtImgEditId = null;
 function canFdtChartEdit() {
   return typeof isAdmin !== 'undefined' && isAdmin && typeof canManageLegion === 'function' && canManageLegion(currentSelection);
 }
@@ -104,9 +106,57 @@ function syncFdtChartEditUi() {
   if (!btn) return;
   const allowed = canFdtChartEdit();
   if (!allowed) fdtChartEdit = false;
-  btn.classList.toggle('hidden', !allowed || fdtChartTab === 'image');
+  btn.classList.toggle('hidden', !allowed);
   btn.classList.toggle('active', fdtChartEdit);
   btn.setAttribute('aria-pressed', String(fdtChartEdit));
+  const imgEdit = fdtChartEdit && fdtChartTab === 'image';
+  document.getElementById('fdt-chart-image-wrap')?.classList.toggle('fdt-img-editable', imgEdit);
+  document.getElementById('fdt-image-edit-bar')?.classList.toggle('hidden', !imgEdit);
+  if (!imgEdit) closeFdtImageEditor();
+}
+// ---- Live Edit on the Image tab: click a player in the picture to edit it ----
+function onFdtImageClick(e) {
+  if (!fdtChartEdit || fdtChartTab !== 'image' || !canFdtChartEdit()) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  const px = (e.clientX - r.left) / r.width * fdtImageHits.W;
+  const py = (e.clientY - r.top) / r.height * fdtImageHits.H;
+  const hit = fdtImageHits.list.find(h => px >= h.x && px <= h.x + h.w && py >= h.y && py <= h.y + h.h);
+  if (!hit) { closeFdtImageEditor(); return; }
+  openFdtImageEditor(hit.id, e.clientX, e.clientY);
+}
+function openFdtImageEditor(id, cx, cy) {
+  const p = loadedTroopsData.find(x => Number(x.id) === Number(id));
+  if (!p) return;
+  fdtImgEditId = Number(p.id);
+  const modal = document.getElementById('fdt-chart-modal');
+  let pop = document.getElementById('fdt-image-editor');
+  if (!pop) { pop = document.createElement('div'); pop.id = 'fdt-image-editor'; pop.className = 'fdt-image-editor'; modal.appendChild(pop); }
+  const g = (FDT_ALLIANCE_TASKS.find(a => parseFdtTasks(p.frostdragon_task).includes(a))) || '';
+  const sel = parseFdtTasks(p.frostdragon_task);
+  const roleTasks = FDT_TASKS.filter(t => !FDT_ALLIANCE_TASKS.includes(t));
+  pop.innerHTML = `<div class="fdt-ie-head"><div><strong>${escapeHtml(p.nickname || '-')}</strong><small>${escapeHtml(p.alliance || '-')} · ID ${escapeHtml(p.game_id || '-')} · ${(Number(p.troops_power) || 0).toLocaleString('en-US')}</small></div><button type="button" class="fdt-ie-close" aria-label="Close" onclick="closeFdtImageEditor()">&times;</button></div>
+    <label class="fdt-ie-label">Group</label>
+    <select class="fdt-edit-select" onchange="setFdtPlayerGroup(${Number(p.id)}, this.value)"><option value="">No group</option>${FDT_ALLIANCE_TASKS.map(a => `<option value="${a}" ${g === a ? 'selected' : ''}>${a}</option>`).join('')}</select>
+    <label class="fdt-ie-label">Tasks</label>
+    <div class="fdt-ie-tasks">${roleTasks.map(t => `<label><input type="checkbox" ${sel.includes(t) ? 'checked' : ''} onchange="toggleFrostdragonTask(${Number(p.id)}, '${t}', this.checked)"><span>${escapeHtml(t)}</span></label>`).join('')}</div>
+    <div class="fdt-ie-actions"><button type="button" class="fdt-mini-btn fdt-edit-remove" onclick="removeFdtPlayerFromChart(${Number(p.id)})">🗑 Remove from roster</button></div>`;
+  pop.classList.remove('hidden');
+  if (typeof cx === 'number') {
+    const w = pop.offsetWidth, h = pop.offsetHeight;
+    pop.style.left = Math.max(8, Math.min(cx + 12, window.innerWidth - w - 8)) + 'px';
+    pop.style.top = Math.max(8, Math.min(cy + 12, window.innerHeight - h - 8)) + 'px';
+  }
+}
+function closeFdtImageEditor() {
+  fdtImgEditId = null;
+  document.getElementById('fdt-image-editor')?.classList.add('hidden');
+}
+// After the picture is redrawn: close the editor if its player left the Battle roster.
+function refreshFdtImageEditor() {
+  if (fdtImgEditId == null) return;
+  const p = loadedTroopsData.find(x => Number(x.id) === fdtImgEditId);
+  if (!p || p.frostdragon_role !== 'Battle') closeFdtImageEditor();
 }
 function toggleFdtChartEdit() {
   if (!canFdtChartEdit()) { showToast("You don't have permission to edit this roster.", 'warning'); return; }
@@ -145,7 +195,7 @@ function toggleFdtChartView(force) {
   if (open && !fdtRosterContextOk()) return;
   modal.classList.toggle('hidden', !open);
   document.body.classList.toggle('fdt-guide-open', open);
-  if (!open) fdtChartEdit = false;
+  if (!open) { fdtChartEdit = false; closeFdtImageEditor(); }
   if (open) {
     fdtChartEdit = false;
     fdtChartTab = 'chart';
@@ -358,7 +408,10 @@ function buildFdtChartCanvas() {
   const FONT = '"Segoe UI", Tahoma, Arial, sans-serif';
   const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
 
+  // Clickable areas (in the 1400px-wide drawing space) used by Live Edit on the Image tab.
+  let hits = [];
   const draw = (ctx, H) => {
+    hits = [];
     const rr = (x, y, w, h, r) => { r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
     const txt = (s, x, y, o = {}) => {
       const { size = 14, weight = '400', color = '#e2e8f0', align = 'left', maxW } = o;
@@ -387,6 +440,7 @@ function buildFdtChartCanvas() {
       const lw = Math.round(w * 0.3), vw = 96, bx = x + lw + 10, bw = w - lw - vw - 20;
       rows.forEach((r, i) => {
         const cy = y + i * 30 + 15;
+        if (r.id != null) hits.push({ x, y: cy - 15, w, h: 30, id: r.id });
         txt(r.label, x, cy, { size: 13, color: '#cbd5e1', maxW: lw });
         rr(bx, cy - 8, bw, 16, 6); ctx.fillStyle = 'rgba(51,65,85,0.6)'; ctx.fill();
         if (max > 0 && r.value > 0) { rr(bx, cy - 8, Math.max(6, bw * r.value / max), 16, 6); ctx.fillStyle = r.color; ctx.fill(); }
@@ -456,6 +510,7 @@ function buildFdtChartCanvas() {
       let py = cy0 + 62;
       if (!n) txt('No players assigned', x + 16, py + 8, { size: 12, color: '#64748b' });
       t.players.forEach((p, k) => {
+        hits.push({ x, y: py - 3, w: tw, h: 22, id: p.id });
         ctx.fillStyle = fdtColorOf(d.groupOf(p)); ctx.beginPath(); ctx.arc(x + 22, py + 8, 4, 0, Math.PI * 2); ctx.fill();
         // Nickname followed by the player's alliance tag, e.g. "ACĒ (IDN)". The nickname is shortened first if the row is tight.
         const tag = p.alliance ? ` (${p.alliance})` : '';
@@ -483,7 +538,7 @@ function buildFdtChartCanvas() {
     const maxTop = Math.max(1, ...d.top.map(d.power));
     card(PAD, y, W - 2 * PAD, h3, 'Top 15 players by troops power', 'Red = Alliance A · Blue = Alliance B (A first, then B)');
     bars(PAD + 16, y + 62, W - 2 * PAD - 32, d.top.map((p, i) => ({
-      label: `${i + 1}. ${p.nickname || '-'}${p.alliance ? '  (' + p.alliance + ')' : ''}`,
+      id: p.id, label: `${i + 1}. ${p.nickname || '-'}${p.alliance ? '  (' + p.alliance + ')' : ''}`,
       value: d.power(p), color: fdtColorOf(d.groupOf(p)), display: fdtCompactPower(d.power(p))
     })), maxTop);
     y += h3 + GAP;
@@ -499,6 +554,7 @@ function buildFdtChartCanvas() {
   const ctx = canvas.getContext('2d');
   ctx.scale(scale, scale);
   draw(ctx, H);
+  fdtImageHits = { W, H, list: hits };
   return canvas;
 }
 function showFdtChartImage() {
@@ -508,6 +564,7 @@ function showFdtChartImage() {
     fdtChartImageUrl = buildFdtChartCanvas().toDataURL('image/png');
     img.src = fdtChartImageUrl;
     applyFdtZoom();
+    refreshFdtImageEditor();
   } catch (e) {
     console.warn('FDT chart image failed', e);
     if (typeof showToast === 'function') showToast('Unable to generate chart image.', 'error');

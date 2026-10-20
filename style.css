@@ -1267,3 +1267,19 @@ body.fdt-shared-open { overflow:hidden; }
 #confirm-modal { z-index: 2600; }
 .fdt-edit-assign { border-color: rgba(167,139,250,.6); color: #ede9fe; background: rgba(124,58,237,.3); font-weight: 600; }
 #legion-assign-modal { z-index: 2500; } /* above the Roster Chart modal (2400), below confirm (2600) */
+
+/* Live Edit on the Image tab */
+.fdt-image-edit-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 8px 12px; border: 1px solid rgba(167,139,250,.5); border-radius: 10px; background: rgba(124,58,237,.15); color: #ddd6fe; font-size: .8rem; text-align: left; }
+.fdt-image-edit-bar.hidden { display: none; }
+.fdt-chart-image-wrap.fdt-img-editable img { cursor: pointer; outline: 2px dashed rgba(167,139,250,.45); outline-offset: 2px; }
+.fdt-image-editor { position: fixed; z-index: 2450; width: 250px; max-height: 80vh; overflow-y: auto; padding: 12px; text-align: left; background: #0f172a; border: 1px solid rgba(167,139,250,.6); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.6); color: #e2e8f0; }
+.fdt-image-editor.hidden { display: none; }
+.fdt-ie-head { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
+.fdt-ie-head strong { display: block; color: #f1f5f9; font-size: .95rem; word-break: break-word; }
+.fdt-ie-head small { color: #94a3b8; font-size: .7rem; }
+.fdt-ie-close { background: none; border: 0; color: #94a3b8; font-size: 1.3rem; line-height: 1; cursor: pointer; }
+.fdt-ie-label { display: block; margin: 8px 0 4px; font-size: .7rem; text-transform: uppercase; color: #94a3b8; }
+.fdt-ie-tasks { display: grid; gap: 2px; }
+.fdt-ie-tasks label { display: flex; align-items: center; gap: 7px; padding: 3px 2px; font-size: .8rem; cursor: pointer; }
+.fdt-ie-tasks input { accent-color: #a78bfa; }
+.fdt-ie-actions { margin-top: 10px; }
