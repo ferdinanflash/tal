@@ -1197,7 +1197,16 @@ body.fdt-guide-open { overflow: hidden; }
 .fdt-chart-tabs { display:flex; gap:6px; margin-top:12px; }
 .fdt-chart-tab { background:rgba(15,23,42,.8); border:1px solid rgba(125,211,252,.3); color:#bae6fd; padding:7px 14px; border-radius:8px; font-size:.82rem; cursor:pointer; }
 .fdt-chart-tab.active { background:rgba(14,165,233,.28); border-color:#38bdf8; color:#fff; font-weight:700; }
+.fdt-chart-tabs { align-items:center; flex-wrap:wrap; }
+.fdt-zoom-controls { display:inline-flex; align-items:center; margin-left:auto; border:1px solid rgba(125,211,252,.3); border-radius:8px; overflow:hidden; background:rgba(15,23,42,.8); }
+.fdt-zoom-btn, .fdt-zoom-level { background:transparent; border:0; color:#bae6fd; font-size:1rem; line-height:1; padding:8px 13px; cursor:pointer; min-width:40px; }
+.fdt-zoom-level { font-size:.8rem; min-width:56px; border-left:1px solid rgba(125,211,252,.2); border-right:1px solid rgba(125,211,252,.2); }
+.fdt-zoom-btn:hover, .fdt-zoom-level:hover { background:rgba(14,165,233,.22); color:#fff; }
+.fdt-zoom-btn:disabled { opacity:.35; cursor:not-allowed; background:transparent; }
+.fdt-chart-modal-content .fdt-guide-body { overflow:auto; touch-action:pan-x pan-y; }
 .fdt-chart-image-wrap { text-align:center; }
+#fdt-checklist label { display:flex; gap:8px; align-items:flex-start; margin:6px 0; }
+#fdt-checklist input[type=checkbox]:disabled { cursor:not-allowed; opacity:.7; }
 .fdt-chart-image-wrap.hidden { display:none; }
 .fdt-chart-image-wrap img { max-width:100%; height:auto; border-radius:10px; border:1px solid rgba(125,211,252,.3); }
 .fdt-footer-btns { display:flex; gap:8px; flex-wrap:wrap; }

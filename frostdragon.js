@@ -109,10 +109,63 @@ function toggleFdtChartView(force) {
   document.body.classList.toggle('fdt-guide-open', open);
   if (open) {
     fdtChartTab = 'chart';
+    fdtZoom = 1;
     applyFdtChartMode();
+    applyFdtZoom();
     modal.querySelector('.close-modal')?.focus();
   }
 }
+// ---- Zoom in / out (Chart + Image tabs) ----
+// Buttons (− / 100% / +), Ctrl/⌘ + mouse wheel, and Ctrl +/-/0 while the modal is open.
+// Chart tab: CSS zoom (re-flows like browser zoom). Image tab: scales the PNG width and scrolls.
+const FDT_ZOOM_MIN = 0.5, FDT_ZOOM_MAX = 3, FDT_ZOOM_STEP = 0.25;
+let fdtZoom = 1;
+function applyFdtZoom() {
+  const view = document.getElementById('fdt-chart-view');
+  const img = document.getElementById('fdt-chart-image');
+  if (view) view.style.zoom = fdtZoom === 1 ? '' : String(fdtZoom);
+  if (img) {
+    img.style.maxWidth = 'none';
+    img.style.width = (fdtZoom * 100) + '%';
+  }
+  const label = document.getElementById('fdt-zoom-level');
+  if (label) label.textContent = Math.round(fdtZoom * 100) + '%';
+  const out = document.getElementById('fdt-zoom-out'), inn = document.getElementById('fdt-zoom-in');
+  if (out) out.disabled = fdtZoom <= FDT_ZOOM_MIN + 1e-6;
+  if (inn) inn.disabled = fdtZoom >= FDT_ZOOM_MAX - 1e-6;
+}
+function fdtSetZoom(z) {
+  fdtZoom = Math.min(FDT_ZOOM_MAX, Math.max(FDT_ZOOM_MIN, Math.round(z * 100) / 100));
+  applyFdtZoom();
+}
+function fdtZoomBy(dir) { fdtSetZoom(fdtZoom + dir * FDT_ZOOM_STEP); }
+function fdtZoomReset() { fdtSetZoom(1); }
+document.addEventListener('wheel', e => {
+  if (!isFdtChartOpen() || !(e.ctrlKey || e.metaKey) || !e.target.closest?.('#fdt-chart-modal')) return;
+  e.preventDefault();
+  fdtZoomBy(e.deltaY < 0 ? 1 : -1);
+}, { passive: false });
+document.addEventListener('keydown', e => {
+  if (!isFdtChartOpen() || !(e.ctrlKey || e.metaKey)) return;
+  if (e.key === '+' || e.key === '=') { e.preventDefault(); fdtZoomBy(1); }
+  else if (e.key === '-') { e.preventDefault(); fdtZoomBy(-1); }
+  else if (e.key === '0') { e.preventDefault(); fdtZoomReset(); }
+});
+// Pinch-to-zoom on touch screens (two fingers inside the chart body).
+(function () {
+  let startDist = 0, startZoom = 1;
+  const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  document.addEventListener('touchstart', e => {
+    if (e.touches.length === 2 && e.target.closest?.('#fdt-chart-modal .fdt-guide-body')) { startDist = dist(e.touches); startZoom = fdtZoom; }
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    if (e.touches.length !== 2 || !startDist || !e.target.closest?.('#fdt-chart-modal .fdt-guide-body')) return;
+    e.preventDefault();
+    fdtSetZoom(startZoom * dist(e.touches) / startDist);
+  }, { passive: false });
+  document.addEventListener('touchend', e => { if (e.touches.length < 2) startDist = 0; }, { passive: true });
+})();
+
 // Called on every roster re-render: keeps an open chart in sync with the data / filter.
 function applyFdtChartMode() {
   if (!isFdtChartOpen()) return;
@@ -200,8 +253,8 @@ function renderFdtCharts() {
   const powerChart = fdtBarRows(d.groupRows.map(g => ({ label: g.label, value: g.power, color: fdtColorOf(g.label), display: fdtCompactPower(g.power), sub: g.power.toLocaleString('en-US') })), maxGroupPower);
 
   const maxTask = Math.max(1, ...d.taskCounts.map(t => t.players.length));
-  const playerList = list => list.length ? `<table class="fdt-task-players"><thead><tr><th>#</th><th>Nickname</th><th>Game ID</th><th>Group</th><th>Troops Power</th></tr></thead><tbody>${
-    list.map((p, i) => { const g = groupOf(p); return `<tr><td>${i + 1}</td><td>${escapeHtml(p.nickname || '-')}</td><td>${escapeHtml(p.game_id || '-')}</td><td><span class="fdt-group-dot" style="background:${fdtColorOf(g)}"></span>${escapeHtml(g || '—')}</td><td>${power(p).toLocaleString('en-US')}</td></tr>`; }).join('')
+  const playerList = list => list.length ? `<table class="fdt-task-players"><thead><tr><th>#</th><th>Nickname</th><th>Alliance</th><th>Game ID</th><th>Group</th><th>Troops Power</th></tr></thead><tbody>${
+    list.map((p, i) => { const g = groupOf(p); return `<tr><td>${i + 1}</td><td>${escapeHtml(p.nickname || '-')}</td><td>${escapeHtml(p.alliance || '-')}</td><td>${escapeHtml(p.game_id || '-')}</td><td><span class="fdt-group-dot" style="background:${fdtColorOf(g)}"></span>${escapeHtml(g || '—')}</td><td>${power(p).toLocaleString('en-US')}</td></tr>`; }).join('')
   }</tbody></table>` : '<div class="fdt-chart-empty">No players assigned.</div>';
   const taskChart = d.taskCounts.map(t => `<details class="fdt-task-detail"><summary>${fdtBarRows([{
       label: t.label, value: t.players.length, color: t.label === 'No role task' ? '#64748b' : '#0ea5e9',
@@ -327,7 +380,16 @@ function buildFdtChartCanvas() {
       if (!n) txt('No players assigned', x + 16, py + 8, { size: 12, color: '#64748b' });
       t.players.forEach((p, k) => {
         ctx.fillStyle = fdtColorOf(d.groupOf(p)); ctx.beginPath(); ctx.arc(x + 22, py + 8, 4, 0, Math.PI * 2); ctx.fill();
-        txt(`${k + 1}. ${p.nickname || '-'}`, x + 34, py + 8, { size: 13, maxW: tw - 34 - 90 });
+        // Nickname followed by the player's alliance tag, e.g. "ACĒ (IDN)". The nickname is shortened first if the row is tight.
+        const tag = p.alliance ? ` (${p.alliance})` : '';
+        ctx.font = `400 12px ${FONT}`;
+        const tagW = tag ? ctx.measureText(tag).width : 0;
+        const nameMax = tw - 34 - 62 - tagW;
+        const nameStr = `${k + 1}. ${p.nickname || '-'}`;
+        ctx.font = `400 13px ${FONT}`;
+        const nameW = Math.min(ctx.measureText(nameStr).width, nameMax);
+        txt(nameStr, x + 34, py + 8, { size: 13, maxW: nameMax });
+        if (tag) txt(tag, x + 34 + nameW, py + 8, { size: 12, color: '#7dd3fc' });
         txt(fdtCompactPower(d.power(p)), x + tw - 16, py + 8, { size: 12, color: '#94a3b8', align: 'right' });
         py += 22;
       });
@@ -365,6 +427,7 @@ function showFdtChartImage() {
   try {
     fdtChartImageUrl = buildFdtChartCanvas().toDataURL('image/png');
     img.src = fdtChartImageUrl;
+    applyFdtZoom();
   } catch (e) {
     console.warn('FDT chart image failed', e);
     if (typeof showToast === 'function') showToast('Unable to generate chart image.', 'error');
@@ -459,7 +522,62 @@ async function loadFdtSettings() {
     const lock=document.getElementById('fdt-lock-btn'); if(lock) lock.textContent=fdtSettings.locked?'Unlock roster':'Lock roster';
     updateFdtClock();
   } catch(e) { console.warn('FDT settings not loaded; run supabase_frostdragon_column.sql',e); }
+  loadFdtChecklist();
 }
+// ---- Admin phase checklist: stored on the server (footer_settings.frostdragon_checklist, jsonb) ----
+// Shared by all admins/devices. Before this, the checkboxes were plain HTML and reset on every reload.
+let fdtChecklist = {};
+let fdtChecklistSaving = 0;
+function canEditFdtChecklist() {
+  return (typeof isAdmin !== 'undefined' && !!isAdmin) || (typeof canOpenPresidentPanel === 'function' && canOpenPresidentPanel());
+}
+function renderFdtChecklist() {
+  const root = document.getElementById('fdt-checklist'); if (!root) return;
+  const editable = canEditFdtChecklist();
+  root.querySelectorAll('input[type=checkbox][data-chk]').forEach(cb => {
+    cb.checked = !!fdtChecklist[cb.dataset.chk];
+    cb.disabled = !editable;
+  });
+  const done = root.querySelectorAll('input[data-chk]:checked').length, total = root.querySelectorAll('input[data-chk]').length;
+  const st = document.getElementById('fdt-checklist-status');
+  if (st) st.textContent = `(${done}/${total} done${editable ? '' : ' · view only'})`;
+}
+async function loadFdtChecklist() {
+  const client = getSupabase(); if (!client || fdtChecklistSaving) return;
+  try {
+    const { data, error } = await client.from('footer_settings').select('frostdragon_checklist').eq('id', 'main').single();
+    if (error) throw error;
+    const v = data?.frostdragon_checklist;
+    fdtChecklist = (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
+    renderFdtChecklist();
+  } catch (e) { console.warn('FDT checklist not loaded; run supabase_frostdragon_checklist.sql', e); renderFdtChecklist(); }
+}
+async function onFdtChecklistChange(cb) {
+  if (!canEditFdtChecklist()) { renderFdtChecklist(); return; }
+  const key = cb.dataset.chk, previous = !!fdtChecklist[key];
+  fdtChecklistSaving++;
+  try {
+    // Re-read the latest server copy first so two admins ticking different items don't overwrite each other.
+    let latest = fdtChecklist;
+    const cur = await getSupabase().from('footer_settings').select('frostdragon_checklist').eq('id', 'main').single();
+    if (!cur.error && cur.data?.frostdragon_checklist && typeof cur.data.frostdragon_checklist === 'object') latest = cur.data.frostdragon_checklist;
+    const next = { ...latest, [key]: cb.checked };
+    const { data, error } = await getSupabase().from('footer_settings').update({ frostdragon_checklist: next }).eq('id', 'main').select('frostdragon_checklist');
+    if (error) throw error;
+    if (!data || !data.length) throw new Error('No permission to update (check footer_settings RLS policy).');
+    fdtChecklist = next;
+    showToast('Checklist saved.', 'success');
+  } catch (e) {
+    fdtChecklist[key] = previous;
+    showToast('Unable to save checklist: ' + (e.message || e) + ' — make sure supabase_frostdragon_checklist.sql has been run.', 'error');
+  } finally {
+    fdtChecklistSaving--;
+    renderFdtChecklist();
+  }
+}
+document.addEventListener('change', e => {
+  const cb = e.target; if (cb?.matches?.('#fdt-checklist input[type=checkbox][data-chk]')) onFdtChecklistChange(cb);
+});
 async function saveFdtSettings() {
   if(!canOpenPresidentPanel()) { showToast('Full-access staff only.', 'warning'); return; }
   const open=document.getElementById('fdt-open-time').value, deadline=document.getElementById('fdt-deadline').value;

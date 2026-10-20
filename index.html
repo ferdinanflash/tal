@@ -243,19 +243,19 @@
                     </div>
                     <div id="fdt-countdown" style="margin-top:12px;font-weight:700">Battlefield schedule not set.</div>
                     <div id="fdt-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px"></div>
-                    <div id="fdt-checklist" style="margin-top:14px"><h3>Admin phase checklist</h3>
+                    <div id="fdt-checklist" style="margin-top:14px"><h3>Admin phase checklist <small id="fdt-checklist-status" style="font-weight:400;color:#94a3b8"></small></h3>
                       <h4>Before Battlefield opens</h4>
-                      <label><input type="checkbox"> Confirm exactly one Tyrant Candidate</label>
-                      <label><input type="checkbox"> Assign Rally Captains and Capital Reinforcers</label>
-                      <label><input type="checkbox"> Assign Spire teams (Life / Shield / Dragonbane / Blade)</label>
-                      <label><input type="checkbox"> Confirm members joined before sign-up ended and dispatch at most 60 per alliance</label>
-                      <label><input type="checkbox"> Lock roster at the deadline</label>
+                      <label><input type="checkbox" data-chk="tyrant"> Confirm exactly one Tyrant Candidate</label>
+                      <label><input type="checkbox" data-chk="captains"> Assign Rally Captains and Capital Reinforcers</label>
+                      <label><input type="checkbox" data-chk="spires"> Assign Spire teams (Life / Shield / Dragonbane / Blade)</label>
+                      <label><input type="checkbox" data-chk="limit60"> Confirm members joined before sign-up ended and dispatch at most 60 per alliance</label>
+                      <label><input type="checkbox" data-chk="lock"> Lock roster at the deadline</label>
                       <h4>Capital opening / Dragonite gathering</h4>
-                      <label><input type="checkbox"> Share Dragonite collection routes and refresh timing</label>
-                      <label><input type="checkbox"> Coordinate Capital Defense and reinforcement calls</label>
+                      <label><input type="checkbox" data-chk="routes"> Share Dragonite collection routes and refresh timing</label>
+                      <label><input type="checkbox" data-chk="defense"> Coordinate Capital Defense and reinforcement calls</label>
                       <h4>Mid-battle / Rearmament</h4>
-                      <label><input type="checkbox"> Rotate Spire assignments every 30 minutes</label>
-                      <label><input type="checkbox"> Save healing resources for Rearmament and prepare teleport plan</label>
+                      <label><input type="checkbox" data-chk="rotate"> Rotate Spire assignments every 30 minutes</label>
+                      <label><input type="checkbox" data-chk="rearm"> Save healing resources for Rearmament and prepare teleport plan</label>
                     </div>
                 </section>
 				<div class="table-container" aria-live="polite">
@@ -677,6 +677,11 @@
 <div class="fdt-chart-tabs" role="tablist">
 <button id="fdt-chart-tab-chart" class="fdt-chart-tab active" type="button" role="tab" aria-selected="true" onclick="setFdtChartTab('chart')">📊 Chart</button>
 <button id="fdt-chart-tab-image" class="fdt-chart-tab" type="button" role="tab" aria-selected="false" onclick="setFdtChartTab('image')">🖼 Image</button>
+<div class="fdt-zoom-controls" role="group" aria-label="Zoom">
+<button type="button" class="fdt-zoom-btn" id="fdt-zoom-out" aria-label="Zoom out" title="Zoom out" onclick="fdtZoomBy(-1)">−</button>
+<button type="button" class="fdt-zoom-level" id="fdt-zoom-level" aria-label="Reset zoom to 100%" title="Reset zoom" onclick="fdtZoomReset()">100%</button>
+<button type="button" class="fdt-zoom-btn" id="fdt-zoom-in" aria-label="Zoom in" title="Zoom in" onclick="fdtZoomBy(1)">+</button>
+</div>
 </div>
 </div>
 <div class="fdt-guide-body">
