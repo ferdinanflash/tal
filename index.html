@@ -490,8 +490,20 @@
 				</p>
 
 				<div class="form-group">
-					<label>Select Player</label>
-					<select id="select-legion-player">
+					<label for="legion-assign-alliance">Alliance Category</label>
+					<select id="legion-assign-alliance" onchange="filterLegionAssignPlayers()">
+						<!-- Populated via JS -->
+					</select>
+				</div>
+
+				<div class="form-group">
+					<label for="legion-assign-search">Search Game ID / Nickname</label>
+					<input type="text" id="legion-assign-search" placeholder="Type game ID or nickname..." autocomplete="off" oninput="filterLegionAssignPlayers()">
+				</div>
+
+				<div class="form-group">
+					<label for="select-legion-player">Select Player <span id="legion-assign-count" class="legion-assign-count"></span></label>
+					<select id="select-legion-player" onchange="onLegionAssignPlayerChange()">
 						<!-- Populated via JS -->
 					</select>
 				</div>
@@ -502,6 +514,11 @@
 						<option value="Battle">Battle (Main Players - Max 30)</option>
 						<option value="Substitute">Substitute (Reserve Players - Max 20)</option>
 					</select>
+				</div>
+
+				<div class="form-group hidden" id="legion-assign-task-group">
+					<label>Task <span class="legion-assign-count">(optional, can pick several)</span></label>
+					<div id="legion-assign-task-options" class="legion-assign-task-options"></div>
 				</div>
 
 				<div class="form-actions">
@@ -677,6 +694,7 @@
 <div class="fdt-chart-tabs" role="tablist">
 <button id="fdt-chart-tab-chart" class="fdt-chart-tab active" type="button" role="tab" aria-selected="true" onclick="setFdtChartTab('chart')">📊 Chart</button>
 <button id="fdt-chart-tab-image" class="fdt-chart-tab" type="button" role="tab" aria-selected="false" onclick="setFdtChartTab('image')">🖼 Image</button>
+<button id="fdt-chart-edit-btn" class="fdt-chart-tab fdt-chart-edit-btn hidden" type="button" aria-pressed="false" title="Edit group, tasks or remove players directly from the chart" onclick="toggleFdtChartEdit()">✏️ Live Edit</button>
 <div class="fdt-zoom-controls" role="group" aria-label="Zoom">
 <button type="button" class="fdt-zoom-btn" id="fdt-zoom-out" aria-label="Zoom out" title="Zoom out" onclick="fdtZoomBy(-1)">−</button>
 <button type="button" class="fdt-zoom-level" id="fdt-zoom-level" aria-label="Reset zoom to 100%" title="Reset zoom" onclick="fdtZoomReset()">100%</button>
@@ -688,7 +706,7 @@
 <div id="fdt-chart-view" class="fdt-chart-view" aria-live="polite"></div>
 <div id="fdt-chart-image-wrap" class="fdt-chart-image-wrap hidden"><img id="fdt-chart-image" alt="Frostdragon roster chart"></div>
 </div>
-<div class="fdt-guide-modal-footer"><span>Follows the "View by Alliance" filter. Image tab = ready-to-share PNG.</span><div class="fdt-footer-btns"><button class="btn-apply" type="button" onclick="shareFdtChartLink()" title="Share a link that opens this chart image (always latest data)">🔗 Share link</button><button class="btn-apply" type="button" onclick="downloadFdtChartImage()">⬇ Download PNG</button><button class="btn-apply" type="button" onclick="toggleFdtChartView(false)">Close</button></div></div>
+<div class="fdt-guide-modal-footer"><span>Follows the "View by Alliance" filter. Image tab = ready-to-share PNG. Live Edit saves each change instantly.</span><div class="fdt-footer-btns"><button class="btn-apply" type="button" onclick="shareFdtChartLink()" title="Share a link that opens this chart image (always latest data)">🔗 Share link</button><button class="btn-apply" type="button" onclick="downloadFdtChartImage()">⬇ Download PNG</button><button class="btn-apply" type="button" onclick="toggleFdtChartView(false)">Close</button></div></div>
 </div>
 </div>
 

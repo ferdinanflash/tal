@@ -49,6 +49,8 @@ async function updateFrostdragonTask(playerId, tasks) {
   showToast('Frostdragon tasks saved.', 'success');
   updateFdtAllianceFilterUi();
   refreshFdtSummary();
+  // Live Edit: redraw the open chart (and image) straight away so every bar and list reflects the change.
+  if (isFdtChartOpen()) { renderFdtCharts(); if (fdtChartTab === 'image') showFdtChartImage(); }
 }
 // ---- "View by Alliance" filter (Frostdragon roster only) ----
 function isFdtAllianceFilterActive() {
@@ -92,6 +94,40 @@ function updateFdtAllianceFilterUi() {
 const FDT_ALLIANCE_COLORS = { 'Alliance A': '#ef4444', 'Alliance B': '#3b82f6', none: '#64748b' };
 let fdtChartTab = 'chart';
 let fdtChartImageUrl = '';
+// ---- Live Edit (Chart tab): change group / tasks or remove players right inside the roster chart ----
+let fdtChartEdit = false;
+function canFdtChartEdit() {
+  return typeof isAdmin !== 'undefined' && isAdmin && typeof canManageLegion === 'function' && canManageLegion(currentSelection);
+}
+function syncFdtChartEditUi() {
+  const btn = document.getElementById('fdt-chart-edit-btn');
+  if (!btn) return;
+  const allowed = canFdtChartEdit();
+  if (!allowed) fdtChartEdit = false;
+  btn.classList.toggle('hidden', !allowed || fdtChartTab === 'image');
+  btn.classList.toggle('active', fdtChartEdit);
+  btn.setAttribute('aria-pressed', String(fdtChartEdit));
+}
+function toggleFdtChartEdit() {
+  if (!canFdtChartEdit()) { showToast("You don't have permission to edit this roster.", 'warning'); return; }
+  if (!fdtChartEdit && fdtSettings.locked) { showToast('Frostdragon roster is locked. Unlock it in President Panel to make changes.', 'warning'); return; }
+  fdtChartEdit = !fdtChartEdit;
+  syncFdtChartEditUi();
+  renderFdtCharts();
+  if (fdtChartEdit) toggleFdtTaskDetails(true);
+}
+// Group = Alliance A / B (mutually exclusive); '' clears the group. Other tasks are kept.
+async function setFdtPlayerGroup(playerId, group) {
+  const p = loadedTroopsData.find(x => Number(x.id) === Number(playerId));
+  if (!p) return;
+  const tasks = new Set(parseFdtTasks(p.frostdragon_task));
+  FDT_ALLIANCE_TASKS.forEach(t => tasks.delete(t));
+  if (group && FDT_ALLIANCE_TASKS.includes(group)) tasks.add(group);
+  await updateFrostdragonTask(playerId, [...tasks]);
+}
+async function removeFdtPlayerFromChart(playerId) {
+  await removeFromLegion(playerId);
+}
 
 function fdtRosterContextOk() {
   const page = document.getElementById('troops-table-page');
@@ -109,7 +145,9 @@ function toggleFdtChartView(force) {
   if (open && !fdtRosterContextOk()) return;
   modal.classList.toggle('hidden', !open);
   document.body.classList.toggle('fdt-guide-open', open);
+  if (!open) fdtChartEdit = false;
   if (open) {
+    fdtChartEdit = false;
     fdtChartTab = 'chart';
     fdtZoom = 1;
     applyFdtChartMode();
@@ -172,6 +210,7 @@ document.addEventListener('keydown', e => {
 function applyFdtChartMode() {
   if (!isFdtChartOpen()) return;
   if (!fdtRosterContextOk()) { toggleFdtChartView(false); return; }
+  if (fdtChartEdit && fdtSettings.locked) fdtChartEdit = false;
   renderFdtCharts();
   setFdtChartTab(fdtChartTab);
 }
@@ -186,6 +225,7 @@ function setFdtChartTab(tab) {
     b.classList.toggle('active', fdtChartTab === name);
     b.setAttribute('aria-selected', String(fdtChartTab === name));
   });
+  syncFdtChartEditUi();
   if (isImage) showFdtChartImage();
 }
 function fdtCompactPower(n) {
@@ -253,6 +293,10 @@ function renderFdtCharts() {
   const view = document.getElementById('fdt-chart-view');
   if (!view) return;
   const openTasks = Array.from(view.querySelectorAll('.fdt-task-detail[open] .fdt-bar-label')).map(el => el.textContent);
+  const openPickers = Array.from(view.querySelectorAll('.fdt-edit-picker[open]')).map(el => el.dataset.pid);
+  const scrollBox = view.closest('.fdt-guide-body');
+  const scrollTop = scrollBox ? scrollBox.scrollTop : 0;
+  const edit = fdtChartEdit && canFdtChartEdit() && !fdtSettings.locked;
   const d = getFdtChartData();
   const { power, groupOf } = d;
   if (!d.all.length) {
@@ -265,8 +309,16 @@ function renderFdtCharts() {
   const powerChart = fdtBarRows(d.groupRows.map(g => ({ label: g.label, value: g.power, color: fdtColorOf(g.label), display: fdtCompactPower(g.power), sub: g.power.toLocaleString('en-US') })), maxGroupPower);
 
   const maxTask = Math.max(1, ...d.taskCounts.map(t => t.players.length));
-  const playerList = (list, label) => list.length ? `<table class="fdt-task-players"><thead><tr><th>#</th><th>Nickname</th><th>Alliance</th><th>Game ID</th><th>Group</th><th>Troops Power</th></tr></thead><tbody>${
-    list.map((p, i) => { const g = groupOf(p); return `<tr><td>${i + 1}</td><td>${escapeHtml(p.nickname || '-')}${d.isRallyLead(p, label) ? ' <span class="fdt-rally-crown" title="Rally Lead">👑</span>' : ''}</td><td>${escapeHtml(p.alliance || '-')}</td><td>${escapeHtml(p.game_id || '-')}</td><td><span class="fdt-group-dot" style="background:${fdtColorOf(g)}"></span>${escapeHtml(g || '—')}</td><td>${power(p).toLocaleString('en-US')}</td></tr>`; }).join('')
+  const editCell = p => {
+    const g = groupOf(p) || '';
+    const sel = parseFdtTasks(p.frostdragon_task);
+    const groupSel = `<select class="fdt-edit-select" aria-label="Group" onchange="setFdtPlayerGroup(${Number(p.id)}, this.value)"><option value="">No group</option>${FDT_ALLIANCE_TASKS.map(a => `<option value="${a}" ${g === a ? 'selected' : ''}>${a}</option>`).join('')}</select>`;
+    const roleTasks = FDT_TASKS.filter(t => !FDT_ALLIANCE_TASKS.includes(t));
+    const picker = `<details class="fdt-task-picker fdt-edit-picker" data-pid="${Number(p.id)}"><summary>Tasks (${sel.filter(t => !FDT_ALLIANCE_TASKS.includes(t)).length})</summary><div class="fdt-task-options">${roleTasks.map(t => `<label><input type="checkbox" ${sel.includes(t) ? 'checked' : ''} onchange="toggleFrostdragonTask(${Number(p.id)}, '${t}', this.checked)"><span>${escapeHtml(t)}</span></label>`).join('')}</div></details>`;
+    return `<td class="fdt-edit-cell">${groupSel}${picker}<button type="button" class="fdt-mini-btn fdt-edit-remove" title="Remove from Frostdragon roster" onclick="removeFdtPlayerFromChart(${Number(p.id)})">🗑</button></td>`;
+  };
+  const playerList = (list, label) => list.length ? `<table class="fdt-task-players${edit ? ' fdt-task-players--edit' : ''}"><thead><tr><th>#</th><th>Nickname</th><th>Alliance</th><th>Game ID</th><th>Group</th><th>Troops Power</th>${edit ? '<th>Edit</th>' : ''}</tr></thead><tbody>${
+    list.map((p, i) => { const g = groupOf(p); return `<tr><td>${i + 1}</td><td>${escapeHtml(p.nickname || '-')}${d.isRallyLead(p, label) ? ' <span class="fdt-rally-crown" title="Rally Lead">👑</span>' : ''}</td><td>${escapeHtml(p.alliance || '-')}</td><td>${escapeHtml(p.game_id || '-')}</td><td><span class="fdt-group-dot" style="background:${fdtColorOf(g)}"></span>${escapeHtml(g || '—')}</td><td>${power(p).toLocaleString('en-US')}</td>${edit ? editCell(p) : ''}</tr>`; }).join('')
   }</tbody></table>` : '<div class="fdt-chart-empty">No players assigned.</div>';
   const taskChart = d.taskCounts.map(t => `<details class="fdt-task-detail"><summary>${fdtBarRows([{
       label: t.label, value: t.players.length, color: t.label === 'No role task' ? '#64748b' : '#0ea5e9',
@@ -289,12 +341,14 @@ function renderFdtCharts() {
     <div class="fdt-chart-grid">
       <div class="fdt-chart-card"><h4>Combatants per alliance group</h4><small>Yellow marker = limit of ${FDT_MAX_PER_ALLIANCE} per alliance</small>${countChart}</div>
       <div class="fdt-chart-card"><h4>Total troops power per alliance group</h4>${powerChart}</div>
-      <div class="fdt-chart-card fdt-chart-card--wide"><div class="fdt-card-head"><div><h4>Task distribution &amp; players</h4><small>${escapeHtml(d.scopeLabel)} · click a task to see its players</small></div><div class="fdt-card-actions"><button type="button" class="fdt-mini-btn" onclick="toggleFdtTaskDetails(true)">Expand all</button><button type="button" class="fdt-mini-btn" onclick="toggleFdtTaskDetails(false)">Collapse all</button></div></div>${taskChart}</div>
+      <div class="fdt-chart-card fdt-chart-card--wide"><div class="fdt-card-head"><div><h4>Task distribution &amp; players</h4><small>${escapeHtml(d.scopeLabel)} · ${edit ? '<b class="fdt-edit-badge">✏️ Live Edit on — changes save instantly</b>' : 'click a task to see its players'}</small></div><div class="fdt-card-actions"><button type="button" class="fdt-mini-btn" onclick="toggleFdtTaskDetails(true)">Expand all</button><button type="button" class="fdt-mini-btn" onclick="toggleFdtTaskDetails(false)">Collapse all</button></div></div>${taskChart}</div>
       <div class="fdt-chart-card fdt-chart-card--wide"><h4>Top 15 players by troops power</h4><small>Color = alliance group</small>${topChart}</div>
     </div>`;
   view.querySelectorAll('.fdt-task-detail').forEach(el => {
     if (openTasks.includes(el.querySelector('.fdt-bar-label')?.textContent)) el.open = true;
   });
+  view.querySelectorAll('.fdt-edit-picker').forEach(el => { if (openPickers.includes(el.dataset.pid)) el.open = true; });
+  if (scrollBox) scrollBox.scrollTop = scrollTop;
 }
 
 // ---- Image (PNG) rendering: drawn directly on a canvas so the result is a clean standalone picture ----

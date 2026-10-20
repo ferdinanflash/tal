@@ -1241,3 +1241,27 @@ body.fdt-shared-open { overflow:hidden; }
 
 .fdt-rally-crown { margin-left:4px; }
 .fdt-legend-crown { color:#fcd34d; }
+
+/* Assign Player to Legion modal: filters + task picker */
+.legion-assign-count { font-size: .75rem; color: #64748b; margin-left: 4px; }
+.legion-assign-task-options { display: flex; flex-wrap: wrap; gap: 6px; max-height: 130px; overflow-y: auto; }
+.legion-assign-task-chip { cursor: pointer; }
+.legion-assign-task-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.legion-assign-task-chip span { display: inline-block; border: 1px solid rgba(125,211,252,.45); background: rgba(14,165,233,.10); color: #bae6fd; border-radius: 999px; padding: 4px 10px; font-size: .75rem; transition: background .15s, border-color .15s; }
+.legion-assign-task-chip input:checked + span { background: rgba(124,58,237,.35); border-color: #a78bfa; color: #ede9fe; font-weight: 600; }
+.legion-assign-task-chip input:focus-visible + span { outline: 2px solid #a78bfa; outline-offset: 2px; }
+#legion-assign-modal .modal-content { max-height: 92vh; overflow-y: auto; }
+
+/* Roster Chart: Live Edit */
+.fdt-chart-edit-btn { border-color: rgba(167,139,250,.55); color: #ddd6fe; }
+.fdt-chart-edit-btn.active { background: rgba(124,58,237,.4); border-color: #a78bfa; color: #fff; font-weight: 700; }
+.fdt-edit-badge { color: #c4b5fd; }
+.fdt-task-players--edit .fdt-edit-cell { display: flex; align-items: center; gap: 6px; text-align: left; border-bottom: 0; }
+.fdt-edit-select { background: #1e2230; border: 1px solid rgba(255,255,255,.15); color: #f1f5f9; border-radius: 6px; padding: 4px 6px; font-size: .75rem; }
+.fdt-edit-picker { position: relative; }
+.fdt-edit-picker .fdt-task-options { position: absolute; right: 0; z-index: 5; min-width: 190px; max-height: 220px; overflow-y: auto; padding: 8px; background: #0f172a; border: 1px solid rgba(125,211,252,.45); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+.fdt-edit-picker .fdt-task-options label { display: flex; gap: 6px; align-items: center; padding: 3px 2px; white-space: nowrap; }
+.fdt-edit-remove { border-color: rgba(248,113,113,.55); color: #fecaca; }
+.fdt-task-players--edit { overflow: visible; }
+.fdt-chart-modal .fdt-task-detail[open] { overflow: visible; }
+#confirm-modal { z-index: 2600; }

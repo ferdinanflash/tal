@@ -1,4 +1,8 @@
 // ================= LEGION MANAGEMENT FEATURES (PRESIDENT) =================
+// Candidates loaded when the Assign modal opens; the alliance / search
+// controls filter this list client-side without re-querying Supabase.
+let legionAssignCandidates = [];
+
 async function openAddLegionModal() {
     if (!canManageLegion(currentSelection)) {
         showToast("You don't have permission to manage this legion's roster.", "warning");
@@ -24,24 +28,85 @@ async function openAddLegionModal() {
         showToast("Failed to load players list", "error");
         return;
     }
+    legionAssignCandidates = data || [];
 
-    const selectEl = document.getElementById('select-legion-player');
-    selectEl.innerHTML = "";
+    // Alliance category dropdown
+    const allianceEl = document.getElementById('legion-assign-alliance');
+    const presentAlliances = ALL_ALLIANCES.filter(a => legionAssignCandidates.some(p => p.alliance === a));
+    allianceEl.innerHTML = `<option value="">All Alliances (${legionAssignCandidates.length})</option>` +
+        presentAlliances.map(a => `<option value="${a}">${a} (${legionAssignCandidates.filter(p => p.alliance === a).length})</option>`).join('');
 
-    if (!data || data.length === 0) {
-        selectEl.innerHTML = `<option value="">No available players to add</option>`;
+    document.getElementById('legion-assign-search').value = '';
+
+    // Task picker (Frostdragon only: tasks are stored in frostdragon_task)
+    const taskGroup = document.getElementById('legion-assign-task-group');
+    if (frost && typeof FDT_TASKS !== 'undefined') {
+        document.getElementById('legion-assign-task-options').innerHTML = FDT_TASKS.map(t =>
+            `<label class="legion-assign-task-chip"><input type="checkbox" value="${escapeHtml(t)}" onchange="onLegionAssignTaskToggle(this)"><span>${escapeHtml(t)}</span></label>`
+        ).join('');
+        taskGroup.classList.remove('hidden');
     } else {
-        data.forEach(p => {
+        taskGroup.classList.add('hidden');
+    }
+
+    filterLegionAssignPlayers();
+    document.getElementById('legion-assign-modal').classList.remove('hidden');
+    document.getElementById('legion-assign-search').focus();
+}
+
+// Re-render the player dropdown from the alliance + search filters.
+function filterLegionAssignPlayers() {
+    const alliance = document.getElementById('legion-assign-alliance').value;
+    const q = document.getElementById('legion-assign-search').value.trim().toLowerCase();
+    const selectEl = document.getElementById('select-legion-player');
+    const previous = selectEl.value;
+
+    const matches = legionAssignCandidates.filter(p => {
+        if (alliance && p.alliance !== alliance) return false;
+        if (!q) return true;
+        return String(p.nickname || '').toLowerCase().includes(q)
+            || String(p.game_id || '').toLowerCase().includes(q);
+    });
+
+    selectEl.innerHTML = "";
+    if (matches.length === 0) {
+        selectEl.innerHTML = `<option value="">No matching players</option>`;
+    } else {
+        matches.forEach(p => {
             const option = document.createElement('option');
             option.value = p.id;
             const currentLegionTag = p.legion ? ` (${p.legion})` : '';
             const prefTimeTag = p.preferred_time ? ` [Time: ${p.preferred_time}]` : '';
-            option.text = `[${p.alliance}] ${p.nickname} - Power: ${Number(p.troops_power).toLocaleString('en-US')}${prefTimeTag}${currentLegionTag}`;
+            option.text = `[${p.alliance}] ${p.nickname} (ID: ${p.game_id}) - Power: ${Number(p.troops_power).toLocaleString('en-US')}${prefTimeTag}${currentLegionTag}`;
             selectEl.add(option);
         });
+        // Keep the previous pick if it is still in the list, else first match.
+        if (previous && matches.some(p => String(p.id) === String(previous))) selectEl.value = previous;
     }
+    document.getElementById('legion-assign-count').innerText = `(${matches.length} found)`;
+    onLegionAssignPlayerChange();
+}
 
-    document.getElementById('legion-assign-modal').classList.remove('hidden');
+// When the picked player changes, preload that player's existing tasks.
+function onLegionAssignPlayerChange() {
+    const box = document.getElementById('legion-assign-task-options');
+    if (!box || !box.children.length) return;
+    const id = document.getElementById('select-legion-player').value;
+    const player = legionAssignCandidates.find(p => String(p.id) === String(id));
+    const tasks = player && typeof parseFdtTasks === 'function' ? parseFdtTasks(player.frostdragon_task) : [];
+    box.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = tasks.includes(cb.value); });
+}
+
+// Alliance A / B are mutually exclusive, same rule as the roster task picker.
+function onLegionAssignTaskToggle(cb) {
+    if (!cb.checked || typeof FDT_ALLIANCE_TASKS === 'undefined' || !FDT_ALLIANCE_TASKS.includes(cb.value)) return;
+    document.querySelectorAll('#legion-assign-task-options input[type="checkbox"]').forEach(other => {
+        if (other !== cb && FDT_ALLIANCE_TASKS.includes(other.value)) other.checked = false;
+    });
+}
+
+function getLegionAssignSelectedTasks() {
+    return Array.from(document.querySelectorAll('#legion-assign-task-options input[type="checkbox"]:checked')).map(cb => cb.value);
 }
 
 function closeLegionAssignModal() {
@@ -106,9 +171,13 @@ async function submitLegionAssignment() {
     const submitBtn = document.querySelector('#legion-assign-modal .btn-apply');
     if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Assigning..."; }
 
-    const { error } = await client.from('troops_power').update(
-        frost ? { frostdragon_role: role } : { legion: currentSelection, legion_role: role }
-    ).eq('id', playerId);
+    const updatePayload = frost ? { frostdragon_role: role } : { legion: currentSelection, legion_role: role };
+    if (frost && typeof FDT_TASKS !== 'undefined') {
+        // Same storage format as updateFrostdragonTask(): comma-separated, null when empty.
+        const tasks = [...new Set(parseFdtTasks(getLegionAssignSelectedTasks()))];
+        updatePayload.frostdragon_task = tasks.length ? tasks.join(', ') : null;
+    }
+    const { error } = await client.from('troops_power').update(updatePayload).eq('id', playerId);
 
     if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Assign Player"; }
 
