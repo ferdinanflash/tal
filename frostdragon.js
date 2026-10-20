@@ -300,7 +300,7 @@ function renderFdtCharts() {
   const d = getFdtChartData();
   const { power, groupOf } = d;
   if (!d.all.length) {
-    view.innerHTML = '<div class="fdt-chart-empty">No Battle roster players yet. Assign players to the Frostdragon roster to see charts.</div>';
+    view.innerHTML = '<div class="fdt-chart-empty">No Battle roster players yet. Assign players to the Frostdragon roster to see charts.' + (edit ? '<br><br><button type="button" class="fdt-mini-btn fdt-edit-assign" onclick="openAddLegionModal()">+ Assign Player</button>' : '') + '</div>';
     return;
   }
   const maxCount = Math.max(FDT_MAX_PER_ALLIANCE, ...d.groupRows.map(g => g.count));
@@ -341,7 +341,7 @@ function renderFdtCharts() {
     <div class="fdt-chart-grid">
       <div class="fdt-chart-card"><h4>Combatants per alliance group</h4><small>Yellow marker = limit of ${FDT_MAX_PER_ALLIANCE} per alliance</small>${countChart}</div>
       <div class="fdt-chart-card"><h4>Total troops power per alliance group</h4>${powerChart}</div>
-      <div class="fdt-chart-card fdt-chart-card--wide"><div class="fdt-card-head"><div><h4>Task distribution &amp; players</h4><small>${escapeHtml(d.scopeLabel)} · ${edit ? '<b class="fdt-edit-badge">✏️ Live Edit on — changes save instantly</b>' : 'click a task to see its players'}</small></div><div class="fdt-card-actions"><button type="button" class="fdt-mini-btn" onclick="toggleFdtTaskDetails(true)">Expand all</button><button type="button" class="fdt-mini-btn" onclick="toggleFdtTaskDetails(false)">Collapse all</button></div></div>${taskChart}</div>
+      <div class="fdt-chart-card fdt-chart-card--wide"><div class="fdt-card-head"><div><h4>Task distribution &amp; players</h4><small>${escapeHtml(d.scopeLabel)} · ${edit ? '<b class="fdt-edit-badge">✏️ Live Edit on — changes save instantly</b>' : 'click a task to see its players'}</small></div><div class="fdt-card-actions">${edit ? '<button type="button" class="fdt-mini-btn fdt-edit-assign" onclick="openAddLegionModal()">+ Assign Player</button>' : ''}<button type="button" class="fdt-mini-btn" onclick="toggleFdtTaskDetails(true)">Expand all</button><button type="button" class="fdt-mini-btn" onclick="toggleFdtTaskDetails(false)">Collapse all</button></div></div>${taskChart}</div>
       <div class="fdt-chart-card fdt-chart-card--wide"><h4>Top 15 players by troops power</h4><small>Color = alliance group</small>${topChart}</div>
     </div>`;
   view.querySelectorAll('.fdt-task-detail').forEach(el => {

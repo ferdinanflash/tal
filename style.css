@@ -1265,3 +1265,5 @@ body.fdt-shared-open { overflow:hidden; }
 .fdt-task-players--edit { overflow: visible; }
 .fdt-chart-modal .fdt-task-detail[open] { overflow: visible; }
 #confirm-modal { z-index: 2600; }
+.fdt-edit-assign { border-color: rgba(167,139,250,.6); color: #ede9fe; background: rgba(124,58,237,.3); font-weight: 600; }
+#legion-assign-modal { z-index: 2500; } /* above the Roster Chart modal (2400), below confirm (2600) */
