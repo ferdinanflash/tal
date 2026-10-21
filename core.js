@@ -78,11 +78,18 @@ const FULL_ACCESS_ROLE = { scope: 'full', alliances: ALL_ALLIANCES, legions: ALL
 
 let currentUserRole = null; // computed on login / session restore
 
-function getRoleForUsername(username) {
+// `roleKey` is the original username kept in app_metadata when the President
+// renames an account (President Panel -> Staff Accounts), so a renamed
+// restricted account (e.g. "idn") keeps its limited scope.
+function getRoleForUsername(username, roleKey) {
     if (!username) return null;
-    const found = STAFF_ROLES[username.trim().toLowerCase()];
+    const key = (roleKey || username).trim().toLowerCase();
+    const found = STAFF_ROLES[key];
     return found || FULL_ACCESS_ROLE;
 }
+
+// Only this account may manage other staff usernames/passwords.
+const PRESIDENT_ACCOUNT_KEY = 'demon';
 
 // Can this staff member add/edit/delete players belonging to `allianceCode`?
 function canEditAlliance(allianceCode) {
@@ -125,6 +132,7 @@ function populateAllianceSelectOptions(list) {
 let supabaseClient = null;
 let isAdmin = false;
 let currentStaffUsername = null;
+let currentStaffRoleKey = null;
 let viewMode = 'ALLIANCE'; // 'ALLIANCE' or 'LEGION'
 let currentSelection = 'ARX'; // Alliance name or 'Legion 1' / 'Legion 2'
 let loadedTroopsData = [];
@@ -247,7 +255,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 function applyAuthSession(session) {
     isAdmin = !!session;
     currentStaffUsername = session ? staffEmailToUsername(session.user.email) : null;
-    currentUserRole = isAdmin ? getRoleForUsername(currentStaffUsername) : null;
+    currentStaffRoleKey = session ? (session.user.app_metadata?.role_key || currentStaffUsername) : null;
+    currentUserRole = isAdmin ? getRoleForUsername(currentStaffUsername, currentStaffRoleKey) : null;
     if (isAdmin) {
         updateAdminUI();
     } else {

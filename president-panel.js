@@ -186,6 +186,8 @@ async function refreshPresidentPanel() {
         roles.push('<div class="pp-role-row"><strong>FULL ACCESS</strong><span>ALL ALLIANCES + ALL BATTLE</span></div>');
         roleList.innerHTML = roles.join('');
     }
+
+    loadStaffAccounts();
 }
 
 function switchBattleTheme(theme) {
@@ -285,6 +287,113 @@ function applyBattleTheme() {
     }
 
     if (typeof renderTable === 'function' && viewMode === 'LEGION') renderTable();
+}
+
+// ================= STAFF ACCOUNTS (change username / password) =================
+// Backed by the SECURITY DEFINER functions in supabase_staff_accounts.sql,
+// which re-check on the server that the caller is the President account.
+let staffAccountsCache = [];
+let editingStaffAccount = null;
+
+function canManageStaffAccounts() {
+    return canOpenPresidentPanel() && (currentStaffRoleKey || '').toLowerCase() === PRESIDENT_ACCOUNT_KEY;
+}
+
+async function loadStaffAccounts() {
+    const card = document.getElementById('pp-accounts-card');
+    const list = document.getElementById('pp-accounts-list');
+    if (!card || !list) return;
+    if (!canManageStaffAccounts()) { card.classList.add('hidden'); return; }
+    card.classList.remove('hidden');
+
+    const client = getSupabase();
+    if (!client) return;
+    list.innerHTML = '<div class="pp-accounts-empty">Loading…</div>';
+
+    const { data, error } = await client.rpc('staff_list_accounts');
+    if (error) {
+        list.innerHTML = `<div class="pp-accounts-empty">Failed to load accounts: ${escapeHtml(error.message)}<br>Run <code>supabase_staff_accounts.sql</code> in the Supabase SQL Editor first.</div>`;
+        return;
+    }
+    staffAccountsCache = data || [];
+    if (!staffAccountsCache.length) {
+        list.innerHTML = '<div class="pp-accounts-empty">No staff accounts found.</div>';
+        return;
+    }
+    list.innerHTML = staffAccountsCache.map(acc => {
+        const role = getRoleForUsername(acc.username, acc.role_key);
+        const scope = role.scope === 'alliance' ? (role.alliances || []).join(', ')
+            : role.scope === 'legion' ? (role.legions || []).join(', ')
+            : 'FULL ACCESS';
+        const me = acc.id && acc.username === currentStaffUsername ? ' <em>(you)</em>' : '';
+        return `<div class="pp-account-row">
+            <div class="pp-account-info"><strong>${escapeHtml(acc.username.toUpperCase())}${me}</strong><span>${escapeHtml(scope)}</span></div>
+            <button class="btn-apply" onclick="openStaffAccountModal('${escapeHtml(acc.id)}')">Edit</button>
+        </div>`;
+    }).join('');
+}
+
+function openStaffAccountModal(id) {
+    if (!canManageStaffAccounts()) return;
+    const acc = staffAccountsCache.find(a => a.id === id);
+    if (!acc) return;
+    editingStaffAccount = acc;
+    document.getElementById('staff-account-current').innerText = acc.username;
+    document.getElementById('staff-account-username').value = acc.username;
+    document.getElementById('staff-account-password').value = '';
+    document.getElementById('staff-account-password2').value = '';
+    document.getElementById('staff-account-modal').classList.remove('hidden');
+    document.getElementById('staff-account-username').focus();
+}
+
+function closeStaffAccountModal() {
+    document.getElementById('staff-account-modal')?.classList.add('hidden');
+    editingStaffAccount = null;
+}
+
+async function submitStaffAccountChange() {
+    if (!canManageStaffAccounts() || !editingStaffAccount) return;
+    const acc = editingStaffAccount;
+    const username = document.getElementById('staff-account-username').value.trim().toLowerCase().replace(/\s+/g, '');
+    const pw = document.getElementById('staff-account-password').value;
+    const pw2 = document.getElementById('staff-account-password2').value;
+
+    const nameChanged = username && username !== acc.username;
+    if (!username) { showToast('Username cannot be empty.', 'warning'); return; }
+    if (!/^[a-z0-9._-]{2,32}$/.test(username)) { showToast('Username: 2-32 chars, letters/numbers/. _ - only.', 'warning'); return; }
+    if (pw && pw.length < 6) { showToast('Password must be at least 6 characters.', 'warning'); return; }
+    if (pw !== pw2) { showToast('Password confirmation does not match.', 'warning'); return; }
+    if (!nameChanged && !pw) { showToast('Nothing to change.', 'info'); return; }
+
+    const isSelf = acc.username === currentStaffUsername;
+    const summary = [nameChanged ? `username "${acc.username}" → "${username}"` : null, pw ? 'password' : null].filter(Boolean).join(' and ');
+    const confirmed = await showCustomConfirmAsync(`Change ${summary} for ${acc.username.toUpperCase()}? ${isSelf ? 'You' : 'They'} will be signed out and must log in again.`, '#7c3aed');
+    if (!confirmed) return;
+
+    const btn = document.getElementById('staff-account-save-btn');
+    btn.disabled = true;
+    const client = getSupabase();
+    const { error } = await client.rpc('staff_update_account', {
+        target_id: acc.id,
+        new_username: nameChanged ? username : null,
+        new_password: pw || null
+    });
+    btn.disabled = false;
+
+    if (error) {
+        showToast('Failed to update account: ' + error.message, 'error');
+        return;
+    }
+    closeStaffAccountModal();
+    showToast(`Account ${acc.username.toUpperCase()} updated.`, 'success');
+
+    if (isSelf) {
+        // Our own sessions were revoked server-side; sign out cleanly.
+        closePresidentPanel();
+        await handleStaffLogout();
+        return;
+    }
+    loadStaffAccounts();
 }
 
 function exportPresidentSnapshot() {

@@ -12,7 +12,7 @@
 
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer=""></script>
 					<!-- Modular application scripts: load in dependency order. -->
-					<script src="core.js?v=18" defer></script>
+					<script src="core.js?v=19" defer></script>
 					<script src="navigation.js?v=18" defer></script>
 					<script src="schedule.js?v=16" defer></script>
 					<script src="leaderboard.js?v=19" defer></script>
@@ -21,7 +21,7 @@
 					<script src="export.js?v=16" defer></script>
 					<script src="footer.js?v=16" defer></script>
 					<script src="effects.js?v=16" defer></script>
-					<script src="president-panel.js?v=6" defer></script>
+					<script src="president-panel.js?v=7" defer></script>
 					<script src="redeem.js?v=2" defer></script>
 				</head>
 	<body>
@@ -465,6 +465,13 @@
 					<div id="pp-role-list" class="pp-role-list"></div>
 				</div>
 
+				<div id="pp-accounts-card" class="pp-card pp-wide hidden">
+					<h3>🔑 Staff Accounts</h3>
+					<p>Change the username and password of every staff account. Users are signed out after a change and must log in again.</p>
+					<div id="pp-accounts-list" class="pp-accounts-list"><div class="pp-accounts-empty">Loading…</div></div>
+					<div class="pp-actions-row"><button class="btn-apply" onclick="loadStaffAccounts()">Reload Accounts</button></div>
+				</div>
+
 				<div class="pp-card">
 					<h3>⚙️ System Settings</h3>
 					<p>Site presentation and President/Guild information.</p>
@@ -524,6 +531,33 @@
 				<div class="form-actions">
 					<button class="btn-back" onclick="closeLegionAssignModal()">Cancel</button>
 					<button class="btn-apply legion-action-btn" onclick="submitLegionAssignment()">Assign Player</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- PRESIDENT: EDIT STAFF ACCOUNT MODAL -->
+		<div id="staff-account-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="staff-account-modal-title">
+			<div class="modal-content custom-form-modal">
+				<span class="close-modal" onclick="closeStaffAccountModal()">&times;</span>
+				<h2 id="staff-account-modal-title" class="modal-title">Edit Staff Account</h2>
+				<p class="modal-subtitle">Current username: <span id="staff-account-current" class="modal-target-highlight-purple"></span></p>
+
+				<div class="form-group">
+					<label for="staff-account-username">New Username</label>
+					<input type="text" id="staff-account-username" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+				</div>
+				<div class="form-group">
+					<label for="staff-account-password">New Password <span class="legion-assign-count">(leave empty to keep)</span></label>
+					<input type="password" id="staff-account-password" autocomplete="new-password" placeholder="Min. 6 characters">
+				</div>
+				<div class="form-group">
+					<label for="staff-account-password2">Confirm New Password</label>
+					<input type="password" id="staff-account-password2" autocomplete="new-password">
+				</div>
+
+				<div class="form-actions">
+					<button class="btn-back" onclick="closeStaffAccountModal()">Cancel</button>
+					<button id="staff-account-save-btn" class="btn-apply primary-action" onclick="submitStaffAccountChange()">Save Changes</button>
 				</div>
 			</div>
 		</div>
