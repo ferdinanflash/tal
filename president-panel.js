@@ -162,7 +162,7 @@ async function refreshPresidentPanel() {
 
     const desc = document.getElementById('pp-battle-description');
     if (desc) desc.innerText = frost
-        ? 'One Battle Group. Each alliance can dispatch up to 60 combatants. No Substitute/Reserve.'
+        ? 'One Battle Group. Each alliance can dispatch up to 60 combatants (Alliance A and B). No Substitute/Reserve.'
         : 'Two Legion rosters. Each Legion supports 30 Battle + 20 Substitute.';
 
     const l2 = document.getElementById('pp-legion2-btn');
@@ -170,8 +170,12 @@ async function refreshPresidentPanel() {
     if (l2) l2.classList.toggle('hidden', frost);
     if (s2) s2.classList.toggle('hidden', frost);
 
-    document.getElementById('pp-tundra-btn')?.classList.toggle('active', !frost);
-    document.getElementById('pp-frostdragon-btn')?.classList.toggle('active', frost);
+    [['pp-tundra-btn', !frost], ['pp-frostdragon-btn', frost]].forEach(([id, on]) => {
+        const b = document.getElementById(id);
+        if (!b) return;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-pressed', String(on));
+    });
 
     const roleList = document.getElementById('pp-role-list');
     if (roleList) {
@@ -198,14 +202,13 @@ function switchBattleTheme(theme) {
     const nextTheme = theme === 'frostdragon' ? 'frostdragon' : 'tundra';
     const oldTheme = getBattleTheme();
     if (oldTheme === nextTheme) {
-        applyBattleTheme();
-        refreshPresidentPanel();
+        showToast(`${nextTheme === 'frostdragon' ? 'Frostdragon Tyrant' : 'Tundra Arm League'} is already active.`, 'info');
         return;
     }
 
     const message = nextTheme === 'frostdragon'
-        ? 'Switch Battle to Frostdragon Tyrant? It will use 1 group, up to 60 combatants per alliance and no Substitute.'
-        : 'Switch Battle back to Tundra Arm League? It will use Legion 1 + Legion 2, each 30 Battle + 20 Substitute.';
+        ? 'Switch Battle to Frostdragon Tyrant for everyone? It uses 1 Battle Group, up to 60 combatants per alliance and no Substitute. Tundra Arm League rosters are kept.'
+        : 'Switch Battle back to Tundra Arm League for everyone? It uses Legion 1 + Legion 2, each 30 Battle + 20 Substitute. Frostdragon rosters are kept.';
 
     showCustomConfirm(message, async () => {
         const client = getSupabase();
