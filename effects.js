@@ -66,6 +66,6 @@ function toggleSnowEffect() {
 function updateSnowToggleUI() {
     const btn = document.getElementById('snow-toggle-btn');
     if (!btn) return;
-    btn.innerHTML = '<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#tundra-snow-icon"></use></svg> ' + (snowEnabled ? 'ON' : 'OFF');
+    btn.innerHTML = '<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#tundra-snow-icon"></use></svg> <span class="snow-label">Snow</span> <span class="snow-state">' + (snowEnabled ? 'ON' : 'OFF') + '</span>';
     btn.classList.toggle('snow-off', !snowEnabled);
 }

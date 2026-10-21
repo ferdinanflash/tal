@@ -16,7 +16,7 @@ body {
 /* ==================== NAVBAR & LIVE CLOCK ==================== */
 .navbar {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     padding: 15px 20px;
     background-color: #18191d;
@@ -419,7 +419,25 @@ td:first-child, th:first-child {
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
+    width: 100%;
 }
+
+.navbar-main-btns {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.navbar-main-btns .btn-redeem,
+.navbar-main-btns .btn-admin {
+    justify-content: center;
+    white-space: nowrap;
+}
+.navbar-main-btns .president-panel-top-btn { flex: 1 1 100%; }
+.btn-snow-toggle .snow-state { font-weight: 800; }
+.btn-snow-toggle { display: inline-flex; align-items: center; gap: 5px; }
 
 .btn-snow-toggle {
     background: rgba(59, 130, 246, 0.15);
@@ -1339,3 +1357,20 @@ body.fdt-shared-open { overflow:hidden; }
 @keyframes emblemFlame { 0% { transform:scale(1,1) rotate(-4deg); } 100% { transform:scale(.92,1.14) rotate(4deg); } }
 @keyframes emblemPaw { 0%,70%,100% { transform:translateY(0) scale(1); } 80% { transform:translateY(-3px) scale(1.1); } 90% { transform:translateY(0) scale(.95); } }
 @media (prefers-reduced-motion: reduce) { .alliance-crest, .alliance-crest::after, .alliance-crest svg { animation:none !important; } }
+
+/* ==================== NAVBAR MOBILE FIX ==================== */
+/* Snow toggle stays on its own (outside), Redeem Code + Alliance Staff
+   share one row and never wrap to a second line. */
+@media screen and (max-width: 600px) {
+    .navbar { padding: 12px 12px; }
+    .navbar-controls { flex-direction: column; align-items: stretch; gap: 8px; }
+    .btn-snow-toggle { align-self: flex-start; }
+    .navbar-main-btns { flex-wrap: wrap; width: 100%; gap: 8px; }
+    .navbar-main-btns .btn-redeem,
+    .navbar-main-btns .btn-admin {
+        flex: 1 1 0;
+        min-width: 0;
+        font-size: 0.8rem;
+        padding: 9px 8px;
+    }
+}

@@ -74,12 +74,13 @@
 		</svg>
 
 		<header class="navbar">
-			<span class="logo fire-text">3475</span>
 			<div class="navbar-controls">
-				<button id="snow-toggle-btn" class="btn-snow-toggle" onclick="toggleSnowEffect()" title="Toggle snow effect"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#tundra-snow-icon"></use></svg> ON</button>
+				<button id="snow-toggle-btn" class="btn-snow-toggle" onclick="toggleSnowEffect()" title="Toggle snow effect"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#tundra-snow-icon"></use></svg> <span class="snow-label">Snow</span> <span class="snow-state">ON</span></button>
+				<div class="navbar-main-btns">
 				<button id="redeem-code-btn" type="button" class="btn-redeem" onclick="openRedeemModal()" aria-haspopup="dialog" aria-controls="redeem-modal"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"></rect><path d="M12 8v13"></path><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"></path><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"></path></svg><span>Redeem Code</span></button>
 				<button id="admin-toggle-btn" class="btn-admin" onclick="handleAdminLogin()">Alliance Staff</button>
 				<button id="president-panel-btn" class="btn-admin president-panel-top-btn hidden" onclick="openPresidentPanel()">👑 PRESIDENT PANEL</button>
+				</div>
 			</div>
 		</header>
 
@@ -301,6 +302,20 @@
 				<p class="modal-subtitle">
 					Target: <span id="schedule-modal-target" class="modal-target-highlight">-</span>
 				</p>
+
+				<div class="form-group">
+					<label>Match Day</label>
+					<select id="input-match-day">
+						<option value="">-- Select Day --</option>
+						<option value="Monday">Monday</option>
+						<option value="Tuesday">Tuesday</option>
+						<option value="Wednesday">Wednesday</option>
+						<option value="Thursday">Thursday</option>
+						<option value="Friday">Friday</option>
+						<option value="Saturday">Saturday</option>
+						<option value="Sunday">Sunday</option>
+					</select>
+				</div>
 
 				<div class="form-group">
 					<label>Match Time (UTC)</label>

@@ -6,6 +6,7 @@ function openScheduleModal(legionName) {
     editingScheduleLegion = legionName;
     document.getElementById('schedule-modal-target').innerText = legionName;
     document.getElementById('input-match-time').value = "";
+    document.getElementById('input-match-day').value = "";
     document.getElementById('schedule-modal').classList.remove('hidden');
 }
 
@@ -18,16 +19,23 @@ async function submitMatchSchedule() {
     const client = getSupabase();
     if (!client) return;
 
-    const matchTime = document.getElementById('input-match-time').value;
-    if (!matchTime) {
+    const matchDay = document.getElementById('input-match-day').value;
+    const matchTimeOnly = document.getElementById('input-match-time').value;
+    if (!matchDay) {
+        showToast("Please select a match day!", "warning");
+        return;
+    }
+    if (!matchTimeOnly) {
         showToast("Please select a match time!", "warning");
         return;
     }
+    // Stored as e.g. "Saturday, 12:00 UTC" (time options already include "UTC")
+    const matchTime = `${matchDay}, ${matchTimeOnly}`;
 
     const fieldName = editingScheduleLegion === 'Legion 1' ? 'legion1_schedule' : 'legion2_schedule';
 
     const confirmed = await showCustomConfirmAsync(
-        `Save ${editingScheduleLegion} match time as ${matchTime} UTC?`,
+        `Save ${editingScheduleLegion} match time as ${matchTime}?`,
         '#2563eb'
     );
     if (!confirmed) return;
