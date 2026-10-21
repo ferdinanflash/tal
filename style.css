@@ -1412,3 +1412,27 @@ body.fdt-shared-open { overflow:hidden; }
         padding: 8px 14px;
     }
 }
+
+/* ==================== ADMIN PHASE CHECKLIST (collapsible) ==================== */
+.fdt-checklist-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(14, 165, 233, 0.08);
+    border: 1px solid rgba(125, 211, 252, 0.3);
+    border-radius: 10px;
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    font-size: 1.05rem;
+    text-align: left;
+    cursor: pointer;
+}
+.fdt-checklist-toggle:hover { background: rgba(14, 165, 233, 0.16); }
+.fdt-checklist-toggle:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+.fdt-checklist-chevron { flex-shrink: 0; font-size: 0.8rem; color: #7dd3fc; transition: transform 0.2s ease; }
+.fdt-checklist-toggle.is-open .fdt-checklist-chevron { transform: rotate(180deg); }
+.fdt-checklist-body { padding-top: 6px; }

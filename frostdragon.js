@@ -757,6 +757,15 @@ async function loadFdtSettings() {
 // ---- Admin phase checklist: stored on the server (footer_settings.frostdragon_checklist, jsonb) ----
 // Shared by all admins/devices. Before this, the checkboxes were plain HTML and reset on every reload.
 let fdtChecklist = {};
+// Collapsed by default every time the page opens; tap the header to expand/collapse.
+function toggleFdtChecklist(force) {
+  const body = document.getElementById('fdt-checklist-body'), btn = document.getElementById('fdt-checklist-toggle');
+  if (!body || !btn) return;
+  const open = typeof force === 'boolean' ? force : body.classList.contains('hidden');
+  body.classList.toggle('hidden', !open);
+  btn.setAttribute('aria-expanded', String(open));
+  btn.classList.toggle('is-open', open);
+}
 let fdtChecklistSaving = 0;
 function canEditFdtChecklist() {
   return (typeof isAdmin !== 'undefined' && !!isAdmin) || (typeof canOpenPresidentPanel === 'function' && canOpenPresidentPanel());

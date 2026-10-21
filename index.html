@@ -6,7 +6,7 @@
 				<title>3475 Battle League</title>
 				<meta name="description" content="3475 3475 Battle League - Alliance troops power leaderboard, legion roster, and match scheduling.">
 				<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E">
-				<link rel="stylesheet" href="style.css?v=21">
+				<link rel="stylesheet" href="style.css?v=22">
 
 
 
@@ -249,7 +249,8 @@
                     </div>
                     <div id="fdt-countdown" style="margin-top:12px;font-weight:700">Battlefield schedule not set.</div>
                     <div id="fdt-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px"></div>
-                    <div id="fdt-checklist" style="margin-top:14px"><h3>Admin phase checklist <small id="fdt-checklist-status" style="font-weight:400;color:#94a3b8"></small></h3>
+                    <div id="fdt-checklist" style="margin-top:14px"><button type="button" id="fdt-checklist-toggle" class="fdt-checklist-toggle" aria-expanded="false" aria-controls="fdt-checklist-body" onclick="toggleFdtChecklist()"><span class="fdt-checklist-title">Admin phase checklist <small id="fdt-checklist-status" style="font-weight:400;color:#94a3b8"></small></span><span class="fdt-checklist-chevron" aria-hidden="true">&#9660;</span></button>
+                      <div id="fdt-checklist-body" class="fdt-checklist-body hidden">
                       <h4>Before Battlefield opens</h4>
                       <label><input type="checkbox" data-chk="tyrant"> Confirm exactly one Tyrant Candidate</label>
                       <label><input type="checkbox" data-chk="captains"> Assign Rally Captains and Capital Reinforcers</label>
@@ -262,6 +263,7 @@
                       <h4>Mid-battle / Rearmament</h4>
                       <label><input type="checkbox" data-chk="rotate"> Rotate Spire assignments every 30 minutes</label>
                       <label><input type="checkbox" data-chk="rearm"> Save healing resources for Rearmament and prepare teleport plan</label>
+                      </div>
                     </div>
                 </section>
 				<div class="table-container" aria-live="polite">
@@ -789,6 +791,6 @@
 </div>
 </div>
 
-	<script src="frostdragon.js?v=11"></script>
+	<script src="frostdragon.js?v=12"></script>
 </body>
 </html>
