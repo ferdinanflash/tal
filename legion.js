@@ -307,6 +307,22 @@ function openBulkRemoveModal() {
         present.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)} (${loadedTroopsData.filter(p => p.alliance === a).length})</option>`).join('');
     document.getElementById('bulk-remove-search').value = '';
 
+    // Task filter exists only for Frostdragon (tasks live in frostdragon_task)
+    const taskGroup = document.getElementById('bulk-remove-task-group');
+    const taskEl = document.getElementById('bulk-remove-task');
+    const showTasks = bulkRemoveIsFrost() && typeof FDT_TASKS !== 'undefined' && typeof parseFdtTasks === 'function';
+    taskGroup.classList.toggle('hidden', !showTasks);
+    if (showTasks) {
+        const withTask = t => loadedTroopsData.filter(p => parseFdtTasks(p.frostdragon_task).includes(t)).length;
+        const noTask = loadedTroopsData.filter(p => parseFdtTasks(p.frostdragon_task).length === 0).length;
+        taskEl.innerHTML = `<option value="">All Tasks</option>` +
+            FDT_TASKS.filter(t => withTask(t) > 0)
+                .map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)} (${withTask(t)})</option>`).join('') +
+            (noTask > 0 ? `<option value="__none__">No task assigned (${noTask})</option>` : '');
+    } else {
+        taskEl.innerHTML = '';
+    }
+
     filterBulkRemovePlayers();
     document.getElementById('bulk-remove-modal').classList.remove('hidden');
 }
@@ -319,8 +335,13 @@ function closeBulkRemoveModal() {
 function getBulkRemoveShown() {
     const alliance = document.getElementById('bulk-remove-alliance').value;
     const q = document.getElementById('bulk-remove-search').value.trim().toLowerCase();
+    const task = bulkRemoveIsFrost() ? document.getElementById('bulk-remove-task').value : '';
     return loadedTroopsData.filter(p => {
         if (alliance && p.alliance !== alliance) return false;
+        if (task) {
+            const tasks = parseFdtTasks(p.frostdragon_task);
+            if (task === '__none__' ? tasks.length > 0 : !tasks.includes(task)) return false;
+        }
         if (!q) return true;
         return (p.nickname || '').toLowerCase().includes(q) || String(p.game_id || '').toLowerCase().includes(q);
     });
@@ -338,9 +359,11 @@ function filterBulkRemovePlayers() {
         : shown.map(p => {
             const id = Number(p.id);
             const role = p[roleField] ? ` · ${escapeHtml(p[roleField])}` : '';
+            const tasks = bulkRemoveIsFrost() && typeof parseFdtTasks === 'function' ? parseFdtTasks(p.frostdragon_task) : [];
+            const taskLine = tasks.length ? `<span class="bulk-remove-tasks">${tasks.map(escapeHtml).join(', ')}</span>` : '';
             return `<label class="bulk-remove-item">
                 <input type="checkbox" value="${id}" ${bulkRemoveSelected.has(id) ? 'checked' : ''} onchange="onBulkRemoveToggle(this)">
-                <span class="bulk-remove-name">${escapeHtml(p.nickname)}</span>
+                <span class="bulk-remove-name">${escapeHtml(p.nickname)}${taskLine}</span>
                 <span class="bulk-remove-meta">${escapeHtml(p.alliance)} · ${escapeHtml(p.game_id)}${role}</span>
             </label>`;
         }).join('');

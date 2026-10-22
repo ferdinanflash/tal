@@ -1455,3 +1455,5 @@ body.fdt-shared-open { overflow:hidden; }
 .bulk-remove-name { font-weight: 700; color: #f1f5f9; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bulk-remove-meta { margin-left: auto; font-size: 0.75rem; color: #8a8d98; white-space: nowrap; }
 .bulk-remove-empty { padding: 18px; text-align: center; color: #8a8d98; }
+.bulk-remove-name { display: flex; flex-direction: column; }
+.bulk-remove-tasks { font-weight: 500; font-size: 0.7rem; color: #60a5fa; white-space: normal; }
