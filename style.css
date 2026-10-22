@@ -1457,3 +1457,7 @@ body.fdt-shared-open { overflow:hidden; }
 .bulk-remove-empty { padding: 18px; text-align: center; color: #8a8d98; }
 .bulk-remove-name { display: flex; flex-direction: column; }
 .bulk-remove-tasks { font-weight: 500; font-size: 0.7rem; color: #60a5fa; white-space: normal; }
+
+#bulk-assign-modal { z-index: 2500; } /* above the Roster Chart modal (2400), below confirm (2600) */
+#bulk-assign-modal .modal-content { max-height: 92vh; overflow-y: auto; }
+#bulk-assign-modal .bulk-remove-item input[type="checkbox"], #bulk-assign-modal .bulk-remove-all input[type="checkbox"] { accent-color: #7c3aed; }

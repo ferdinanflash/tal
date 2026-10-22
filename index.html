@@ -190,6 +190,7 @@
 					<div class="schedule-actions-buttons">
 						<button id="add-entry-btn" class="btn-apply toolbar-action-btn" onclick="openAddModal()">+ Add Player Power</button>
 						<button id="add-legion-member-btn" class="btn-apply toolbar-action-btn legion-action-btn" onclick="openAddLegionModal()">+ Assign Player to Legion</button>
+						<button id="bulk-assign-top-btn" class="btn-apply toolbar-action-btn legion-action-btn" style="display:none;" onclick="openBulkAssignModal()">Bulk Assign</button>
 						<button id="bulk-remove-top-btn" class="btn-apply btn-danger toolbar-action-btn" style="display:none;" onclick="openBulkRemoveModal()">Bulk Remove</button>
 						<button class="btn-apply toolbar-action-btn export-btn" onclick="exportToCSV()">Export CSV</button>
 					</div>
@@ -555,6 +556,55 @@
 				<div class="form-actions">
 					<button class="btn-back" onclick="closeBulkRemoveModal()">Cancel</button>
 					<button id="bulk-remove-submit-btn" class="btn-apply btn-danger primary-action" onclick="submitBulkRemove()" disabled>Remove Selected</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- BULK ASSIGN MODAL -->
+		<div id="bulk-assign-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="bulk-assign-modal-title">
+			<div class="modal-content custom-form-modal">
+				<span class="close-modal" onclick="closeBulkAssignModal()">&times;</span>
+				<h2 id="bulk-assign-modal-title" class="modal-title">Bulk Assign Players</h2>
+				<p class="modal-subtitle">
+					Target: <span id="bulk-assign-target-label" class="modal-target-highlight-purple">Legion 1</span>
+				</p>
+
+				<div class="form-group">
+					<label for="bulk-assign-alliance">Alliance Category</label>
+					<select id="bulk-assign-alliance" onchange="filterBulkAssignPlayers()"></select>
+				</div>
+
+				<div class="form-group">
+					<label for="bulk-assign-search">Search Game ID / Nickname</label>
+					<input type="text" id="bulk-assign-search" placeholder="Type game ID or nickname..." autocomplete="off" oninput="filterBulkAssignPlayers()">
+				</div>
+
+				<div class="bulk-remove-toolbar">
+					<label class="bulk-remove-all"><input type="checkbox" id="bulk-assign-select-all" onchange="toggleBulkAssignAll(this.checked)"> Select all shown</label>
+					<span id="bulk-assign-count" class="legion-assign-count">0 selected</span>
+				</div>
+				<div id="bulk-assign-list" class="bulk-remove-list"></div>
+
+				<div class="form-group" id="bulk-assign-role-group">
+					<label for="bulk-assign-role">Legion Role Status</label>
+					<select id="bulk-assign-role">
+						<option value="Battle">Battle (Main Players - Max 30)</option>
+						<option value="Substitute">Substitute (Reserve Players - Max 20)</option>
+					</select>
+				</div>
+
+				<div class="form-group hidden" id="bulk-assign-task-group">
+					<label>Task for all selected <span class="legion-assign-count">(optional, can pick several)</span></label>
+					<div id="bulk-assign-task-options" class="legion-assign-task-options"></div>
+					<select id="bulk-assign-task-mode" style="margin-top:8px">
+						<option value="add">Add to each player's existing tasks</option>
+						<option value="replace">Replace each player's existing tasks</option>
+					</select>
+				</div>
+
+				<div class="form-actions">
+					<button class="btn-back" onclick="closeBulkAssignModal()">Cancel</button>
+					<button id="bulk-assign-submit-btn" class="btn-apply legion-action-btn primary-action" onclick="submitBulkAssign()" disabled>Assign Selected</button>
 				</div>
 			</div>
 		</div>

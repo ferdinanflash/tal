@@ -436,3 +436,208 @@ function submitBulkRemove() {
         fetchData();
     }, '#ef4444');
 }
+
+
+// ================= BULK ASSIGN PLAYERS (own popup) =================
+// Pick many players at once and give them all the same role (+ tasks for
+// Frostdragon). Uses the same limits and storage format as the single Assign
+// popup: FDT max 60 Battle per alliance, Tundra 30 Battle / 20 Substitute.
+const bulkAssignSelected = new Set();
+let bulkAssignCandidates = [];
+
+async function openBulkAssignModal() {
+    if (!canManageLegion(currentSelection)) {
+        showToast("You don't have permission to manage this legion's roster.", "warning");
+        return;
+    }
+    if (bulkRemoveBlocked()) return;
+    const client = getSupabase();
+    if (!client) return;
+    const frost = bulkRemoveIsFrost();
+
+    let q = client.from('troops_power').select('*');
+    q = frost ? q.is('frostdragon_role', null) : q.or(`legion.is.null,legion.neq.${currentSelection}`);
+    const { data, error } = await q.order('troops_power', { ascending: false });
+    if (error) { showToast("Failed to load players list", "error"); return; }
+    bulkAssignCandidates = data || [];
+    if (bulkAssignCandidates.length === 0) { showToast('No players available to assign.', 'info'); return; }
+
+    bulkAssignSelected.clear();
+    document.getElementById('bulk-assign-target-label').innerText = frost ? 'FDT Roster' : currentSelection;
+    const allianceEl = document.getElementById('bulk-assign-alliance');
+    const present = ALL_ALLIANCES.filter(a => bulkAssignCandidates.some(p => p.alliance === a));
+    allianceEl.innerHTML = `<option value="">All Alliances (${bulkAssignCandidates.length})</option>` +
+        present.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)} (${bulkAssignCandidates.filter(p => p.alliance === a).length})</option>`).join('');
+    document.getElementById('bulk-assign-search').value = '';
+
+    // Frostdragon: no substitutes, but tasks can be set. Tundra: role picker only.
+    document.getElementById('bulk-assign-role-group').classList.toggle('hidden', frost);
+    document.getElementById('bulk-assign-role').value = 'Battle';
+    const taskGroup = document.getElementById('bulk-assign-task-group');
+    const showTasks = frost && typeof FDT_TASKS !== 'undefined';
+    taskGroup.classList.toggle('hidden', !showTasks);
+    if (showTasks) {
+        document.getElementById('bulk-assign-task-options').innerHTML = FDT_TASKS.map(t =>
+            `<label class="legion-assign-task-chip"><input type="checkbox" value="${escapeHtml(t)}" onchange="onBulkAssignTaskToggle(this)"><span>${escapeHtml(t)}</span></label>`
+        ).join('');
+        document.getElementById('bulk-assign-task-mode').value = 'add';
+    }
+
+    filterBulkAssignPlayers();
+    document.getElementById('bulk-assign-modal').classList.remove('hidden');
+}
+
+function closeBulkAssignModal() {
+    document.getElementById('bulk-assign-modal').classList.add('hidden');
+    bulkAssignSelected.clear();
+}
+
+function onBulkAssignTaskToggle(cb) {
+    if (!cb.checked || typeof FDT_ALLIANCE_TASKS === 'undefined' || !FDT_ALLIANCE_TASKS.includes(cb.value)) return;
+    document.querySelectorAll('#bulk-assign-task-options input[type="checkbox"]').forEach(other => {
+        if (other !== cb && FDT_ALLIANCE_TASKS.includes(other.value)) other.checked = false;
+    });
+}
+
+function getBulkAssignShown() {
+    const alliance = document.getElementById('bulk-assign-alliance').value;
+    const q = document.getElementById('bulk-assign-search').value.trim().toLowerCase();
+    return bulkAssignCandidates.filter(p => {
+        if (alliance && p.alliance !== alliance) return false;
+        if (!q) return true;
+        return (p.nickname || '').toLowerCase().includes(q) || String(p.game_id || '').toLowerCase().includes(q);
+    });
+}
+
+function filterBulkAssignPlayers() {
+    const shown = getBulkAssignShown();
+    const list = document.getElementById('bulk-assign-list');
+    list.innerHTML = shown.length === 0
+        ? '<div class="bulk-remove-empty">No players match.</div>'
+        : shown.map(p => {
+            const id = Number(p.id);
+            const power = Number(p.troops_power || 0).toLocaleString('en-US');
+            const legionTag = p.legion ? ` · ${escapeHtml(p.legion)}` : '';
+            return `<label class="bulk-remove-item">
+                <input type="checkbox" value="${id}" ${bulkAssignSelected.has(id) ? 'checked' : ''} onchange="onBulkAssignToggle(this)">
+                <span class="bulk-remove-name">${escapeHtml(p.nickname)}</span>
+                <span class="bulk-remove-meta">${escapeHtml(p.alliance)} · ${escapeHtml(p.game_id)} · ${power}${legionTag}</span>
+            </label>`;
+        }).join('');
+    updateBulkAssignSummary();
+}
+
+function onBulkAssignToggle(cb) {
+    const id = Number(cb.value);
+    if (cb.checked) bulkAssignSelected.add(id); else bulkAssignSelected.delete(id);
+    updateBulkAssignSummary();
+}
+
+function toggleBulkAssignAll(checked) {
+    getBulkAssignShown().forEach(p => {
+        if (checked) bulkAssignSelected.add(Number(p.id)); else bulkAssignSelected.delete(Number(p.id));
+    });
+    filterBulkAssignPlayers();
+}
+
+function updateBulkAssignSummary() {
+    const count = bulkAssignSelected.size;
+    document.getElementById('bulk-assign-count').innerText = `${count} selected`;
+    const btn = document.getElementById('bulk-assign-submit-btn');
+    btn.disabled = count === 0;
+    btn.innerText = count > 0 ? `Assign Selected (${count})` : 'Assign Selected';
+    const all = document.getElementById('bulk-assign-select-all');
+    const shown = getBulkAssignShown();
+    const selShown = shown.filter(p => bulkAssignSelected.has(Number(p.id))).length;
+    all.checked = shown.length > 0 && selShown === shown.length;
+    all.indeterminate = selShown > 0 && selShown < shown.length;
+}
+
+async function submitBulkAssign() {
+    if (bulkRemoveBlocked()) return;
+    const client = getSupabase();
+    if (!client) return;
+    const ids = [...bulkAssignSelected];
+    if (ids.length === 0) { showToast('Select at least one player first.', 'warning'); return; }
+    const frost = bulkRemoveIsFrost();
+    const picked = bulkAssignCandidates.filter(p => bulkAssignSelected.has(Number(p.id)));
+
+    // ---- quota checks (same rules as the single Assign popup) ----
+    const role = frost ? 'Battle' : document.getElementById('bulk-assign-role').value;
+    if (frost) {
+        const limit = typeof FDT_MAX_PER_ALLIANCE !== 'undefined' ? FDT_MAX_PER_ALLIANCE : 60;
+        const addBy = {};
+        picked.forEach(p => { addBy[p.alliance] = (addBy[p.alliance] || 0) + 1; });
+        for (const [alliance, add] of Object.entries(addBy)) {
+            const have = loadedTroopsData.filter(p => p.alliance === alliance && p.frostdragon_role === 'Battle').length;
+            if (have + add > limit) {
+                showToast(`${alliance} would have ${have + add} combatants (max ${limit}). Select fewer ${alliance} players.`, 'warning');
+                return;
+            }
+        }
+    } else {
+        const cap = role === 'Battle' ? 30 : 20;
+        const have = loadedTroopsData.filter(p => p.legion_role === role).length;
+        if (have + picked.length > cap) {
+            showToast(`${role} quota exceeded: ${have} + ${picked.length} > ${cap}. Select fewer players.`, 'warning');
+            return;
+        }
+    }
+
+    const confirmed = await showCustomConfirmAsync(
+        `Assign ${picked.length} selected player(s) to ${frost ? 'the Frostdragon Tyrant roster' : currentSelection + ' as ' + role}?`,
+        '#7c3aed'
+    );
+    if (!confirmed) return;
+
+    const btn = document.getElementById('bulk-assign-submit-btn');
+    btn.disabled = true; btn.innerText = 'Assigning...';
+
+    // ---- build per-player payloads ----
+    const chosen = frost && typeof parseFdtTasks === 'function'
+        ? [...new Set(parseFdtTasks(Array.from(document.querySelectorAll('#bulk-assign-task-options input:checked')).map(cb => cb.value)))]
+        : [];
+    const mode = frost ? document.getElementById('bulk-assign-task-mode').value : 'add';
+    const chosenGroup = chosen.find(t => FDT_ALLIANCE_TASKS.includes(t));
+    const taskFor = p => {
+        let tasks = mode === 'replace' ? [] : parseFdtTasks(p.frostdragon_task);
+        if (chosenGroup) tasks = tasks.filter(t => !FDT_ALLIANCE_TASKS.includes(t));
+        const merged = [...new Set([...tasks, ...chosen])];
+        return merged.length ? merged.join(', ') : null;
+    };
+
+    let done = 0, failed = false;
+    if (!frost) {
+        // Same payload for everyone -> chunked bulk update.
+        for (let i = 0; i < ids.length; i += 100) {
+            const { data, error } = await client.from('troops_power')
+                .update({ legion: currentSelection, legion_role: role }).in('id', ids.slice(i, i + 100)).select('id');
+            if (error) { failed = true; break; }
+            done += (data || []).length;
+        }
+    } else {
+        // Group players by resulting task string so identical payloads go in one request.
+        const groups = new Map();
+        picked.forEach(p => {
+            const key = (chosen.length || mode === 'replace') ? (taskFor(p) ?? '\u0000null') : '\u0000keep';
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push(Number(p.id));
+        });
+        outer: for (const [key, gids] of groups) {
+            const payload = { frostdragon_role: 'Battle' };
+            if (key !== '\u0000keep') payload.frostdragon_task = key === '\u0000null' ? null : key;
+            for (let i = 0; i < gids.length; i += 100) {
+                const { data, error } = await client.from('troops_power').update(payload).in('id', gids.slice(i, i + 100)).select('id');
+                if (error) { failed = true; break outer; }
+                done += (data || []).length;
+            }
+        }
+    }
+
+    btn.disabled = false;
+    closeBulkAssignModal();
+    if (failed) showToast(`Stopped early: ${done} of ${ids.length} assigned. Please try again.`, 'error');
+    else if (done < ids.length) showToast(`${done} of ${ids.length} assigned (the rest were not allowed).`, 'warning');
+    else showToast(`${done} player(s) added to ${frost ? 'Frostdragon Tyrant roster' : currentSelection}.`, 'success');
+    fetchData();
+}
