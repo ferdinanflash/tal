@@ -184,7 +184,7 @@ async function refreshPresidentPanel() {
                 ? (role.alliances || []).join(', ')
                 : role.scope === 'legion'
                     ? (role.legions || []).join(', ')
-                    : role.scope;
+                    : role.scope === 'none' ? 'VIEW ONLY' : role.scope;
             return `<div class="pp-role-row"><strong>${escapeHtml(name.toUpperCase())}</strong><span>${escapeHtml(scope)}</span></div>`;
         });
         roles.push('<div class="pp-role-row"><strong>FULL ACCESS</strong><span>ALL ALLIANCES + ALL BATTLE</span></div>');
@@ -327,6 +327,7 @@ async function loadStaffAccounts() {
         const role = getRoleForUsername(acc.username, acc.role_key);
         const scope = role.scope === 'alliance' ? (role.alliances || []).join(', ')
             : role.scope === 'legion' ? (role.legions || []).join(', ')
+            : role.scope === 'none' ? 'VIEW ONLY'
             : 'FULL ACCESS';
         const me = acc.id && acc.username === currentStaffUsername ? ' <em>(you)</em>' : '';
         return `<div class="pp-account-row">
