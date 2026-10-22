@@ -8,6 +8,7 @@ function resetTableControls() {
     fdtAllianceFilter = '';
     const allianceFilter = document.getElementById('fdt-alliance-filter');
     if (allianceFilter) allianceFilter.value = '';
+    if (typeof selectedRosterIds !== 'undefined') selectedRosterIds.clear();
     updateSortArrows();
 }
 

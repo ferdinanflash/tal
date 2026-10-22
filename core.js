@@ -227,6 +227,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    if (tableBody) {
+        tableBody.addEventListener('change', (e) => {
+            const cb = e.target.closest('.js-roster-select');
+            if (!cb) return;
+            const id = Number(cb.dataset.id);
+            if (cb.checked) selectedRosterIds.add(id); else selectedRosterIds.delete(id);
+            cb.closest('tr')?.classList.toggle('row-selected', cb.checked);
+            updateBulkBar();
+        });
+    }
+
     const loginUsernameInput = document.getElementById('input-login-username');
     if (loginUsernameInput) {
         loginUsernameInput.addEventListener('keydown', (e) => {

@@ -12,12 +12,12 @@
 
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer=""></script>
 					<!-- Modular application scripts: load in dependency order. -->
-					<script src="core.js?v=24" defer></script>
-					<script src="navigation.js?v=19" defer></script>
+					<script src="core.js?v=25" defer></script>
+					<script src="navigation.js?v=20" defer></script>
 					<script src="schedule.js?v=17" defer></script>
-					<script src="leaderboard.js?v=22" defer></script>
+					<script src="leaderboard.js?v=23" defer></script>
 					<script src="player.js?v=20" defer></script>
-					<script src="legion.js?v=18" defer></script>
+					<script src="legion.js?v=19" defer></script>
 					<script src="export.js?v=19" defer></script>
 					<script src="footer.js?v=17" defer></script>
 					<script src="effects.js?v=17" defer></script>
@@ -270,6 +270,7 @@
 					<table>
 						<thead>
 							<tr id="table-header-row">
+								<th id="th-select" class="hidden-table-column bulk-select-cell"><input type="checkbox" id="roster-select-all" title="Select all shown" aria-label="Select all shown players" onchange="toggleSelectAllRoster(this.checked)"></th>
 								<th>RANK</th>
 								<th class="sortable" onclick="handleSortClick('alliance')">ALLIANCE <span class="sort-arrow" id="sort-arrow-alliance"></span></th>
 								<th class="sortable" onclick="handleSortClick('nickname')">NICKNAME <span class="sort-arrow" id="sort-arrow-nickname"></span></th>
@@ -285,6 +286,17 @@
 							<!-- Populated via JS -->
 						</tbody>
 					</table>
+				</div>
+
+				<!-- BULK ACTIONS (roster view, only for staff who can manage this roster) -->
+				<div id="bulk-bar" class="bulk-bar hidden">
+					<span id="bulk-count" class="bulk-count">0 selected</span>
+					<select id="bulk-alliance-select" class="alliance-filter-select" onchange="selectRosterByAlliance(this.value)" aria-label="Select players by alliance">
+						<option value="">Select by alliance…</option>
+					</select>
+					<button type="button" class="btn-back" onclick="toggleSelectAllRoster(true)">Select All</button>
+					<button type="button" class="btn-back" onclick="clearRosterSelection()">Clear</button>
+					<button type="button" id="bulk-remove-btn" class="btn-apply btn-danger" onclick="bulkRemoveFromRoster()" disabled>Remove Selected</button>
 				</div>
 
 				<!-- PAGINATION -->

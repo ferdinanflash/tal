@@ -267,3 +267,53 @@ async function removeFromLegion(id) {
     }, '#ef4444');
 }
 
+
+
+// ================= BULK REMOVE FROM ROSTER =================
+// Removes every selected player from the roster currently on screen, with the
+// same effect as the per-row "Remove" button (only the active theme's fields
+// are cleared: Frostdragon never touches Tundra legions and vice versa).
+async function bulkRemoveFromRoster() {
+    const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
+    if (frost && typeof fdtSettings !== 'undefined' && fdtSettings.locked) {
+        showToast('Frostdragon roster is locked. Unlock it in President Panel to make changes.', 'warning');
+        return;
+    }
+    if (!canManageLegion(currentSelection)) return;
+
+    const ids = [...selectedRosterIds];
+    if (ids.length === 0) {
+        showToast('Select at least one player first.', 'warning');
+        return;
+    }
+
+    const where = frost ? 'the Frostdragon Tyrant roster' : `the ${currentSelection} roster`;
+    showCustomConfirm(`Remove ${ids.length} selected player(s) from ${where}?`, async () => {
+        const client = getSupabase();
+        if (!client) return;
+
+        const patch = frost ? { frostdragon_role: null } : { legion: null, legion_role: null };
+        let removed = 0;
+        let failed = false;
+
+        // Chunked so the request URL stays small even for large selections.
+        for (let i = 0; i < ids.length; i += 100) {
+            const chunk = ids.slice(i, i + 100);
+            let q = client.from('troops_power').update(patch).in('id', chunk);
+            if (!frost) q = q.eq('legion', currentSelection); // never touch another legion
+            const { data, error } = await q.select('id');
+            if (error) { failed = true; break; }
+            removed += (data || []).length;
+        }
+
+        selectedRosterIds.clear();
+        if (failed) {
+            showToast(`Stopped early: ${removed} of ${ids.length} removed. Please try again.`, 'error');
+        } else if (removed < ids.length) {
+            showToast(`${removed} of ${ids.length} removed (the rest were not allowed or already gone).`, 'warning');
+        } else {
+            showToast(`${removed} player(s) removed from ${frost ? 'Frostdragon Tyrant roster' : currentSelection}.`, 'success');
+        }
+        fetchData();
+    }, '#ef4444');
+}

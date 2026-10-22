@@ -1441,3 +1441,17 @@ body.fdt-shared-open { overflow:hidden; }
 /* ==================== MASKED (hidden-for-guests) VALUES ==================== */
 .masked-value { color: #64748b; letter-spacing: 2px; cursor: help; user-select: none; }
 .sortable.sort-locked { cursor: default; opacity: 0.75; }
+
+
+/* ==================== BULK REMOVE (roster) ==================== */
+.bulk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 12px; padding: 10px 12px; background: #111827; border: 1px solid #1f2937; border-radius: 10px; }
+.bulk-bar.hidden { display: none; }
+.bulk-count { font-weight: 700; color: #e2e8f0; margin-right: auto; }
+.bulk-bar .btn-apply[disabled] { opacity: 0.45; cursor: not-allowed; animation: none; }
+.bulk-select-cell { width: 36px; text-align: center; }
+.bulk-select-cell input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #3b82f6; }
+tr.row-selected { background: rgba(59, 130, 246, 0.12); }
+@media screen and (max-width: 640px) {
+    td.bulk-select-cell { width: auto; text-align: right; }
+    .bulk-count { flex-basis: 100%; }
+}
