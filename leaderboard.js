@@ -114,14 +114,29 @@ function showTableError(message = "Unable to load data right now.") {
 }
 
 
+// ================= GUEST MASKING (Game ID + Troops Power) =================
+// Guests see these two columns masked; staff and verified players see them.
+function updateSensitiveUiState() {
+    const locked = !canViewSensitive();
+    ['game_id', 'troops_power'].forEach(f => {
+        const th = document.getElementById('sort-arrow-' + f)?.closest('th');
+        if (th) th.classList.toggle('sort-locked', locked);
+    });
+    const search = document.getElementById('search-input');
+    if (search) {
+        search.placeholder = locked ? '🔍 Search nickname...' : '🔍 Search nickname or Game ID...';
+    }
+}
+
 // ================= SEARCH / SORT / PAGINATION HELPERS =================
 function getDisplayData() {
     let data = [...loadedTroopsData];
 
     if (searchQuery) {
+        const canSearchId = canViewSensitive();
         data = data.filter(p =>
             (p.nickname || '').toLowerCase().includes(searchQuery) ||
-            String(p.game_id || '').toLowerCase().includes(searchQuery)
+            (canSearchId && String(p.game_id || '').toLowerCase().includes(searchQuery))
         );
     }
 
@@ -129,7 +144,8 @@ function getDisplayData() {
         data = getFdtAllianceScoped(data);
     }
 
-    if (currentSortField) {
+    const sortLocked = !canViewSensitive() && (currentSortField === 'game_id' || currentSortField === 'troops_power');
+    if (currentSortField && !sortLocked) {
         data.sort((a, b) => {
             let valA = a[currentSortField];
             let valB = b[currentSortField];
@@ -162,6 +178,10 @@ function handleSearchInput(value) {
 }
 
 function handleSortClick(field) {
+    if (!canViewSensitive() && (field === 'game_id' || field === 'troops_power')) {
+        showToast("Login with your Game ID to use this.", "warning");
+        return;
+    }
     if (currentSortField === field) {
         currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
@@ -225,6 +245,7 @@ function renderTable() {
     if (thAction) {
         thAction.style.display = isAdmin ? "table-cell" : "none";
     }
+    updateSensitiveUiState();
     const taskHeader = document.getElementById('th-frostdragon-task');
     if (taskHeader) taskHeader.style.display = (viewMode === 'LEGION' && typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 'table-cell' : 'none';
     if (typeof updateFdtAllianceFilterUi === 'function') updateFdtAllianceFilterUi();
@@ -244,7 +265,11 @@ function renderTable() {
 
     const sortedByPower = [...loadedTroopsData].sort((a, b) => b.troops_power - a.troops_power);
 
-    if (viewMode === 'LEGION') {
+    const hideSummary = HIDE_SUMMARY_FOR_GUESTS && !canViewSensitive();
+    if (hideSummary) {
+        summaryBoxContainer.style.gridTemplateColumns = "1fr";
+        summaryBoxContainer.innerHTML = `<div style="padding: 12px; background: #111827; border: 1px dashed #334155; border-radius: 10px; text-align: center; color: #8a8d98; font-size: 0.85rem;">🔒 Login with your Game ID to see Troops Power totals.</div>`;
+    } else if (viewMode === 'LEGION') {
         const roleField = (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 'frostdragon_role' : 'legion_role';
         // When "View by Alliance" is active (Frostdragon), the power cards follow the selected alliance.
         const summaryData = (typeof getFdtAllianceScoped === 'function') ? getFdtAllianceScoped(loadedTroopsData) : loadedTroopsData;
@@ -421,8 +446,12 @@ function renderTable() {
             <td data-label="Rank"><strong style="color: ${rank !== '-' && rank <= 20 ? '#f59e0b' : '#f1f5f9'};">#${rank}</strong></td>
             <td data-label="Alliance"><span style="background: #1e2230; padding: 2px 8px; border-radius: 4px; font-weight: bold; color: ${allianceTextColor}; border: 1px solid ${allianceTextColor}40;">${safeAlliance}</span></td>
             <td data-label="Nickname"><strong>${safeNickname}</strong></td>
-            <td data-label="Game ID"><span class="js-copy-gameid" style="cursor:pointer; color:#3b82f6; text-decoration:underline;" data-gameid="${safeGameId}">${safeGameId}</span></td>
-            <td data-label="Troops Power"><strong style="color: #22c55e;">${formattedPower}</strong></td>
+            <td data-label="Game ID">${canViewSensitive()
+                ? `<span class="js-copy-gameid" style="cursor:pointer; color:#3b82f6; text-decoration:underline;" data-gameid="${safeGameId}">${safeGameId}</span>`
+                : `<span class="masked-value" title="Login to view">${MASKED_TEXT}</span>`}</td>
+            <td data-label="Troops Power">${canViewSensitive()
+                ? `<strong style="color: #22c55e;">${formattedPower}</strong>`
+                : `<span class="masked-value" title="Login to view">${MASKED_TEXT}</span>`}</td>
             <td data-label="Pref. Time"><span style="color: #f59e0b; font-weight: 600;">${safePrefTime}</span></td>
             ${taskCellHtml}
             ${statusCellHtml}

@@ -131,6 +131,30 @@ function populateAllianceSelectOptions(list) {
 
 let supabaseClient = null;
 let isAdmin = false;
+
+// ================= PLAYER (STATE MEMBER) LOGIN =================
+// Second login type: a player of this state only enters their Game ID. If that
+// ID exists in `troops_power`, Game ID + Troops Power become visible. Guests
+// (not logged in at all) see those two columns masked.
+// NOTE: this is a UI-level mask (see the security note in the README/answer):
+// the data is still readable through the public Supabase API until RLS is set.
+const PLAYER_SESSION_KEY = '3475_player_game_id';
+const HIDE_SUMMARY_FOR_GUESTS = false; // true -> also hide Top 20 / Total power cards for guests
+let isPlayerViewer = false;
+let currentPlayerRecord = null; // { id, game_id, nickname, alliance }
+let loginTab = 'player';        // 'player' | 'staff'
+
+// Staff or a verified player may see Game ID + Troops Power.
+function canViewSensitive() {
+    return isAdmin || isPlayerViewer;
+}
+
+const MASKED_TEXT = '••••••';
+
+// Resolves once the staff/player session has been restored on page load, so
+// pages that render power figures (e.g. the shared FDT chart link) can wait.
+let authReadyResolve;
+const authReady = new Promise(resolve => { authReadyResolve = resolve; });
 let currentStaffUsername = null;
 let currentStaffRoleKey = null;
 let viewMode = 'ALLIANCE'; // 'ALLIANCE' or 'LEGION'
@@ -163,6 +187,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         const { data: { session } } = await client.auth.getSession();
         applyAuthSession(session);
 
+        // Restore a player login (Game ID) if there is no staff session.
+        if (!session) await restorePlayerSession();
+        if (authReadyResolve) authReadyResolve();
+
         // Load the site-wide Battle Theme from Supabase before the first data
         // render. President-selected theme is global; never use localStorage
         // as the source of truth for Battle mode.
@@ -178,6 +206,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    if (authReadyResolve) authReadyResolve(); // no-op if already resolved
     loadFooterInfo();
     loadLegionSchedules();
     startLiveClock();
@@ -201,6 +230,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             const removeEl = e.target.closest('.js-remove-legion');
             if (removeEl) { removeFromLegion(Number(removeEl.dataset.id)); return; }
+        });
+    }
+
+    const playerIdInput = document.getElementById('input-player-gameid');
+    if (playerIdInput) {
+        playerIdInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') submitPlayerLogin();
         });
     }
 
@@ -258,9 +294,12 @@ function applyAuthSession(session) {
     currentStaffRoleKey = session ? (session.user.app_metadata?.role_key || currentStaffUsername) : null;
     currentUserRole = isAdmin ? getRoleForUsername(currentStaffUsername, currentStaffRoleKey) : null;
     if (isAdmin) {
+        // A staff session replaces any player session.
+        clearPlayerSession();
         updateAdminUI();
     } else {
         resetAdminUI();
+        updatePlayerUI();
     }
 }
 
@@ -407,7 +446,7 @@ function resetAdminUI() {
     const adminBtn = document.getElementById('admin-toggle-btn');
     const adminInd = document.getElementById('admin-indicator');
 
-    if (adminBtn) adminBtn.innerText = "Alliance Staff";
+    if (adminBtn) adminBtn.innerText = "Login";
     if (adminInd) adminInd.style.display = "none";
 
     document.querySelectorAll('.admin-schedule-btn').forEach(btn => btn.classList.add('hidden'));
@@ -431,10 +470,30 @@ function handleAdminLogin() {
         handleStaffLogout();
         return;
     }
+    if (isPlayerViewer) {
+        handlePlayerLogout();
+        return;
+    }
     document.getElementById('input-login-username').value = '';
     document.getElementById('input-login-password').value = '';
+    const idInput = document.getElementById('input-player-gameid');
+    if (idInput) idInput.value = '';
     document.getElementById('login-modal').classList.remove('hidden');
-    document.getElementById('input-login-username').focus();
+    switchLoginTab('player');
+}
+
+function switchLoginTab(tab) {
+    loginTab = tab === 'staff' ? 'staff' : 'player';
+    document.getElementById('login-panel-player')?.classList.toggle('hidden', loginTab !== 'player');
+    document.getElementById('login-panel-staff')?.classList.toggle('hidden', loginTab !== 'staff');
+    const tp = document.getElementById('login-tab-player');
+    const ts = document.getElementById('login-tab-staff');
+    tp?.classList.toggle('active', loginTab === 'player');
+    ts?.classList.toggle('active', loginTab === 'staff');
+    tp?.setAttribute('aria-selected', loginTab === 'player');
+    ts?.setAttribute('aria-selected', loginTab === 'staff');
+    const focusEl = document.getElementById(loginTab === 'player' ? 'input-player-gameid' : 'input-login-username');
+    if (focusEl) setTimeout(() => focusEl.focus(), 0);
 }
 
 function closeLoginModal() {
@@ -484,6 +543,94 @@ async function handleStaffLogout() {
     applyAuthSession(null);
     showToast("Logged out successfully.", "info");
     fetchData();
+}
+
+// ================= PLAYER LOGIN (Game ID only) =================
+async function lookupPlayerByGameId(gameId) {
+    const client = getSupabase();
+    if (!client) return { error: new Error('Database unavailable') };
+    const { data, error } = await client
+        .from('troops_power')
+        .select('id, game_id, nickname, alliance')
+        .eq('game_id', gameId)
+        .limit(1);
+    if (error) return { error };
+    return { player: data && data.length ? data[0] : null };
+}
+
+async function submitPlayerLogin() {
+    const input = document.getElementById('input-player-gameid');
+    const gameId = (input?.value || '').trim();
+    if (!gameId) {
+        showToast("Please enter your Game ID!", "warning");
+        return;
+    }
+
+    const btn = document.getElementById('player-login-submit-btn');
+    btn.disabled = true;
+    btn.innerText = "Checking...";
+    const { player, error } = await lookupPlayerByGameId(gameId);
+    btn.disabled = false;
+    btn.innerText = "Enter";
+
+    if (error) {
+        showToast("Could not check your ID. Please try again.", "error");
+        return;
+    }
+    if (!player) {
+        showToast("You are not 3475 member", "error");
+        return;
+    }
+
+    isPlayerViewer = true;
+    currentPlayerRecord = player;
+    try { localStorage.setItem(PLAYER_SESSION_KEY, String(player.game_id)); } catch (e) { /* storage blocked */ }
+    updatePlayerUI();
+    closeLoginModal();
+    showToast(`Welcome, ${player.nickname || player.game_id}!`, "success");
+    fetchData();
+}
+
+async function restorePlayerSession() {
+    let saved = null;
+    try { saved = localStorage.getItem(PLAYER_SESSION_KEY); } catch (e) { /* ignore */ }
+    if (!saved) return;
+    const { player } = await lookupPlayerByGameId(saved);
+    if (player) {
+        isPlayerViewer = true;
+        currentPlayerRecord = player;
+    } else {
+        // ID was removed from the database (or lookup failed): drop the session.
+        clearPlayerSession();
+    }
+    updatePlayerUI();
+}
+
+function clearPlayerSession() {
+    isPlayerViewer = false;
+    currentPlayerRecord = null;
+    try { localStorage.removeItem(PLAYER_SESSION_KEY); } catch (e) { /* ignore */ }
+}
+
+function handlePlayerLogout() {
+    clearPlayerSession();
+    updatePlayerUI();
+    showToast("Logged out successfully.", "info");
+    fetchData();
+}
+
+// Navbar label for the player session (staff UI is handled by updateAdminUI).
+function updatePlayerUI() {
+    if (isAdmin) return;
+    const adminBtn = document.getElementById('admin-toggle-btn');
+    const adminInd = document.getElementById('admin-indicator');
+    if (isPlayerViewer && currentPlayerRecord) {
+        if (adminBtn) adminBtn.innerText = `Logout (${(currentPlayerRecord.nickname || currentPlayerRecord.game_id)})`;
+        if (adminInd) { adminInd.style.display = "inline"; adminInd.innerText = "(PLAYER VIEW)"; }
+    } else {
+        if (adminBtn) adminBtn.innerText = "Login";
+        if (adminInd) adminInd.style.display = "none";
+    }
 }
 
 // ================= NAVIGATION =================

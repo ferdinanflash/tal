@@ -192,6 +192,10 @@ function toggleFdtChartView(force) {
   const modal = document.getElementById('fdt-chart-modal');
   if (!modal) return;
   const open = typeof force === 'boolean' ? force : modal.classList.contains('hidden');
+  if (open && typeof canViewSensitive === 'function' && !canViewSensitive()) {
+    showToast('Login with your Game ID to view the roster chart.', 'warning');
+    return;
+  }
   if (open && !fdtRosterContextOk()) return;
   modal.classList.toggle('hidden', !open);
   document.body.classList.toggle('fdt-guide-open', open);
@@ -404,6 +408,9 @@ function renderFdtCharts() {
 // ---- Image (PNG) rendering: drawn directly on a canvas so the result is a clean standalone picture ----
 function buildFdtChartCanvas() {
   const d = getFdtChartData();
+  // Public viewers (not staff, not a verified player) never see per-player power in the image.
+  const showPlayerPower = typeof canViewSensitive !== 'function' || canViewSensitive();
+  const showTotals = showPlayerPower || typeof HIDE_SUMMARY_FOR_GUESTS === 'undefined' || !HIDE_SUMMARY_FOR_GUESTS;
   const SCALE = 2, W = 1400, PAD = 36, GAP = 18;
   const FONT = '"Segoe UI", Tahoma, Arial, sans-serif';
   const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
@@ -458,7 +465,7 @@ function buildFdtChartCanvas() {
     // Header
     txt('FROSTDRAGON TYRANT', PAD, y + 8, { size: 12, weight: '700', color: '#38bdf8' });
     txt('Roster Chart — ' + d.scopeLabel, PAD, y + 38, { size: 30, weight: '700', color: '#e0f2fe' });
-    txt(`${d.scoped.length} combatants  ·  total power ${d.scopedPower.toLocaleString('en-US')}  ·  ${stamp}`, PAD, y + 70, { size: 14, color: '#94a3b8' });
+    txt(`${d.scoped.length} combatants  ·  ${showTotals ? `total power ${d.scopedPower.toLocaleString('en-US')}  ·  ` : ''}${stamp}`, PAD, y + 70, { size: 14, color: '#94a3b8' });
     let lx = W - PAD;
     ['No group', 'Alliance B', 'Alliance A'].forEach(label => {
       ctx.font = `400 13px ${FONT}`;
@@ -481,8 +488,10 @@ function buildFdtChartCanvas() {
     const maxGroupPower = Math.max(1, ...d.groupRows.map(g => g.power));
     card(PAD, y, cw, h1, 'Combatants per alliance group', `Yellow marker = limit of ${FDT_MAX_PER_ALLIANCE} per alliance`);
     bars(PAD + 16, y + 62, cw - 32, d.groupRows.map(g => ({ label: g.label, value: g.count, color: fdtColorOf(g.label), display: `${g.count} / ${FDT_MAX_PER_ALLIANCE}` })), maxCount, FDT_MAX_PER_ALLIANCE);
-    card(PAD + cw + GAP, y, cw, h1, 'Total troops power per alliance group', 'Battle roster');
-    bars(PAD + cw + GAP + 16, y + 62, cw - 32, d.groupRows.map(g => ({ label: g.label, value: g.power, color: fdtColorOf(g.label), display: fdtCompactPower(g.power) })), maxGroupPower);
+    if (showTotals) {
+      card(PAD + cw + GAP, y, cw, h1, 'Total troops power per alliance group', 'Battle roster');
+      bars(PAD + cw + GAP + 16, y + 62, cw - 32, d.groupRows.map(g => ({ label: g.label, value: g.power, color: fdtColorOf(g.label), display: fdtCompactPower(g.power) })), maxGroupPower);
+    }
     y += h1 + GAP + 8;
 
     // Section 2: task cards with players
@@ -504,7 +513,7 @@ function buildFdtChartCanvas() {
       const total = t.players.reduce((s, p) => s + d.power(p), 0);
       card(x, cy0, tw, h, null);
       txt(t.label, x + 16, cy0 + 22, { size: 15, weight: '700', color: '#f1f5f9', maxW: tw - 130 });
-      txt(n ? `${n}  ·  ${fdtCompactPower(total)}` : '0', x + tw - 16, cy0 + 22, { size: 13, weight: '700', color: '#7dd3fc', align: 'right' });
+      txt(n ? (showTotals ? `${n}  ·  ${fdtCompactPower(total)}` : `${n}`) : '0', x + tw - 16, cy0 + 22, { size: 13, weight: '700', color: '#7dd3fc', align: 'right' });
       rr(x + 16, cy0 + 38, tw - 32, 6, 3); ctx.fillStyle = 'rgba(51,65,85,0.6)'; ctx.fill();
       if (n) { rr(x + 16, cy0 + 38, Math.max(6, (tw - 32) * n / maxTask), 6, 3); ctx.fillStyle = t.label === 'No role task' ? '#64748b' : '#0ea5e9'; ctx.fill(); }
       let py = cy0 + 62;
@@ -525,23 +534,25 @@ function buildFdtChartCanvas() {
         if (lead) crown(x + 34, py + 8);
         txt(nameStr, x + 34 + off, py + 8, { size: 13, maxW: nameMax });
         if (tag) txt(tag, x + 34 + off + nameW, py + 8, { size: 12, color: '#7dd3fc' });
-        txt(fdtCompactPower(d.power(p)), x + tw - 16, py + 8, { size: 12, color: '#94a3b8', align: 'right' });
+        if (showPlayerPower) txt(fdtCompactPower(d.power(p)), x + tw - 16, py + 8, { size: 12, color: '#94a3b8', align: 'right' });
         py += 22;
       });
       colY[c] = cy0 + h + GAP;
     });
     y = Math.max(...colY);
 
-    // Section 3: top players
+    // Section 3: top players (ranks players by power, so it is hidden from the public)
     y += 6;
-    const h3 = 62 + d.top.length * 30 + 14;
-    const maxTop = Math.max(1, ...d.top.map(d.power));
-    card(PAD, y, W - 2 * PAD, h3, 'Top 15 players by troops power', 'Red = Alliance A · Blue = Alliance B (A first, then B)');
-    bars(PAD + 16, y + 62, W - 2 * PAD - 32, d.top.map((p, i) => ({
-      id: p.id, label: `${i + 1}. ${p.nickname || '-'}${p.alliance ? '  (' + p.alliance + ')' : ''}`,
-      value: d.power(p), color: fdtColorOf(d.groupOf(p)), display: fdtCompactPower(d.power(p))
-    })), maxTop);
-    y += h3 + GAP;
+    if (showPlayerPower) {
+      const h3 = 62 + d.top.length * 30 + 14;
+      const maxTop = Math.max(1, ...d.top.map(d.power));
+      card(PAD, y, W - 2 * PAD, h3, 'Top 15 players by troops power', 'Red = Alliance A · Blue = Alliance B (A first, then B)');
+      bars(PAD + 16, y + 62, W - 2 * PAD - 32, d.top.map((p, i) => ({
+        id: p.id, label: `${i + 1}. ${p.nickname || '-'}${p.alliance ? '  (' + p.alliance + ')' : ''}`,
+        value: d.power(p), color: fdtColorOf(d.groupOf(p)), display: fdtCompactPower(d.power(p))
+      })), maxTop);
+      y += h3 + GAP;
+    }
     txt('Frostdragon Tyrant roster · generated from the roster tool', PAD, y + 8, { size: 12, color: '#64748b' });
     return y + 30 + PAD / 2;
   };
@@ -633,6 +644,7 @@ async function openFdtSharedImage(alliance) {
     body.innerHTML = '<div class="fdt-shared-msg">Loading roster chart…</div>';
     try {
       const client = getSupabase(); if (!client) throw new Error('Supabase not available');
+      if (typeof authReady !== 'undefined') await authReady; // session restore decides whether power is shown
       const { data, error } = await client.from('troops_power').select('*').eq('frostdragon_role', 'Battle');
       if (error) throw error;
       loadedTroopsData = data || [];
