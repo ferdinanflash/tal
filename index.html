@@ -6,23 +6,23 @@
 				<title>3475 Battle League</title>
 				<meta name="description" content="3475 3475 Battle League - Alliance troops power leaderboard, legion roster, and match scheduling.">
 				<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E">
-				<link rel="stylesheet" href="style.css?v=22">
+				<link rel="stylesheet" href="style.css?v=23">
 
 
 
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer=""></script>
 					<!-- Modular application scripts: load in dependency order. -->
-					<script src="core.js?v=25" defer></script>
-					<script src="navigation.js?v=20" defer></script>
-					<script src="schedule.js?v=17" defer></script>
-					<script src="leaderboard.js?v=23" defer></script>
-					<script src="player.js?v=20" defer></script>
-					<script src="legion.js?v=19" defer></script>
-					<script src="export.js?v=19" defer></script>
-					<script src="footer.js?v=17" defer></script>
-					<script src="effects.js?v=17" defer></script>
-					<script src="president-panel.js?v=10" defer></script>
-					<script src="redeem.js?v=3" defer></script>
+					<script src="core.js?v=27" defer></script>
+					<script src="navigation.js?v=22" defer></script>
+					<script src="schedule.js?v=18" defer></script>
+					<script src="leaderboard.js?v=25" defer></script>
+					<script src="player.js?v=21" defer></script>
+					<script src="legion.js?v=21" defer></script>
+					<script src="export.js?v=20" defer></script>
+					<script src="footer.js?v=18" defer></script>
+					<script src="effects.js?v=18" defer></script>
+					<script src="president-panel.js?v=11" defer></script>
+					<script src="redeem.js?v=4" defer></script>
 				</head>
 	<body>
 		<!-- 2.5s opening animation; intentionally runs on every refresh. -->
@@ -190,6 +190,7 @@
 					<div class="schedule-actions-buttons">
 						<button id="add-entry-btn" class="btn-apply toolbar-action-btn" onclick="openAddModal()">+ Add Player Power</button>
 						<button id="add-legion-member-btn" class="btn-apply toolbar-action-btn legion-action-btn" onclick="openAddLegionModal()">+ Assign Player to Legion</button>
+						<button id="bulk-remove-top-btn" class="btn-apply btn-danger toolbar-action-btn" style="display:none;" onclick="openBulkRemoveModal()">Bulk Remove</button>
 						<button class="btn-apply toolbar-action-btn export-btn" onclick="exportToCSV()">Export CSV</button>
 					</div>
 				</div>
@@ -270,7 +271,6 @@
 					<table>
 						<thead>
 							<tr id="table-header-row">
-								<th id="th-select" class="hidden-table-column bulk-select-cell"><input type="checkbox" id="roster-select-all" title="Select all shown" aria-label="Select all shown players" onchange="toggleSelectAllRoster(this.checked)"></th>
 								<th>RANK</th>
 								<th class="sortable" onclick="handleSortClick('alliance')">ALLIANCE <span class="sort-arrow" id="sort-arrow-alliance"></span></th>
 								<th class="sortable" onclick="handleSortClick('nickname')">NICKNAME <span class="sort-arrow" id="sort-arrow-nickname"></span></th>
@@ -286,17 +286,6 @@
 							<!-- Populated via JS -->
 						</tbody>
 					</table>
-				</div>
-
-				<!-- BULK ACTIONS (roster view, only for staff who can manage this roster) -->
-				<div id="bulk-bar" class="bulk-bar hidden">
-					<span id="bulk-count" class="bulk-count">0 selected</span>
-					<select id="bulk-alliance-select" class="alliance-filter-select" onchange="selectRosterByAlliance(this.value)" aria-label="Select players by alliance">
-						<option value="">Select by alliance…</option>
-					</select>
-					<button type="button" class="btn-back" onclick="toggleSelectAllRoster(true)">Select All</button>
-					<button type="button" class="btn-back" onclick="clearRosterSelection()">Clear</button>
-					<button type="button" id="bulk-remove-btn" class="btn-apply btn-danger" onclick="bulkRemoveFromRoster()" disabled>Remove Selected</button>
 				</div>
 
 				<!-- PAGINATION -->
@@ -534,6 +523,37 @@
 		</section>
 
 		<!-- PRESIDENT LEGION ASSIGNMENT MODAL -->
+		<div id="bulk-remove-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="bulk-remove-modal-title">
+			<div class="modal-content custom-form-modal">
+				<span class="close-modal" onclick="closeBulkRemoveModal()">&times;</span>
+				<h2 id="bulk-remove-modal-title" class="modal-title">Bulk Remove from Roster</h2>
+				<p class="modal-subtitle">
+					Target: <span id="bulk-remove-target-label" class="modal-target-highlight-purple">Legion 1</span>
+				</p>
+
+				<div class="form-group">
+					<label for="bulk-remove-alliance">Alliance Category</label>
+					<select id="bulk-remove-alliance" onchange="filterBulkRemovePlayers()"></select>
+				</div>
+
+				<div class="form-group">
+					<label for="bulk-remove-search">Search Game ID / Nickname</label>
+					<input type="text" id="bulk-remove-search" placeholder="Type game ID or nickname..." autocomplete="off" oninput="filterBulkRemovePlayers()">
+				</div>
+
+				<div class="bulk-remove-toolbar">
+					<label class="bulk-remove-all"><input type="checkbox" id="bulk-remove-select-all" onchange="toggleBulkRemoveAll(this.checked)"> Select all shown</label>
+					<span id="bulk-remove-count" class="legion-assign-count">0 selected</span>
+				</div>
+				<div id="bulk-remove-list" class="bulk-remove-list"></div>
+
+				<div class="form-actions">
+					<button class="btn-back" onclick="closeBulkRemoveModal()">Cancel</button>
+					<button id="bulk-remove-submit-btn" class="btn-apply btn-danger primary-action" onclick="submitBulkRemove()" disabled>Remove Selected</button>
+				</div>
+			</div>
+		</div>
+
 		<div id="legion-assign-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="legion-assign-modal-title">
 			<div class="modal-content custom-form-modal">
 				<span class="close-modal" onclick="closeLegionAssignModal()">&times;</span>
@@ -803,6 +823,6 @@
 </div>
 </div>
 
-	<script src="frostdragon.js?v=15"></script>
+	<script src="frostdragon.js?v=16"></script>
 </body>
 </html>

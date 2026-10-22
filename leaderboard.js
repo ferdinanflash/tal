@@ -236,79 +236,6 @@ function updatePaginationControls(totalItems) {
     nextBtn.disabled = currentPage >= totalPages;
 }
 
-// ================= BULK SELECT (roster view) =================
-const selectedRosterIds = new Set();
-
-// Bulk tools exist only in a roster (Legion / FDT) view, for staff who may manage it.
-function isBulkRosterMode() {
-    return isAdmin && viewMode === 'LEGION' && canManageLegion(currentSelection);
-}
-
-function updateBulkBar() {
-    const bar = document.getElementById('bulk-bar');
-    const thSelect = document.getElementById('th-select');
-    const bulk = isBulkRosterMode();
-    if (thSelect) thSelect.style.display = bulk ? 'table-cell' : 'none';
-    if (!bar) return;
-    bar.classList.toggle('hidden', !bulk);
-    if (!bulk) return;
-
-    const count = selectedRosterIds.size;
-    const countEl = document.getElementById('bulk-count');
-    if (countEl) countEl.innerText = `${count} selected`;
-    const removeBtn = document.getElementById('bulk-remove-btn');
-    if (removeBtn) removeBtn.disabled = count === 0;
-
-    // Header checkbox: checked = every shown player selected, indeterminate = some
-    const all = document.getElementById('roster-select-all');
-    if (all) {
-        const shownIds = getDisplayData().map(p => Number(p.id));
-        const selectedShown = shownIds.filter(id => selectedRosterIds.has(id)).length;
-        all.checked = shownIds.length > 0 && selectedShown === shownIds.length;
-        all.indeterminate = selectedShown > 0 && selectedShown < shownIds.length;
-    }
-
-    // Alliance quick-select: only alliances present in this roster
-    const sel = document.getElementById('bulk-alliance-select');
-    if (sel) {
-        const present = [...new Set(loadedTroopsData.map(p => p.alliance).filter(Boolean))].sort();
-        const key = present.join('|');
-        if (sel.dataset.key !== key) {
-            sel.innerHTML = '<option value="">Select by alliance…</option>' +
-                present.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
-            sel.dataset.key = key;
-        }
-    }
-}
-
-// Selects/unselects everything the current search/filter shows (all pages).
-function toggleSelectAllRoster(checked) {
-    if (!isBulkRosterMode()) return;
-    getDisplayData().forEach(p => {
-        if (checked) selectedRosterIds.add(Number(p.id)); else selectedRosterIds.delete(Number(p.id));
-    });
-    renderTable();
-}
-
-function selectRosterByAlliance(code) {
-    const sel = document.getElementById('bulk-alliance-select');
-    if (sel) sel.value = '';
-    if (!code || !isBulkRosterMode()) return;
-    const matches = getDisplayData().filter(p => p.alliance === code);
-    if (matches.length === 0) {
-        showToast(`No ${code} players in this roster.`, 'info');
-        return;
-    }
-    matches.forEach(p => selectedRosterIds.add(Number(p.id)));
-    renderTable();
-    showToast(`${matches.length} ${code} player(s) selected.`, 'info');
-}
-
-function clearRosterSelection() {
-    selectedRosterIds.clear();
-    renderTable();
-}
-
 function renderTable() {
     const tbody = document.getElementById('troops-table-body');
     const thAction = document.getElementById('th-action');
@@ -320,14 +247,6 @@ function renderTable() {
     }
     updateSensitiveUiState();
 
-    // Keep only selections that still exist in the loaded roster (and none outside bulk mode)
-    const bulkMode = isBulkRosterMode();
-    if (!bulkMode) {
-        selectedRosterIds.clear();
-    } else {
-        const loadedIds = new Set(loadedTroopsData.map(p => Number(p.id)));
-        [...selectedRosterIds].forEach(id => { if (!loadedIds.has(id)) selectedRosterIds.delete(id); });
-    }
     const taskHeader = document.getElementById('th-frostdragon-task');
     if (taskHeader) taskHeader.style.display = (viewMode === 'LEGION' && typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 'table-cell' : 'none';
     if (typeof updateFdtAllianceFilterUi === 'function') updateFdtAllianceFilterUi();
@@ -424,12 +343,10 @@ function renderTable() {
     let totalColumns = 6;
     if (viewMode === 'LEGION') totalColumns++;
     if (isAdmin) totalColumns++;
-    if (bulkMode) totalColumns++;
 
     if (loadedTroopsData.length === 0) {
         tbody.innerHTML = `<tr><td colspan="${totalColumns}" style="padding: 20px; color: #8a8d98;">No player data available.</td></tr>`;
         updatePaginationControls(0);
-        updateBulkBar();
         return;
     }
 
@@ -439,7 +356,6 @@ function renderTable() {
     if (displayData.length === 0) {
         tbody.innerHTML = `<tr><td colspan="${totalColumns}" style="padding: 20px; color: #8a8d98;">No players match your search or filter.</td></tr>`;
         updatePaginationControls(0);
-        updateBulkBar();
         return;
     }
 
@@ -527,14 +443,7 @@ function renderTable() {
         else if (player.alliance === 'ZXC') allianceTextColor = '#ef4444';
         else if (player.alliance === 'CAT') allianceTextColor = '#ec4899';
 
-        const isSelected = bulkMode && selectedRosterIds.has(playerId);
-        if (isSelected) row.classList.add('row-selected');
-        const selectCellHtml = bulkMode
-            ? `<td data-label="Select" class="bulk-select-cell"><input type="checkbox" class="js-roster-select" data-id="${playerId}" aria-label="Select ${safeNickname}" ${isSelected ? 'checked' : ''}></td>`
-            : '';
-
         row.innerHTML = `
-            ${selectCellHtml}
             <td data-label="Rank"><strong style="color: ${rank !== '-' && rank <= 20 ? '#f59e0b' : '#f1f5f9'};">#${rank}</strong></td>
             <td data-label="Alliance"><span style="background: #1e2230; padding: 2px 8px; border-radius: 4px; font-weight: bold; color: ${allianceTextColor}; border: 1px solid ${allianceTextColor}40;">${safeAlliance}</span></td>
             <td data-label="Nickname"><strong>${safeNickname}</strong></td>
@@ -554,7 +463,6 @@ function renderTable() {
     });
 
     updatePaginationControls(displayData.length);
-    updateBulkBar();
 }
 
 // ================= PLAYER MODAL & EDIT =================

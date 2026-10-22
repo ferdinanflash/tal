@@ -8,7 +8,6 @@ function resetTableControls() {
     fdtAllianceFilter = '';
     const allianceFilter = document.getElementById('fdt-alliance-filter');
     if (allianceFilter) allianceFilter.value = '';
-    if (typeof selectedRosterIds !== 'undefined') selectedRosterIds.clear();
     updateSortArrows();
 }
 
@@ -29,6 +28,7 @@ function selectAlliance(alliance) {
     const canAddHere = alliance === 'ALL' ? myAlliances.length > 0 : myAlliances.includes(alliance);
     document.getElementById('add-entry-btn').style.display = canAddHere ? "inline-block" : "none";
     document.getElementById('add-legion-member-btn').style.display = "none";
+    document.getElementById('bulk-remove-top-btn').style.display = "none";
 
     const titleEl = document.getElementById('selected-alliance-title');
     if (alliance === 'ALL') {
@@ -56,6 +56,7 @@ function selectLegion(legionName) {
     document.getElementById('add-entry-btn').style.display = "none";
 
     document.getElementById('add-legion-member-btn').style.display = canManageLegion(legionName) ? "inline-block" : "none";
+    document.getElementById('bulk-remove-top-btn').style.display = canManageLegion(legionName) ? "inline-block" : "none";
 
     const isFdtTheme = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
     document.getElementById('selected-alliance-title').innerText = isFdtTheme ? 'FDT Roster' : `${legionName} Official Roster`;

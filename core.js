@@ -227,17 +227,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    if (tableBody) {
-        tableBody.addEventListener('change', (e) => {
-            const cb = e.target.closest('.js-roster-select');
-            if (!cb) return;
-            const id = Number(cb.dataset.id);
-            if (cb.checked) selectedRosterIds.add(id); else selectedRosterIds.delete(id);
-            cb.closest('tr')?.classList.toggle('row-selected', cb.checked);
-            updateBulkBar();
-        });
-    }
-
     const loginUsernameInput = document.getElementById('input-login-username');
     if (loginUsernameInput) {
         loginUsernameInput.addEventListener('keydown', (e) => {
@@ -256,12 +245,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     // its own "Cancel"/"x" button (so per-modal state gets cleaned up too).
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape') return;
+        // The confirm dialog sits on top of other modals, so Esc dismisses it first.
+        // It must resolve its pending promise via the real Cancel button click.
+        const confirmModalTop = document.getElementById('confirm-modal');
+        if (confirmModalTop && !confirmModalTop.classList.contains('hidden')) {
+            document.getElementById('confirm-cancel-btn')?.click();
+            return;
+        }
         const closers = {
             'schedule-modal': closeScheduleModal,
             'president-modal': closePresidentModal,
             'duplicate-id-modal': closeDuplicateIdModal,
             'add-modal': closeAddModal,
             'legion-assign-modal': closeLegionAssignModal,
+            'bulk-remove-modal': closeBulkRemoveModal,
             'login-modal': closeLoginModal,
             'redeem-modal': closeRedeemModal,
         };

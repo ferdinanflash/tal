@@ -269,25 +269,121 @@ async function removeFromLegion(id) {
 
 
 
-// ================= BULK REMOVE FROM ROSTER =================
-// Removes every selected player from the roster currently on screen, with the
-// same effect as the per-row "Remove" button (only the active theme's fields
-// are cleared: Frostdragon never touches Tundra legions and vice versa).
-async function bulkRemoveFromRoster() {
-    const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
-    if (frost && typeof fdtSettings !== 'undefined' && fdtSettings.locked) {
+// ================= BULK REMOVE FROM ROSTER (own popup) =================
+// Works on the roster that is already loaded on screen (loadedTroopsData), so
+// opening the popup needs no extra query. Removal has the same effect as the
+// per-row "Remove" button: only the active theme's fields are cleared
+// (Frostdragon never touches Tundra legions and vice versa).
+const bulkRemoveSelected = new Set();
+
+function bulkRemoveIsFrost() {
+    return typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
+}
+
+function bulkRemoveBlocked() {
+    if (bulkRemoveIsFrost() && typeof fdtSettings !== 'undefined' && fdtSettings.locked) {
         showToast('Frostdragon roster is locked. Unlock it in President Panel to make changes.', 'warning');
+        return true;
+    }
+    if (!canManageLegion(currentSelection)) {
+        showToast("You don't have permission to manage this roster.", 'warning');
+        return true;
+    }
+    return false;
+}
+
+function openBulkRemoveModal() {
+    if (bulkRemoveBlocked()) return;
+    if (!loadedTroopsData || loadedTroopsData.length === 0) {
+        showToast('This roster is empty.', 'info');
         return;
     }
-    if (!canManageLegion(currentSelection)) return;
+    bulkRemoveSelected.clear();
+    document.getElementById('bulk-remove-target-label').innerText = bulkRemoveIsFrost() ? 'FDT Roster' : currentSelection;
 
-    const ids = [...selectedRosterIds];
+    const allianceEl = document.getElementById('bulk-remove-alliance');
+    const present = ALL_ALLIANCES.filter(a => loadedTroopsData.some(p => p.alliance === a));
+    allianceEl.innerHTML = `<option value="">All Alliances (${loadedTroopsData.length})</option>` +
+        present.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)} (${loadedTroopsData.filter(p => p.alliance === a).length})</option>`).join('');
+    document.getElementById('bulk-remove-search').value = '';
+
+    filterBulkRemovePlayers();
+    document.getElementById('bulk-remove-modal').classList.remove('hidden');
+}
+
+function closeBulkRemoveModal() {
+    document.getElementById('bulk-remove-modal').classList.add('hidden');
+    bulkRemoveSelected.clear();
+}
+
+function getBulkRemoveShown() {
+    const alliance = document.getElementById('bulk-remove-alliance').value;
+    const q = document.getElementById('bulk-remove-search').value.trim().toLowerCase();
+    return loadedTroopsData.filter(p => {
+        if (alliance && p.alliance !== alliance) return false;
+        if (!q) return true;
+        return (p.nickname || '').toLowerCase().includes(q) || String(p.game_id || '').toLowerCase().includes(q);
+    });
+}
+
+// Re-renders the checklist for the current alliance/search filter. Selections
+// persist across filter changes (they are kept in bulkRemoveSelected).
+function filterBulkRemovePlayers() {
+    const roleField = bulkRemoveIsFrost() ? 'frostdragon_role' : 'legion_role';
+    const shown = getBulkRemoveShown();
+    const list = document.getElementById('bulk-remove-list');
+
+    list.innerHTML = shown.length === 0
+        ? '<div class="bulk-remove-empty">No players match.</div>'
+        : shown.map(p => {
+            const id = Number(p.id);
+            const role = p[roleField] ? ` · ${escapeHtml(p[roleField])}` : '';
+            return `<label class="bulk-remove-item">
+                <input type="checkbox" value="${id}" ${bulkRemoveSelected.has(id) ? 'checked' : ''} onchange="onBulkRemoveToggle(this)">
+                <span class="bulk-remove-name">${escapeHtml(p.nickname)}</span>
+                <span class="bulk-remove-meta">${escapeHtml(p.alliance)} · ${escapeHtml(p.game_id)}${role}</span>
+            </label>`;
+        }).join('');
+    updateBulkRemoveSummary();
+}
+
+function onBulkRemoveToggle(cb) {
+    const id = Number(cb.value);
+    if (cb.checked) bulkRemoveSelected.add(id); else bulkRemoveSelected.delete(id);
+    updateBulkRemoveSummary();
+}
+
+function toggleBulkRemoveAll(checked) {
+    getBulkRemoveShown().forEach(p => {
+        if (checked) bulkRemoveSelected.add(Number(p.id)); else bulkRemoveSelected.delete(Number(p.id));
+    });
+    filterBulkRemovePlayers();
+}
+
+function updateBulkRemoveSummary() {
+    const count = bulkRemoveSelected.size;
+    document.getElementById('bulk-remove-count').innerText = `${count} selected`;
+    const btn = document.getElementById('bulk-remove-submit-btn');
+    btn.disabled = count === 0;
+    btn.innerText = count > 0 ? `Remove Selected (${count})` : 'Remove Selected';
+
+    const all = document.getElementById('bulk-remove-select-all');
+    const shown = getBulkRemoveShown();
+    const selShown = shown.filter(p => bulkRemoveSelected.has(Number(p.id))).length;
+    all.checked = shown.length > 0 && selShown === shown.length;
+    all.indeterminate = selShown > 0 && selShown < shown.length;
+}
+
+function submitBulkRemove() {
+    if (bulkRemoveBlocked()) return;
+    const ids = [...bulkRemoveSelected];
     if (ids.length === 0) {
         showToast('Select at least one player first.', 'warning');
         return;
     }
-
+    const frost = bulkRemoveIsFrost();
     const where = frost ? 'the Frostdragon Tyrant roster' : `the ${currentSelection} roster`;
+
     showCustomConfirm(`Remove ${ids.length} selected player(s) from ${where}?`, async () => {
         const client = getSupabase();
         if (!client) return;
@@ -306,7 +402,7 @@ async function bulkRemoveFromRoster() {
             removed += (data || []).length;
         }
 
-        selectedRosterIds.clear();
+        closeBulkRemoveModal();
         if (failed) {
             showToast(`Stopped early: ${removed} of ${ids.length} removed. Please try again.`, 'error');
         } else if (removed < ids.length) {
