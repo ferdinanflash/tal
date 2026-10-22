@@ -11,7 +11,7 @@ function csvSafeField(value) {
 
 function exportToCSV() {
     if (!canViewSensitive()) {
-        showToast("Login with your Game ID to export the roster.", "warning");
+        showToast("Login to export the roster.", "warning");
         return;
     }
     if (loadedTroopsData.length === 0) {

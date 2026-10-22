@@ -179,7 +179,7 @@ function handleSearchInput(value) {
 
 function handleSortClick(field) {
     if (!canViewSensitive() && (field === 'game_id' || field === 'troops_power')) {
-        showToast("Login with your Game ID to use this.", "warning");
+        showToast("Login to use this.", "warning");
         return;
     }
     if (currentSortField === field) {
@@ -268,7 +268,7 @@ function renderTable() {
     const hideSummary = HIDE_SUMMARY_FOR_GUESTS && !canViewSensitive();
     if (hideSummary) {
         summaryBoxContainer.style.gridTemplateColumns = "1fr";
-        summaryBoxContainer.innerHTML = `<div style="padding: 12px; background: #111827; border: 1px dashed #334155; border-radius: 10px; text-align: center; color: #8a8d98; font-size: 0.85rem;">🔒 Login with your Game ID to see Troops Power totals.</div>`;
+        summaryBoxContainer.innerHTML = `<div style="padding: 12px; background: #111827; border: 1px dashed #334155; border-radius: 10px; text-align: center; color: #8a8d98; font-size: 0.85rem;">🔒 Login to see Troops Power totals.</div>`;
     } else if (viewMode === 'LEGION') {
         const roleField = (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 'frostdragon_role' : 'legion_role';
         // When "View by Alliance" is active (Frostdragon), the power cards follow the selected alliance.

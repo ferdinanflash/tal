@@ -193,7 +193,7 @@ function toggleFdtChartView(force) {
   if (!modal) return;
   const open = typeof force === 'boolean' ? force : modal.classList.contains('hidden');
   if (open && typeof canViewSensitive === 'function' && !canViewSensitive()) {
-    showToast('Login with your Game ID to view the roster chart.', 'warning');
+    showToast('Login to view the roster chart.', 'warning');
     return;
   }
   if (open && !fdtRosterContextOk()) return;

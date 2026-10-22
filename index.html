@@ -12,13 +12,13 @@
 
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer=""></script>
 					<!-- Modular application scripts: load in dependency order. -->
-					<script src="core.js?v=22" defer></script>
+					<script src="core.js?v=24" defer></script>
 					<script src="navigation.js?v=19" defer></script>
 					<script src="schedule.js?v=17" defer></script>
-					<script src="leaderboard.js?v=21" defer></script>
+					<script src="leaderboard.js?v=22" defer></script>
 					<script src="player.js?v=20" defer></script>
 					<script src="legion.js?v=18" defer></script>
-					<script src="export.js?v=18" defer></script>
+					<script src="export.js?v=19" defer></script>
 					<script src="footer.js?v=17" defer></script>
 					<script src="effects.js?v=17" defer></script>
 					<script src="president-panel.js?v=9" defer></script>
@@ -601,42 +601,21 @@
 			<div class="modal-content custom-form-modal">
 				<span class="close-modal" onclick="closeLoginModal()">&times;</span>
 				<h2 id="login-modal-title" class="modal-title">Login</h2>
+				<p class="modal-subtitle">Sign in to view player IDs and Troops Power.</p>
 
-				<div class="login-tabs" role="tablist">
-					<button type="button" id="login-tab-player" class="login-tab active" role="tab" aria-selected="true" onclick="switchLoginTab('player')">Player</button>
-					<button type="button" id="login-tab-staff" class="login-tab" role="tab" aria-selected="false" onclick="switchLoginTab('staff')">Alliance Staff</button>
+				<div class="form-group">
+					<label>Username</label>
+					<input type="text" id="input-login-username" placeholder="Enter username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false">
 				</div>
 
-				<!-- PLAYER LOGIN: Game ID only -->
-				<div id="login-panel-player" role="tabpanel">
-					<p class="modal-subtitle">Enter your Game ID to view player IDs and Troops Power.</p>
-					<div class="form-group">
-						<label>Game ID</label>
-						<input type="text" id="input-player-gameid" placeholder="Enter your Game ID" inputmode="numeric" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
-					</div>
-					<div class="form-actions">
-						<button class="btn-back" onclick="closeLoginModal()">Cancel</button>
-						<button id="player-login-submit-btn" class="btn-apply primary-action" onclick="submitPlayerLogin()">Enter</button>
-					</div>
+				<div class="form-group">
+					<label>Password</label>
+					<input type="password" id="input-login-password" placeholder="Enter password" autocomplete="current-password">
 				</div>
 
-				<!-- STAFF LOGIN: username + password -->
-				<div id="login-panel-staff" class="hidden" role="tabpanel">
-					<p class="modal-subtitle">Sign in with your staff account to manage rosters.</p>
-					<div class="form-group">
-						<label>Username</label>
-						<input type="text" id="input-login-username" placeholder="Enter username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false">
-					</div>
-
-					<div class="form-group">
-						<label>Password</label>
-						<input type="password" id="input-login-password" placeholder="Enter password" autocomplete="current-password">
-					</div>
-
-					<div class="form-actions">
-						<button class="btn-back" onclick="closeLoginModal()">Cancel</button>
-						<button id="login-submit-btn" class="btn-apply primary-action" onclick="submitStaffLogin()">Sign In</button>
-					</div>
+				<div class="form-actions">
+					<button class="btn-back" onclick="closeLoginModal()">Cancel</button>
+					<button id="login-submit-btn" class="btn-apply primary-action" onclick="submitStaffLogin()">Sign In</button>
 				</div>
 			</div>
 		</div>
@@ -812,6 +791,6 @@
 </div>
 </div>
 
-	<script src="frostdragon.js?v=14"></script>
+	<script src="frostdragon.js?v=15"></script>
 </body>
 </html>
