@@ -1529,3 +1529,14 @@ body.fy-shared-open { overflow:hidden; }
 #foundry-shared-map .fdt-shared-actions .fy-share-active { background:#14532d; border-color:#4ade80; color:#fff; }
 
 .fy-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.fy-title-row .page-title{margin-bottom:8px}#foundry-shared-map .fdt-shared-actions{display:flex;flex-wrap:wrap;gap:6px}#foundry-shared-map .fdt-shared-actions button{white-space:nowrap}
+
+/* Foundry Live Share player/task details */
+.fy-share-roster-wrap{margin:16px 0;padding:12px;border:1px solid rgba(148,163,184,.35);border-radius:12px;background:rgba(15,23,42,.72);color:#f8fafc}
+.fy-share-roster-wrap h3{margin:0 0 10px;font-size:1.05rem}
+.fy-share-roster-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.fy-share-roster{width:100%;border-collapse:collapse;font-size:.9rem;min-width:440px}
+.fy-share-roster th,.fy-share-roster td{padding:8px 10px;border-bottom:1px solid rgba(148,163,184,.22);text-align:left;white-space:nowrap}
+.fy-share-roster th{background:rgba(51,65,85,.8);font-weight:700}
+.fy-share-roster tbody tr:last-child td{border-bottom:0}
+#foundry-language-toggle{margin-left:8px}
+@media(max-width:600px){#foundry-page .schedule-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.fy-share-roster-wrap{padding:8px}.fy-share-roster th,.fy-share-roster td{padding:7px 8px}}
