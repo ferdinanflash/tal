@@ -1477,14 +1477,17 @@ body.fdt-shared-open { overflow:hidden; }
 .fy-table td select { background: #121316; color: #fff; border: 1px solid #3a3d48; border-radius: 6px; padding: 4px 6px; max-width: 170px; }
 .fy-row-empty td { color: #64748b; }
 .fy-empty { color: #64748b; font-style: italic; }
-.fy-map { width: 100%; max-width: 760px; display: block; margin: 8px auto; background: #14151a; border-radius: 18px; }
+.fy-map { width: 100%; max-width: 900px; display: block; margin: 8px auto; background: #14151a; border-radius: 18px; }
 .fy-bg { fill: #16181f; stroke: #2d3039; stroke-width: 2; }
 .fy-link { stroke: #3a3d48; stroke-width: 2; stroke-dasharray: 5 5; }
 .fy-node { cursor: pointer; transition: opacity .2s; }
 .fy-node.fy-off { opacity: .28; }
-.fy-node.fy-sel circle { stroke-width: 5; filter: drop-shadow(0 0 8px #fff); }
-.fy-n { fill: #fff; font-size: 14px; font-weight: 800; pointer-events: none; }
-.fy-l { fill: #cbd5e1; font-size: 10px; pointer-events: none; }
+.fy-node.fy-sel circle { stroke-width: 14; filter: drop-shadow(0 0 8px #fff); }
+.fy-n { fill: #fff; font-size: 52px; font-weight: 800; pointer-events: none; paint-order: stroke; stroke: rgba(0,0,0,.6); stroke-width: 6px; }
+.fy-l { fill: #fff; font-size: 40px; font-weight: 700; pointer-events: none; paint-order: stroke; stroke: rgba(10,10,20,.85); stroke-width: 9px; stroke-linejoin: round; }
+.fy-spawn { font-size: 34px; letter-spacing: 1px; }
+.fy-spawn-us { fill: #67e8f9; }
+.fy-spawn-foe { fill: #fca5a5; }
 .fy-note { color: #94a3b8; font-size: .78rem; margin: 8px 0; }
 .fy-extra { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 10px; }
 .fy-detail { background: #1c1d22; border: 1px solid #2d3039; border-radius: 12px; padding: 14px; margin-top: 10px; }
@@ -1499,3 +1502,9 @@ body.fdt-shared-open { overflow:hidden; }
 .fy-guide li { color: #cbd5e1; font-size: .85rem; line-height: 1.55; padding: 4px 0 4px 16px; position: relative; }
 .fy-guide li::before { content: '▸'; position: absolute; left: 0; color: #f59e0b; }
 @media (max-width: 600px) { .fy-admin .btn-apply { flex: 1; } .fy-table td select { max-width: 120px; } }
+
+#fy-bulk-modal { z-index: 2500; }
+#fy-bulk-modal .modal-content { max-height: 92vh; overflow-y: auto; }
+#fy-bulk-modal .bulk-remove-item input[type="checkbox"], #fy-bulk-modal .bulk-remove-all input[type="checkbox"] { accent-color: #f59e0b; }
+.fy-bulk-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 480px) { .fy-bulk-row { grid-template-columns: 1fr; } }

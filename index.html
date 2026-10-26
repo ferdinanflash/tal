@@ -197,6 +197,7 @@
 				<h1 class="page-title fire-text">Foundry Battle Roster</h1>
 				<p class="page-subtitle">IDN Alliance · 2 Legion · 30 Battle + 10 Cadangan per Legion</p>
 				<div id="foundry-admin-bar" class="fy-admin hidden">
+					<button class="btn-apply" type="button" onclick="openFoundryBulkAssign()">➕ Bulk Assign</button>
 					<button class="btn-apply" type="button" onclick="foundryAutoFill()">⚡ Isi Otomatis (by Power)</button>
 					<button class="btn-apply" type="button" onclick="foundryCopyText()">📋 Salin untuk Discord</button>
 					<button class="btn-apply btn-danger" type="button" onclick="foundryClearAll()">Kosongkan Roster</button>
@@ -632,6 +633,43 @@
 				<div class="form-actions">
 					<button class="btn-back" onclick="closeBulkAssignModal()">Cancel</button>
 					<button id="bulk-assign-submit-btn" class="btn-apply legion-action-btn primary-action" onclick="submitBulkAssign()" disabled>Assign Selected</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- FOUNDRY BULK ASSIGN MODAL -->
+		<div id="fy-bulk-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="fy-bulk-title">
+			<div class="modal-content custom-form-modal">
+				<span class="close-modal" onclick="closeFoundryBulkAssign()">&times;</span>
+				<h2 id="fy-bulk-title" class="modal-title">Bulk Assign Foundry</h2>
+				<p class="modal-subtitle">Pemain yang dipilih mengisi slot kosong berikutnya, urut dari Power tertinggi.</p>
+
+				<div class="fy-bulk-row">
+					<div class="form-group">
+						<label for="fy-bulk-legion">Legion</label>
+						<select id="fy-bulk-legion" onchange="foundryBulkUpdate()"></select>
+					</div>
+					<div class="form-group">
+						<label for="fy-bulk-status">Status</label>
+						<select id="fy-bulk-status" onchange="foundryBulkUpdate()"></select>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="fy-bulk-search">Cari Game ID / Nickname</label>
+					<input type="text" id="fy-bulk-search" placeholder="Ketik game ID atau nickname..." autocomplete="off" oninput="foundryBulkFilter()">
+				</div>
+
+				<div class="bulk-remove-toolbar">
+					<label class="bulk-remove-all"><input type="checkbox" id="fy-bulk-all" onchange="foundryBulkToggleAll(this.checked)"> Pilih semua yang tampil (sampai slot penuh)</label>
+					<span id="fy-bulk-count" class="legion-assign-count">0 dipilih</span>
+				</div>
+				<div id="fy-bulk-list" class="bulk-remove-list"></div>
+				<p id="fy-bulk-info" class="fy-note"></p>
+
+				<div class="form-actions">
+					<button class="btn-back" onclick="closeFoundryBulkAssign()">Batal</button>
+					<button id="fy-bulk-submit" class="btn-apply legion-action-btn primary-action" onclick="foundryBulkSubmit()" disabled>Assign Terpilih</button>
 				</div>
 			</div>
 		</div>

@@ -43,5 +43,5 @@ write, branching on `getBattleTheme() === 'frostdragon'`.
 
 ## Foundry Battle Roster (IDN)
 
-- `foundry.js` — halaman Foundry (roster 2 Legion x 30 Battle + 10 Cadangan, peta, strategi); dibuka dari menu utama lewat `openFoundry()`
+- `foundry.js` — halaman Foundry (roster 2 Legion x 30 Battle + 10 Cadangan, bulk assign, peta, strategi); dibuka dari menu utama lewat `openFoundry()`
 - `supabase_foundry_roster.sql` — kolom `foundry_*` pada `troops_power` (dijalankan sekali di Supabase SQL Editor). Terpisah dari `legion_role` dan `frostdragon_role`, jadi tidak saling menimpa.
