@@ -98,6 +98,25 @@ function foundryRender() {
 // ---------- BILINGUAL UI (English / Bahasa Indonesia) ----------
 let foundryLanguage = localStorage.getItem('foundry-language') || 'en';
 const FOUNDRY_I18N = {
+  'Back to Menu':'Kembali ke Menu','Bulk Assign':'Penugasan Massal','Clear Roster':'Kosongkan Roster',
+  'Player':'Pemain','Substitute':'Cadangan','Substitute Players':'Pemain Cadangan',
+  'Map':'Peta','Strategy':'Strategi','Event overview':'Gambaran event','Roster roles':'Peran roster',
+  'Timeline & phase plan':'Linimasa dan rencana fase','Building':'Bangunan','Opens':'Terbuka',
+  'First capture':'Poin perebutan pertama','Points/min':'Poin/menit','Phase 1':'Fase 1','Phase 2':'Fase 2','Phase 3':'Fase 3',
+  'Players & assigned tasks':'Pemain dan tugas yang ditetapkan','Task / Role':'Tugas / Peran',
+  'No battle players assigned for this phase.':'Belum ada pemain tempur yang ditugaskan pada fase ini.',
+  'Small numbers indicate roster slot numbers.':'Angka kecil menunjukkan nomor slot pemain di roster.',
+  'Angka kecil adalah nomor slot roster.':'Small numbers show the player’s roster slot number.',
+  'Mark tugas pemain':'Player task markers','Pilih semua':'Select all','Matikan semua':'Clear all',
+  'Angka di lingkaran = jumlah pemain yang ditugaskan pada bangunan untuk phase terpilih. Mark kecil = nomor slot pemain; gunakan filter tugas untuk menampilkan peran tertentu.':'Numbers inside circles show how many players are assigned to each building in the selected phase. Small markers show player slot numbers. Use task filters to show specific roles.',
+  'Angka di lingkaran = jumlah pemain yang ditugaskan pada bangunan untuk fase terpilih. Mark kecil = nomor slot pemain; gunakan filter tugas untuk menampilkan peran tertentu.':'Numbers inside circles show assigned players for the selected phase. Small markers show player slot numbers; use task filters to show specific roles.',
+  'Mark angka menunjukkan nomor slot pemain di roster untuk target bangunan pada phase terpilih. Arahkan/ketuk mark untuk melihat nama dan tugas.':'Numbered markers show roster slots assigned to each building for the selected phase. Tap a marker to view the player name and task.',
+  'belum ada':'none assigned','Pilih Legion dan Phase':'Select Legion and Phase',
+  'Tugas':'Task','Target':'Target','Simpan':'Save','Batal':'Cancel','Nomor slot':'Slot number',
+  'Roster Foundry Battle':'Foundry Battle Roster','Aliansi IDN':'IDN Alliance','Peta':'Map','Strategi':'Strategy',
+  'Gambaran event':'Event overview','Peran dalam roster':'Roster roles','Kesalahan umum':'Common mistakes',
+  'Checklist sebelum battle':'Pre-battle checklist','Taktik inti':'Core tactics',
+
   'Back to Menu':'Kembali ke Menu','Foundry Battle Roster':'Roster Foundry Battle',
   'IDN Alliance · 2 Legion · 30 Battle + 10 Cadangan per Legion':'Aliansi IDN · 2 Legion · 30 Petarung + 10 Cadangan per Legion',
   'Bulk Assign':'Penugasan Massal','⚡ Isi Otomatis (by Power)':'⚡ Isi Otomatis (berdasarkan Power)',
@@ -115,7 +134,16 @@ const FOUNDRY_I18N = {
   'Open site':'Buka situs','Refresh':'Segarkan','ROAM':'ROAM','WORKSHOP':'WORKSHOP',
   'Arsenal Supplies I':'Arsenal Supplies I','Arsenal Supplies II':'Arsenal Supplies II','Arsenal Supplies III':'Arsenal Supplies III','Arsenal Supplies IV':'Arsenal Supplies IV','Arsenal Supplies V':'Arsenal Supplies V','Arsenal Supplies VI':'Arsenal Supplies VI',
   'Roster Foundry Battle':'Foundry Battle Roster','Aliansi IDN':'IDN Alliance','Peta':'Map','Strategi':'Strategy','Pilih Legion dan Phase':'Select Legion and Phase','Tugas':'Task','Target':'Target','Simpan':'Save','Batal':'Cancel','Penugasan Massal':'Bulk Assign','Kosongkan Roster':'Clear Roster','Pemain Cadangan':'Substitute Players','Nomor slot':'Slot number',
-  'Angka kecil adalah nomor slot roster.':'Small numbers indicate roster slot numbers.'
+  'Angka kecil adalah nomor slot roster.':'Small numbers indicate roster slot numbers.',
+  'Peta Foundry Battle':'Foundry Battle Map','Pemain & tugas yang ditetapkan':'Players & assigned tasks',
+  'Angka di lingkaran':'Numbers inside circles','Phase terpilih':'Selected phase',
+  'Penugasan Massal':'Bulk Assign','Isi Otomatis (berdasarkan Power)':'Auto-fill (by Power)',
+  'Salin untuk Discord':'Copy for Discord','Kosongkan Roster':'Clear Roster',
+  'Poin perebutan pertama':'First capture points','poin/menit':'points/min',
+  'Menit 0':'Minute 0','Menit 15':'Minute 15','Bangunan':'Building','Buka':'Opens',
+  'Pemain':'Player','Cadangan':'Substitute','Kembali ke Menu':'Back to Menu',
+  'Perbekalan':'Supplies','PERBEKALAN':'SUPPLIES','Pengintai':'Scout',
+  'Hanya baca':'Read-only','Segarkan':'Refresh','Buka situs':'Open site'
 };
 function foundryT(text) {
   if (foundryLanguage === 'id') return text;
@@ -454,6 +482,12 @@ function foundryMapHtml() {
             ${nodes}<g class="fy-task-zone-labels"><text x="38" y="22" class="fy-zone-label">ROAM</text><text x="516" y="22" text-anchor="middle" class="fy-zone-label">WORKSHOP</text></g>${marks}</svg>
         <div class="fy-extra">${['roam', 'workshop'].map(k => `<button class="btn-apply ${k === foundrySelected ? 'fy-on' : ''}" onclick="foundryPickBuilding('${k}')">${escapeHtml(FOUNDRY_B[k].n)}</button>`).join('')}</div>
         <p class="fy-note">Angka di lingkaran = jumlah pemain yang ditugaskan pada bangunan untuk phase terpilih. Mark kecil = nomor slot pemain; gunakan filter tugas untuk menampilkan peran tertentu.</p>
+        <div class="fy-map-legend" aria-label="Map marker legend">
+          <h3>${foundryLanguage === 'en' ? 'Map marker guide' : 'Keterangan mark pada peta'}</h3>
+          <p><b>${foundryLanguage === 'en' ? 'Large number in a circle:' : 'Angka besar di lingkaran:'}</b> ${foundryLanguage === 'en' ? 'number of players assigned to that building in the selected phase.' : 'jumlah pemain yang ditugaskan ke bangunan tersebut pada fase yang dipilih.'}</p>
+          <p><b>${foundryLanguage === 'en' ? 'Small numbered marker:' : 'Mark kecil bernomor:'}</b> ${foundryLanguage === 'en' ? 'roster slot number. Tap it to see player, role, and target.' : 'nomor slot roster pemain. Ketuk mark untuk melihat nama, tugas, dan target.'}</p>
+          <div class="fy-map-legend-items">${roles.map(r => { const c=({'Commander':'#f59e0b','Rally Leader':'#ef4444','Joiner':'#fb923c','Holder':'#38bdf8','Mobile':'#4ade80','Collector':'#c084fc'})[r]; const idNames={'Commander':'Komandan','Rally Leader':'Pemimpin Rally','Joiner':'Anggota Rally','Holder':'Penjaga','Mobile':'Mobile','Collector':'Pengumpul'}; return `<span><i style="background:${c}"></i>${foundryLanguage==='en'?r:idNames[r]}</span>`; }).join('')}</div>
+        </div>
         <div class="fy-detail"><h3>${escapeHtml(b.n)}</h3>${pts}<p>${escapeHtml(b.tip)}</p>
             <div class="fy-cols"><div><h4>Phase 1</h4><ul>${list(1)}</ul></div><div><h4>Phase 2/3</h4><ul>${list(2)}</ul></div></div></div>`;
 }
@@ -546,7 +580,8 @@ async function openFoundrySharedMap(legion, phase) {
         const targetLabel = foundryLanguage === 'en' ? 'Target' : 'Target';
         const noPlayers = foundryLanguage === 'en' ? 'No battle players assigned for this phase.' : 'Belum ada pemain Battle yang ditugaskan pada phase ini.';
         const taskRows = assignedRows.length ? `<div class="fy-share-roster-wrap"><h3>${taskTitle}</h3><div class="fy-share-roster-scroll"><table class="fy-share-roster"><thead><tr><th>${slotLabel}</th><th>${playerLabel}</th><th>${roleLabel}</th><th>${targetLabel}</th></tr></thead><tbody>${assignedRows.map(({key,building,player:p})=>`<tr><td>#${escapeHtml(p.foundry_slot)}</td><td>${escapeHtml(p.nickname || '-')}</td><td>${escapeHtml(p.foundry_role || (foundryLanguage==='en'?'Unassigned':'Belum ditentukan'))}</td><td>${escapeHtml(foundryLanguage==='en' ? (building.n==='Roamer / Pengintai'?'Roamer':building.n==='Weapon Workshop'?'Weapon Workshop':building.n) : building.n)}</td></tr>`).join('')}</tbody></table></div></div>` : `<p class="fy-note">${noPlayers}</p>`;
-        body.innerHTML = `<svg viewBox="0 0 ${FOUNDRY_MAP.w} ${FOUNDRY_MAP.h}" class="fy-map" role="img" aria-label="Foundry Live Map"><image href="${FOUNDRY_MAP.src}" x="0" y="0" width="${FOUNDRY_MAP.w}" height="${FOUNDRY_MAP.h}"/>${nodes}<g class="fy-task-zone-labels"><text x="38" y="22" class="fy-zone-label">ROAM</text><text x="516" y="22" text-anchor="middle" class="fy-zone-label">WORKSHOP</text></g>${marks}</svg><p class="fy-note">${legion} · Phase ${phase} · ${new Date().toLocaleTimeString()} · ${foundryLanguage==='en'?'Small numbers indicate roster slot numbers.':'Angka kecil adalah nomor slot roster.'}</p>${taskRows}`;
+        const mapLegend = `<div class="fy-map-legend"><h3>${foundryLanguage==='en'?'Map marker guide':'Keterangan mark pada peta'}</h3><p><b>${foundryLanguage==='en'?'Large number in a circle:':'Angka besar di lingkaran:'}</b> ${foundryLanguage==='en'?'number of players assigned to that building for the selected phase.':'jumlah pemain yang ditugaskan ke bangunan pada fase terpilih.'}</p><p><b>${foundryLanguage==='en'?'Small numbered marker:':'Mark kecil bernomor:'}</b> ${foundryLanguage==='en'?'roster slot number; see the table below for player name, role, and target.':'nomor slot roster; lihat tabel di bawah untuk nama pemain, tugas, dan target.'}</p><p>${foundryLanguage==='en'?'Marker colors identify roles: Commander (gold), Rally Leader (red), Joiner (orange), Holder (blue), Mobile (green), Collector (purple).':'Warna mark menunjukkan tugas: Commander (emas), Rally Leader (merah), Joiner (oranye), Holder (biru), Mobile (hijau), Collector (ungu).'}</p></div>`;
+        body.innerHTML = `<svg viewBox="0 0 ${FOUNDRY_MAP.w} ${FOUNDRY_MAP.h}" class="fy-map" role="img" aria-label="Foundry Live Map"><image href="${FOUNDRY_MAP.src}" x="0" y="0" width="${FOUNDRY_MAP.w}" height="${FOUNDRY_MAP.h}"/>${nodes}<g class="fy-task-zone-labels"><text x="38" y="22" class="fy-zone-label">ROAM</text><text x="516" y="22" text-anchor="middle" class="fy-zone-label">WORKSHOP</text></g>${marks}</svg><p class="fy-note">${legion} · Phase ${phase} · ${new Date().toLocaleTimeString()} · ${foundryLanguage==='en'?'Small numbers indicate roster slot numbers.':'Angka kecil adalah nomor slot roster.'}</p>${mapLegend}${taskRows}`;
       } catch(e) { console.warn('Foundry live share failed',e); body.innerHTML=`<div class="fdt-shared-msg">${foundryLanguage==='en'?'Unable to load map. Check your connection or Supabase read permissions, then refresh.':'Tidak dapat memuat peta. Periksa koneksi atau izin baca Supabase, lalu refresh.'}</div>`; }
       ['l1','l2'].forEach((x,i)=>wrap.querySelector('#fy-share-'+x).classList.toggle('fy-share-active',legion===FOUNDRY_LEGIONS[i]));
       [1,2,3].forEach(n=>wrap.querySelector('#fy-share-p'+n).classList.toggle('fy-share-active',phase===n));

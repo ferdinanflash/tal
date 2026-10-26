@@ -1540,3 +1540,12 @@ body.fy-shared-open { overflow:hidden; }
 .fy-share-roster tbody tr:last-child td{border-bottom:0}
 #foundry-language-toggle{margin-left:8px}
 @media(max-width:600px){#foundry-page .schedule-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.fy-share-roster-wrap{padding:8px}.fy-share-roster th,.fy-share-roster td{padding:7px 8px}}
+
+/* Foundry language switch and map marker guide */
+#foundry-language-toggle { display:inline-flex!important; align-items:center; justify-content:center; color:#eaf6ff!important; background:#10243a!important; border-color:#38bdf8!important; }
+.fy-map-legend { margin:14px 0; padding:14px; border:1px solid #475569; border-radius:14px; background:rgba(15,23,42,.92); color:#e2e8f0; }
+.fy-map-legend h3 { margin:0 0 10px; font-size:1.05rem; }
+.fy-map-legend p { margin:7px 0; line-height:1.45; }
+.fy-map-legend-items { display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:10px; }
+.fy-map-legend-items span { display:inline-flex; align-items:center; gap:6px; }
+.fy-map-legend-items i { display:inline-block; width:12px; height:12px; border-radius:4px; border:1px solid #e2e8f0; }
