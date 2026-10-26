@@ -173,13 +173,23 @@ function foundryRosterHtml(legion) {
     const row = (status, slot, tpl) => {
         const p = foundryFind(legion, status, slot);
         const role = p ? (p.foundry_role || '-') : (tpl ? tpl[0] : 'Substitute');
-        const p1 = status === 'Battle' ? foundryName(p ? p.foundry_p1 : tpl[1]) : '-';
-        const p2 = status === 'Battle' ? foundryName(p ? p.foundry_p2 : tpl[2]) : '-';
+        const p1Key = p ? p.foundry_p1 : (tpl ? tpl[1] : null);
+        const p2Key = p ? p.foundry_p2 : (tpl ? tpl[2] : null);
+        const p1 = status === 'Battle' ? foundryName(p1Key) : '-';
+        const p2 = status === 'Battle' ? foundryName(p2Key) : '-';
         const who = edit
-            ? `<select onchange="foundryAssign('${legion}','${status}',${slot},this.value)">${opts(p)}</select>`
+            ? `<select aria-label="Player slot ${slot}" onchange="foundryAssign('${legion}','${status}',${slot},this.value)">${opts(p)}</select>`
             : (p ? escapeHtml(p.nickname) : '<span class="fy-empty">kosong</span>');
+        const roleCell = edit && p && status === 'Battle'
+            ? `<select class="fy-manual-task" aria-label="Task for ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_role',this.value)">${['Commander','Rally Leader','Joiner','Holder','Mobile','Collector','Substitute'].map(r => `<option value="${r}" ${role===r?'selected':''}>${escapeHtml(r)}</option>`).join('')}</select>`
+            : escapeHtml(role);
+        const buildingOptions = (current) => '<option value="">— kosong —</option>' + FOUNDRY_KEYS.map(k => `<option value="${k}" ${current===k?'selected':''}>${escapeHtml(FOUNDRY_B[k].n)}</option>`).join('');
+        const p1Cell = edit && p && status === 'Battle'
+            ? `<select class="fy-manual-task" aria-label="Phase 1 target for ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_p1',this.value)">${buildingOptions(p1Key)}</select>` : escapeHtml(p1);
+        const p2Cell = edit && p && status === 'Battle'
+            ? `<select class="fy-manual-task" aria-label="Phase 2/3 target for ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_p2',this.value)">${buildingOptions(p2Key)}</select>` : escapeHtml(p2);
         const id = p && canViewSensitive() ? escapeHtml(p.game_id) : (p ? MASKED_TEXT : '');
-        return `<tr class="${p ? '' : 'fy-row-empty'}"><td>${slot}</td><td>${who}</td><td>${id}</td><td>${p ? foundryPower(p) : ''}</td><td>${escapeHtml(role)}</td><td>${escapeHtml(p1)}</td><td>${escapeHtml(p2)}</td></tr>`;
+        return `<tr class="${p ? '' : 'fy-row-empty'}"><td>${slot}</td><td>${who}</td><td>${id}</td><td>${p ? foundryPower(p) : ''}</td><td>${roleCell}</td><td>${p1Cell}</td><td>${p2Cell}</td></tr>`;
     };
     const head = '<thead><tr><th>#</th><th>Pemain</th><th>Game ID</th><th>Power</th><th>Role</th><th>Phase 1</th><th>Phase 2/3</th></tr></thead>';
     const nb = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle').length;
@@ -198,6 +208,24 @@ async function foundryClear(p) {
     const { error } = await getSupabase().from('troops_power').update(nulls).eq('id', p.id);
     if (error) throw error;
     Object.assign(p, nulls);
+}
+
+async function foundryUpdateTask(playerId, field, value) {
+    const allowed = { foundry_role: ['Commander','Rally Leader','Joiner','Holder','Mobile','Collector','Substitute'], foundry_p1: FOUNDRY_KEYS, foundry_p2: FOUNDRY_KEYS };
+    if (!foundryCanEdit()) { showToast('Anda tidak punya izin mengubah roster IDN.', 'warning'); foundryRender(); return; }
+    if (!Object.prototype.hasOwnProperty.call(allowed, field) || (value && !allowed[field].includes(value))) return;
+    const player = foundryPlayers.find(p => String(p.id) === String(playerId));
+    if (!player) return;
+    const patch = { [field]: value || null };
+    try {
+        const { error } = await getSupabase().from('troops_power').update(patch).eq('id', player.id);
+        if (error) throw error;
+        Object.assign(player, patch);
+        showToast(foundryLanguage === 'en' ? 'Player task saved.' : 'Tugas pemain berhasil disimpan.', 'success');
+    } catch (e) {
+        showToast(foundryLanguage === 'en' ? 'Could not save task. Check Supabase permissions and roster columns.' : 'Tugas gagal disimpan. Periksa izin Supabase dan kolom roster.', 'error');
+    }
+    foundryRender();
 }
 
 async function foundryAssign(legion, status, slot, idValue) {
