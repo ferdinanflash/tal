@@ -1554,3 +1554,13 @@ body.fy-shared-open { overflow:hidden; }
 .fy-table .fy-manual-task { width:100%; min-width:145px; max-width:230px; padding:7px 8px; border:1px solid #52627b; border-radius:7px; background:#101827; color:#eef4ff; font:inherit; font-size:.88rem; }
 .fy-table td { vertical-align:middle; }
 @media (max-width:700px) { .fy-table .fy-manual-task { min-width:132px; font-size:12px; padding:6px; } }
+
+/* Foundry Live Share strategy guide */
+#foundry-shared-map .fy-share-strategy{margin:14px 12px 18px;border:1px solid rgba(125,211,252,.3);border-radius:12px;background:rgba(15,23,42,.92);color:#e2e8f0;overflow:hidden}
+#foundry-shared-map .fy-share-strategy>summary{cursor:pointer;padding:13px 15px;font-weight:800;font-size:1.05rem;background:rgba(30,41,59,.9);list-style-position:inside}
+#foundry-shared-map .fy-share-strategy-content{padding:4px 15px 15px;line-height:1.5}
+#foundry-shared-map .fy-share-strategy-content section{margin-top:12px}
+#foundry-shared-map .fy-share-strategy-content h4{margin:0 0 5px;color:#7dd3fc}
+#foundry-shared-map .fy-share-strategy-content ul{margin:5px 0;padding-left:22px}
+#foundry-shared-map .fy-share-strategy-content li{margin:5px 0}
+@media(max-width:600px){#foundry-shared-map .fy-share-strategy{margin:10px 8px 16px}#foundry-shared-map .fy-share-strategy-content{padding:4px 12px 12px}}
