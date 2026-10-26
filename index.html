@@ -147,6 +147,12 @@
 						<span class="arrow">&gt;</span>
 					</div>
 
+					<!-- FOUNDRY BATTLE ROSTER (IDN) -->
+					<div class="list-item foundry-menu-btn" id="foundry-menu-btn" onclick="openFoundry()" role="button" tabindex="0" aria-label="Foundry Battle Roster IDN" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openFoundry()}">
+						<span class="alliance-name">🏭 Foundry Battle Roster (IDN)</span>
+						<span class="arrow">&gt;</span>
+					</div>
+
 					<div class="list-spacer"></div>
 
 					<!-- ALLIANCE & GLOBAL BUTTONS -->
@@ -182,6 +188,27 @@
 				</div>
 			</section>
 
+
+			<!-- FOUNDRY BATTLE ROSTER PAGE (IDN) -->
+			<section id="foundry-page" class="hidden">
+				<div class="schedule-actions">
+					<button class="btn-back no-bottom-margin" onclick="closeFoundry()">&lt; Back to Menu</button>
+				</div>
+				<h1 class="page-title fire-text">Foundry Battle Roster</h1>
+				<p class="page-subtitle">IDN Alliance · 2 Legion · 30 Battle + 10 Cadangan per Legion</p>
+				<div id="foundry-admin-bar" class="fy-admin hidden">
+					<button class="btn-apply" type="button" onclick="foundryAutoFill()">⚡ Isi Otomatis (by Power)</button>
+					<button class="btn-apply" type="button" onclick="foundryCopyText()">📋 Salin untuk Discord</button>
+					<button class="btn-apply btn-danger" type="button" onclick="foundryClearAll()">Kosongkan Roster</button>
+				</div>
+				<div class="fy-tabs" role="tablist">
+					<button class="fy-tab btn-apply" data-tab="Legion 1" onclick="foundrySetTab('Legion 1')">Legion 1</button>
+					<button class="fy-tab btn-apply" data-tab="Legion 2" onclick="foundrySetTab('Legion 2')">Legion 2</button>
+					<button class="fy-tab btn-apply" data-tab="map" onclick="foundrySetTab('map')">🗺️ Peta</button>
+					<button class="fy-tab btn-apply" data-tab="strategy" onclick="foundrySetTab('strategy')">📖 Strategi</button>
+				</div>
+				<div id="foundry-body"></div>
+			</section>
 
 			<!-- TROOPS & LEGION TABLE PAGE -->
 			<section id="troops-table-page" class="hidden">
@@ -879,5 +906,6 @@
 </div>
 
 	<script src="frostdragon.js?v=16"></script>
+	<script src="foundry.js?v=1"></script>
 </body>
 </html>
