@@ -1508,3 +1508,22 @@ body.fdt-shared-open { overflow:hidden; }
 #fy-bulk-modal .bulk-remove-item input[type="checkbox"], #fy-bulk-modal .bulk-remove-all input[type="checkbox"] { accent-color: #f59e0b; }
 .fy-bulk-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 480px) { .fy-bulk-row { grid-template-columns: 1fr; } }
+
+/* Foundry task markers and role filters */
+.fy-task-filter { border: 1px solid #3b3d48; background: #191b22; border-radius: 12px; padding: 10px 12px; margin: 8px 0 12px; }
+.fy-task-filter-head, .fy-task-filter-options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.fy-task-filter-head { margin-bottom: 8px; }
+.fy-task-filter-head strong { color: #fcd34d; margin-right: 4px; }
+.fy-task-filter-options label { display: inline-flex; align-items: center; gap: 5px; border: 1px solid #3b3d48; border-radius: 20px; padding: 5px 9px; font-size: .82rem; color: #e5e7eb; }
+.fy-task-filter-options input { accent-color: #f59e0b; }
+.fy-task-filter small { display: block; color: #9ca3af; margin-top: 8px; }
+.fy-task-mark { cursor: help; pointer-events: all; }
+.fy-task-mark-text { fill: #111827; font-size: 12px; font-weight: 900; pointer-events: none; }
+.fy-zone-label { fill: #fff; font-size: 12px; font-weight: 800; paint-order: stroke; stroke: rgba(0,0,0,.8); stroke-width: 3px; }
+
+/* Foundry read-only live share map */
+body.fy-shared-open { overflow:hidden; }
+#foundry-shared-map { position:fixed; inset:0; z-index:2147483001; display:flex; flex-direction:column; background:#0b1220; color:#e0f2fe; }
+#foundry-shared-map .fy-map { display:block; width:min(100%, 900px); height:auto; margin:0 auto; }
+#foundry-shared-map .fy-share-foot { padding:7px 12px; text-align:center; color:#94a3b8; font-size:.8rem; border-top:1px solid rgba(125,211,252,.2); }
+#foundry-shared-map .fdt-shared-actions .fy-share-active { background:#14532d; border-color:#4ade80; color:#fff; }

@@ -5,22 +5,22 @@ const FOUNDRY_ALLIANCE = 'IDN';
 const FOUNDRY_LEGIONS = ['Legion 1', 'Legion 2'];
 const FOUNDRY_BATTLE_MAX = 30, FOUNDRY_SUB_MAX = 10;
 
-// Posisi (x,y) = titik lencana di gambar foundry-map.webp (ukuran 2400x1936 px). Ubah di sini bila ada bangunan yang tertukar.
-const FOUNDRY_MAP = { src: 'foundry-map.webp', w: 2400, h: 1936 };
+// Koordinat marker diselaraskan dengan map Foundry baru (554x554 px).
+const FOUNDRY_MAP = { src: 'foundry-map.webp', w: 554, h: 554 };
 const FOUNDRY_B = {
-    foundry: { n: 'Imperial Foundry',        ph: 2, f: 9000, m: 1800, x: 1150, y: 1120, r: 64, c: '#f59e0b', tip: 'Pusat map. Rally terkuat; lawan akan mengincar ini.' },
-    proto1:  { n: 'Prototype Site I',        ph: 1, f: 6000, m: 1200, x: 690, y: 900, r: 50, c: '#a78bfa', tip: 'Poin besar sejak menit 0. Tahan sepanjang battle.' },
-    proto2:  { n: 'Prototype Site II',       ph: 1, f: 6000, m: 1200, x: 1680, y: 1220, r: 50, c: '#a78bfa', tip: 'Poin besar sejak menit 0. Tahan sepanjang battle.' },
-    rep1:    { n: 'Repair Facility I',       ph: 1, f: 3000, m: 600,  x: 1436, y: 420, r: 40, c: '#38bdf8', tip: 'Sudut kanan atas. Cukup 2 holder.' },
-    rep2:    { n: 'Repair Facility II',      ph: 1, f: 3000, m: 600,  x: 1844, y: 1030, r: 40, c: '#38bdf8', tip: 'Sisi kanan (dekat spawn musuh). Cukup 2 holder.' },
-    rep3:    { n: 'Repair Facility III',     ph: 1, f: 3000, m: 600,  x: 814, y: 1790, r: 40, c: '#38bdf8', tip: 'Sudut kiri bawah. Cukup 2 holder.' },
-    rep4:    { n: 'Repair Facility IV',      ph: 1, f: 3000, m: 600,  x: 490, y: 1210, r: 40, c: '#38bdf8', tip: 'Sisi kiri (dekat spawn kita). Cukup 2 holder.' },
-    boiler:  { n: 'Boiler Room',             ph: 1, f: 1200, m: 240,  x: 1136, y: 672, r: 34, c: '#fb7185', tip: 'Waktu kontrol bangunan -50% (±1 menit, bukan 2). Rebut paling awal.' },
-    transit: { n: 'Central Transit Station', ph: 1, f: 1200, m: 240,  x: 1136, y: 1572, r: 34, c: '#4ade80', tip: 'Cooldown teleport -50%. Kunci mobilitas tim.' },
-    muni:    { n: 'Munitions Warehouse',     ph: 2, f: 1200, m: 240,  x: 814, y: 420, r: 34, c: '#facc15', tip: '+15% damage pasukan sendiri, -15% damage musuh. Buka menit 15.' },
-    merc:    { n: 'Mercenary Camp',          ph: 2, f: 1200, m: 240,  x: 1436, y: 1800, r: 34, c: '#f97316', tip: 'Kirim hingga 4 tim serang ke bangunan musuh. Buka menit 15.' },
-    roam:    { n: 'Roamer / Pengintai',      ph: 1, f: 0, m: 0, tip: 'Tidak di bangunan: bantu reinforce, serang bangunan musuh yang lemah.' },
-    workshop:{ n: 'Weapon Workshop',         ph: 3, f: 0, m: 0, tip: 'Muncul acak mulai menit 30. Ambil poin simpanannya secepatnya.' }
+    foundry: { n: 'Imperial Foundry',        ph: 2, f: 9000, m: 1800, x: 278, y: 278, r: 25, c: '#f59e0b', tip: 'Pusat map. Rally terkuat; lawan akan mengincar ini.' },
+    proto1:  { n: 'Prototype Site I',        ph: 1, f: 6000, m: 1200, x: 91, y: 247, r: 18, c: '#a78bfa', tip: 'Poin besar sejak menit 0. Tahan sepanjang battle.' },
+    proto2:  { n: 'Prototype Site II',       ph: 1, f: 6000, m: 1200, x: 438, y: 337, r: 18, c: '#a78bfa', tip: 'Poin besar sejak menit 0. Tahan sepanjang battle.' },
+    rep1:    { n: 'Repair Facility I',       ph: 1, f: 3000, m: 600,  x: 361, y: 82, r: 15, c: '#38bdf8', tip: 'Sudut kanan atas. Cukup 2 holder.' },
+    rep2:    { n: 'Repair Facility II',      ph: 1, f: 3000, m: 600,  x: 488, y: 254, r: 15, c: '#38bdf8', tip: 'Sisi kanan (dekat spawn musuh). Cukup 2 holder.' },
+    rep3:    { n: 'Repair Facility III',     ph: 1, f: 3000, m: 600,  x: 180, y: 477, r: 15, c: '#38bdf8', tip: 'Sudut kiri bawah. Cukup 2 holder.' },
+    rep4:    { n: 'Repair Facility IV',      ph: 1, f: 3000, m: 600,  x: 26, y: 318, r: 15, c: '#38bdf8', tip: 'Sisi kiri (dekat spawn kita). Cukup 2 holder.' },
+    boiler:  { n: 'Boiler Room',             ph: 1, f: 1200, m: 240,  x: 187, y: 83, r: 13, c: '#fb7185', tip: 'Waktu kontrol bangunan -50% (±1 menit, bukan 2). Rebut paling awal.' },
+    transit: { n: 'Central Transit Station', ph: 1, f: 1200, m: 240,  x: 365, y: 477, r: 13, c: '#4ade80', tip: 'Cooldown teleport -50%. Kunci mobilitas tim.' },
+    muni:    { n: 'Munitions Warehouse',     ph: 2, f: 1200, m: 240,  x: 278, y: 400, r: 13, c: '#facc15', tip: '+15% damage pasukan sendiri, -15% damage musuh. Buka menit 15.' },
+    merc:    { n: 'Mercenary Camp',          ph: 2, f: 1200, m: 240,  x: 278, y: 174, r: 13, c: '#f97316', tip: 'Kirim hingga 4 tim serang ke bangunan musuh. Buka menit 15.' },
+    roam:    { n: 'Roamer / Pengintai',      ph: 1, f: 0, m: 0, x: 38, y: 42, r: 0, c: '#4ade80', tip: 'Tidak di bangunan: bantu reinforce, serang bangunan musuh yang lemah.' },
+    workshop:{ n: 'Weapon Workshop',         ph: 3, f: 0, m: 0, x: 516, y: 42, r: 0, c: '#c084fc', tip: 'Muncul acak mulai menit 30. Ambil poin simpanannya secepatnya.' }
 };
 const FOUNDRY_KEYS = Object.keys(FOUNDRY_B);
 
@@ -43,6 +43,8 @@ let foundryTab = 'Legion 1';   // 'Legion 1' | 'Legion 2' | 'map' | 'strategy'
 let foundryMapLegion = 'Legion 1';
 let foundryPhase = 1;
 let foundrySelected = 'foundry';
+let foundryTaskMarksOn = true;
+let foundryTaskFilters = new Set(['Commander', 'Rally Leader', 'Joiner', 'Holder', 'Mobile', 'Collector']);
 
 function foundryCanEdit() { return typeof canEditAlliance === 'function' && canEditAlliance(FOUNDRY_ALLIANCE); }
 function foundryName(key) { return (FOUNDRY_B[key] || {}).n || '-'; }
@@ -84,6 +86,45 @@ function foundryRender() {
     if (FOUNDRY_LEGIONS.includes(foundryTab)) body.innerHTML = foundryRosterHtml(foundryTab);
     else if (foundryTab === 'map') body.innerHTML = foundryMapHtml();
     else body.innerHTML = foundryStrategyHtml();
+    foundryApplyLanguage();
+}
+
+// ---------- BILINGUAL UI (English / Bahasa Indonesia) ----------
+let foundryLanguage = localStorage.getItem('foundry-language') || 'en';
+const FOUNDRY_I18N = {
+  'Back to Menu':'Kembali ke Menu','Foundry Battle Roster':'Roster Foundry Battle',
+  'IDN Alliance · 2 Legion · 30 Battle + 10 Cadangan per Legion':'Aliansi IDN · 2 Legion · 30 Petarung + 10 Cadangan per Legion',
+  'Bulk Assign':'Penugasan Massal','⚡ Isi Otomatis (by Power)':'⚡ Isi Otomatis (berdasarkan Power)',
+  '📋 Salin untuk Discord':'📋 Salin untuk Discord','Kosongkan Roster':'Clear Roster',
+  '🗺️ Peta':'🗺️ Map','📖 Strategi':'📖 Strategy','Pemain':'Player','Cadangan':'Substitute',
+  '— kosong —':'— empty —','kosong':'empty','Role':'Role','Phase 1':'Phase 1','Phase 2/3':'Phase 2/3',
+  'Pemain Cadangan':'Substitute Players','Mark tugas pemain':'Player task markers','Pilih semua':'Select all',
+  'Matikan semua':'Clear all','Mark: ON':'Markers: ON','Mark: OFF':'Markers: OFF',
+  'Mark angka menunjukkan nomor slot pemain di roster untuk target bangunan pada phase terpilih. Arahkan/ketuk mark untuk melihat nama dan tugas.':'Numbered markers show roster slots assigned to each building for the selected phase. Hover/tap a marker to view the player name and task.',
+  'belum ada':'none assigned','Angka di lingkaran = jumlah pemain yang ditugaskan pada bangunan untuk phase terpilih. Mark kecil = nomor slot pemain; gunakan filter tugas untuk menampilkan peran tertentu.':'Numbers in circles show assigned players for the selected phase. Small markers show player slot numbers; use task filters to show selected roles.',
+  'Gambaran event':'Event overview','Timeline & rencana per phase':'Timeline & phase plan','Peran dalam roster':'Roster roles',
+  'Gagal memuat data pemain IDN':'Failed to load IDN player data','Anda tidak punya izin mengubah roster IDN.':'You do not have permission to edit the IDN roster.',
+  'Link Live Share Foundry disalin.':'Foundry Live Share link copied.','Tidak dapat memuat peta. Periksa koneksi atau izin baca Supabase, lalu refresh.':'Unable to load map. Check your connection or Supabase read permissions, then refresh.',
+  'Memuat data roster Foundry…':'Loading Foundry roster…','Read-only · Data dimuat dari Supabase saat dibuka. Refresh otomatis setiap 30 detik.':'Read-only · Data loads from Supabase on open. Auto-refreshes every 30 seconds.',
+  'Open site':'Buka situs','Refresh':'Segarkan','ROAM':'ROAM','WORKSHOP':'WORKSHOP',
+  'Angka kecil adalah nomor slot roster.':'Small numbers indicate roster slot numbers.'
+};
+function foundryT(text) {
+  if (foundryLanguage === 'id') return text;
+  return FOUNDRY_I18N[text] || text;
+}
+function foundryApplyLanguage(root = document.getElementById('foundry-page')) {
+  if (!root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(n => { const raw = n.nodeValue.trim(); if (!raw) return; const translated = foundryT(raw); if (translated !== raw) n.nodeValue = n.nodeValue.replace(raw, translated); });
+  const btn = document.getElementById('foundry-language-toggle');
+  if (btn) btn.textContent = foundryLanguage === 'en' ? '🇮🇩 Bahasa Indonesia' : '🇬🇧 English';
+}
+function foundryToggleLanguage() {
+  foundryLanguage = foundryLanguage === 'en' ? 'id' : 'en';
+  localStorage.setItem('foundry-language', foundryLanguage);
+  foundryRender(); foundryApplyLanguage();
 }
 
 // ---------- ROSTER ----------
@@ -355,31 +396,56 @@ function foundryPickBuilding(key) { foundrySelected = key; foundryRender(); }
 function foundrySetPhase(n) { foundryPhase = n; foundryRender(); }
 function foundrySetMapLegion(l) { foundryMapLegion = l; foundryRender(); }
 
+function foundryToggleTaskMarks() { foundryTaskMarksOn = !foundryTaskMarksOn; foundryRender(); }
+function foundryToggleTaskFilter(role, checked) {
+    if (checked) foundryTaskFilters.add(role); else foundryTaskFilters.delete(role);
+    foundryRender();
+}
+function foundrySetAllTaskFilters(checked) {
+    foundryTaskFilters = checked ? new Set(['Commander', 'Rally Leader', 'Joiner', 'Holder', 'Mobile', 'Collector']) : new Set();
+    foundryRender();
+}
+
 function foundryMapHtml() {
     const L = foundryMapLegion, ph = foundryPhase;
-    const nodes = Object.entries(FOUNDRY_B).filter(([, b]) => b.x).map(([k, b]) => {
+    const nodes = Object.entries(FOUNDRY_B).filter(([k, b]) => b.x && !['roam', 'workshop'].includes(k)).map(([k, b]) => {
         const active = b.ph <= ph;
         const n = foundryAssigned(L, k, ph === 1 ? 1 : 2).length;
         return `<g class="fy-node ${active ? '' : 'fy-off'} ${k === foundrySelected ? 'fy-sel' : ''}" onclick="foundryPickBuilding('${k}')" tabindex="0" role="button" aria-label="${escapeHtml(b.n)}">
             <circle cx="${b.x}" cy="${b.y}" r="${b.r}" fill="${b.c}" fill-opacity=".55" stroke="${b.c}" stroke-width="8"/>
             <text x="${b.x}" y="${b.y + 16}" text-anchor="middle" class="fy-n">${n}</text>
-            <text x="${b.x}" y="${Math.min(b.y + b.r + 46, FOUNDRY_MAP.h - 14)}" text-anchor="middle" class="fy-l">${escapeHtml(b.n)}</text></g>`;
+            </g>`;
     }).join('');
+    // Each visible pill represents one player's assignment for the selected phase.
+    // Pills are grouped around the target building and can be filtered by task/role.
+    const marks = foundryTaskMarksOn ? Object.entries(FOUNDRY_B).filter(([, b]) => b.x).map(([key, b]) => {
+        const ps = foundryAssigned(L, key, ph === 1 ? 1 : 2).filter(p => foundryTaskFilters.has(p.foundry_role || ''));
+        return ps.map((p, i) => {
+            const col = ({ Commander:'#f59e0b', 'Rally Leader':'#ef4444', Joiner:'#fb923c', Holder:'#38bdf8', Mobile:'#4ade80', Collector:'#c084fc' })[p.foundry_role] || '#e5e7eb';
+            const perRow = 4, dx = ((i % perRow) - 1.5) * 24, dy = 32 + Math.floor(i / perRow) * 23;
+            const x = Math.max(17, Math.min(FOUNDRY_MAP.w - 17, b.x + dx));
+            const y = Math.max(14, Math.min(FOUNDRY_MAP.h - 14, b.y + dy));
+            const label = String(p.foundry_slot);
+            return `<g class="fy-task-mark" tabindex="0" role="img" aria-label="Slot ${label}: ${escapeHtml(p.nickname)} — ${escapeHtml(p.foundry_role || 'Task')}" transform="translate(${x},${y})"><title>Slot ${label} · ${escapeHtml(p.nickname)} · ${escapeHtml(p.foundry_role || 'Task')} · ${escapeHtml(b.n)}</title><rect x="-11" y="-10" width="22" height="20" rx="6" fill="${col}" stroke="#111827" stroke-width="2"/><text x="0" y="5" text-anchor="middle" class="fy-task-mark-text">${label}</text></g>`;
+        }).join('');
+    }).join('') : '';
     const b = FOUNDRY_B[foundrySelected];
     const list = (phase) => {
         const ps = foundryAssigned(L, foundrySelected, phase);
         return ps.length ? ps.map(p => `<li>#${p.foundry_slot} ${escapeHtml(p.nickname)} <small>(${escapeHtml(p.foundry_role)})</small></li>`).join('') : '<li class="fy-empty">belum ada</li>';
     };
     const pts = b.m ? `<p><b>${b.f.toLocaleString('en-US')}</b> poin first capture + <b>${b.m.toLocaleString('en-US')}</b> poin/menit</p>` : '';
+    const roles = ['Commander', 'Rally Leader', 'Joiner', 'Holder', 'Mobile', 'Collector'];
     return `<div class="fy-controls">
+        <button class="btn-apply" type="button" onclick="shareFoundryMapLink()">🔗 Live Share Map</button>
         ${FOUNDRY_LEGIONS.map(l => `<button class="btn-apply ${l === L ? 'fy-on' : ''}" onclick="foundrySetMapLegion('${l}')">${l}</button>`).join('')}
         ${[1, 2, 3].map(n => `<button class="btn-apply ${n === ph ? 'fy-on' : ''}" onclick="foundrySetPhase(${n})">Phase ${n} (${(n - 1) * 15}–${n * 15} mnt${n === 3 ? '+' : ''})</button>`).join('')}</div>
+        <div class="fy-task-filter"><div class="fy-task-filter-head"><strong>Mark tugas pemain</strong><button class="btn-apply ${foundryTaskMarksOn ? 'fy-on' : ''}" onclick="foundryToggleTaskMarks()">${foundryTaskMarksOn ? 'Mark: ON' : 'Mark: OFF'}</button><button class="btn-apply" onclick="foundrySetAllTaskFilters(true)">Pilih semua</button><button class="btn-apply" onclick="foundrySetAllTaskFilters(false)">Matikan semua</button></div><div class="fy-task-filter-options">${roles.map(r => `<label><input type="checkbox" ${foundryTaskFilters.has(r) ? 'checked' : ''} onchange="foundryToggleTaskFilter('${r}',this.checked)"><span>${r}</span></label>`).join('')}</div><small>Mark angka menunjukkan nomor slot pemain di roster untuk target bangunan pada phase terpilih. Arahkan/ketuk mark untuk melihat nama dan tugas.</small></div>
         <svg viewBox="0 0 ${FOUNDRY_MAP.w} ${FOUNDRY_MAP.h}" class="fy-map" role="img" aria-label="Peta Foundry Battle">
             <image href="${FOUNDRY_MAP.src}" x="0" y="0" width="${FOUNDRY_MAP.w}" height="${FOUNDRY_MAP.h}"/>
-            <text x="214" y="1075" text-anchor="middle" class="fy-l fy-spawn fy-spawn-us">SPAWN KITA</text>
-            <text x="2194" y="1075" text-anchor="middle" class="fy-l fy-spawn fy-spawn-foe">SPAWN MUSUH</text>${nodes}</svg>
+            ${nodes}<g class="fy-task-zone-labels"><text x="38" y="22" class="fy-zone-label">ROAM</text><text x="516" y="22" text-anchor="middle" class="fy-zone-label">WORKSHOP</text></g>${marks}</svg>
         <div class="fy-extra">${['roam', 'workshop'].map(k => `<button class="btn-apply ${k === foundrySelected ? 'fy-on' : ''}" onclick="foundryPickBuilding('${k}')">${escapeHtml(FOUNDRY_B[k].n)}</button>`).join('')}</div>
-        <p class="fy-note">Gambar peta dipakai sebagai acuan posisi bangunan. Angka di lingkaran = jumlah pemain ${L} yang ditugaskan pada phase terpilih. Klik bangunan untuk detail.</p>
+        <p class="fy-note">Angka di lingkaran = jumlah pemain yang ditugaskan pada bangunan untuk phase terpilih. Mark kecil = nomor slot pemain; gunakan filter tugas untuk menampilkan peran tertentu.</p>
         <div class="fy-detail"><h3>${escapeHtml(b.n)}</h3>${pts}<p>${escapeHtml(b.tip)}</p>
             <div class="fy-cols"><div><h4>Phase 1</h4><ul>${list(1)}</ul></div><div><h4>Phase 2/3</h4><ul>${list(2)}</ul></div></div></div>`;
 }
@@ -409,3 +475,68 @@ function foundryStrategyHtml() {
 <section><h3>7. Kesalahan umum</h3><ul><li>Semua orang menumpuk di Imperial Foundry.</li><li>Lupa mengambil Arsenal Supplies setelah merebut bangunan.</li><li>Menyerang kota musuh yang tidak mengubah skor.</li><li>Terus menyerang posisi yang sudah kalah.</li><li>Tidak memantau skor sampai terlambat.</li></ul></section>
 <p class="fy-note">Mekanik dan angka bisa berubah saat game diperbarui. Cek panel Foundry Battle di game sebelum registrasi.</p></div>`;
 }
+
+
+// ---------- LIVE SHARE MAP (public read-only, freshly loaded from Supabase) ----------
+function buildFoundryShareUrl(legion = foundryMapLegion, phase = foundryPhase) {
+    const u = new URL(location.href); u.search = ''; u.hash = '';
+    u.searchParams.set('foundry', 'map');
+    u.searchParams.set('legion', FOUNDRY_LEGIONS.includes(legion) ? legion : 'Legion 1');
+    u.searchParams.set('phase', String([1,2,3].includes(Number(phase)) ? Number(phase) : 1));
+    return u.toString();
+}
+async function shareFoundryMapLink() {
+    const url = buildFoundryShareUrl();
+    const title = `Foundry Live Map — ${foundryMapLegion} — Phase ${foundryPhase}`;
+    if (navigator.share) {
+        try { await navigator.share({ title, text: title, url }); return; }
+        catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    if (await fdtCopyText(url)) showToast('Link Live Share Foundry disalin.', 'success');
+    else window.prompt('Salin link Live Share Foundry:', url);
+}
+async function openFoundrySharedMap(legion, phase) {
+    const old = document.getElementById('foundry-shared-map'); if (old) old.remove();
+    legion = FOUNDRY_LEGIONS.includes(legion) ? legion : 'Legion 1';
+    phase = [1,2,3].includes(Number(phase)) ? Number(phase) : 1;
+    const wrap = document.createElement('div'); wrap.id = 'foundry-shared-map';
+    wrap.innerHTML = `<div class="fdt-shared-bar"><strong>🏭 Foundry Live Map · IDN</strong><span class="fdt-shared-actions"><button id="fy-share-lang">🇮🇩 Bahasa Indonesia</button>
+      <button id="fy-share-l1">Legion 1</button><button id="fy-share-l2">Legion 2</button>
+      <button id="fy-share-p1">Phase 1</button><button id="fy-share-p2">Phase 2</button><button id="fy-share-p3">Phase 3</button>
+      <button id="fy-share-refresh">⟳ ${foundryLanguage==='en'?'Refresh':'Segarkan'}</button><button id="fy-share-site">${foundryLanguage==='en'?'Open site':'Buka situs'}</button></span></div>
+      <div class="fdt-shared-body" id="fy-share-body"><div class="fdt-shared-msg">${foundryLanguage==='en'?'Loading Foundry roster…':'Memuat data roster Foundry…'}</div></div>
+      <div class="fy-share-foot">${foundryLanguage==='en'?'Read-only · Data loads from Supabase on open. Auto-refresh every 30 seconds.':'Hanya baca · Data dimuat dari Supabase saat dibuka. Refresh otomatis setiap 30 detik.'}</div>`;
+    document.body.appendChild(wrap); document.body.classList.add('fy-shared-open');
+    let timer = null;
+    const body = wrap.querySelector('#fy-share-body');
+    const load = async () => {
+      body.innerHTML = `<div class="fdt-shared-msg">${foundryLanguage==='en'?'Loading Foundry roster…':'Memuat data roster Foundry…'}</div>`;
+      try {
+        const client = getSupabase(); if (!client) throw new Error('Supabase tidak tersedia');
+        const { data, error } = await client.from('troops_power').select('*').eq('alliance', FOUNDRY_ALLIANCE).order('troops_power', {ascending:false});
+        if (error) throw error;
+        foundryPlayers = data || []; foundryMapLegion = legion; foundryPhase = phase;
+        // Build map without editor controls; the map and task marks reflect latest database values.
+        const nodes = Object.entries(FOUNDRY_B).filter(([k,b]) => b.x && !['roam','workshop'].includes(k)).map(([k,b]) => {
+          const n = foundryAssigned(legion,k,phase===1?1:2).length;
+          return `<g class="fy-node ${b.ph <= phase ? '' : 'fy-off'}"><circle cx="${b.x}" cy="${b.y}" r="${b.r}" fill="${b.c}" fill-opacity=".55" stroke="${b.c}" stroke-width="8"/><text x="${b.x}" y="${b.y+16}" text-anchor="middle" class="fy-n">${n}</text></g>`;
+        }).join('');
+        const marks = Object.entries(FOUNDRY_B).filter(([,b])=>b.x).map(([key,b])=>foundryAssigned(legion,key,phase===1?1:2).map((p,i)=>{
+          const col=({'Commander':'#f59e0b','Rally Leader':'#ef4444','Joiner':'#fb923c','Holder':'#38bdf8','Mobile':'#4ade80','Collector':'#c084fc'})[p.foundry_role]||'#e5e7eb';
+          const dx=((i%4)-1.5)*24,dy=32+Math.floor(i/4)*23,x=Math.max(17,Math.min(FOUNDRY_MAP.w-17,b.x+dx)),y=Math.max(14,Math.min(FOUNDRY_MAP.h-14,b.y+dy));
+          return `<g class="fy-task-mark" transform="translate(${x},${y})"><title>Slot ${p.foundry_slot} · ${escapeHtml(p.nickname)} · ${escapeHtml(p.foundry_role||'Task')} · ${escapeHtml(b.n)}</title><rect x="-11" y="-10" width="22" height="20" rx="6" fill="${col}" stroke="#111827" stroke-width="2"/><text x="0" y="5" text-anchor="middle" class="fy-task-mark-text">${p.foundry_slot}</text></g>`;
+        }).join('')).join('');
+        body.innerHTML = `<svg viewBox="0 0 ${FOUNDRY_MAP.w} ${FOUNDRY_MAP.h}" class="fy-map" role="img" aria-label="Foundry Live Map"><image href="${FOUNDRY_MAP.src}" x="0" y="0" width="${FOUNDRY_MAP.w}" height="${FOUNDRY_MAP.h}"/>${nodes}<g class="fy-task-zone-labels"><text x="38" y="22" class="fy-zone-label">ROAM</text><text x="516" y="22" text-anchor="middle" class="fy-zone-label">WORKSHOP</text></g>${marks}</svg><p class="fy-note">${legion} · Phase ${phase} · ${new Date().toLocaleTimeString()} · ${foundryLanguage==='en'?'Small numbers indicate roster slot numbers.':'Angka kecil adalah nomor slot roster.'}</p>`;
+      } catch(e) { console.warn('Foundry live share failed',e); body.innerHTML='<div class="fdt-shared-msg">Tidak dapat memuat peta. Periksa koneksi atau izin baca Supabase, lalu refresh.</div>'; }
+      ['l1','l2'].forEach((x,i)=>wrap.querySelector('#fy-share-'+x).classList.toggle('fy-share-active',legion===FOUNDRY_LEGIONS[i]));
+      [1,2,3].forEach(n=>wrap.querySelector('#fy-share-p'+n).classList.toggle('fy-share-active',phase===n));
+    };
+    wrap.querySelector('#fy-share-lang').onclick=()=>{foundryLanguage=foundryLanguage==='en'?'id':'en';localStorage.setItem('foundry-language',foundryLanguage);openFoundrySharedMap(legion,phase);};
+    wrap.querySelector('#fy-share-l1').onclick=()=>{legion='Legion 1';load();}; wrap.querySelector('#fy-share-l2').onclick=()=>{legion='Legion 2';load();};
+    [1,2,3].forEach(n=>wrap.querySelector('#fy-share-p'+n).onclick=()=>{phase=n;load();});
+    wrap.querySelector('#fy-share-refresh').onclick=load;
+    wrap.querySelector('#fy-share-site').onclick=()=>{location.href=location.origin+location.pathname;};
+    await load(); timer=setInterval(load,30000);
+    window.addEventListener('pagehide',()=>{if(timer)clearInterval(timer);},{once:true});
+}
+document.addEventListener('DOMContentLoaded',()=>{const q=new URLSearchParams(location.search);if(q.get('foundry')==='map')openFoundrySharedMap(q.get('legion')||'Legion 1',Number(q.get('phase')||1));});
