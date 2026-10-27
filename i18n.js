@@ -1,4 +1,4 @@
-// ================= SITE I18N (EN / ID / 中文) =================
+// ================= SITE I18N (EN / ID / 中文 / Filipino / Italiano / ไทย) =================
 // Teks sumber di seluruh situs = bahasa Inggris. Kamus: English -> [Indonesia, 中文] (lihat i18n-dict-*.js).
 // - Kalimat dinamis memakai penampung {0} {1} ..., mis. "ID {0} copied to clipboard!".
 // - DOM (teks, placeholder, title, aria-label, alt) diterjemahkan otomatis, termasuk konten yang dirender belakangan
@@ -7,10 +7,10 @@
 // - Tambahkan data-no-i18n pada elemen yang tidak boleh diterjemahkan (mis. input pengguna).
 (function () {
     'use strict';
-    const SUPPORTED = ['en', 'id', 'zh'];
+    const SUPPORTED = ['en', 'id', 'zh', 'tl', 'it', 'th'];
     const KEY = 'site-language';
-    const LOCALE = { en: 'en-US', id: 'id-ID', zh: 'zh-CN' };
-    const HTML_LANG = { en: 'en', id: 'id', zh: 'zh-CN' };
+    const LOCALE = { en: 'en-US', id: 'id-ID', zh: 'zh-CN', tl: 'fil-PH', it: 'it-IT', th: 'th-TH' };
+    const HTML_LANG = { en: 'en', id: 'id', zh: 'zh-CN', tl: 'fil', it: 'it', th: 'th' };
     const ATTRS = ['placeholder', 'title', 'aria-label', 'alt'];
     const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'NOSCRIPT', 'CODE', 'PRE']);
 
@@ -22,18 +22,18 @@
             if (SUPPORTED.includes(saved)) return saved;
         } catch (e) { /* storage blocked */ }
         const nav = String((navigator.languages && navigator.languages[0]) || navigator.language || 'en').toLowerCase();
-        return nav.startsWith('id') || nav.startsWith('in') ? 'id' : nav.startsWith('zh') ? 'zh' : 'en';
+        return nav.startsWith('id') || nav.startsWith('in') ? 'id' : nav.startsWith('zh') ? 'zh' : nav.startsWith('fil') || nav.startsWith('tl') ? 'tl' : nav.startsWith('it') ? 'it' : nav.startsWith('th') ? 'th' : 'en';
     }
 
     let lang = detect();
-    const exact = new Map();      // English (normalized) -> { id, zh }
-    const patterns = [];          // { re, order[], tr:{id,zh}, weight }
+    const exact = new Map();      // English (normalized) -> translations by language
+    const patterns = [];          // { re, order[], tr, weight }
     const listeners = [];
     const norm = s => String(s).replace(/\s+/g, ' ').trim();
     const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-    function register(en, id, zh) {
-        const tr = { id: id || null, zh: zh || null };
+    function register(en, id, zh, tl, it, th) {
+        const tr = { id: id || null, zh: zh || null, tl: tl || null, it: it || null, th: th || null };
         const key = norm(en);
         if (/\{\d+\}/.test(key)) {
             const parts = key.split(/\{(\d+)\}/);          // [lit, idx, lit, idx, lit...]
@@ -43,15 +43,16 @@
             patterns.sort((a, b) => b.weight - a.weight);
         } else {
             const prev = exact.get(key) || {};
-            exact.set(key, { id: tr.id || prev.id || null, zh: tr.zh || prev.zh || null });
+            exact.set(key, Object.fromEntries(['id','zh','tl','it','th'].map(k => [k, tr[k] || prev[k] || null])));
         }
     }
-    // Format baris: "English || Indonesia || 中文"; baris kosong dan baris berawalan # diabaikan.
+    // Format baris: English || Indonesia || 中文 || Filipino || Italiano || ไทย. Kolom bahasa baru opsional.
     function addText(block) {
         String(block).split('\n').forEach(line => {
             if (!line.trim() || line.trim().startsWith('#')) return;
-            const [en, id, zh] = line.split(' || ').map(s => s.trim());
-            if (en) register(en, id, zh);
+            const cols = line.split(' || ').map(s => s.trim());
+            const [en, id, zh, tl, it, th] = cols;
+            if (en) register(en, id, zh, tl, it, th);
         });
     }
 
@@ -174,8 +175,8 @@
         });
         const code = document.getElementById('language-current-code');
         const flag = document.getElementById('language-current-flag');
-        if (code) code.textContent = ({en:'ENG', id:'ID', zh:'CN'})[lang] || 'ENG';
-        if (flag) flag.textContent = ({en:'🇺🇸', id:'🇮🇩', zh:'🇨🇳'})[lang] || '🇺🇸';
+        if (code) code.textContent = ({en:'ENG', id:'ID', zh:'CN', tl:'PH', it:'IT', th:'TH'})[lang] || 'ENG';
+        if (flag) flag.textContent = ({en:'🇺🇸', id:'🇮🇩', zh:'🇨🇳', tl:'🇵🇭', it:'🇮🇹', th:'🇹🇭'})[lang] || '🇺🇸';
     }
     function setLang(next, opts) {
         if (!SUPPORTED.includes(next)) return;
@@ -220,7 +221,7 @@
         addText, t, apply, setLang,
         onChange: fn => { listeners.push(fn); },
         // Pilih teks sesuai bahasa: pick({ en, id, zh }); zh/id jatuh ke terjemahan kamus dari en.
-        pick: o => lang === 'id' ? (o.id != null ? o.id : t(o.en, 'id')) : lang === 'zh' ? (o.zh != null ? o.zh : t(o.en, 'zh')) : o.en
+        pick: o => (o[lang] != null ? o[lang] : t(o.en, lang) || o.en)
     };
     window.T = window.T || ((s) => t(s));
 })();

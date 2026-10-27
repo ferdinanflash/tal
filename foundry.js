@@ -256,10 +256,10 @@ function foundryApplyLanguage(root = document.getElementById('foundry-page')) {
   // Modal Bulk Assign berada di luar #foundry-page, jadi diterjemahkan juga.
   if (root.id === 'foundry-page') { const m = document.getElementById('fy-bulk-modal'); if (m) foundryApplyLanguage(m); }
   const btn = document.getElementById('foundry-language-toggle');
-  if (btn) btn.textContent = foundryLanguage === 'en' ? '🇮🇩 Bahasa Indonesia' : '🇬🇧 English';
+  if (btn) btn.textContent = foundryLanguage === 'en' ? '🇮🇩 Bahasa Indonesia' : (foundryLanguage === 'id' ? '🇨🇳 中文' : '🇬🇧 English');
 }
 function foundryToggleLanguage() {
-  foundryLanguage = foundryLanguage === 'en' ? 'id' : 'en';
+  foundryLanguage = foundryLanguage === 'en' ? 'id' : (foundryLanguage === 'id' ? 'zh' : 'en');
   localStorage.setItem('foundry-language', foundryLanguage);
   foundryRender(); foundryApplyLanguage();
 }
@@ -893,7 +893,31 @@ function foundryChecklistHtml() {
 }
 
 // ---------- STRATEGY ----------
-function foundryStrategyHtml() { return foundryLanguage === 'en' ? foundryStrategyHtmlEn() : foundryStrategyHtmlId(); }
+function foundryStrategyHtml() { return foundryLanguage === 'zh' ? foundryStrategyHtmlZh() : (foundryLanguage === 'en' ? foundryStrategyHtmlEn() : foundryStrategyHtmlId()); }
+function foundryStrategyHtmlZh() {
+    const rows = FOUNDRY_KEYS.filter(k => FOUNDRY_B[k].m).map(k => { const b = FOUNDRY_B[k];
+        return `<tr><td>${escapeHtml(b.n)}</td><td>${b.ph === 1 ? '第 0 分钟开放' : '第 15 分钟开放'}</td><td>${b.f.toLocaleString('en-US')}</td><td>${b.m.toLocaleString('en-US')}</td></tr>`; }).join('');
+    return `<div class="fy-guide">
+<section><h3>1. 活动概览</h3><ul><li>Foundry Battle 是联盟对联盟的战斗活动，每场持续 60 分钟，每两周举行一次。每个军团最多包含 30 名战斗成员和 10 名替补；每位玩家只能加入一个军团。</li><li>参赛条件：熔炉等级达到 16 级以上，且联盟战力排名进入前 20。每个联盟最多可报名 2 个军团；联盟排名奖励主要依据 Legion 1 计算。</li><li>替补玩家只能在第 3 分钟后进入战场。离开战场后，必须等待 12 分钟才能重新进入。</li><li>联盟军械库积分（Alliance Arsenal Points）最高的联盟获胜。个人积分只用于个人奖励（PvP：防守时每 10K 战力获得 40 分，进攻时获得 80 分）。</li><li>建筑积分有容量上限；超出的部分会成为临时积分，并在建筑易主时掉落为 Arsenal Supplies，双方都可以拾取。</li><li>部队不会永久阵亡；受伤部队会在战斗结束后恢复。</li></ul></section>
+<section><h3>2. 建筑积分（全地图总计：每分钟 7,560 分）</h3><div class="table-container"><table class="fy-table"><thead><tr><th>建筑</th><th>开放时间</th><th>首次占领积分</th><th>每分钟积分</th></tr></thead><tbody>${rows}</tbody></table></div>
+<p class="fy-note">占领建筑通常约需 2 分钟（控制 Boiler Room 后约需 1 分钟）。建筑完全被占领后才会开始产生积分，因此请确保完成占领。</p></section>
+<section><h3>3. 时间线与阶段计划</h3><ul>
+<li><b>开始前：</b>确认所有人的任务，保存阵型，并召回所有行军部队。战斗开始后，立即传送到分配的建筑。</li>
+<li><b>阶段 1（0–15 分钟）：</b>争夺 2 个 Prototype Site、4 个 Repair Facility、Boiler Room 和 Central Transit Station。优先占领 Boiler Room 与 Transit Station（占领较快，也更容易反复易手）。Prototype Site 由最强集结队负责防守；每个 Repair Facility 安排 2 名守点玩家即可。</li>
+<li><b>阶段 2（第 15 分钟）：</b>Imperial Foundry、Munitions Warehouse 和 Mercenary Camp 开放。集结队长与集结成员转向中央目标（阶段 2 的主要目标是 Imperial Foundry）；Prototype Site 和 Repair Facility 的守点玩家留守原位，并补足空缺驻军。</li>
+<li><b>阶段 3（30–60 分钟）：</b>Weapon Workshop 会随机出现。负责收集的玩家留意小地图并尽快占领。若战况胶着，可利用 Munitions Warehouse（己方伤害 +15%，敌方伤害 -15%）。</li></ul></section>
+<section><h3>4. 名单中的职责</h3><ul><li><b>指挥官（1 人）：</b>观察比分，并发布简短明确的指令：防守、增援、集结、收集或轮换。</li><li><b>集结队长 / 集结成员：</b>负责攻击 Imperial Foundry，并在阶段 1 防守 Prototype Site。</li><li><b>机动队员：</b>在各目标间传送，压制高价值敌方建筑，并协助增援。</li><li><b>守点队员：</b>占领并守住指定建筑直到战斗结束，不要随意转移到中央。</li><li><b>收集员：</b>拾取建筑易主时掉落的 Arsenal Supplies，并争夺 Weapon Workshop。（指挥官、机动队员、收集员和游走侦察员是团队内部职责，并非游戏官方职业。）</li><li><b>替补（10 人）：</b>保持在线，第 3 分钟后即可入场。应尽早替换缺席成员，不要等到战斗中途。</li></ul></section>
+<section><h3>5. 核心战术</h3><ul>
+<li>不要让所有强力玩家都冲向 Imperial Foundry。稳固控制 Prototype Site、Repair Facility 和外围据点（Boiler Room、Transit Station、Munitions Warehouse、Mercenary Camp），往往比一次失败的中央突击更有效。</li>
+<li>建筑的持续占领时间与积分价值同样重要：Prototype Site 持续占领 10 分钟可获得 12,000 点持续积分。</li>
+<li>建筑即将失守时就应增援守点玩家，不要等失守后才重新争夺。（战场内是否允许派遣增援，请以游戏内实际机制为准。）</li>
+<li>优先攻击储存大量临时积分的敌方建筑。成功夺取后会掉落 Arsenal Supplies，应安排收集员在附近待命。</li>
+<li>领先时保护持续产分的建筑；落后时瞄准高价值或储存积分的建筑以及 Weapon Workshop；比分接近时快速轮换，避免参与无法改变目标控制权的战斗。</li>
+<li>离开战场后需等待 12 分钟才能重新进入；阶段解锁前或战斗结束前不要轻易离场。</li></ul></section>
+<section><h3>6. 战前检查清单</h3><ul><li>确认自己的名字和军团与名单一致，并在活动面板确认战斗时间。</li><li>召回所有行军部队，完成侦察，在 Infirmary 治疗伤兵，并取消前往 Embassy 的增援。</li><li>保留治疗加速道具；装备最强的 Chief Gear / Hero Gear，并启用战斗增益。</li><li>为集结、驻防和单人攻击准备好已保存的阵型。</li><li>确认没有任何功能会自动派遣部队离开城市。</li><li>至少准备 10 个 Advanced Teleporter，并启用宠物增益（行军容量、攻击、防御和行军速度）。每位玩家的准备状态可在 ✅ Checklist 标签中查看。</li></ul></section>
+<section><h3>7. 常见错误</h3><ul><li>所有玩家都挤到 Imperial Foundry。</li><li>忘记拾取建筑易主后掉落的 Arsenal Supplies。</li><li>攻击不会影响比分的敌方城市。</li><li>持续攻击已经无法夺取的目标。</li><li>没有及时关注比分变化。</li></ul></section>
+<p class="fy-note">游戏更新后，机制和数值可能发生变化。报名之前请查看游戏内的 Foundry Battle 活动面板。<br>最后核对的社区攻略：${FOUNDRY_VERIFIED}（WoS Helper、mone.gg、BuffBuff、BlueStacks、WoS Tools）。官方数值与规则以游戏内活动面板为准。</p></div>`;
+}
 function foundryStrategyHtmlId() {
     const rows = FOUNDRY_KEYS.filter(k => FOUNDRY_B[k].m).map(k => { const b = FOUNDRY_B[k];
         return `<tr><td>${escapeHtml(b.n)}</td><td>${b.ph === 1 ? 'Menit 0' : 'Menit 15'}</td><td>${b.f.toLocaleString('en-US')}</td><td>${b.m.toLocaleString('en-US')}</td></tr>`; }).join('');
@@ -970,7 +994,7 @@ async function openFoundrySharedMap(legion, phase) {
     legion = FOUNDRY_LEGIONS.includes(legion) ? legion : 'Legion 1';
     phase = [1,2,3].includes(Number(phase)) ? Number(phase) : 1;
     const urlLang = new URLSearchParams(location.search).get('lang');
-    if (urlLang === 'en' || urlLang === 'id') foundryLanguage = urlLang;
+    if (urlLang === 'en' || urlLang === 'id' || urlLang === 'zh') foundryLanguage = urlLang;
     const en = () => foundryLanguage === 'en';
     const wrap = document.createElement('div'); wrap.id = 'foundry-shared-map';
     wrap.innerHTML = `<div class="fdt-shared-bar"><strong>🏭 Foundry Live Map · IDN</strong><span class="fdt-shared-actions"><button id="fy-share-lang">${en()?'🇮🇩 Bahasa Indonesia':'🇬🇧 English'}</button>
@@ -1174,7 +1198,7 @@ async function openFoundrySharedChart(legion, phase) {
     legion = FOUNDRY_LEGIONS.includes(legion) ? legion : 'Legion 1';
     phase = [1, 2, 3].includes(Number(phase)) ? Number(phase) : 1;
     const urlLang = new URLSearchParams(location.search).get('lang');
-    if (urlLang === 'en' || urlLang === 'id') foundryLanguage = urlLang;
+    if (urlLang === 'en' || urlLang === 'id' || urlLang === 'zh') foundryLanguage = urlLang;
     const en = () => foundryLanguage === 'en';
     const wrap = document.createElement('div'); wrap.id = 'foundry-shared-map';
     wrap.innerHTML = `<div class="fdt-shared-bar"><strong>📊 Foundry Live Chart · IDN</strong><span class="fdt-shared-actions"><button id="fy-share-lang">${en() ? '🇮🇩 Bahasa Indonesia' : '🇬🇧 English'}</button>
