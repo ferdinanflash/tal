@@ -45,3 +45,6 @@ write, branching on `getBattleTheme() === 'frostdragon'`.
 
 - `foundry.js` — halaman Foundry (roster 2 Legion x 30 Battle + 10 Cadangan, bulk assign, peta, strategi); dibuka dari menu utama lewat `openFoundry()`
 - `supabase_foundry_roster.sql` — kolom `foundry_*` pada `troops_power` (dijalankan sekali di Supabase SQL Editor). Terpisah dari `legion_role` dan `frostdragon_role`, jadi tidak saling menimpa.
+- `supabase_foundry_p3.sql` — kolom tambahan `foundry_p3` (target Phase 3), `foundry_cover` (slot yang digantikan cadangan), `foundry_ready` (bitmask checklist kesiapan). Dijalankan sekali setelah `supabase_foundry_roster.sql`. Bila belum dijalankan, `foundry.js` tetap jalan (mode lama Phase 2/3) dan menampilkan pemberitahuan.
+
+Fitur Foundry: peringatan roster per Legion/Phase (`FOUNDRY_MIN`), target 3 fase terpisah (`foundryTarget`), pemetaan cadangan, salin Discord per fase, ekspor PNG peta (`foundryExportPng`, kanvas), tab Checklist kesiapan, dan tanggal verifikasi (`FOUNDRY_VERIFIED`) di tab Strategi.

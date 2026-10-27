@@ -1564,3 +1564,17 @@ body.fy-shared-open { overflow:hidden; }
 #foundry-shared-map .fy-share-strategy-content ul{margin:5px 0;padding-left:22px}
 #foundry-shared-map .fy-share-strategy-content li{margin:5px 0}
 @media(max-width:600px){#foundry-shared-map .fy-share-strategy{margin:10px 8px 16px}#foundry-shared-map .fy-share-strategy-content{padding:4px 12px 12px}}
+
+/* Foundry roster warnings, checklist */
+.fy-warn-box { border: 1px solid rgba(245,158,11,.55); background: rgba(245,158,11,.08); border-radius: 12px; padding: 10px 14px; margin: 10px 0; color: #fde68a; font-size: .86rem; }
+.fy-warn-box ul { list-style: none; margin: 6px 0 0; padding: 0; }
+.fy-warn-box li { padding: 2px 0 2px 18px; position: relative; color: #e2e8f0; }
+.fy-warn-box li::before { position: absolute; left: 0; }
+.fy-warn-box li.fy-w-warn::before { content: '⚠️'; font-size: .75rem; }
+.fy-warn-box li.fy-w-info::before { content: 'ℹ️'; font-size: .75rem; }
+.fy-warn-box p { margin: 4px 0 0; color: #e2e8f0; }
+.fy-warn-box.fy-ok { border-color: rgba(74,222,128,.5); background: rgba(74,222,128,.08); color: #bbf7d0; }
+.fy-check-table td input[type="checkbox"] { width: 18px; height: 18px; accent-color: #f59e0b; }
+.fy-check-table td, .fy-check-table th { text-align: center; }
+.fy-check-table td:nth-child(2), .fy-check-table th:nth-child(2) { text-align: left; }
+.fy-ready-all td { background: rgba(74,222,128,.07); }

@@ -6,7 +6,7 @@
 				<title>3475 Battle League</title>
 				<meta name="description" content="3475 3475 Battle League - Alliance troops power leaderboard, legion roster, and match scheduling.">
 				<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E">
-				<link rel="stylesheet" href="style.css?v=26">
+				<link rel="stylesheet" href="style.css?v=27">
 
 
 
@@ -200,6 +200,8 @@
 				<div id="foundry-admin-bar" class="fy-admin hidden">
 					<button class="btn-apply" type="button" onclick="openFoundryBulkAssign()">➕ Bulk Assign</button>
 					<button class="btn-apply" type="button" onclick="foundryAutoFill()">⚡ Isi Otomatis (by Power)</button>
+					<select id="foundry-copy-legion" class="btn-apply" aria-label="Legion untuk disalin" style="min-height:44px"><option value="all">Semua Legion</option><option value="Legion 1">Legion 1</option><option value="Legion 2">Legion 2</option></select>
+					<select id="foundry-copy-mode" class="btn-apply" aria-label="Fase untuk disalin" style="min-height:44px"><option value="all">Semua fase (per slot)</option><option value="1">Phase 1 (per bangunan)</option><option value="2">Phase 2 (per bangunan)</option><option value="3">Phase 3 (per bangunan)</option></select>
 					<button class="btn-apply" type="button" onclick="foundryCopyText()">📋 Salin untuk Discord</button>
 					<button class="btn-apply btn-danger" type="button" onclick="foundryClearAll()">Kosongkan Roster</button>
 				</div>
@@ -208,6 +210,7 @@
 					<button class="fy-tab btn-apply" data-tab="Legion 2" onclick="foundrySetTab('Legion 2')">Legion 2</button>
 					<button class="fy-tab btn-apply" data-tab="map" onclick="foundrySetTab('map')">🗺️ Peta</button>
 					<button class="fy-tab btn-apply" data-tab="strategy" onclick="foundrySetTab('strategy')">📖 Strategi</button>
+					<button class="fy-tab btn-apply" data-tab="checklist" onclick="foundrySetTab('checklist')">✅ Checklist</button>
 				</div>
 				<div id="foundry-body"></div>
 			</section>
@@ -945,6 +948,6 @@
 </div>
 
 	<script src="frostdragon.js?v=16"></script>
-	<script src="foundry.js?v=6"></script>
+	<script src="foundry.js?v=8"></script>
 </body>
 </html>
