@@ -577,27 +577,30 @@ async function foundryBulkSubmit() {
     foundryRender();
 }
 
-// Isi otomatis: urut power -> L1 Battle 30, L2 Battle 30, lalu cadangan 10 per legion.
+// Isi otomatis: hanya menyusun ulang pemain yang SUDAH ada di tiap Legion. Legion dan status
+// (Battle / Cadangan) setiap pemain dipertahankan; tidak ada pemain baru yang ditambahkan.
+// Per Legion + status: urut power -> slot 1..n. Role & target phase dihitung ulang mengikuti FOUNDRY_TEMPLATE.
 async function foundryAutoFill() {
     if (!foundryCanEdit()) return;
-    if (!await showCustomConfirmAsync('Isi otomatis roster Foundry IDN berdasarkan Troops Power? Roster Foundry yang ada akan diganti.', '#f59e0b')) return;
+    if (!foundryPlayers.some(foundryInRoster)) { showToast('Belum ada pemain di roster Foundry. Assign pemain ke Legion dulu.', 'info'); return; }
+    if (!await showCustomConfirmAsync('Susun ulang & hitung ulang roster berdasarkan Troops Power? Legion dan status Battle/Cadangan tiap pemain tetap; tidak ada pemain baru yang ditambahkan.', '#f59e0b')) return;
     try {
-        const sorted = [...foundryPlayers].sort((a, b) => Number(b.troops_power || 0) - Number(a.troops_power || 0));
-        const plan = [];
-        FOUNDRY_LEGIONS.forEach(l => { for (let i = 1; i <= FOUNDRY_BATTLE_MAX; i++) plan.push([l, 'Battle', i]); });
-        FOUNDRY_LEGIONS.forEach(l => { for (let i = 1; i <= FOUNDRY_SUB_MAX; i++) plan.push([l, 'Substitute', i]); });
+        const jobs = [];
+        FOUNDRY_LEGIONS.forEach(l => ['Battle', 'Substitute'].forEach(st => {
+            const max = st === 'Battle' ? FOUNDRY_BATTLE_MAX : FOUNDRY_SUB_MAX;
+            foundryPlayers.filter(p => p.foundry_legion === l && p.foundry_status === st)
+                .sort((a, b) => Number(b.troops_power || 0) - Number(a.troops_power || 0))
+                .slice(0, max)
+                .forEach((p, idx) => jobs.push({ p, patch: foundryPatchFor(l, st, idx + 1) }));
+        }));
         const client = getSupabase();
-        const jobs = sorted.map((p, idx) => {
-            const t = plan[idx];
-            return { p, patch: t ? foundryPatchFor(t[0], t[1], t[2]) : foundryNullPatch() };
-        });
         for (let i = 0; i < jobs.length; i += 20) {
             const res = await Promise.all(jobs.slice(i, i + 20).map(j => client.from('troops_power').update(j.patch).eq('id', j.p.id)));
             const bad = res.find(r => r.error);
             if (bad) throw bad.error;
         }
         jobs.forEach(j => Object.assign(j.p, j.patch));
-        showToast('Roster Foundry terisi otomatis.', 'success');
+        showToast('Roster Foundry disusun ulang (Legion & status tetap).', 'success');
     } catch (e) {
         showToast('Gagal mengisi otomatis. Pastikan supabase_foundry_roster.sql dan supabase_foundry_p3.sql sudah dijalankan.', 'error');
     }
