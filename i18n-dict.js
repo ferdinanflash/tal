@@ -371,6 +371,116 @@ The Chief with the longest total Capital occupation time wins; on a tie, whoever
 Tip: verify event-specific mechanics in-game before battle. || Tips: periksa mekanisme khusus event di dalam game sebelum bertempur. || 提示：战斗前请在游戏内确认该活动的具体机制。
 Close guide || Tutup panduan || 关闭指南
 
+# Home page subtitle and view controls
+Select Alliance, Global Leaderboard, or Legion Roster || Pilih Aliansi, Papan Peringkat Global, atau Roster Legiun || 选择联盟、全球排行榜或军团名单
+Select Alliance, Global Leaderboard, or Battle Group || Pilih Aliansi, Papan Peringkat Global, atau Grup Pertempuran || 选择联盟、全球排行榜或战斗小组
+Select Alliance || Pilih Aliansi || 选择联盟
+All Phase || Semua Fase || 所有阶段
+All Phases || Semua Fase || 所有阶段
+Map || Peta || 地图
+Chart || Grafik || 图表
+
+# Alliance names: preserve alliance codes, translate the word Alliance
+ARX Alliance || Aliansi ARX || ARX 联盟
+IDN Alliance || Aliansi IDN || IDN 联盟
+VNX Alliance || Aliansi VNX || VNX 联盟
+ZXC Alliance || Aliansi ZXC || ZXC 联盟
+CAT Alliance || Aliansi CAT || CAT 联盟
+ALL TROOPS POWER (GLOBAL RANK) || KEKUATAN SELURUH PASUKAN (PERINGKAT GLOBAL) || 全部部队战力（全球排名）
+Select Alliance, Global Leaderboard, or Legion Roster || Pilih Aliansi, Papan Peringkat Global, atau Roster Legiun || 选择联盟、全球排行榜或军团名单
+Select Alliance, Global Leaderboard, or Battle Group || Pilih Aliansi, Papan Peringkat Global, atau Grup Pertempuran || 选择联盟、全球排行榜或战斗小组
+All Phase || Semua Fase || 所有阶段
+All Phases || Semua Fase || 所有阶段
+Set Schedule || Atur Jadwal || 设置日程
+Match Time: Sunday, 12:00 UTC || Waktu Pertandingan: Minggu, 12:00 UTC || 比赛时间：星期日 UTC 12:00
+Match Time: 12:00 UTC || Waktu Pertandingan: 12:00 UTC || 比赛时间：UTC 12:00
+Select Day || Pilih Hari || 选择日期
+Select Match Time || Pilih Waktu Pertandingan || 选择比赛时间
+Select Preferred Time || Pilih Waktu Pilihan || 选择首选时间
+FDT Guide || Panduan FDT || FDT 指南
+Foundry Battle Roster (IDN) || Roster Pertempuran Foundry (IDN) || Foundry 战斗名单（IDN）
+
+
+# Input placeholders and field labels
+Search nickname or Game ID... || Cari nickname atau ID Game... || 搜索昵称或游戏 ID...
+Enter president name || Masukkan nama presiden || 输入会长名称
+Enter guild name || Masukkan nama guild || 输入公会名称
+Enter nickname || Masukkan nickname || 输入昵称
+Enter Game ID || Masukkan ID Game || 输入游戏 ID
+e.g. 150000000 || mis. 150000000 || 例如 150000000
+Type game ID or nickname... || Ketik ID Game atau nickname... || 输入游戏 ID 或昵称...
+Min. 6 characters || Minimal 6 karakter || 至少 6 个字符
+Enter username || Masukkan nama pengguna || 输入用户名
+Enter password || Masukkan kata sandi || 输入密码
+Enter gift code || Masukkan kode hadiah || 输入礼包码
+Player ID (FID) || ID Pemain (FID) || 玩家 ID（FID）
+Gift Code || Kode Hadiah || 礼包码
+Select all shown || Pilih semua yang ditampilkan || 全选当前显示项
+Battlefield open (UTC) || Medan perang dibuka (UTC) || 战场开启时间（UTC）
+Roster deadline (UTC) || Batas waktu roster (UTC) || 名单截止时间（UTC）
+Threshold || Ambang batas || 阈值
+Power threshold || Ambang kekuatan || 战力阈值
+Minimum power || Kekuatan minimum || 最低战力
+Maximum players || Jumlah maksimum pemain || 玩家人数上限
+
+# Toast notifications and validation messages
+Please enter Nickname! || Harap masukkan nickname! || 请输入昵称！
+Please enter Game ID! || Harap masukkan ID Game! || 请输入游戏 ID！
+Please enter valid Troops Power! || Harap masukkan kekuatan pasukan yang valid! || 请输入有效的部队战力！
+You don't have permission to add players. || Anda tidak memiliki izin untuk menambahkan pemain. || 您没有权限添加玩家。
+You don't have permission to edit this player's alliance. || Anda tidak memiliki izin untuk mengubah aliansi pemain ini. || 您没有权限修改该玩家的联盟。
+You don't have permission to save changes for this player. || Anda tidak memiliki izin untuk menyimpan perubahan pemain ini. || 您没有权限保存该玩家的更改。
+Player power added successfully! || Kekuatan pemain berhasil ditambahkan! || 玩家战力添加成功！
+Error inserting data: {0} || Gagal memasukkan data: {0} || 插入数据时出错：{0}
+You don't have permission to set this legion's schedule. || Anda tidak memiliki izin untuk mengatur jadwal legiun ini. || 您没有权限设置该军团的日程。
+Please select a match day! || Harap pilih hari pertandingan! || 请选择比赛日期！
+Please select a match time! || Harap pilih waktu pertandingan! || 请选择比赛时间！
+Schedule for {0} updated! || Jadwal untuk {0} diperbarui! || {0} 的日程已更新！
+Failed to save schedule: {0} || Gagal menyimpan jadwal: {0} || 保存日程失败：{0}
+Login to export the roster. || Silakan login untuk mengekspor roster. || 请登录后导出名单。
+No data to export! || Tidak ada data untuk diekspor! || 没有可导出的数据！
+No players match your search. || Tidak ada pemain yang cocok dengan pencarian Anda. || 没有符合搜索条件的玩家。
+CSV Downloaded successfully! || CSV berhasil diunduh! || CSV 下载成功！
+Select at least one player first. || Pilih setidaknya satu pemain terlebih dahulu. || 请先至少选择一名玩家。
+Please try again. || Silakan coba lagi. || 请重试。
+Share link copied. || Tautan berbagi berhasil disalin. || 分享链接已复制。
+Chart image downloaded. || Gambar grafik berhasil diunduh. || 图表图片已下载。
+Unable to download chart image. || Tidak dapat mengunduh gambar grafik. || 无法下载图表图片。
+Unable to generate chart image. || Tidak dapat membuat gambar grafik. || 无法生成图表图片。
+Frostdragon roster is locked. || Roster Frostdragon terkunci. || Frostdragon 名单已锁定。
+Frostdragon roster is locked. Unlock it in President Panel to make changes. || Roster Frostdragon terkunci. Buka kuncinya di President Panel untuk melakukan perubahan. || Frostdragon 名单已锁定。请在会长面板中解锁后再修改。
+Unable to save task: {0} || Tidak dapat menyimpan tugas: {0} || 无法保存任务：{0}
+Frostdragon tasks saved. || Tugas Frostdragon berhasil disimpan. || Frostdragon 任务已保存。
+You don't have permission to edit this roster. || Anda tidak memiliki izin untuk mengedit roster ini. || 您没有权限编辑此名单。
+Login to view the roster chart. || Silakan login untuk melihat grafik roster. || 请登录后查看名单图表。
+Enter a number between 0 and {0}. || Masukkan angka antara 0 dan {0}. || 请输入介于 0 和 {0} 之间的数字。
+Dragonite Collectors are already arranged this way. || Pengumpul Dragonite sudah diatur seperti ini. || Dragonite 收集者已按此方式安排。
+{0} updates failed; the rest were saved. || {0} pembaruan gagal; sisanya berhasil disimpan. || {0} 项更新失败，其余已保存。
+Dragonite Collectors updated ({0} players). || Pengumpul Dragonite diperbarui ({0} pemain). || Dragonite 收集者已更新（{0} 名玩家）。
+Checklist saved. || Checklist berhasil disimpan. || 清单已保存。
+Unable to save checklist: {0} || Tidak dapat menyimpan checklist: {0} || 无法保存清单：{0}
+Staff access required. || Memerlukan akses staf. || 需要工作人员权限。
+Schedule save failed: {0} || Gagal menyimpan jadwal: {0} || 日程保存失败：{0}
+Frostdragon schedule saved (UTC). || Jadwal Frostdragon berhasil disimpan (UTC). || Frostdragon 日程已保存（UTC）。
+Roster lock update failed: {0} || Gagal memperbarui kunci roster: {0} || 更新名单锁定状态失败：{0}
+Frostdragon roster locked. || Roster Frostdragon dikunci. || Frostdragon 名单已锁定。
+Frostdragon roster unlocked. || Roster Frostdragon dibuka kuncinya. || Frostdragon 名单已解锁。
+Username cannot be empty. || Nama pengguna tidak boleh kosong. || 用户名不能为空。
+Username: 2-32 chars, letters/numbers/. _ - only. || Nama pengguna: 2–32 karakter, hanya huruf/angka/titik/garis bawah/strip. || 用户名需为 2–32 个字符，只能包含字母、数字、点、下划线和连字符。
+Password must be at least 6 characters. || Kata sandi harus minimal 6 karakter. || 密码至少需要 6 个字符。
+Password confirmation does not match. || Konfirmasi kata sandi tidak cocok. || 两次输入的密码不一致。
+Nothing to change. || Tidak ada yang perlu diubah. || 没有需要更改的内容。
+Failed to update account: {0} || Gagal memperbarui akun: {0} || 更新账户失败：{0}
+Account {0} updated. || Akun {0} berhasil diperbarui. || 账户 {0} 已更新。
+President Panel data refreshed. || Data President Panel berhasil diperbarui. || 会长面板数据已刷新。
+Only the President can switch the Battle theme. || Hanya Presiden yang dapat mengganti tema pertempuran. || 只有会长可以切换战斗主题。
+{0} is already active. || {0} sudah aktif. || {0} 已经启用。
+Global Battle Theme: {0} || Tema Pertempuran Global: {0} || 全局战斗主题：{0}
+Failed to load global Battle Theme: {0} || Gagal memuat Tema Pertempuran Global: {0} || 加载全局战斗主题失败：{0}
+Failed to switch global Battle Theme: {0} || Gagal mengganti Tema Pertempuran Global: {0} || 切换全局战斗主题失败：{0}
+Username: 2-32 chars, letters/numbers/. _ - only. || Nama pengguna: 2–32 karakter, hanya huruf/angka/titik/garis bawah/strip. || 用户名需为 2–32 个字符，只能包含字母、数字、点、下划线和连字符。
+
+
 
 `);
   I18N.apply(document.body);
