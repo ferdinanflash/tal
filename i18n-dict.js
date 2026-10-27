@@ -711,6 +711,26 @@ Not available ||  ||  || Hindi available || Non disponibile || ไม่พร�
 Permission denied ||  ||  || Walang pahintulot || Permesso negato || ไม่ได้รับอนุญาต
 Check your connection and try again. ||  ||  || Suriin ang koneksyon at subukang muli. || Controlla la connessione e riprova. || ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง
 
+# Main menu — complete six-language coverage
+Select Alliance, Global Leaderboard, or Battle Group || Pilih Aliansi, Papan Peringkat Global, atau Grup Pertempuran || 选择联盟、全球排行榜或战斗小组 || Pumili ng Alyansa, Global Leaderboard, o Battle Group || Seleziona alleanza, classifica globale o gruppo di battaglia || เลือกพันธมิตร กระดานจัดอันดับโลก หรือกลุ่มรบ
+LEGION 1 (30 Battle / 20 Sub) || LEGION 1 (30 Tempur / 20 Cadangan) || 军团 1（30 名出战 / 20 名替补） || LEGION 1 (30 Laban / 20 Reserve) || LEGIONE 1 (30 in battaglia / 20 riserve) || กองทัพ 1 (ลงรบ 30 / สำรอง 20)
+LEGION 2 (30 Battle / 20 Sub) || LEGION 2 (30 Tempur / 20 Cadangan) || 军团 2（30 名出战 / 20 名替补） || LEGION 2 (30 Laban / 20 Reserve) || LEGIONE 2 (30 in battaglia / 20 riserve) || กองทัพ 2 (ลงรบ 30 / สำรอง 20)
+Set Schedule || Atur Jadwal || 设置日程 || Itakda ang Iskedyul || Imposta programma || ตั้งกำหนดการ
+Match Time: || Waktu Pertandingan: || 比赛时间： || Oras ng Laban: || Orario della partita: || เวลาแข่งขัน:
+FDT Guide || Panduan FDT || FDT 指南 || Gabay sa FDT || Guida FDT || คู่มือ FDT
+Foundry Battle Roster (IDN) || Roster Pertempuran Foundry (IDN) || Foundry 战斗名单（IDN） || Roster ng Laban sa Foundry (IDN) || Rosa battaglia Foundry (IDN) || รายชื่อผู้รบ Foundry (IDN)
+ARX Alliance || Aliansi ARX || ARX 联盟 || Alyansang ARX || Alleanza ARX || พันธมิตร ARX
+IDN Alliance || Aliansi IDN || IDN 联盟 || Alyansang IDN || Alleanza IDN || พันธมิตร IDN
+VNX Alliance || Aliansi VNX || VNX 联盟 || Alyansang VNX || Alleanza VNX || พันธมิตร VNX
+ZXC Alliance || Aliansi ZXC || ZXC 联盟 || Alyansang ZXC || Alleanza ZXC || พันธมิตร ZXC
+CAT Alliance || Aliansi CAT || CAT 联盟 || Alyansang CAT || Alleanza CAT || พันธมิตร CAT
+ALL TROOPS POWER (GLOBAL RANK) || KEKUATAN SEMUA PASUKAN (PERINGKAT GLOBAL) || 全部部队战力（全球排名） || LAKAS NG LAHAT NG TROPA (GLOBAL RANK) || POTENZA DI TUTTE LE TRUPPE (CLASSIFICA GLOBALE) || พลังรบรวมทั้งหมด (อันดับโลก)
+Back to Menu || Kembali ke Menu || 返回菜单 || Bumalik sa Menu || Torna al menu || กลับไปที่เมนู
+Redeem Code || Tukarkan Kode || 兑换码 || I-redeem ang Code || Riscatta codice || แลกรหัส
+PRESIDENT || PRESIDEN || 会长 || PRESIDENTE || PRESIDENTE || ประธาน
+PANEL || PANEL || 面板 || PANEL || PANNELLO || แผงควบคุม
+
+
 
 
 
