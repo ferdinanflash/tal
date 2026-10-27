@@ -269,6 +269,41 @@ Current President || Presiden Saat Ini || 当前会长
 No recent activity || Belum ada aktivitas terbaru || 暂无最近活动
 Search nickname or Game ID... || Cari nama panggilan atau ID Game... || 搜索昵称或游戏 ID…
 
+
+# President Panel — complete interface labels
+FULL ACCESS CONTROL CENTER || PUSAT KENDALI AKSES PENUH || 完整权限控制中心
+Central control for the five alliances, player roster, battle and system settings. || Pusat kendali untuk lima aliansi, daftar pemain, pertempuran, dan pengaturan sistem. || 五个联盟、玩家名单、战斗和系统设置的中央控制台。
+Back || Kembali || 返回
+Refresh || Muat ulang || 刷新
+Total Players || Total Pemain || 玩家总数
+Battle || Tempur || 战斗
+Substitute || Cadangan || 替补
+Active Theme || Tema Aktif || 当前主题
+Battle Theme || Tema Pertempuran || 战斗主题
+Choose the battle mode for the whole site. This is global: every visitor and staff member sees the change. || Pilih mode pertempuran untuk seluruh situs. Pengaturan ini berlaku global bagi semua pengunjung dan staf. || 为整个网站选择战斗模式。此设置为全局设置，所有访客和工作人员都会看到更改。
+ACTIVE || AKTIF || 已启用
+2 Legions · each 30 Battle + 20 Substitute || 2 Legiun · masing-masing 30 Tempur + 20 Cadangan || 2 个军团 · 每个军团 30 名战斗成员 + 20 名替补
+1 Battle Group · up to 60 per alliance · No Substitute || 1 Grup Tempur · maksimal 60 per aliansi · Tanpa Cadangan || 1 个战斗组 · 每个联盟最多 60 人 · 无替补
+Player data, alliances and leaderboards stay intact. Each theme keeps its own roster, so switching never overwrites the other. || Data pemain, aliansi, dan papan peringkat tetap utuh. Setiap tema memiliki roster sendiri sehingga pergantian tema tidak menimpa data tema lain. || 玩家数据、联盟和排行榜都会保留。每个主题使用独立名单，切换主题不会覆盖另一个主题的数据。
+Player Management || Pengelolaan Pemain || 玩家管理
+Open the existing player database and manage all five alliances. || Buka basis data pemain yang ada dan kelola kelima aliansi. || 打开现有玩家数据库并管理全部五个联盟。
+Battle / Legion Management || Pengelolaan Pertempuran / Legiun || 战斗 / 军团管理
+Manage the existing Legion rosters and player assignments. || Kelola roster Legiun dan penempatan pemain yang sudah ada. || 管理现有军团名单和玩家分配。
+Open Battle 1 || Buka Pertempuran 1 || 打开战斗 1
+Open Battle 2 || Buka Pertempuran 2 || 打开战斗 2
+Global Leaderboard || Papan Peringkat Global || 全球排行榜
+View the complete Troops Power ranking across ARX, IDN, VNX, ZXC and CAT. || Lihat peringkat Kekuatan Pasukan lengkap untuk ARX, IDN, VNX, ZXC, dan CAT. || 查看 ARX、IDN、VNX、ZXC 和 CAT 的完整部队战力排名。
+Open Global Ranking || Buka Peringkat Global || 打开全球排名
+Battle Schedule || Jadwal Pertempuran || 战斗日程
+Use the existing schedule system for the active Battle group(s). || Gunakan sistem jadwal yang tersedia untuk grup pertempuran aktif. || 使用现有日程系统管理当前启用的战斗组。
+Schedule 1 || Jadwal 1 || 日程 1
+Schedule 2 || Jadwal 2 || 日程 2
+President Panel is available to full-access staff only. || Panel Presiden hanya tersedia untuk staf dengan akses penuh. || 会长面板仅向拥有完整权限的工作人员开放。
+President Panel data refreshed. || Data Panel Presiden berhasil diperbarui. || 会长面板数据已刷新。
+Choose language || Pilih bahasa || 选择语言
+Toggle snow effect || Aktifkan/nonaktifkan efek salju || 切换飘雪效果
+LOCAL: || LOKAL: || 本地时间：
+
 `);
   I18N.apply(document.body);
 });

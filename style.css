@@ -1608,3 +1608,19 @@ body.fy-shared-open { overflow:hidden; }
 
 /* Use the global EN / ID / 中文 switcher instead of the legacy Foundry-only toggle. */
 .site-legacy-language-toggle { display: none !important; }
+
+/* Language switcher aligned at the far-left of the same action row as Redeem/Login. */
+.navbar-main-btns { display:flex; align-items:center; flex-wrap:nowrap; }
+.navbar-main-btns > .site-language-switcher { order:-1; margin:0 2px 0 0; }
+.navbar-main-btns > .site-language-switcher .language-current { min-width:86px; min-height:38px; padding:7px 10px; border-radius:10px; font-size:.82rem; }
+.navbar-main-btns > .site-language-switcher .language-options { top:calc(100% + 8px); left:0; }
+.navbar-controls { flex-direction:column; align-items:stretch; }
+.navbar-main-btns .btn-redeem, .navbar-main-btns .btn-admin, .navbar-main-btns .president-panel-top-btn { flex:1 1 0; min-width:0; }
+@media(max-width:600px) {
+  .navbar-main-btns { width:100%; gap:5px; }
+  .navbar-main-btns > .site-language-switcher { flex:0 0 auto; }
+  .navbar-main-btns > .site-language-switcher .language-current { min-width:76px; min-height:38px; padding:6px 7px; gap:4px; }
+  #language-current-code { font-size:.78rem; }
+  #language-current-flag { font-size:1rem; }
+  .navbar-main-btns .btn-redeem, .navbar-main-btns .btn-admin, .navbar-main-btns .president-panel-top-btn { font-size:.72rem; padding:7px 4px; }
+}
