@@ -235,6 +235,40 @@ Not available || Tidak tersedia || 不可用
 Permission denied || Izin ditolak || 权限不足
 Check your connection and try again. || Periksa koneksi Anda lalu coba lagi. || 请检查网络连接后重试。
 
+
+# Legion roster and administration
+Login || Masuk || 登录
+Logout || Keluar || 退出登录
+Logout (DEMON) || Keluar (DEMON) || 退出登录（DEMON）
+Redeem Code || Tukarkan Kode || 兑换码
+Assign Player to Legion || Tetapkan Pemain ke Legiun || 将玩家分配至军团
+Bulk Remove || Hapus Massal || 批量移除
+Export CSV || Ekspor CSV || 导出 CSV
+Legion 1 Official Roster || Daftar Resmi Legiun 1 || 第一军团官方名单
+Official Roster || Daftar Resmi || 官方名单
+Troops Power Leaderboard || Papan Peringkat Kekuatan Pasukan || 部队战力排行榜
+FULL ACCESS STAFF || STAF AKSES PENUH || 完全权限工作人员
+Substitute Players: || Pemain Cadangan: || 替补玩家：
+TOP 20 TROOPS POWER || 20 Kekuatan Pasukan Teratas || 部队战力前 20 名
+BATTLE TROOPS POWER || Kekuatan Pasukan Tempur || 战斗部队战力
+SUBSTITUTE TROOPS POWER || Kekuatan Pasukan Cadangan || 替补部队战力
+Last updated: {0} || Terakhir diperbarui: {0} || 最后更新：{0}
+RANK || PERINGKAT || 排名
+ALLIANCE || ALIANSI || 联盟
+NICKNAME || NAMA PANGGILAN || 昵称
+GAME ID || ID GAME || 游戏 ID
+TROOPS POWER || KEKUATAN PASUKAN || 部队战力
+PREF. TIME || WAKTU PILIHAN || 首选时间
+Local Time: || Waktu Lokal: || 本地时间：
+UTC-0: || UTC-0: || UTC-0：
+Language / Bahasa / 语言 || Bahasa || 语言
+Snow ON || Salju Aktif || 雪景开启
+Snow OFF || Salju Nonaktif || 雪景关闭
+President Panel || Panel Presiden || 会长面板
+Current President || Presiden Saat Ini || 当前会长
+No recent activity || Belum ada aktivitas terbaru || 暂无最近活动
+Search nickname or Game ID... || Cari nama panggilan atau ID Game... || 搜索昵称或游戏 ID…
+
 `);
   I18N.apply(document.body);
 });
