@@ -23,6 +23,30 @@ const FOUNDRY_B = {
     workshop:{ n: 'Weapon Workshop',         ph: 3, f: 0, m: 0, x: 516, y: 42, r: 0, c: '#c084fc', tip: 'Muncul di lokasi acak mulai menit 30. Collector memantau minimap dan merebutnya secepat mungkin.' }
 };
 const FOUNDRY_KEYS = Object.keys(FOUNDRY_B);
+// Tips bangunan & nama Roamer mengikuti bahasa aktif (foundryLanguage dibaca saat dipanggil).
+const FOUNDRY_TIP_EN = {
+    foundry: 'Center of the map. Strongest rally target; the enemy will come for it.',
+    proto1: 'Big points from minute 0. Hold it for the whole battle.',
+    proto2: 'Big points from minute 0. Hold it for the whole battle.',
+    rep1: 'Top-right corner (labeled Repair IV on the in-game map). 2 holders are enough.',
+    rep2: 'Right side. 2 holders are enough.',
+    rep3: 'Bottom-left corner. 2 holders are enough.',
+    rep4: 'Left side (labeled Repair I on the in-game map). 2 holders are enough.',
+    boiler: 'Building control time -50% (about 1 minute instead of 2). Take it first.',
+    transit: 'Teleport cooldown -50%. The key to team mobility.',
+    muni: '+15% damage for your troops, -15% damage for the enemy. Opens at minute 15.',
+    merc: 'Send up to 4 attack teams at enemy buildings. Opens at minute 15.',
+    roam: 'Not on a building: help reinforce and attack weak enemy buildings.',
+    workshop: 'Appears at a random location from minute 30. Collectors watch the minimap and capture it as fast as possible.'
+};
+Object.entries(FOUNDRY_B).forEach(([k, b]) => {
+    const idTip = b.tip;
+    Object.defineProperty(b, 'tip', { enumerable: true, configurable: true,
+        get: () => (typeof foundryLanguage !== 'undefined' && foundryLanguage === 'en' && FOUNDRY_TIP_EN[k]) || idTip });
+});
+(() => { const idName = FOUNDRY_B.roam.n;
+    Object.defineProperty(FOUNDRY_B.roam, 'n', { enumerable: true, configurable: true,
+        get: () => (typeof foundryLanguage !== 'undefined' && foundryLanguage === 'en') ? 'Roamer / Scout' : idName }); })();
 
 const FOUNDRY_VERIFIED = '27 Okt 2026';
 const FOUNDRY_PHASE_RANGE = ['0–15', '15–30', '30–60'];
@@ -140,7 +164,7 @@ async function foundryLoad() {
     if (!client) return;
     const { data, error } = await client.from('troops_power').select('*')
         .eq('alliance', FOUNDRY_ALLIANCE).order('troops_power', { ascending: false });
-    if (error) { showToast('Gagal memuat data pemain IDN', 'error'); return; }
+    if (error) { showToast(foundryL('Gagal memuat data pemain IDN', 'Failed to load IDN player data'), 'error'); return; }
     foundrySetPlayers(data);
     foundryRender();
 }
@@ -172,7 +196,7 @@ const FOUNDRY_I18N_PAIRS = [
   ['Pemain','Player'],['Cadangan','Substitute'],['Pemain Cadangan','Substitute Players'],
   ['Peta','Map'],['🗺️ Peta','🗺️ Map'],['Strategi','Strategy'],['📖 Strategi','📖 Strategy'],
   ['Roster Foundry Battle','Foundry Battle Roster'],['Aliansi IDN','IDN Alliance'],
-  ['Aliansi IDN · 2 Legion · 30 Petarung + 10 Cadangan per Legion','IDN Alliance · 2 Legion · 30 Battle + 10 Cadangan per Legion'],
+  ['Aliansi IDN · 2 Legion · 30 Petarung + 10 Cadangan per Legion','IDN Alliance · 2 Legion · 30 Battle + 10 Substitutes per Legion'],
   ['⚡ Isi Otomatis (by Power)','⚡ Auto-fill (by Power)'],['⚡ Isi Otomatis (berdasarkan Power)','⚡ Auto-fill (by Power)'],
   ['📋 Salin untuk Discord','📋 Copy for Discord'],['Salin untuk Discord','Copy for Discord'],
   ['— kosong —','— empty —'],['kosong','empty'],['belum ada','none assigned'],
@@ -200,7 +224,16 @@ const FOUNDRY_I18N_PAIRS = [
   ['Hanya baca · Data dimuat dari Supabase saat dibuka. Refresh otomatis setiap 30 detik.','Read-only · Data loads from Supabase on open. Auto-refreshes every 30 seconds.'],
   ['Menggantikan slot','Replaces slot'],['Siap','Ready'],['Siap semua','Fully ready'],['Ekspor PNG','Export PNG'],['🖼️ Ekspor PNG','🖼️ Export PNG'],
 ['Pemain Cadangan','Substitute Players'],
-['📊 Grafik','📊 Chart'],['Link Live Share Chart disalin.','Live Share Chart link copied.']
+['📊 Grafik','📊 Chart'],['Link Live Share Chart disalin.','Live Share Chart link copied.'],
+['< Kembali ke Menu','< Back to Menu'],['➕ Penugasan Massal','➕ Bulk Assign'],
+['Semua Legion','All Legions'],['Semua fase (per slot)','All phases (per slot)'],
+['Phase 1 (per bangunan)','Phase 1 (per building)'],['Phase 2 (per bangunan)','Phase 2 (per building)'],['Phase 3 (per bangunan)','Phase 3 (per building)'],
+['Legion untuk disalin','Legion to copy'],['Fase untuk disalin','Phase to copy'],
+['Penugasan Massal Foundry','Bulk Assign Foundry'],
+['Pemain yang dipilih mengisi slot kosong berikutnya, urut dari Power tertinggi.','Selected players fill the next free slots, ordered from highest Power.'],
+['Cari Game ID / Nickname','Search Game ID / Nickname'],['Ketik game ID atau nickname...','Type game ID or nickname...'],
+['Pilih semua yang tampil (sampai slot penuh)','Select all shown (until slots are full)'],
+['Assign Terpilih','Assign Selected'],['0 dipilih','0 selected']
 ];
 const FOUNDRY_ID_TO_EN = new Map(), FOUNDRY_EN_TO_ID = new Map();
 FOUNDRY_I18N_PAIRS.forEach(([id, en]) => {
@@ -216,6 +249,12 @@ function foundryApplyLanguage(root = document.getElementById('foundry-page')) {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
   nodes.forEach(n => { const raw = n.nodeValue.trim(); if (!raw) return; const translated = foundryT(raw); if (translated !== raw) n.nodeValue = n.nodeValue.replace(raw, translated); });
+  // Atribut yang terlihat/terbaca pengguna (placeholder, aria-label, title).
+  root.querySelectorAll('[placeholder],[aria-label],[title]').forEach(el => ['placeholder', 'aria-label', 'title'].forEach(a => {
+    const v = el.getAttribute(a); if (!v) return; const t = foundryT(v); if (t !== v) el.setAttribute(a, t);
+  }));
+  // Modal Bulk Assign berada di luar #foundry-page, jadi diterjemahkan juga.
+  if (root.id === 'foundry-page') { const m = document.getElementById('fy-bulk-modal'); if (m) foundryApplyLanguage(m); }
   const btn = document.getElementById('foundry-language-toggle');
   if (btn) btn.textContent = foundryLanguage === 'en' ? '🇮🇩 Bahasa Indonesia' : '🇬🇧 English';
 }
@@ -292,7 +331,7 @@ function foundrySummaryHtml(legion) {
         <p class="fy-note">${foundryL('Format sel: jumlah pemain / minimal, lalu total Power pemain di bangunan itu. Merah = kurang dari minimal.', 'Cell format: players / minimum, then total power of players there. Red = below minimum.')}</p></details>`;
 }
 async function foundryRecalcTasks(legion) {
-    if (!foundryCanEdit()) { showToast('Anda tidak punya izin mengubah roster IDN.', 'warning'); return; }
+    if (!foundryCanEdit()) { showToast(foundryL('Anda tidak punya izin mengubah roster IDN.', 'You do not have permission to edit the IDN roster.'), 'warning'); return; }
     const ps = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle')
         .sort((a, b) => (Number(b.troops_power) || 0) - (Number(a.troops_power) || 0) || a.foundry_slot - b.foundry_slot);
     if (!ps.length) { showToast(foundryL(`${legion} belum punya pemain Battle.`, `${legion} has no battle players.`), 'info'); return; }
@@ -363,7 +402,7 @@ function foundryRosterHtml(legion) {
                 let o = `<option value="">— ${foundryL('belum ditentukan', 'not set')} —</option>`;
                 for (let i = 1; i <= FOUNDRY_BATTLE_MAX; i++) {
                     const b = foundryFind(legion, 'Battle', i);
-                    o += `<option value="${i}" ${c === i ? 'selected' : ''}>#${i} ${b ? escapeHtml(b.nickname) + ' (' + escapeHtml(b.foundry_role || '-') + ')' : '(kosong)'}</option>`;
+                    o += `<option value="${i}" ${c === i ? 'selected' : ''}>#${i} ${b ? escapeHtml(b.nickname) + ' (' + escapeHtml(b.foundry_role || '-') + ')' : foundryL('(kosong)', '(empty)')}</option>`;
                 }
                 cover = `<select class="fy-manual-task" aria-label="Cover for ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_cover',this.value)">${o}</select>`;
             } else {
@@ -381,7 +420,7 @@ function foundryRosterHtml(legion) {
     for (let i = 1; i <= FOUNDRY_BATTLE_MAX; i++) battle += battleRow(i);
     for (let i = 1; i <= FOUNDRY_SUB_MAX; i++) subs += subRow(i);
     return `${foundryExtNotice()}${foundryWarningsHtml(legion)}${foundryToolsHtml(legion)}${foundrySummaryHtml(legion)}
-        <div class="fy-counter"><span class="fy-badge fy-b-battle">Battle ${nb} / ${FOUNDRY_BATTLE_MAX}</span><span class="fy-badge fy-b-sub">Cadangan ${ns} / ${FOUNDRY_SUB_MAX}</span></div>
+        <div class="fy-counter"><span class="fy-badge fy-b-battle">Battle ${nb} / ${FOUNDRY_BATTLE_MAX}</span><span class="fy-badge fy-b-sub">${foundryL('Cadangan', 'Substitutes')} ${ns} / ${FOUNDRY_SUB_MAX}</span></div>
         <div class="table-container"><table class="fy-table">${battleHead}<tbody>${battle}</tbody></table></div>
         <h3 class="fy-h">Pemain Cadangan</h3>
         <p class="fy-note">${foundryL('Cadangan baru bisa masuk battlefield setelah menit 3. Tentukan slot yang akan digantikan sebelum battle.', 'Substitutes can only enter the battlefield after minute 3. Decide which slot each one replaces before the battle.')}</p>
@@ -397,8 +436,8 @@ async function foundryClear(p) {
 
 async function foundryUpdateTask(playerId, field, value) {
     const allowed = { foundry_role: [...FOUNDRY_ROLES, 'Substitute'], foundry_p1: FOUNDRY_KEYS, foundry_p2: FOUNDRY_KEYS, foundry_p3: FOUNDRY_KEYS };
-    if (!foundryCanEdit()) { showToast('Anda tidak punya izin mengubah roster IDN.', 'warning'); foundryRender(); return; }
-    if ((field === 'foundry_p3' || field === 'foundry_cover') && !foundryExt) { showToast('Jalankan supabase_foundry_p3.sql dulu.', 'warning'); foundryRender(); return; }
+    if (!foundryCanEdit()) { showToast(foundryL('Anda tidak punya izin mengubah roster IDN.', 'You do not have permission to edit the IDN roster.'), 'warning'); foundryRender(); return; }
+    if ((field === 'foundry_p3' || field === 'foundry_cover') && !foundryExt) { showToast(foundryL('Jalankan supabase_foundry_p3.sql dulu.', 'Run supabase_foundry_p3.sql first.'), 'warning'); foundryRender(); return; }
     let v = value === '' ? null : value;
     if (field === 'foundry_cover') {
         if (v !== null) { v = Number(v); if (!Number.isInteger(v) || v < 1 || v > FOUNDRY_BATTLE_MAX) return; }
@@ -420,7 +459,7 @@ async function foundryUpdateTask(playerId, field, value) {
 }
 
 async function foundryAssign(legion, status, slot, idValue) {
-    if (!foundryCanEdit()) { showToast('Anda tidak punya izin mengubah roster IDN.', 'warning'); return; }
+    if (!foundryCanEdit()) { showToast(foundryL('Anda tidak punya izin mengubah roster IDN.', 'You do not have permission to edit the IDN roster.'), 'warning'); return; }
     try {
         const old = foundryFind(legion, status, slot);
         if (old) await foundryClear(old);
@@ -432,7 +471,7 @@ async function foundryAssign(legion, status, slot, idValue) {
             Object.assign(p, patch);
         }
     } catch (e) {
-        showToast('Gagal menyimpan. Pastikan supabase_foundry_roster.sql (dan supabase_foundry_p3.sql) sudah dijalankan.', 'error');
+        showToast(foundryL('Gagal menyimpan. Pastikan supabase_foundry_roster.sql (dan supabase_foundry_p3.sql) sudah dijalankan.', 'Save failed. Make sure supabase_foundry_roster.sql (and supabase_foundry_p3.sql) have been run.'), 'error');
     }
     foundryRender();
 }
@@ -460,8 +499,8 @@ function foundryBulkShown() {
 }
 
 function openFoundryBulkAssign() {
-    if (!foundryCanEdit()) { showToast('Anda tidak punya izin mengubah roster IDN.', 'warning'); return; }
-    if (foundryBulkCandidates().length === 0) { showToast('Semua pemain IDN sudah masuk roster Foundry.', 'info'); return; }
+    if (!foundryCanEdit()) { showToast(foundryL('Anda tidak punya izin mengubah roster IDN.', 'You do not have permission to edit the IDN roster.'), 'warning'); return; }
+    if (foundryBulkCandidates().length === 0) { showToast(foundryL('Semua pemain IDN sudah masuk roster Foundry.', 'All IDN players are already in the Foundry roster.'), 'info'); return; }
     foundryBulkSel.clear();
     const defLegion = FOUNDRY_LEGIONS.includes(foundryTab) ? foundryTab : foundryMapLegion;
     document.getElementById('fy-bulk-legion').innerHTML = FOUNDRY_LEGIONS.map(l =>
@@ -470,13 +509,14 @@ function openFoundryBulkAssign() {
     document.getElementById('fy-bulk-modal').classList.remove('hidden');
     foundryBulkUpdate();
     foundryBulkFilter();
+    foundryApplyLanguage(document.getElementById('fy-bulk-modal'));
 }
 function closeFoundryBulkAssign() { document.getElementById('fy-bulk-modal').classList.add('hidden'); }
 
 function foundryBulkFilter() {
     const shown = foundryBulkShown();
     document.getElementById('fy-bulk-list').innerHTML = shown.length === 0
-        ? '<div class="bulk-remove-empty">Tidak ada pemain yang cocok.</div>'
+        ? `<div class="bulk-remove-empty">${foundryL('Tidak ada pemain yang cocok.', 'No matching players.')}</div>`
         : shown.map(p => {
             const id = String(p.id);
             const gid = canViewSensitive() ? escapeHtml(p.game_id) : MASKED_TEXT;
@@ -498,7 +538,7 @@ function foundryBulkToggle(cb) {
     if (cb.checked) {
         if (foundryBulkSel.size >= foundryBulkCapacity()) {
             cb.checked = false;
-            showToast('Slot kosong sudah penuh. Pilih Legion/Status lain atau kurangi pilihan.', 'warning');
+            showToast(foundryL('Slot kosong sudah penuh. Pilih Legion/Status lain atau kurangi pilihan.', 'No free slots left. Pick another Legion/Status or reduce your selection.'), 'warning');
             return;
         }
         foundryBulkSel.add(cb.value);
@@ -512,7 +552,7 @@ function foundryBulkToggleAll(checked) {
     else {
         const cap = foundryBulkCapacity();
         for (const p of shown) { if (foundryBulkSel.size >= cap) break; foundryBulkSel.add(String(p.id)); }
-        if (shown.some(p => !foundryBulkSel.has(String(p.id)))) showToast(`Hanya ${cap} slot kosong, jadi pemilihan dibatasi.`, 'info');
+        if (shown.some(p => !foundryBulkSel.has(String(p.id)))) showToast(foundryL(`Hanya ${cap} slot kosong, jadi pemilihan dibatasi.`, `Only ${cap} free slots, so the selection is limited.`), 'info');
     }
     foundryBulkFilter();
 }
@@ -524,8 +564,8 @@ function foundryBulkUpdate() {
     const cur = stEl.value || 'Battle';
     stEl.innerHTML = ['Battle', 'Substitute'].map(st => {
         const free = foundryBulkFreeSlots(legion, st).length;
-        const label = st === 'Battle' ? 'Battle' : 'Cadangan';
-        return `<option value="${st}" ${st === cur ? 'selected' : ''}>${label} (sisa ${free} / ${foundryBulkMax(st)})</option>`;
+        const label = st === 'Battle' ? 'Battle' : foundryL('Cadangan', 'Substitute');
+        return `<option value="${st}" ${st === cur ? 'selected' : ''}>${label} (${foundryL('sisa', 'left')} ${free} / ${foundryBulkMax(st)})</option>`;
     }).join('');
     foundryBulkSummary();
 }
@@ -533,15 +573,15 @@ function foundryBulkUpdate() {
 function foundryBulkSummary() {
     const t = foundryBulkTarget();
     const cap = foundryBulkCapacity(), n = foundryBulkSel.size;
-    document.getElementById('fy-bulk-count').innerText = `${n} dipilih`;
+    document.getElementById('fy-bulk-count').innerText = foundryL(`${n} dipilih`, `${n} selected`);
     const over = n > cap;
     document.getElementById('fy-bulk-info').innerText = cap === 0
-        ? `${t.legion} ${t.status === 'Battle' ? 'Battle' : 'Cadangan'} sudah penuh.`
-        : over ? `Pilihan (${n}) melebihi slot kosong (${cap}). Kurangi pilihan.`
-        : `Slot kosong: ${cap}. Pemain mengisi slot kosong terendah lebih dulu.`;
+        ? foundryL(`${t.legion} ${t.status === 'Battle' ? 'Battle' : 'Cadangan'} sudah penuh.`, `${t.legion} ${t.status === 'Battle' ? 'Battle' : 'Substitute'} is full.`)
+        : over ? foundryL(`Pilihan (${n}) melebihi slot kosong (${cap}). Kurangi pilihan.`, `Selection (${n}) exceeds the free slots (${cap}). Reduce your selection.`)
+        : foundryL(`Slot kosong: ${cap}. Pemain mengisi slot kosong terendah lebih dulu.`, `Free slots: ${cap}. Players fill the lowest free slots first.`);
     const btn = document.getElementById('fy-bulk-submit');
     btn.disabled = n === 0 || over;
-    btn.innerText = n > 0 ? `Assign Terpilih (${n})` : 'Assign Terpilih';
+    btn.innerText = n > 0 ? `${foundryL('Assign Terpilih', 'Assign Selected')} (${n})` : foundryL('Assign Terpilih', 'Assign Selected');
     const all = document.getElementById('fy-bulk-all'), shown = foundryBulkShown();
     const sel = shown.filter(p => foundryBulkSel.has(String(p.id))).length;
     all.checked = shown.length > 0 && sel === shown.length;
@@ -549,13 +589,13 @@ function foundryBulkSummary() {
 }
 
 async function foundryBulkSubmit() {
-    if (!foundryCanEdit()) { showToast('Anda tidak punya izin mengubah roster IDN.', 'warning'); return; }
+    if (!foundryCanEdit()) { showToast(foundryL('Anda tidak punya izin mengubah roster IDN.', 'You do not have permission to edit the IDN roster.'), 'warning'); return; }
     const { legion, status } = foundryBulkTarget();
     const chosen = foundryBulkCandidates().filter(p => foundryBulkSel.has(String(p.id)))
         .sort((a, b) => Number(b.troops_power || 0) - Number(a.troops_power || 0));
     const slots = foundryBulkFreeSlots(legion, status);
     if (chosen.length === 0) return;
-    if (chosen.length > slots.length) { showToast('Slot kosong tidak cukup untuk pilihan ini.', 'warning'); foundryBulkSummary(); return; }
+    if (chosen.length > slots.length) { showToast(foundryL('Slot kosong tidak cukup untuk pilihan ini.', 'Not enough free slots for this selection.'), 'warning'); foundryBulkSummary(); return; }
     const btn = document.getElementById('fy-bulk-submit');
     btn.disabled = true;
     const jobs = chosen.map((p, i) => ({ p, patch: foundryPatchFor(legion, status, slots[i]) }));
@@ -569,11 +609,11 @@ async function foundryBulkSubmit() {
             const bad = res.find(r => r.error);
             if (bad) throw bad.error;
         }
-        showToast(`${done} pemain di-assign ke ${legion} (${status === 'Battle' ? 'Battle' : 'Cadangan'}).`, 'success');
+        showToast(foundryL(`${done} pemain di-assign ke ${legion} (${status === 'Battle' ? 'Battle' : 'Cadangan'}).`, `${done} players assigned to ${legion} (${status === 'Battle' ? 'Battle' : 'Substitute'}).`), 'success');
         closeFoundryBulkAssign();
         foundryTab = legion;
     } catch (e) {
-        showToast(`Sebagian gagal (${done}/${jobs.length} tersimpan). Pastikan supabase_foundry_roster.sql dan supabase_foundry_p3.sql sudah dijalankan.`, 'error');
+        showToast(foundryL(`Sebagian gagal (${done}/${jobs.length} tersimpan). Pastikan supabase_foundry_roster.sql dan supabase_foundry_p3.sql sudah dijalankan.`, `Partly failed (${done}/${jobs.length} saved). Make sure supabase_foundry_roster.sql and supabase_foundry_p3.sql have been run.`), 'error');
         foundryBulkSel.clear(); foundryBulkFilter(); foundryBulkUpdate();
     }
     foundryRender();
@@ -584,8 +624,8 @@ async function foundryBulkSubmit() {
 // Per Legion + status: urut power -> slot 1..n. Role & target phase dihitung ulang mengikuti FOUNDRY_TEMPLATE.
 async function foundryAutoFill() {
     if (!foundryCanEdit()) return;
-    if (!foundryPlayers.some(foundryInRoster)) { showToast('Belum ada pemain di roster Foundry. Assign pemain ke Legion dulu.', 'info'); return; }
-    if (!await showCustomConfirmAsync('Susun ulang & hitung ulang roster berdasarkan Troops Power? Legion dan status Battle/Cadangan tiap pemain tetap; tidak ada pemain baru yang ditambahkan.', '#f59e0b')) return;
+    if (!foundryPlayers.some(foundryInRoster)) { showToast(foundryL('Belum ada pemain di roster Foundry. Assign pemain ke Legion dulu.', 'No players in the Foundry roster yet. Assign players to a Legion first.'), 'info'); return; }
+    if (!await showCustomConfirmAsync(foundryL('Susun ulang & hitung ulang roster berdasarkan Troops Power? Legion dan status Battle/Cadangan tiap pemain tetap; tidak ada pemain baru yang ditambahkan.', 'Re-arrange and recalculate the roster by Troops Power? Each player keeps their Legion and Battle/Substitute status; no new players are added.'), '#f59e0b')) return;
     try {
         const jobs = [];
         FOUNDRY_LEGIONS.forEach(l => ['Battle', 'Substitute'].forEach(st => {
@@ -602,18 +642,18 @@ async function foundryAutoFill() {
             if (bad) throw bad.error;
         }
         jobs.forEach(j => Object.assign(j.p, j.patch));
-        showToast('Roster Foundry disusun ulang (Legion & status tetap).', 'success');
+        showToast(foundryL('Roster Foundry disusun ulang (Legion & status tetap).', 'Foundry roster re-arranged (Legion & status unchanged).'), 'success');
     } catch (e) {
-        showToast('Gagal mengisi otomatis. Pastikan supabase_foundry_roster.sql dan supabase_foundry_p3.sql sudah dijalankan.', 'error');
+        showToast(foundryL('Gagal mengisi otomatis. Pastikan supabase_foundry_roster.sql dan supabase_foundry_p3.sql sudah dijalankan.', 'Auto-fill failed. Make sure supabase_foundry_roster.sql and supabase_foundry_p3.sql have been run.'), 'error');
     }
     foundryRender();
 }
 
 async function foundryClearAll() {
     if (!foundryCanEdit()) return;
-    if (!await showCustomConfirmAsync('Kosongkan seluruh roster Foundry IDN?')) return;
+    if (!await showCustomConfirmAsync(foundryL('Kosongkan seluruh roster Foundry IDN?', 'Clear the entire IDN Foundry roster?'))) return;
     try { for (const p of foundryPlayers.filter(foundryInRoster)) await foundryClear(p); }
-    catch (e) { showToast('Gagal mengosongkan roster.', 'error'); }
+    catch (e) { showToast(foundryL('Gagal mengosongkan roster.', 'Failed to clear the roster.'), 'error'); }
     foundryRender();
 }
 
@@ -622,7 +662,7 @@ async function foundryCopyText() {
     const mode = (document.getElementById('foundry-copy-mode') || {}).value || 'all';
     const which = (document.getElementById('foundry-copy-legion') || {}).value || 'all';
     const legions = which === 'all' ? FOUNDRY_LEGIONS : [which];
-    const lines = ['**FOUNDRY BATTLE ROSTER — IDN**' + (mode === 'all' ? '' : ` — Phase ${mode} (${FOUNDRY_PHASE_RANGE[Number(mode) - 1]} mnt)`)];
+    const lines = ['**FOUNDRY BATTLE ROSTER — IDN**' + (mode === 'all' ? '' : ` — Phase ${mode} (${FOUNDRY_PHASE_RANGE[Number(mode) - 1]} ${foundryL('mnt', 'min')})`)];
     legions.forEach(l => {
         lines.push('', `__${l}__`);
         if (mode === 'all') {
@@ -642,15 +682,15 @@ async function foundryCopyText() {
             const p = foundryFind(l, 'Substitute', i);
             if (p) subs.push(p.nickname + (p.foundry_cover ? ` (→#${p.foundry_cover})` : ''));
         }
-        if (subs.length) lines.push(`Cadangan (masuk setelah menit 3): ${subs.join(', ')}`);
+        if (subs.length) lines.push(`${foundryL('Cadangan (masuk setelah menit 3)', 'Substitutes (enter after minute 3)')}: ${subs.join(', ')}`);
     });
     const text = lines.join('\n');
     const ok = typeof fdtCopyText === 'function' ? await fdtCopyText(text)
         : (navigator.clipboard && window.isSecureContext ? navigator.clipboard.writeText(text).then(() => true, () => false) : false);
-    if (!ok) { showToast('Browser tidak mengizinkan salin otomatis.', 'warning'); return; }
+    if (!ok) { showToast(foundryL('Browser tidak mengizinkan salin otomatis.', 'Your browser does not allow automatic copying.'), 'warning'); return; }
     showToast(text.length > 1900
-        ? `Roster disalin (${text.length} karakter, lebih dari batas 2000 Discord: kirim per Legion atau per Phase).`
-        : 'Roster disalin (siap tempel ke Discord).', text.length > 1900 ? 'warning' : 'success');
+        ? foundryL(`Roster disalin (${text.length} karakter, lebih dari batas 2000 Discord: kirim per Legion atau per Phase).`, `Roster copied (${text.length} characters, over Discord's 2000 limit: send per Legion or per Phase).`)
+        : foundryL('Roster disalin (siap tempel ke Discord).', 'Roster copied (ready to paste into Discord).'), text.length > 1900 ? 'warning' : 'success');
 }
 
 // ---------- MAP ----------
@@ -714,12 +754,12 @@ function foundryMapHtml() {
         const ps = foundryAssigned(L, foundrySelected, phase);
         return ps.length ? ps.map(p => `<li>#${p.foundry_slot} ${escapeHtml(p.nickname)} <small>(${escapeHtml(p.foundry_role)})</small></li>`).join('') : '<li class="fy-empty">belum ada</li>';
     };
-    const pts = b.m ? `<p><b>${b.f.toLocaleString('en-US')}</b> poin first capture + <b>${b.m.toLocaleString('en-US')}</b> poin/menit</p>` : '';
+    const pts = b.m ? `<p><b>${b.f.toLocaleString('en-US')}</b> ${foundryL('poin first capture', 'first-capture points')} + <b>${b.m.toLocaleString('en-US')}</b> ${foundryL('poin/menit', 'points/min')}</p>` : '';
     return `${foundryExtNotice()}<div class="fy-controls">
         <button class="btn-apply" type="button" onclick="shareFoundryMapLink()">🔗 Live Share Map</button>
         <button class="btn-apply" type="button" onclick="foundryExportPng()">🖼️ ${foundryL('Ekspor PNG', 'Export PNG')}</button>
         ${FOUNDRY_LEGIONS.map(l => `<button class="btn-apply ${l === L ? 'fy-on' : ''}" onclick="foundrySetMapLegion('${l}')">${l}</button>`).join('')}
-        ${[1, 2, 3].map(n => `<button class="btn-apply ${n === ph ? 'fy-on' : ''}" onclick="foundrySetPhase(${n})">Phase ${n} (${FOUNDRY_PHASE_RANGE[n - 1]} mnt)</button>`).join('')}</div>
+        ${[1, 2, 3].map(n => `<button class="btn-apply ${n === ph ? 'fy-on' : ''}" onclick="foundrySetPhase(${n})">Phase ${n} (${FOUNDRY_PHASE_RANGE[n - 1]} ${foundryL('mnt', 'min')})</button>`).join('')}</div>
         ${foundryWarningsHtml(L, ph)}
         <div class="fy-task-filter"><div class="fy-task-filter-head"><strong>Mark tugas pemain</strong><button class="btn-apply ${foundryTaskMarksOn ? 'fy-on' : ''}" onclick="foundryToggleTaskMarks()">${foundryTaskMarksOn ? 'Mark: ON' : 'Mark: OFF'}</button><button class="btn-apply" onclick="foundrySetAllTaskFilters(true)">Pilih semua</button><button class="btn-apply" onclick="foundrySetAllTaskFilters(false)">Matikan semua</button></div><div class="fy-task-filter-options">${FOUNDRY_ROLES.map(r => `<label><input type="checkbox" ${foundryTaskFilters.has(r) ? 'checked' : ''} onchange="foundryToggleTaskFilter('${r}',this.checked)"><span>${r}</span></label>`).join('')}</div><small>Mark angka menunjukkan nomor slot pemain di roster untuk target bangunan pada phase terpilih. Arahkan/ketuk mark untuk melihat nama dan tugas.</small></div>
         <svg viewBox="0 0 ${FOUNDRY_MAP.w} ${FOUNDRY_MAP.h}" class="fy-map" role="img" aria-label="Peta Foundry Battle">${foundryMapSvgInner(L, ph, { interactive: true, filters: foundryTaskFilters, marks: foundryTaskMarksOn })}</svg>
@@ -814,7 +854,7 @@ async function foundryExportPng(legion = foundryMapLegion, phase = foundryPhase)
 // ---------- CHECKLIST KESIAPAN ----------
 function foundryReadyBits(p) { return Number(p.foundry_ready) || 0; }
 async function foundryToggleReady(playerId, bit, checked) {
-    if (!foundryCanEdit()) { showToast('Anda tidak punya izin mengubah roster IDN.', 'warning'); foundryRender(); return; }
+    if (!foundryCanEdit()) { showToast(foundryL('Anda tidak punya izin mengubah roster IDN.', 'You do not have permission to edit the IDN roster.'), 'warning'); foundryRender(); return; }
     const p = foundryPlayers.find(x => String(x.id) === String(playerId));
     if (!p || !(bit >= 0 && bit < FOUNDRY_CHECKS.length)) return;
     const next = checked ? (foundryReadyBits(p) | (1 << bit)) : (foundryReadyBits(p) & ~(1 << bit));
@@ -853,7 +893,8 @@ function foundryChecklistHtml() {
 }
 
 // ---------- STRATEGY ----------
-function foundryStrategyHtml() {
+function foundryStrategyHtml() { return foundryLanguage === 'en' ? foundryStrategyHtmlEn() : foundryStrategyHtmlId(); }
+function foundryStrategyHtmlId() {
     const rows = FOUNDRY_KEYS.filter(k => FOUNDRY_B[k].m).map(k => { const b = FOUNDRY_B[k];
         return `<tr><td>${escapeHtml(b.n)}</td><td>${b.ph === 1 ? 'Menit 0' : 'Menit 15'}</td><td>${b.f.toLocaleString('en-US')}</td><td>${b.m.toLocaleString('en-US')}</td></tr>`; }).join('');
     return `<div class="fy-guide">
@@ -880,6 +921,31 @@ function foundryStrategyHtml() {
 
 
 
+function foundryStrategyHtmlEn() {
+    const rows = FOUNDRY_KEYS.filter(k => FOUNDRY_B[k].m).map(k => { const b = FOUNDRY_B[k];
+        return `<tr><td>${escapeHtml(b.n)}</td><td>${b.ph === 1 ? 'Minute 0' : 'Minute 15'}</td><td>${b.f.toLocaleString('en-US')}</td><td>${b.m.toLocaleString('en-US')}</td></tr>`; }).join('');
+    return `<div class="fy-guide">
+<section><h3>1. Event overview</h3><ul><li>Foundry Battle: alliance vs alliance, 60 minutes, held every 2 weeks. One legion = 30 fighters + 10 substitutes; a player can only be in one legion.</li><li>Requirements: Furnace Lv 16+ and the alliance must be in the top 20 by power. One alliance can register up to 2 legions; alliance ranking rewards are mainly counted from Legion 1.</li><li>Substitutes can only enter after minute 3. Leaving the battlefield means waiting 12 minutes before you can re-enter.</li><li>The winner is the alliance with the most Alliance Arsenal Points. Personal points only count toward individual rewards (PvP: 40 points per 10K power when defending, 80 when attacking).</li><li>Building points are capped by capacity; the excess becomes temporary points that drop as Arsenal Supplies when the building changes hands, and either side can pick them up.</li><li>Troops do not die permanently; injuries are healed after the battle.</li></ul></section>
+<section><h3>2. Building points (full map total: 7,560 points/minute)</h3><div class="table-container"><table class="fy-table"><thead><tr><th>Building</th><th>Opens</th><th>First capture</th><th>Points/min</th></tr></thead><tbody>${rows}</tbody></table></div>
+<p class="fy-note">Control time is about 2 minutes per building (about 1 minute if you hold the Boiler Room). A building only gives points once it is fully captured, so don't go halfway.</p></section>
+<section><h3>3. Timeline &amp; plan per phase</h3><ul>
+<li><b>Before the start:</b> everyone is ready, formations are saved, no marches are left out. As soon as the battle opens, teleport to your assigned buildings.</li>
+<li><b>Phase 1 (0–15):</b> 2 Prototype Sites, 4 Repair Facilities, Boiler Room, Transit Station. Take the Boiler Room and Transit first (faster capture and more frequent teleports). The strongest rallies hold the Prototypes; 2 holders per Repair corner are enough.</li>
+<li><b>Phase 2 (minute 15):</b> Imperial Foundry, Munitions Warehouse and Mercenary Camp open. Rally Leaders and Joiners (Phase 2 target = Imperial Foundry) teleport to the center; Prototype and Repair holders stay put. Refill the garrisons that were left behind.</li>
+<li><b>Phase 3 (minutes 30–60):</b> the Weapon Workshop appears at random. Collectors watch the minimap and grab its points right away. Use the Munitions Warehouse (+15% damage / -15% enemy damage) when the fight is even.</li></ul></section>
+<section><h3>4. Roster roles</h3><ul><li><b>Commander (1):</b> watch the score and give one short order: defend, reinforce, rally, collect, rotate.</li><li><b>Rally Leader / Joiner:</b> the core of the Imperial Foundry attack and Prototype defenders in Phase 1.</li><li><b>Mobile:</b> teleport between points, pressure high-value enemy buildings, help reinforce.</li><li><b>Holder:</b> occupies and guards a building until the end; does not move to the center.</li><li><b>Collector:</b> picks up the Arsenal Supplies that drop when buildings change hands and captures the Weapon Workshop. (Commander, Mobile, Collector and Roamer are internal team roles, not official game roles.)</li><li><b>Substitutes (10):</b> stay online; they can enter after minute 3. Replace absent fighters from the start instead of waiting until mid-battle.</li></ul></section>
+<section><h3>5. Core tactics</h3><ul>
+<li>Don't send all your strong players to the Imperial Foundry. Fully held Prototypes + Repairs + Outposts (Boiler, Transit, Munitions, Mercenary) often beat a single failed rush to the center.</li>
+<li>Holding time matters as much as building value: a Prototype held for 10 minutes = 12,000 sustained points.</li>
+<li>Reinforce holders before a building falls instead of waiting to lose and retake it (check in-game whether reinforcing is allowed on the battlefield; guides differ).</li>
+<li>Attack enemy buildings that are storing a lot of temporary points; when captured, the points drop as Arsenal Supplies, so have a Collector nearby.</li>
+<li>Ahead on score: protect the point-producing buildings. Behind: go for high-value or point-filled buildings and the Weapon Workshop. Close score: rotate quickly and avoid fights that don't change the objective.</li>
+<li>Leaving the battlefield triggers a 12-minute wait before re-entry; don't leave right before a phase unlock or the end of the battle.</li></ul></section>
+<section><h3>6. Pre-battle checklist</h3><ul><li>Make sure your name and legion match this roster; confirm the battle time in the event panel.</li><li>Recall all marches, finish scouting, heal the Infirmary, cancel reinforcements headed to the Embassy.</li><li>Save your healing speedups; equip your strongest Chief Gear/Hero Gear and combat buffs.</li><li>Prepare saved formations for rallies, garrisons and solo attacks.</li><li>Make sure no feature automatically sends marches out of the city.</li><li>Prepare at least 10 Advanced Teleporters and activate pet buffs (march capacity, attack, defense, march speed). Each player's status is tracked in the ✅ Checklist tab.</li></ul></section>
+<section><h3>7. Common mistakes</h3><ul><li>Everyone piles onto the Imperial Foundry.</li><li>Forgetting to pick up Arsenal Supplies that drop after a building changes hands.</li><li>Attacking enemy cities that don't change the score.</li><li>Keep attacking a position that is already lost.</li><li>Not watching the score until it's too late.</li></ul></section>
+<p class="fy-note">Mechanics and numbers can change when the game is updated. Check the Foundry Battle panel in the game before registering.<br>Last cross-checked against community guides: ${FOUNDRY_VERIFIED} (WoS Helper, mone.gg, BuffBuff, BlueStacks, WoS Tools). Official numbers and rules always follow the in-game event panel.</p></div>`;
+}
+
 // ---------- LIVE SHARE MAP (public read-only, freshly loaded from Supabase) ----------
 function buildFoundryShareUrl(legion = foundryMapLegion, phase = foundryPhase) {
     const u = new URL(location.href); u.search = ''; u.hash = '';
@@ -896,7 +962,7 @@ async function shareFoundryMapLink() {
         try { await navigator.share({ title, text: title, url }); return; }
         catch (e) { if (e && e.name === 'AbortError') return; }
     }
-    if (await fdtCopyText(url)) showToast('Link Live Share Foundry disalin.', 'success');
+    if (await fdtCopyText(url)) showToast(foundryL('Link Live Share Foundry disalin.', 'Foundry Live Share link copied.'), 'success');
     else window.prompt('Salin link Live Share Foundry:', url);
 }
 async function openFoundrySharedMap(legion, phase) {
