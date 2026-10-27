@@ -1715,3 +1715,46 @@ body.fy-shared-open { overflow:hidden; }
   #language-current-code { font-size: inherit !important; }
   #language-current-flag { font-size: 1rem !important; }
 }
+
+/* FINAL MOBILE NAV + LANGUAGE DROPDOWN POLISH (2026-10-27) */
+.navbar-main-btns > .president-panel-top-btn {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  overflow-wrap: normal !important;
+  word-break: keep-all !important;
+  letter-spacing: -0.025em;
+  gap: 3px;
+}
+.navbar-main-btns > .president-panel-top-btn .pp-panel-word {
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  word-break: keep-all !important;
+  flex: 0 1 auto;
+}
+.navbar-main-btns > .president-panel-top-btn { font-size: clamp(0.58rem, 2.15vw, 0.78rem) !important; }
+.site-language-switcher .language-options {
+  min-width: 104px !important;
+  padding: 6px !important;
+  gap: 5px !important;
+  border-radius: 16px !important;
+  top: calc(100% + 5px) !important;
+}
+.site-language-switcher .language-options button {
+  min-width: 0 !important;
+  min-height: 48px !important;
+  padding: 5px !important;
+  gap: 2px !important;
+  border-radius: 10px !important;
+  font-size: .78rem !important;
+  line-height: 1.1 !important;
+}
+.site-language-switcher .language-options .language-flag {
+  font-size: 1.15rem !important;
+  line-height: 1 !important;
+}
+@media (max-width: 600px) {
+  .site-language-switcher .language-options { min-width: 88px !important; padding: 5px !important; }
+  .site-language-switcher .language-options button { min-height: 42px !important; font-size: .72rem !important; }
+  .site-language-switcher .language-options .language-flag { font-size: 1rem !important; }
+  .navbar-main-btns > .president-panel-top-btn { font-size: clamp(0.55rem, 2.05vw, 0.68rem) !important; padding-left: 2px !important; padding-right: 2px !important; }
+}
