@@ -1593,3 +1593,27 @@ body.fy-shared-open { overflow:hidden; }
 /* Foundry: View as Chart (tab + Live Share) */
 .fy-chart-wrap { max-width: 900px; margin: 8px auto; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .fy-chart-svg { display: block; width: 100%; min-width: 640px; height: auto; border-radius: 14px; }
+
+
+/* ================= LANGUAGE SWITCHER ================= */
+.site-language-switcher {
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    padding:8px 12px; background:#111827; border-bottom:1px solid #263244;
+    flex-wrap:wrap; width:100%; order:-1;
+}
+.navbar { flex-wrap:wrap; }
+.site-language-switcher .language-label { color:#9ca3af; font-size:.82rem; margin-right:6px; }
+.site-language-switcher button {
+    min-width:44px; min-height:36px; padding:6px 12px; border-radius:8px;
+    border:1px solid #475569; color:#e5e7eb; background:#1f2937; font-weight:700; cursor:pointer;
+}
+.site-language-switcher button.active { color:#07111f; background:#38bdf8; border-color:#38bdf8; }
+@media (max-width:600px) {
+ .site-language-switcher { position:relative; gap:5px; padding:8px 6px; }
+ .site-language-switcher .language-label { width:100%; text-align:center; margin:0 0 2px; }
+ .site-language-switcher button { flex:1; max-width:100px; }
+}
+
+
+/* Use the global EN / ID / 中文 switcher instead of the legacy Foundry-only toggle. */
+.site-legacy-language-toggle { display: none !important; }
