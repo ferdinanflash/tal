@@ -48,3 +48,4 @@ write, branching on `getBattleTheme() === 'frostdragon'`.
 - `supabase_foundry_p3.sql` — kolom tambahan `foundry_p3` (target Phase 3), `foundry_cover` (slot yang digantikan cadangan), `foundry_ready` (bitmask checklist kesiapan). Dijalankan sekali setelah `supabase_foundry_roster.sql`. Bila belum dijalankan, `foundry.js` tetap jalan (mode lama Phase 2/3) dan menampilkan pemberitahuan.
 
 Fitur Foundry: peringatan roster per Legion/Phase (`FOUNDRY_MIN`), target 3 fase terpisah (`foundryTarget`), pemetaan cadangan, salin Discord per fase, ekspor PNG peta (`foundryExportPng`, kanvas), tab Checklist kesiapan, dan tanggal verifikasi (`FOUNDRY_VERIFIED`) di tab Strategi.
+- Kalkulasi tugas: `foundrySummaryHtml` (ringkasan jumlah/Power/potensi poin per bangunan per fase) dan `foundryRecalcTasks` (urut Power, slot dipadatkan 1..N, role/target dihitung dari `FOUNDRY_PRIORITY`; cadangan `foundry_cover` ikut dipetakan ulang).

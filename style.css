@@ -1578,3 +1578,14 @@ body.fy-shared-open { overflow:hidden; }
 .fy-check-table td, .fy-check-table th { text-align: center; }
 .fy-check-table td:nth-child(2), .fy-check-table th:nth-child(2) { text-align: left; }
 .fy-ready-all td { background: rgba(74,222,128,.07); }
+
+/* Foundry task summary */
+.fy-sum { border: 1px solid #2d3039; background: #1c1d22; border-radius: 12px; padding: 10px 14px; margin: 10px 0; }
+.fy-sum summary { cursor: pointer; font-weight: 800; color: #fcd34d; }
+.fy-sum-table td, .fy-sum-table th { text-align: center; }
+.fy-sum-table td:first-child, .fy-sum-table th:first-child { text-align: left; }
+.fy-sum-table small { display: block; color: #94a3b8; font-size: .7rem; }
+.fy-sum-ok { color: #86efac; font-weight: 700; }
+.fy-sum-bad { color: #fca5a5; font-weight: 700; background: rgba(239,68,68,.08); }
+.fy-sum-na { color: #475569; }
+.fy-sum-total td { border-top: 2px solid #3a3d48; font-size: .85rem; }

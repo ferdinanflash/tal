@@ -101,6 +101,27 @@ function foundryNullPatch() {
     return patch;
 }
 
+// Urutan prioritas slot template bila pemain kurang dari 30: inti dulu (Commander, Rally Leader,
+// penjaga Prototype, Joiner), lalu Boiler/Transit, satu penjaga tiap Repair, Mobile, penjaga kedua,
+// dan terakhir Collector.
+const FOUNDRY_PRIORITY = [1, 2, 3, 8, 9, 4, 5, 6, 7, 22, 25, 14, 16, 18, 20, 10, 11, 12, 13, 15, 17, 19, 21, 23, 24, 26, 27, 28, 29, 30];
+function foundryPlanTasks(n) {
+    return FOUNDRY_PRIORITY.slice(0, Math.max(0, Math.min(n, FOUNDRY_BATTLE_MAX))).sort((a, b) => a - b).map(foundryTpl);
+}
+function foundryShortages(list) {
+    const out = [];
+    [1, 2, 3].forEach(ph => Object.entries(FOUNDRY_MIN[ph]).forEach(([key, min]) => {
+        const n = list.filter(o => foundryTarget(o, ph) === key).length;
+        if (n < min) out.push(`P${ph} ${foundryName(key)} ${n}/${min}`);
+    }));
+    return out;
+}
+function foundryFmtPower(n) {
+    if (!canViewSensitive()) return MASKED_TEXT;
+    n = Number(n) || 0;
+    return n >= 1e9 ? (n / 1e9).toFixed(2) + 'B' : n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(0) + 'K' : String(n);
+}
+
 async function openFoundry() {
     document.getElementById('alliance-menu-page').classList.add('hidden');
     document.getElementById('troops-table-page').classList.add('hidden');
@@ -235,6 +256,77 @@ function foundryExtNotice() {
     return foundryExt ? '' : `<div class="fy-warn-box"><strong>ℹ️ ${foundryL('Kolom baru belum ada', 'New columns missing')}</strong><p>${foundryL('Jalankan supabase_foundry_p3.sql di Supabase SQL Editor agar target Phase 3, cadangan pengganti, dan checklist aktif.', 'Run supabase_foundry_p3.sql in the Supabase SQL Editor to enable Phase 3 targets, substitute cover and the checklist.')}</p></div>`;
 }
 
+// ---------- KALKULASI TUGAS ----------
+function foundryToolsHtml(legion) {
+    if (!foundryCanEdit()) return '';
+    return `<div class="fy-controls"><button class="btn-apply" type="button" onclick="foundryRecalcTasks('${legion}')">🧮 ${foundryL('Hitung Tugas Otomatis', 'Auto-calculate tasks')}</button></div>`;
+}
+function foundrySummaryHtml(legion) {
+    const battle = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle');
+    if (!battle.length) return '';
+    const pw = ps => ps.reduce((t, p) => t + (Number(p.troops_power) || 0), 0);
+    const roleBadges = FOUNDRY_ROLES.map(r => {
+        const ps = battle.filter(p => p.foundry_role === r);
+        return `<span class="fy-badge fy-b-sub" style="border-color:${FOUNDRY_ROLE_COLOR[r]}">${r}: ${ps.length}${ps.length ? ' · ' + foundryL('rata-rata', 'avg') + ' ' + foundryFmtPower(pw(ps) / ps.length) : ''}</span>`;
+    }).join('');
+    const keys = FOUNDRY_KEYS.filter(k => [1, 2, 3].some(ph => foundryAssigned(legion, k, ph).length || (FOUNDRY_MIN[ph][k])));
+    const cell = (k, ph) => {
+        const ps = foundryAssigned(legion, k, ph), min = FOUNDRY_MIN[ph][k] || 0;
+        if (FOUNDRY_B[k].ph > ph && !ps.length) return '<td class="fy-sum-na">–</td>';
+        const cls = min ? (ps.length >= min ? 'fy-sum-ok' : 'fy-sum-bad') : '';
+        return `<td class="${cls}">${ps.length}${min ? '/' + min : ''}<small>${ps.length ? foundryFmtPower(pw(ps)) : ''}</small></td>`;
+    };
+    const rows = keys.map(k => `<tr><td>${escapeHtml(FOUNDRY_B[k].n)}</td>${[1, 2, 3].map(ph => cell(k, ph)).join('')}</tr>`).join('');
+    const pot = [1, 2, 3].map(ph => {
+        let have = 0, max = 0;
+        FOUNDRY_KEYS.forEach(k => { const b = FOUNDRY_B[k]; if (!b.m || b.ph > ph) return; max += b.m;
+            if (foundryAssigned(legion, k, ph).length >= (FOUNDRY_MIN[ph][k] || 1)) have += b.m; });
+        return `<td><b>${have.toLocaleString('en-US')}</b> / ${max.toLocaleString('en-US')}</td>`;
+    }).join('');
+    return `<details class="fy-sum" open><summary>🧮 ${foundryL('Ringkasan tugas & kalkulasi', 'Task summary & calculation')} · ${legion}</summary>
+        <div class="fy-counter">${roleBadges}</div>
+        <div class="table-container"><table class="fy-table fy-sum-table"><thead><tr><th>${foundryL('Bangunan', 'Building')}</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th></tr></thead>
+        <tbody>${rows}<tr class="fy-sum-total"><td>${foundryL('Potensi poin/menit (bangunan yang terjaga cukup)', 'Potential points/min (buildings with enough players)')}</td>${pot}</tr></tbody></table></div>
+        <p class="fy-note">${foundryL('Format sel: jumlah pemain / minimal, lalu total Power pemain di bangunan itu. Merah = kurang dari minimal.', 'Cell format: players / minimum, then total power of players there. Red = below minimum.')}</p></details>`;
+}
+async function foundryRecalcTasks(legion) {
+    if (!foundryCanEdit()) { showToast('Anda tidak punya izin mengubah roster IDN.', 'warning'); return; }
+    const ps = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle')
+        .sort((a, b) => (Number(b.troops_power) || 0) - (Number(a.troops_power) || 0) || a.foundry_slot - b.foundry_slot);
+    if (!ps.length) { showToast(foundryL(`${legion} belum punya pemain Battle.`, `${legion} has no battle players.`), 'info'); return; }
+    const plan = foundryPlanTasks(ps.length);
+    const assign = ps.map((p, i) => ({ p, pos: plan[i], slot: i + 1 }));
+    const short = foundryShortages(plan.map(t => ({ foundry_p1: t.p1, foundry_p2: t.p2, foundry_p3: t.p3 })));
+    const msg = foundryL(
+        `Hitung ulang tugas ${legion}? ${ps.length} pemain Battle diurutkan berdasarkan Power; nomor slot, role, dan target Phase 1–3 akan ditimpa (cadangan tidak berubah). ` + (short.length ? `Belum cukup penjaga: ${short.slice(0, 6).join(', ')}${short.length > 6 ? ` +${short.length - 6} lagi` : ''}.` : 'Semua bangunan terisi cukup.'),
+        `Recalculate ${legion} tasks? ${ps.length} battle players are ranked by power; slot numbers, roles and Phase 1–3 targets will be overwritten (substitutes unchanged). ` + (short.length ? `Not enough players: ${short.slice(0, 6).join(', ')}${short.length > 6 ? ` +${short.length - 6} more` : ''}.` : 'Every building has enough players.'));
+    if (!await showCustomConfirmAsync(msg, '#f59e0b')) return;
+    const newSlotOf = new Map(assign.map(a => [Number(a.p.foundry_slot), a.slot]));
+    const jobs = assign.map(a => {
+        const patch = { foundry_slot: a.slot, foundry_role: a.pos.role, foundry_p1: a.pos.p1, foundry_p2: a.pos.p2 };
+        if (foundryExt) patch.foundry_p3 = a.pos.p3;
+        return { p: a.p, patch };
+    });
+    if (foundryExt) foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Substitute' && p.foundry_cover).forEach(p => {
+        const nc = newSlotOf.get(Number(p.foundry_cover)) || null;
+        if (nc !== p.foundry_cover) jobs.push({ p, patch: { foundry_cover: nc } });
+    });
+    try {
+        const client = getSupabase();
+        for (let i = 0; i < jobs.length; i += 20) {
+            const res = await Promise.all(jobs.slice(i, i + 20).map(j => client.from('troops_power').update(j.patch).eq('id', j.p.id)));
+            const bad = res.find(r => r.error);
+            if (bad) throw bad.error;
+        }
+        jobs.forEach(j => Object.assign(j.p, j.patch));
+        showToast(foundryL(`Tugas ${legion} dihitung ulang untuk ${ps.length} pemain.`, `${legion} tasks recalculated for ${ps.length} players.`), 'success');
+    } catch (e) {
+        showToast(foundryL('Gagal menghitung tugas. Muat ulang halaman lalu periksa data roster.', 'Could not calculate tasks. Reload the page and check the roster data.'), 'error');
+        await foundryLoad(); return;
+    }
+    foundryRender();
+}
+
 // ---------- ROSTER ----------
 function foundryRosterHtml(legion) {
     const edit = foundryCanEdit();
@@ -286,7 +378,7 @@ function foundryRosterHtml(legion) {
     let battle = '', subs = '';
     for (let i = 1; i <= FOUNDRY_BATTLE_MAX; i++) battle += battleRow(i);
     for (let i = 1; i <= FOUNDRY_SUB_MAX; i++) subs += subRow(i);
-    return `${foundryExtNotice()}${foundryWarningsHtml(legion)}
+    return `${foundryExtNotice()}${foundryWarningsHtml(legion)}${foundryToolsHtml(legion)}${foundrySummaryHtml(legion)}
         <div class="fy-counter"><span class="fy-badge fy-b-battle">Battle ${nb} / ${FOUNDRY_BATTLE_MAX}</span><span class="fy-badge fy-b-sub">Cadangan ${ns} / ${FOUNDRY_SUB_MAX}</span></div>
         <div class="table-container"><table class="fy-table">${battleHead}<tbody>${battle}</tbody></table></div>
         <h3 class="fy-h">Pemain Cadangan</h3>
