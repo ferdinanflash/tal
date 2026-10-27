@@ -1595,25 +1595,16 @@ body.fy-shared-open { overflow:hidden; }
 .fy-chart-svg { display: block; width: 100%; min-width: 640px; height: auto; border-radius: 14px; }
 
 
-/* ================= LANGUAGE SWITCHER ================= */
-.site-language-switcher {
-    display:flex; align-items:center; justify-content:center; gap:6px;
-    padding:8px 12px; background:#111827; border-bottom:1px solid #263244;
-    flex-wrap:wrap; width:100%; order:-1;
-}
-.navbar { flex-wrap:wrap; }
-.site-language-switcher .language-label { color:#9ca3af; font-size:.82rem; margin-right:6px; }
-.site-language-switcher button {
-    min-width:44px; min-height:36px; padding:6px 12px; border-radius:8px;
-    border:1px solid #475569; color:#e5e7eb; background:#1f2937; font-weight:700; cursor:pointer;
-}
-.site-language-switcher button.active { color:#07111f; background:#38bdf8; border-color:#38bdf8; }
-@media (max-width:600px) {
- .site-language-switcher { position:relative; gap:5px; padding:8px 6px; }
- .site-language-switcher .language-label { width:100%; text-align:center; margin:0 0 2px; }
- .site-language-switcher button { flex:1; max-width:100px; }
-}
-
+/* ================= LANGUAGE SWITCHER — gold dropdown ================= */
+.site-language-switcher{position:relative;display:inline-flex;align-items:center;justify-content:center;width:auto;order:0;flex:0 0 auto;padding:0;margin:0 10px;background:transparent;border:0;z-index:1000}
+.site-language-switcher .language-current{display:flex;align-items:center;justify-content:center;gap:7px;min-width:144px;min-height:56px;padding:10px 17px;border:1px solid #d7b56d;border-radius:32px;color:#ffe0a0;background:linear-gradient(180deg,#171512,#080909);box-shadow:0 0 12px #d9a44126,inset 0 0 8px #d9a44112;font-size:1rem;font-weight:800;cursor:pointer}
+.site-language-switcher .language-current:focus-visible,.site-language-switcher button:focus-visible{outline:2px solid #ffe0a0;outline-offset:3px}
+.language-caret{font-size:.72rem;color:#d8b46b}.language-options{display:none;position:absolute;top:calc(100% + 12px);left:0;min-width:144px;padding:10px 12px 14px;border:1px solid #a98748;border-radius:28px;background:rgba(10,10,9,.97);box-shadow:0 12px 28px #0009;flex-direction:column;gap:8px;z-index:1001}
+.site-language-switcher.open .language-options{display:flex}
+.site-language-switcher .language-options button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:100%;min-width:76px;min-height:76px;padding:9px;border:1px solid transparent;border-radius:18px;color:#f1e5ff;background:#171716;font-weight:800;font-size:1rem;cursor:pointer}
+.site-language-switcher .language-options button.active{border-color:#d8b46b;background:#282116;color:#ffe0a0;box-shadow:inset 0 0 10px #d8b46b16}
+.language-flag{font-size:1.6rem;line-height:1.1}.navbar{flex-wrap:nowrap}
+@media(max-width:600px){.site-language-switcher{margin:0 5px}.site-language-switcher .language-current{min-width:112px;min-height:48px;padding:8px 11px;font-size:.9rem}.language-options{min-width:120px;left:0;padding:8px}.site-language-switcher .language-options button{min-height:64px;min-width:90px}.navbar{flex-wrap:wrap}}
 
 /* Use the global EN / ID / 中文 switcher instead of the legacy Foundry-only toggle. */
 .site-legacy-language-toggle { display: none !important; }

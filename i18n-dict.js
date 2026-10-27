@@ -120,6 +120,121 @@ Foundry Live Map || Peta Live Foundry || Foundry 实时地图
 Foundry Live Chart || Grafik Live Foundry || Foundry 实时图表
 FDT Roster Chart || Grafik Roster FDT || FDT 名单图表
 
+
+# Buttons, pages, roster, events, account and status messages
+Select an option below || Pilih salah satu opsi di bawah || 请选择以下选项
+Minister Reservation || Reservasi Menteri || 部长预约
+Events Leaderboard Record || Rekor Papan Peringkat Acara || 活动排行榜记录
+Transfer Portal || Portal Transfer || 转服门户
+Battle Events || Acara Pertempuran || 战斗活动
+WoS Tool || Alat WoS || WoS 工具
+Current President || Presiden Saat Ini || 当前总统
+RECENTLY ACCEPTED RESERVATION || RESERVASI YANG BARU DITERIMA || 最近接受的预约
+No recent activity || Belum ada aktivitas terbaru || 暂无最近活动
+Made With ❤️ By: || Dibuat dengan ❤️ oleh: || 制作：❤️
+Menu || Menu || 菜单
+Choose language || Pilih bahasa || 选择语言
+Back to Menu || Kembali ke Menu || 返回菜单
+Back || Kembali || 返回
+Next || Berikutnya || 下一步
+Previous || Sebelumnya || 上一步
+Open || Buka || 打开
+Close || Tutup || 关闭
+Enable || Aktifkan || 启用
+Disable || Nonaktifkan || 禁用
+Copy || Salin || 复制
+Copied! || Berhasil disalin! || 已复制！
+Copy link || Salin tautan || 复制链接
+Download || Unduh || 下载
+Upload || Unggah || 上传
+Choose file || Pilih berkas || 选择文件
+Select all || Pilih semua || 全选
+Clear all || Kosongkan semua || 清空全部
+Clear roster || Kosongkan roster || 清空名单
+Save changes || Simpan perubahan || 保存更改
+Discard changes || Buang perubahan || 放弃更改
+Are you sure? || Apakah Anda yakin? || 确定吗？
+Please try again. || Silakan coba lagi. || 请重试。
+Something went wrong. || Terjadi kesalahan. || 出现错误。
+Success || Berhasil || 成功
+Error || Kesalahan || 错误
+Warning || Peringatan || 警告
+Information || Informasi || 信息
+No results found || Tidak ada hasil || 未找到结果
+No players found || Pemain tidak ditemukan || 未找到玩家
+No events found || Acara tidak ditemukan || 未找到活动
+No schedule set || Jadwal belum diatur || 尚未设置日程
+Battle schedule || Jadwal pertempuran || 战斗日程
+Match time || Waktu pertandingan || 比赛时间
+Time slot (UTC+0) || Slot waktu (UTC+0) || 时段（UTC+0）
+Preferred time || Waktu pilihan || 首选时间
+Waiting List || Daftar Tunggu || 等待名单
+Applicants || Pendaftar || 申请者
+Accepted Slots || Slot yang Diterima || 已接受时段
+Slots Left || Slot Tersisa || 剩余时段
+Total Applicants || Total Pendaftar || 申请总数
+Accept || Terima || 接受
+Reject || Tolak || 拒绝
+Move || Pindahkan || 移动
+Move to time || Pindahkan ke waktu || 移动到指定时间
+Remove player || Hapus pemain || 移除玩家
+Add player || Tambah pemain || 添加玩家
+Player name || Nama pemain || 玩家名称
+Nickname || Nama panggilan || 昵称
+Game ID || ID Game || 游戏 ID
+Alliance name || Nama aliansi || 联盟名称
+Alliance code || Kode aliansi || 联盟代码
+Troops Power || Kekuatan Pasukan || 部队战力
+Total Troops Power || Total Kekuatan Pasukan || 部队总战力
+Hero Power || Kekuatan Hero || 英雄战力
+Total Hero Power || Total Kekuatan Hero || 英雄总战力
+Battle Power || Kekuatan Tempur || 战斗力
+Roster || Daftar pemain || 名单
+Battle roster || Daftar pemain pertempuran || 战斗名单
+Slot number || Nomor slot || 位置编号
+Slot || Slot || 位置
+Commander || Komandan || 指挥官
+Rally Leader || Pemimpin Rally || 集结队长
+Task assignment || Penugasan tugas || 任务分配
+Select Legion and Phase || Pilih Legion dan Fase || 选择军团和阶段
+All Legions || Semua Legion || 所有军团
+All Phases || Semua fase || 所有阶段
+Phase 1 || Fase 1 || 第一阶段
+Phase 2 || Fase 2 || 第二阶段
+Phase 3 || Fase 3 || 第三阶段
+Task assignment saved. || Penugasan tugas disimpan. || 任务分配已保存。
+Save failed. || Gagal menyimpan. || 保存失败。
+Loading latest data... || Memuat data terbaru... || 正在加载最新数据…
+Loading accounts... || Memuat akun... || 正在加载账号…
+Loading roster chart… || Memuat grafik roster… || 正在加载名单图表…
+Loading Foundry roster… || Memuat roster Foundry… || 正在加载 Foundry 名单…
+All troops power global rank || Peringkat global kekuatan seluruh pasukan || 全部部队战力全球排名
+ALL TROOPS POWER (GLOBAL RANK) || KEKUATAN SELURUH PASUKAN (PERINGKAT GLOBAL) || 全部部队战力（全球排名）
+Bulk Assign || Penugasan Massal || 批量分配
+Auto-fill (by Power) || Isi Otomatis (berdasarkan Kekuatan) || 自动填充（按战力）
+Copy for Discord || Salin untuk Discord || 复制到 Discord
+Clear Roster || Kosongkan Roster || 清空名单
+Frostdragon Tyrant || Frostdragon Tyrant || Frostdragon Tyrant
+Live Map || Peta Langsung || 实时地图
+Share || Bagikan || 分享
+Strategy Guide || Panduan Strategi || 战略指南
+Checklist || Daftar Periksa || 检查清单
+Pre-battle checklist || Daftar periksa sebelum pertempuran || 战前检查清单
+Search... || Cari... || 搜索...
+Filter || Filter || 筛选
+Sort by || Urutkan berdasarkan || 排序方式
+Ascending || Menaik || 升序
+Descending || Menurun || 降序
+Status || Status || 状态
+Active || Aktif || 活跃
+Inactive || Tidak aktif || 未启用
+Pending || Menunggu || 待处理
+Completed || Selesai || 已完成
+Failed || Gagal || 失败
+Not available || Tidak tersedia || 不可用
+Permission denied || Izin ditolak || 权限不足
+Check your connection and try again. || Periksa koneksi Anda lalu coba lagi. || 请检查网络连接后重试。
+
 `);
   I18N.apply(document.body);
 });

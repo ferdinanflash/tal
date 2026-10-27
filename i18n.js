@@ -172,6 +172,10 @@
             const on = b.getAttribute('data-lang-btn') === lang;
             b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on));
         });
+        const code = document.getElementById('language-current-code');
+        const flag = document.getElementById('language-current-flag');
+        if (code) code.textContent = ({en:'ENG', id:'ID', zh:'CN'})[lang] || 'ENG';
+        if (flag) flag.textContent = ({en:'🇺🇸', id:'🇮🇩', zh:'🇨🇳'})[lang] || '🇺🇸';
     }
     function setLang(next, opts) {
         if (!SUPPORTED.includes(next)) return;
@@ -183,7 +187,25 @@
     }
     function init() {
         document.documentElement.lang = HTML_LANG[lang];
-        document.querySelectorAll('[data-lang-btn]').forEach(b => b.addEventListener('click', () => setLang(b.getAttribute('data-lang-btn'))));
+        document.querySelectorAll('[data-lang-btn]').forEach(b => b.addEventListener('click', () => {
+            setLang(b.getAttribute('data-lang-btn'));
+            const wrap = document.getElementById('site-language-switcher');
+            const trigger = document.getElementById('language-current');
+            if (wrap) wrap.classList.remove('open');
+            if (trigger) trigger.setAttribute('aria-expanded', 'false');
+        }));
+        const langWrap = document.getElementById('site-language-switcher');
+        const langTrigger = document.getElementById('language-current');
+        if (langWrap && langTrigger) {
+            langTrigger.addEventListener('click', () => {
+                const open = langWrap.classList.toggle('open');
+                langTrigger.setAttribute('aria-expanded', String(open));
+            });
+            document.addEventListener('click', e => {
+                if (!langWrap.contains(e.target)) { langWrap.classList.remove('open'); langTrigger.setAttribute('aria-expanded', 'false'); }
+            });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') { langWrap.classList.remove('open'); langTrigger.setAttribute('aria-expanded', 'false'); } });
+        }
         applyHead(); apply(document.body); observe(); syncSwitcher();
         listeners.slice().forEach(fn => { try { fn(lang); } catch (e) { /* ignore */ } });
     }
