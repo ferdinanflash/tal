@@ -1589,3 +1589,7 @@ body.fy-shared-open { overflow:hidden; }
 .fy-sum-bad { color: #fca5a5; font-weight: 700; background: rgba(239,68,68,.08); }
 .fy-sum-na { color: #475569; }
 .fy-sum-total td { border-top: 2px solid #3a3d48; font-size: .85rem; }
+
+/* Foundry: View as Chart (tab + Live Share) */
+.fy-chart-wrap { max-width: 900px; margin: 8px auto; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.fy-chart-svg { display: block; width: 100%; min-width: 640px; height: auto; border-radius: 14px; }

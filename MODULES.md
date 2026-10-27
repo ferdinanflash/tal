@@ -49,3 +49,4 @@ write, branching on `getBattleTheme() === 'frostdragon'`.
 
 Fitur Foundry: peringatan roster per Legion/Phase (`FOUNDRY_MIN`), target 3 fase terpisah (`foundryTarget`), pemetaan cadangan, salin Discord per fase, ekspor PNG peta (`foundryExportPng`, kanvas), tab Checklist kesiapan, dan tanggal verifikasi (`FOUNDRY_VERIFIED`) di tab Strategi.
 - Kalkulasi tugas: `foundrySummaryHtml` (ringkasan jumlah/Power/potensi poin per bangunan per fase) dan `foundryRecalcTasks` (urut Power, slot dipadatkan 1..N, role/target dihitung dari `FOUNDRY_PRIORITY`; cadangan `foundry_cover` ikut dipetakan ulang).
+- `foundry.js` tab **📊 Grafik** (`foundryChartSvg`, `foundryChartExportPng`): grafik roster per Legion/Phase (cakupan bangunan, peran, urutan slot + Power, cadangan). Live Share: `?foundry=chart&legion=Legion%201&phase=1` (`openFoundrySharedChart`, auto-refresh 30 detik, read-only).

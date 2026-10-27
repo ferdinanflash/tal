@@ -67,7 +67,7 @@ const FOUNDRY_ROLE_ID = { Commander: 'Komandan', 'Rally Leader': 'Pemimpin Rally
 
 let foundryPlayers = [];
 let foundryExt = true;         // false bila supabase_foundry_p3.sql belum dijalankan
-let foundryTab = 'Legion 1';   // 'Legion 1' | 'Legion 2' | 'map' | 'strategy' | 'checklist'
+let foundryTab = 'Legion 1';   // 'Legion 1' | 'Legion 2' | 'map' | 'chart' | 'strategy' | 'checklist'
 let foundryMapLegion = 'Legion 1';
 let foundryPhase = 1;
 let foundrySelected = 'foundry';
@@ -157,6 +157,7 @@ function foundryRender() {
     const body = document.getElementById('foundry-body');
     if (FOUNDRY_LEGIONS.includes(foundryTab)) body.innerHTML = foundryRosterHtml(foundryTab);
     else if (foundryTab === 'map') body.innerHTML = foundryMapHtml();
+    else if (foundryTab === 'chart') body.innerHTML = foundryChartHtml();
     else if (foundryTab === 'checklist') body.innerHTML = foundryChecklistHtml();
     else body.innerHTML = foundryStrategyHtml();
     foundryApplyLanguage();
@@ -198,7 +199,8 @@ const FOUNDRY_I18N_PAIRS = [
   ['Memuat data roster Foundry…','Loading Foundry roster…'],
   ['Hanya baca · Data dimuat dari Supabase saat dibuka. Refresh otomatis setiap 30 detik.','Read-only · Data loads from Supabase on open. Auto-refreshes every 30 seconds.'],
   ['Menggantikan slot','Replaces slot'],['Siap','Ready'],['Siap semua','Fully ready'],['Ekspor PNG','Export PNG'],['🖼️ Ekspor PNG','🖼️ Export PNG'],
-['Pemain Cadangan','Substitute Players']
+['Pemain Cadangan','Substitute Players'],
+['📊 Grafik','📊 Chart'],['Link Live Share Chart disalin.','Live Share Chart link copied.']
 ];
 const FOUNDRY_ID_TO_EN = new Map(), FOUNDRY_EN_TO_ID = new Map();
 FOUNDRY_I18N_PAIRS.forEach(([id, en]) => {
@@ -945,3 +947,219 @@ async function openFoundrySharedMap(legion, phase) {
     window.addEventListener('pagehide',()=>{if(timer)clearInterval(timer);},{once:true});
 }
 document.addEventListener('DOMContentLoaded',()=>{const q=new URLSearchParams(location.search);if(q.get('foundry')==='map')openFoundrySharedMap(q.get('legion')||'Legion 1',Number(q.get('phase')||1));});
+
+
+// ---------- VIEW AS CHART (+ LIVE SHARE) ----------
+// Grafik roster per Legion & Phase dalam bentuk SVG: cakupan bangunan (jumlah vs minimal), jumlah per peran,
+// urutan roster Battle (bar = Power, hanya terlihat setelah login) dan cadangan. SVG yang sama dipakai untuk
+// tampilan di tab, ekspor PNG, dan halaman Live Share (?foundry=chart&legion=Legion%201&phase=1).
+let foundryChartLegion = 'Legion 1';
+let foundryChartPhase = 1;
+let foundryChartShareTimer = null;
+const foundryTrunc = (s, n) => { s = String(s == null ? '' : s); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
+
+function foundryChartSvg(legion, phase) {
+    const W = 760, PAD = 16, en = foundryLanguage === 'en';
+    const showPw = canViewSensitive();
+    const pw = p => Number(p.troops_power) || 0;
+    const sum = ps => ps.reduce((s, p) => s + pw(p), 0);
+    const battle = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle')
+        .sort((a, b) => Number(a.foundry_slot) - Number(b.foundry_slot));
+    const subs = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Substitute')
+        .sort((a, b) => Number(a.foundry_slot) - Number(b.foundry_slot));
+    const out = [];
+    const T = (x, y, str, o = {}) => `<text x="${x}" y="${y}" fill="${o.fill || '#e2e8f0'}" font-size="${o.size || 12}" font-weight="${o.weight || 400}" text-anchor="${o.anchor || 'start'}">${escapeHtml(str)}</text>`;
+    const R = (x, y, w, h, fill, rx = 4, extra = '') => `<rect x="${x}" y="${y}" width="${Math.max(0, w)}" height="${h}" rx="${rx}" fill="${fill}" ${extra}/>`;
+    let y = 30;
+    out.push(T(PAD, y, `Foundry Battle · IDN · ${legion} · Phase ${phase} (${FOUNDRY_PHASE_RANGE[phase - 1]} ${en ? 'min' : 'mnt'})`, { fill: '#fcd34d', size: 16, weight: 700 }));
+    y += 20;
+    out.push(T(PAD, y, `${battle.length}/${FOUNDRY_BATTLE_MAX} Battle · ${subs.length}/${FOUNDRY_SUB_MAX} ${en ? 'Substitutes' : 'Cadangan'}` +
+        (showPw && battle.length ? ` · ${en ? 'Total power' : 'Total Power'} ${foundryFmtPower(sum(battle))}` : ''), { fill: '#94a3b8', size: 12 }));
+    y += 14;
+    const section = title => { y += 18; out.push(T(PAD, y, title, { fill: '#7dd3fc', size: 13, weight: 700 })); y += 10; };
+
+    if (!battle.length && !subs.length) {
+        y += 30;
+        out.push(T(PAD, y, en ? 'No players assigned to this legion yet.' : 'Belum ada pemain di legion ini.', { fill: '#94a3b8', size: 13 }));
+        y += 30;
+    } else {
+        // 1. Cakupan bangunan
+        section(en ? 'Building coverage (players assigned · white tick = minimum)' : 'Cakupan bangunan (pemain ditugaskan · garis putih = minimal)');
+        const keys = FOUNDRY_KEYS.filter(k => FOUNDRY_B[k].ph <= phase && (FOUNDRY_MIN[phase][k] || foundryAssigned(legion, k, phase).length));
+        const rows = keys.map(k => ({ k, b: FOUNDRY_B[k], ps: foundryAssigned(legion, k, phase), min: FOUNDRY_MIN[phase][k] || 0 }));
+        const maxN = Math.max(4, ...rows.map(r => Math.max(r.ps.length, r.min)));
+        const bx = 190, bw = 360;
+        rows.forEach(r => {
+            const n = r.ps.length, low = r.min && n < r.min;
+            out.push(T(PAD, y + 14, foundryTrunc(r.b.n, 26), { size: 12 }));
+            out.push(R(bx, y + 3, bw, 14, '#1e293b'));
+            if (n) out.push(R(bx, y + 3, n / maxN * bw, 14, low ? '#ef4444' : r.b.c));
+            if (r.min) out.push(`<line x1="${bx + r.min / maxN * bw}" y1="${y + 1}" x2="${bx + r.min / maxN * bw}" y2="${y + 19}" stroke="#ffffff" stroke-width="2"/>`);
+            out.push(T(bx + bw + 10, y + 14, `${n}${r.min ? '/' + r.min : ''}` + (showPw && n ? ` · ${foundryFmtPower(sum(r.ps))}` : ''), { fill: low ? '#fca5a5' : '#e2e8f0', size: 12, weight: low ? 700 : 400 }));
+            y += 24;
+        });
+
+        // 2. Peran
+        section(en ? 'Roles (battle players)' : 'Peran (pemain Battle)');
+        const roleN = FOUNDRY_ROLES.map(r => ({ r, ps: battle.filter(p => p.foundry_role === r) }));
+        const maxR = Math.max(1, ...roleN.map(o => o.ps.length));
+        roleN.forEach(({ r, ps }) => {
+            out.push(T(PAD, y + 14, en ? r : FOUNDRY_ROLE_ID[r], { size: 12 }));
+            out.push(R(bx, y + 3, bw, 14, '#1e293b'));
+            if (ps.length) out.push(R(bx, y + 3, ps.length / maxR * bw, 14, FOUNDRY_ROLE_COLOR[r]));
+            out.push(T(bx + bw + 10, y + 14, `${ps.length}` + (showPw && ps.length ? ` · ${en ? 'avg' : 'rata-rata'} ${foundryFmtPower(sum(ps) / ps.length)}` : ''), { size: 12 }));
+            y += 22;
+        });
+
+        // 3. Roster Battle urut slot
+        section(en ? `Battle roster by slot · Phase ${phase} target` : `Roster Battle per slot · target Phase ${phase}`);
+        const maxPw = Math.max(1, ...battle.map(pw));
+        const pbx = 190, pmax = 150;
+        battle.forEach(p => {
+            const col = FOUNDRY_ROLE_COLOR[p.foundry_role] || '#e5e7eb';
+            const w = showPw ? Math.max(3, pw(p) / maxPw * pmax) : pmax;
+            out.push(T(PAD, y + 13, `#${p.foundry_slot}`, { fill: '#94a3b8', size: 11 }));
+            out.push(T(PAD + 34, y + 13, foundryTrunc(p.nickname, 18), { size: 12 }));
+            out.push(R(pbx, y + 3, w, 12, col, 3, showPw ? '' : 'fill-opacity=".35"'));
+            if (showPw) out.push(T(pbx + w + 6, y + 13, foundryFmtPower(p.troops_power), { fill: '#cbd5e1', size: 11 }));
+            const role = en ? (p.foundry_role || '-') : (FOUNDRY_ROLE_ID[p.foundry_role] || p.foundry_role || '-');
+            out.push(T(400, y + 13, foundryTrunc(`${role} → ${foundryName(foundryTarget(p, phase))}`, 42), { fill: '#cbd5e1', size: 11 }));
+            y += 20;
+        });
+
+        // 4. Cadangan
+        if (subs.length) {
+            section(en ? 'Substitutes (enter after minute 3)' : 'Cadangan (masuk setelah menit 3)');
+            const half = Math.ceil(subs.length / 2);
+            subs.forEach((p, i) => {
+                const col = i < half ? 0 : 1, row = i < half ? i : i - half;
+                out.push(T(PAD + col * 370, y + 13 + row * 18, `S${p.foundry_slot} ${foundryTrunc(p.nickname, 18)}` + (p.foundry_cover ? ` (→ #${p.foundry_cover})` : ''), { size: 12 }));
+            });
+            y += half * 18;
+        }
+    }
+    y += 16;
+    out.push(T(PAD, y, `${en ? 'Generated' : 'Dibuat'} ${new Date().toLocaleString()}`, { fill: '#64748b', size: 10 }));
+    const H = y + 14;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" class="fy-chart-svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" role="img" aria-label="Foundry roster chart ${escapeHtml(legion)} Phase ${phase}"><rect width="${W}" height="${H}" rx="14" fill="#0b1220"/>${out.join('')}</svg>`;
+    return { svg, W, H };
+}
+
+function foundryChartNote() {
+    return foundryL('Bar bangunan = jumlah pemain ditugaskan (garis putih = minimal, merah = kurang dari minimal). Bar roster = Troops Power (terlihat setelah login).',
+        'Building bars = players assigned (white tick = minimum, red = below minimum). Roster bars = Troops Power (visible after login).');
+}
+
+function foundryChartHtml() {
+    const L = foundryChartLegion, ph = foundryChartPhase;
+    return `${foundryExtNotice()}<div class="fy-controls">
+        <button class="btn-apply" type="button" onclick="shareFoundryChartLink()">🔗 Live Share Chart</button>
+        <button class="btn-apply" type="button" onclick="foundryChartExportPng()">🖼️ ${foundryL('Ekspor PNG', 'Export PNG')}</button>
+        ${FOUNDRY_LEGIONS.map(l => `<button class="btn-apply ${l === L ? 'fy-on' : ''}" onclick="foundrySetChartLegion('${l}')">${l}</button>`).join('')}
+        ${[1, 2, 3].map(n => `<button class="btn-apply ${n === ph ? 'fy-on' : ''}" onclick="foundrySetChartPhase(${n})">Phase ${n} (${FOUNDRY_PHASE_RANGE[n - 1]} ${foundryL('mnt', 'min')})</button>`).join('')}</div>
+        ${foundryWarningsHtml(L, ph)}
+        <div class="fy-chart-wrap">${foundryChartSvg(L, ph).svg}</div>
+        <p class="fy-note">${foundryChartNote()}</p>`;
+}
+function foundrySetChartLegion(l) { foundryChartLegion = l; foundryRender(); }
+function foundrySetChartPhase(n) { foundryChartPhase = n; foundryRender(); }
+
+async function foundryChartExportPng(legion = foundryChartLegion, phase = foundryChartPhase) {
+    try {
+        const { svg, W, H } = foundryChartSvg(legion, phase);
+        const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
+        const img = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = url; });
+        const S = 2, c = document.createElement('canvas'); c.width = W * S; c.height = H * S;
+        c.getContext('2d').drawImage(img, 0, 0, W * S, H * S);
+        URL.revokeObjectURL(url);
+        const a = document.createElement('a');
+        a.href = c.toDataURL('image/png');
+        a.download = `Foundry_Chart_${legion.replace(/\s+/g, '_')}_Phase${phase}_${new Date().toISOString().slice(0, 10)}.png`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        showToast(foundryL('Gambar chart diunduh.', 'Chart image downloaded.'), 'success');
+    } catch (e) {
+        console.warn('Foundry chart export failed', e);
+        showToast(foundryL('Gagal membuat gambar chart.', 'Unable to generate chart image.'), 'error');
+    }
+}
+
+function buildFoundryChartShareUrl(legion = foundryChartLegion, phase = foundryChartPhase) {
+    const u = new URL(location.href); u.search = ''; u.hash = '';
+    u.searchParams.set('foundry', 'chart');
+    u.searchParams.set('legion', FOUNDRY_LEGIONS.includes(legion) ? legion : 'Legion 1');
+    u.searchParams.set('phase', String([1, 2, 3].includes(Number(phase)) ? Number(phase) : 1));
+    u.searchParams.set('lang', foundryLanguage);
+    return u.toString();
+}
+async function shareFoundryChartLink() {
+    const url = buildFoundryChartShareUrl();
+    const title = `Foundry Live Chart — ${foundryChartLegion} — Phase ${foundryChartPhase}`;
+    if (navigator.share) {
+        try { await navigator.share({ title, text: title, url }); return; }
+        catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    if (await fdtCopyText(url)) showToast(foundryL('Link Live Share Chart disalin.', 'Live Share Chart link copied.'), 'success');
+    else window.prompt('Copy Live Share Chart link:', url);
+}
+
+async function openFoundrySharedChart(legion, phase) {
+    const old = document.getElementById('foundry-shared-map'); if (old) old.remove();
+    if (foundryChartShareTimer) { clearInterval(foundryChartShareTimer); foundryChartShareTimer = null; }
+    legion = FOUNDRY_LEGIONS.includes(legion) ? legion : 'Legion 1';
+    phase = [1, 2, 3].includes(Number(phase)) ? Number(phase) : 1;
+    const urlLang = new URLSearchParams(location.search).get('lang');
+    if (urlLang === 'en' || urlLang === 'id') foundryLanguage = urlLang;
+    const en = () => foundryLanguage === 'en';
+    const wrap = document.createElement('div'); wrap.id = 'foundry-shared-map';
+    wrap.innerHTML = `<div class="fdt-shared-bar"><strong>📊 Foundry Live Chart · IDN</strong><span class="fdt-shared-actions"><button id="fy-share-lang">${en() ? '🇮🇩 Bahasa Indonesia' : '🇬🇧 English'}</button>
+      <button id="fy-share-l1">Legion 1</button><button id="fy-share-l2">Legion 2</button>
+      <button id="fy-share-p1">Phase 1</button><button id="fy-share-p2">Phase 2</button><button id="fy-share-p3">Phase 3</button>
+      <button id="fy-share-png">🖼️ PNG</button>
+      <button id="fy-share-refresh">⟳ ${en() ? 'Refresh' : 'Segarkan'}</button><button id="fy-share-site">${en() ? 'Open site' : 'Buka situs'}</button></span></div>
+      <div class="fdt-shared-body" id="fy-share-body"><div class="fdt-shared-msg">${en() ? 'Loading Foundry roster…' : 'Memuat data roster Foundry…'}</div></div>
+      <div class="fy-share-foot">${en() ? 'Read-only · Data loads from Supabase on open. Auto-refresh every 30 seconds.' : 'Hanya baca · Data dimuat dari Supabase saat dibuka. Refresh otomatis setiap 30 detik.'}</div>`;
+    document.body.appendChild(wrap); document.body.classList.add('fy-shared-open');
+    const body = wrap.querySelector('#fy-share-body');
+    let first = true;
+    const markActive = () => {
+        ['l1', 'l2'].forEach((x, i) => wrap.querySelector('#fy-share-' + x).classList.toggle('fy-share-active', legion === FOUNDRY_LEGIONS[i]));
+        [1, 2, 3].forEach(n => wrap.querySelector('#fy-share-p' + n).classList.toggle('fy-share-active', phase === n));
+    };
+    const load = async () => {
+        markActive();
+        const u = new URL(location.href); u.searchParams.set('legion', legion); u.searchParams.set('phase', String(phase));
+        history.replaceState({}, '', u);
+        try {
+            const client = getSupabase(); if (!client) throw new Error('Supabase tidak tersedia');
+            if (typeof authReady !== 'undefined') await authReady; // sesi login menentukan apakah Power ditampilkan
+            const { data, error } = await client.from('troops_power').select('*').eq('alliance', FOUNDRY_ALLIANCE).order('troops_power', { ascending: false });
+            if (error) throw error;
+            foundrySetPlayers(data); foundryChartLegion = legion; foundryChartPhase = phase;
+            const keep = body.scrollTop;
+            body.innerHTML = `<div class="fy-chart-wrap">${foundryChartSvg(legion, phase).svg}</div><p class="fy-note" style="text-align:center">${escapeHtml(foundryChartNote())}</p>`;
+            if (!first) body.scrollTop = keep;
+            first = false;
+        } catch (e) {
+            console.warn('Foundry live chart failed', e);
+            if (first) body.innerHTML = `<div class="fdt-shared-msg">${en() ? 'Unable to load chart. Check your connection or Supabase read permissions, then refresh.' : 'Tidak dapat memuat chart. Periksa koneksi atau izin baca Supabase, lalu refresh.'}</div>`;
+        }
+    };
+    wrap.querySelector('#fy-share-lang').onclick = () => {
+        foundryLanguage = foundryLanguage === 'en' ? 'id' : 'en'; localStorage.setItem('foundry-language', foundryLanguage);
+        const u = new URL(location.href); u.searchParams.set('lang', foundryLanguage); history.replaceState({}, '', u);
+        openFoundrySharedChart(legion, phase);
+    };
+    wrap.querySelector('#fy-share-l1').onclick = () => { legion = 'Legion 1'; load(); };
+    wrap.querySelector('#fy-share-l2').onclick = () => { legion = 'Legion 2'; load(); };
+    [1, 2, 3].forEach(n => wrap.querySelector('#fy-share-p' + n).onclick = () => { phase = n; load(); });
+    wrap.querySelector('#fy-share-refresh').onclick = load;
+    wrap.querySelector('#fy-share-png').onclick = () => foundryChartExportPng(legion, phase);
+    wrap.querySelector('#fy-share-site').onclick = () => { location.href = location.origin + location.pathname; };
+    await load();
+    foundryChartShareTimer = setInterval(load, 30000);
+    window.addEventListener('pagehide', () => { if (foundryChartShareTimer) clearInterval(foundryChartShareTimer); }, { once: true });
+}
+document.addEventListener('DOMContentLoaded', () => {
+    const q = new URLSearchParams(location.search);
+    if (q.get('foundry') === 'chart') openFoundrySharedChart(q.get('legion') || 'Legion 1', Number(q.get('phase') || 1));
+});
