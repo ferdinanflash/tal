@@ -236,6 +236,13 @@ Permission denied || Izin ditolak || 权限不足
 Check your connection and try again. || Periksa koneksi Anda lalu coba lagi. || 请检查网络连接后重试。
 
 
+# President info and redeem code help
+Edit President Info || Edit Info Presiden || 编辑会长信息
+This updates the footer shown to everyone. || Informasi ini memperbarui footer yang ditampilkan kepada semua orang. || 此处更新的信息将显示在所有人看到的页脚中。
+President Name || Nama Presiden || 会长名称
+Guild Name || Nama Guild || 公会名称
+One Player ID per line to redeem for multiple accounts at once, or pick an alliance above to auto-fill every ID in that alliance. || Masukkan satu Player ID per baris untuk menukarkan kode bagi beberapa akun sekaligus, atau pilih aliansi di atas untuk mengisi otomatis semua ID dalam aliansi tersebut. || 每行输入一个玩家 ID，即可同时为多个账号兑换；也可以选择上方的联盟，自动填入该联盟的所有 ID。
+
 # Legion roster and administration
 Login || Masuk || 登录
 Logout || Keluar || 退出登录
