@@ -1624,3 +1624,94 @@ body.fy-shared-open { overflow:hidden; }
   #language-current-flag { font-size:1rem; }
   .navbar-main-btns .btn-redeem, .navbar-main-btns .btn-admin, .navbar-main-btns .president-panel-top-btn { font-size:.72rem; padding:7px 4px; }
 }
+
+
+/* Match language switcher button dimensions to Redeem Code / Login buttons. */
+.navbar-main-btns > .site-language-switcher {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+    margin: 0;
+    box-sizing: border-box;
+}
+.navbar-main-btns > .site-language-switcher .language-current {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    line-height: 1.2;
+    gap: 5px;
+}
+@media screen and (max-width: 600px) {
+    .navbar-main-btns > .site-language-switcher { flex: 1 1 0; }
+    .navbar-main-btns > .site-language-switcher .language-current {
+        min-width: 0; min-height: 38px; padding: 8px 6px; font-size: 0.76rem;
+    }
+}
+@media screen and (min-width: 601px) {
+    .navbar-main-btns > .site-language-switcher { flex: 0 0 auto; width: 170px; }
+    .navbar-main-btns > .site-language-switcher .language-current { width: 100%; }
+}
+
+/* FINAL FIX: navbar action labels must stay inside their own button boxes. */
+.navbar-main-btns {
+  display: flex !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.navbar-main-btns > .site-language-switcher,
+.navbar-main-btns > .btn-redeem,
+.navbar-main-btns > .btn-admin,
+.navbar-main-btns > .president-panel-top-btn {
+  flex: 1 1 0 !important;
+  width: 0;
+  min-width: 0 !important;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.navbar-main-btns > .site-language-switcher .language-current,
+.navbar-main-btns > .btn-redeem,
+.navbar-main-btns > .btn-admin,
+.navbar-main-btns > .president-panel-top-btn {
+  min-width: 0 !important;
+  width: 100%;
+  height: auto;
+  min-height: 44px;
+  box-sizing: border-box;
+  white-space: normal !important;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  text-overflow: clip;
+  text-align: center;
+  line-height: 1.15;
+  padding: 7px 4px !important;
+  font-size: clamp(0.62rem, 2.6vw, 0.82rem) !important;
+}
+.navbar-main-btns > .site-language-switcher .language-current {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  gap: 3px;
+}
+.navbar-main-btns > .btn-redeem { gap: 4px; }
+.navbar-main-btns > .btn-redeem svg { flex: 0 0 auto; }
+.navbar-main-btns > .btn-redeem span,
+.navbar-main-btns > .president-panel-top-btn .pp-panel-word { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .navbar-main-btns { gap: 5px !important; }
+  .navbar-main-btns > .site-language-switcher .language-current,
+  .navbar-main-btns > .btn-redeem,
+  .navbar-main-btns > .btn-admin,
+  .navbar-main-btns > .president-panel-top-btn { min-height: 44px; padding: 6px 3px !important; font-size: clamp(0.58rem, 2.5vw, 0.72rem) !important; }
+  #language-current-code { font-size: inherit !important; }
+  #language-current-flag { font-size: 1rem !important; }
+}
