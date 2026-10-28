@@ -52,30 +52,64 @@ const FOUNDRY_VERIFIED = '27 Okt 2026';
 const FOUNDRY_PHASE_RANGE = ['0–15', '15–30', '30–60'];
 const foundryL = (id, en) => (typeof foundryLanguage !== 'undefined' && foundryLanguage === 'en') ? en : id;
 
-// Template 30 slot (urut dari terkuat). [role, phase1, phase2]. Target Phase 3 diturunkan di foundryTpl().
+// Template 30 slot (urut dari terkuat). [role, phase1, phase2, phase3?].
+// Strategi inti:
+//  P1: rebut Boiler (kontrol -50%) + Transit (teleport -50%), kunci Proto (poin besar), jaga Repair.
+//  P2: rally ke Imperial Foundry, buka Muni/Merc, tahan Proto/Repair.
+//  P3: tahan Foundry + Proto/Repair, Collector/Mobile buru Weapon Workshop.
 const FOUNDRY_TEMPLATE = [
-    ['Commander', 'transit', 'foundry'],
-    ['Rally Leader', 'proto1', 'foundry'], ['Rally Leader', 'proto2', 'foundry'],
-    ['Joiner', 'proto1', 'foundry'], ['Joiner', 'proto2', 'foundry'], ['Joiner', 'proto1', 'foundry'], ['Joiner', 'proto2', 'foundry'],
-    ['Holder', 'proto1', 'proto1'], ['Holder', 'proto2', 'proto2'],
-    ['Mobile', 'roam', 'foundry'], ['Mobile', 'roam', 'merc'], ['Mobile', 'roam', 'muni'], ['Mobile', 'roam', 'foundry'],
-    ['Holder', 'rep1', 'rep1'], ['Holder', 'rep1', 'rep1'], ['Holder', 'rep2', 'rep2'], ['Holder', 'rep2', 'rep2'],
-    ['Holder', 'rep3', 'rep3'], ['Holder', 'rep3', 'rep3'], ['Holder', 'rep4', 'rep4'], ['Holder', 'rep4', 'rep4'],
-    ['Holder', 'boiler', 'boiler'], ['Holder', 'boiler', 'muni'], ['Holder', 'boiler', 'merc'],
-    ['Holder', 'transit', 'transit'], ['Holder', 'transit', 'transit'],
-    ['Collector', 'roam', 'roam'], ['Collector', 'roam', 'roam'], ['Collector', 'roam', 'roam'], ['Collector', 'roam', 'roam']
+    // 1  Komandan: Transit P1 (mobilitas), Foundry P2-P3
+    ['Commander', 'transit', 'foundry', 'foundry'],
+    // 2-3  Rally Leader: Proto P1 (satu per sisi), Foundry P2-P3
+    ['Rally Leader', 'proto1', 'foundry', 'foundry'],
+    ['Rally Leader', 'proto2', 'foundry', 'foundry'],
+    // 4-7  Joiner: ikuti sisi Proto di P1, masuk Foundry di P2-P3
+    ['Joiner', 'proto1', 'foundry', 'foundry'],
+    ['Joiner', 'proto2', 'foundry', 'foundry'],
+    ['Joiner', 'proto1', 'foundry', 'foundry'],
+    ['Joiner', 'proto2', 'foundry', 'foundry'],
+    // 8-9  Holder Proto (tahan sepanjang battle)
+    ['Holder', 'proto1', 'proto1', 'proto1'],
+    ['Holder', 'proto2', 'proto2', 'proto2'],
+    // 10-13 Mobile: roam P1, respon Foundry/Merc/Muni P2, Workshop/Foundry P3
+    ['Mobile', 'roam', 'foundry', 'workshop'],
+    ['Mobile', 'roam', 'merc', 'foundry'],
+    ['Mobile', 'roam', 'muni', 'workshop'],
+    ['Mobile', 'roam', 'foundry', 'foundry'],
+    // 14-21 Holder Repair (2 per fasilitas)
+    ['Holder', 'rep1', 'rep1', 'rep1'],
+    ['Holder', 'rep1', 'rep1', 'rep1'],
+    ['Holder', 'rep2', 'rep2', 'rep2'],
+    ['Holder', 'rep2', 'rep2', 'rep2'],
+    ['Holder', 'rep3', 'rep3', 'rep3'],
+    ['Holder', 'rep3', 'rep3', 'rep3'],
+    ['Holder', 'rep4', 'rep4', 'rep4'],
+    ['Holder', 'rep4', 'rep4', 'rep4'],
+    // 22-24 Boiler holders → sebagian pindah ke Muni/Merc di P2, sisanya tahan Boiler
+    ['Holder', 'boiler', 'boiler', 'boiler'],
+    ['Holder', 'boiler', 'muni', 'muni'],
+    ['Holder', 'boiler', 'merc', 'merc'],
+    // 25-26 Transit holders
+    ['Holder', 'transit', 'transit', 'transit'],
+    ['Holder', 'transit', 'transit', 'transit'],
+    // 27-30 Collector: roam P1-P2 (Arsenal Supplies), Workshop P3
+    ['Collector', 'roam', 'roam', 'workshop'],
+    ['Collector', 'roam', 'roam', 'workshop'],
+    ['Collector', 'roam', 'roam', 'workshop'],
+    ['Collector', 'roam', 'roam', 'workshop']
 ];
-// Collector: Phase 2 kumpulkan Arsenal Supplies (roam), Phase 3 buru Weapon Workshop.
 function foundryTpl(slot) {
     const t = FOUNDRY_TEMPLATE[slot - 1];
-    return t ? { slot, role: t[0], p1: t[1], p2: t[2], p3: t[0] === 'Collector' ? 'workshop' : t[2] } : null;
+    if (!t) return null;
+    return { slot, role: t[0], p1: t[1], p2: t[2], p3: t[3] != null ? t[3] : t[2] };
 }
 
-// Minimal pemain per bangunan agar roster dianggap aman (dipakai peringatan roster).
+// Minimal pemain per bangunan (peringatan roster + skor planner).
+// Angka diset agar roster penuh (30) menutup semua, dan roster tipis tetap prioritas ke bangunan bernilai tinggi.
 const FOUNDRY_MIN = {
-    1: { proto1: 2, proto2: 2, rep1: 2, rep2: 2, rep3: 2, rep4: 2, boiler: 1, transit: 1 },
-    2: { foundry: 3, proto1: 1, proto2: 1, rep1: 2, rep2: 2, rep3: 2, rep4: 2, boiler: 1, muni: 1, merc: 1, transit: 1 },
-    3: { foundry: 3, proto1: 1, proto2: 1, rep1: 2, rep2: 2, rep3: 2, rep4: 2, boiler: 1, muni: 1, merc: 1, transit: 1, workshop: 1 }
+    1: { proto1: 2, proto2: 2, rep1: 1, rep2: 1, rep3: 1, rep4: 1, boiler: 2, transit: 2 },
+    2: { foundry: 4, proto1: 1, proto2: 1, rep1: 1, rep2: 1, rep3: 1, rep4: 1, boiler: 1, muni: 1, merc: 1, transit: 1 },
+    3: { foundry: 4, proto1: 1, proto2: 1, rep1: 1, rep2: 1, rep3: 1, rep4: 1, boiler: 1, muni: 1, merc: 1, transit: 1, workshop: 2 }
 };
 // Checklist kesiapan per pemain, disimpan sebagai bitmask di kolom foundry_ready.
 const FOUNDRY_CHECKS = [
@@ -126,55 +160,94 @@ function foundryNullPatch() {
     return patch;
 }
 
-// Urutan prioritas slot template bila pemain kurang dari 30: inti dulu (Commander, Rally Leader,
-// penjaga Prototype, Joiner), lalu Boiler/Transit, satu penjaga tiap Repair, Mobile, penjaga kedua,
-// dan terakhir Collector.
+// Urutan prioritas slot bila roster < 30 (pemutus seri + urutan cover cadangan).
+// Inti dulu: Commander, RL, Holder Proto, Joiner, Boiler, Transit, 1x tiap Repair, Mobile, Holder 2, Collector.
 const FOUNDRY_PRIORITY = [1, 2, 3, 8, 9, 4, 5, 6, 7, 22, 25, 14, 16, 18, 20, 10, 11, 12, 13, 15, 17, 19, 21, 23, 24, 26, 27, 28, 29, 30];
-// Planner tugas berbasis cakupan 3 fase. Untuk n pemain Battle, pilih n dari 30 posisi template satu per satu:
-// tiap langkah mengambil posisi yang paling menambah skor, yaitu poin/menit bangunan x lama fase x
-// (pemain terpasang / minimal pemain, maks 1) dijumlahkan untuk Phase 1, 2, 3 menurut FOUNDRY_MIN.
-// Kunci awal FOUNDRY_PLAN_FIRST (Commander, penjaga Boiler Room) selalu dipilih dulu. Bila skor seri, urutan FOUNDRY_PRIORITY yang menentukan.
-// Hasil diurutkan menurut nomor template, sehingga pemain terkuat mendapat role teratas (Commander, Rally Leader, ...).
-// Kunci awal (nomor slot template) yang selalu dipilih lebih dulu: Commander (transit Phase 1, Foundry Phase 2-3) lalu
-// penjaga Boiler Room (Phase 1-3). Boiler memotong waktu kontrol bangunan 50% sehingga harus direbut paling awal.
-const FOUNDRY_PLAN_FIRST = [1, 22];
-const FOUNDRY_PHASE_MINUTES = [15, 15, 30];   // Phase 1: 0-15, Phase 2: 15-30, Phase 3: 30-60
-const FOUNDRY_WORKSHOP_VALUE = 240;           // asumsi nilai Weapon Workshop (FOUNDRY_B.workshop.m = 0); ubah bila perlu
-// Cakupan per fase untuk daftar posisi template: pemain yang bertugas langsung + march penguatan Rally Leader/Joiner
-// (kalkulasi Joiner terbaru). Kekuatan posisi memakai urutan slot (slot kecil = lebih kuat) karena Power asli baru
-// dipasangkan setelah rencana dipilih.
+// Slot yang selalu diambil lebih dulu (sebelum greedy skor):
+// 1=Commander, 22=Boiler utama, 25=Transit utama, 2/3=Rally Leader, 8/9=Holder Proto.
+const FOUNDRY_PLAN_FIRST = [1, 22, 25, 2, 3, 8, 9];
+const FOUNDRY_PHASE_MINUTES = [15, 15, 30];   // P1 0-15, P2 15-30, P3 30-60
+const FOUNDRY_WORKSHOP_VALUE = 400;           // nilai efektif Workshop (tidak ada m di map; diasumsikan tinggi)
+// Multiplier strategis: bangunan yang mengubah tempo battle lebih berharga dari poin mentahnya.
+const FOUNDRY_STRAT_MULT = {
+    boiler: 1.8,   // kontrol bangunan -50% → harus diambil awal
+    transit: 1.5,  // cooldown teleport -50% → mobilitas tim
+    foundry: 1.35, // pusat + poin terbesar
+    proto1: 1.2, proto2: 1.2,
+    muni: 1.15, merc: 1.1,
+    workshop: 1.25
+};
+// Cakupan per fase = pemain di bangunan + march penguatan RL/Joiner (sama dengan tabel Garrison).
 function foundryPlanCover(positions) {
     const cnt = { 1: {}, 2: {}, 3: {} };
-    positions.forEach(t => [1, 2, 3].forEach(ph => { const k = t['p' + ph]; cnt[ph][k] = (cnt[ph][k] || 0) + 1; }));
+    positions.forEach(t => [1, 2, 3].forEach(ph => { const k = t['p' + ph]; if (k) cnt[ph][k] = (cnt[ph][k] || 0) + 1; }));
     const members = positions.filter(t => FOUNDRY_REINFORCE_ROLES.includes(t.role))
         .map(t => ({ id: 'plan' + t.slot, foundry_role: t.role, foundry_slot: t.slot, troops_power: 1000 - t.slot, foundry_p1: t.p1, foundry_p2: t.p2, foundry_p3: t.p3 }));
     const jp = foundryJoinerCalc(members, (k, ph) => cnt[ph][k] || 0);
     [1, 2, 3].forEach(ph => Object.entries(jp.phases[ph].add).forEach(([k, v]) => { cnt[ph][k] = (cnt[ph][k] || 0) + v; }));
     return cnt;
 }
+// Skor strategi: poin/menit × menit fase × multiplier strategis × rasio cakupan (diminishing setelah min),
+// + bonus first-capture di P1, + penalti bila Proto kiri/kanan timpang, + penalti missing critical.
 function foundryPlanScore(positions) {
     const cnt = foundryPlanCover(positions);
     let total = 0;
     [1, 2, 3].forEach(ph => {
+        const mins = FOUNDRY_PHASE_MINUTES[ph - 1];
         Object.entries(FOUNDRY_MIN[ph]).forEach(([k, min]) => {
-            const val = k === 'workshop' ? FOUNDRY_WORKSHOP_VALUE : (FOUNDRY_B[k].m || 0);
-            total += FOUNDRY_PHASE_MINUTES[ph - 1] * val * Math.min(cnt[ph][k] || 0, min) / min;
+            const n = cnt[ph][k] || 0;
+            const ppm = k === 'workshop' ? FOUNDRY_WORKSHOP_VALUE : (FOUNDRY_B[k].m || 0);
+            const mult = FOUNDRY_STRAT_MULT[k] || 1;
+            // sampai min: linear; kelebihan: diminishing (max +40% dari nilai min)
+            let cover;
+            if (n <= 0) cover = 0;
+            else if (n <= min) cover = n / min;
+            else cover = 1 + 0.4 * (1 - Math.exp(-(n - min) / Math.max(min, 1)));
+            total += mins * ppm * mult * cover;
+            // First-capture: hanya relevan di fase buka bangunan (ph bangunan)
+            if (ph === (FOUNDRY_B[k] && FOUNDRY_B[k].ph) && n > 0) {
+                const fc = k === 'workshop' ? FOUNDRY_WORKSHOP_VALUE * 2 : (FOUNDRY_B[k].f || 0);
+                total += fc * mult * Math.min(1, n / Math.max(min, 1)) * 0.25;
+            }
         });
+    });
+    // Balance Proto kiri/kanan di P1 (hindari semua stack di satu sisi)
+    const p1L = cnt[1].proto1 || 0, p1R = cnt[1].proto2 || 0;
+    if (p1L + p1R > 0) {
+        const bal = 1 - Math.abs(p1L - p1R) / Math.max(p1L + p1R, 1);
+        total += bal * 15 * 1200 * 0.15; // sedikit bonus balance
+    }
+    // Critical missing hard penalty (mendorong PLAN_FIRST + greedy menutup lubang)
+    const critical = [
+        [1, 'boiler'], [1, 'transit'], [1, 'proto1'], [1, 'proto2'],
+        [2, 'foundry'], [3, 'foundry']
+    ];
+    critical.forEach(([ph, k]) => {
+        const min = (FOUNDRY_MIN[ph][k] || 1);
+        const n = cnt[ph][k] || 0;
+        if (n < min) total -= FOUNDRY_PHASE_MINUTES[ph - 1] * (FOUNDRY_B[k].m || 600) * (FOUNDRY_STRAT_MULT[k] || 1) * (min - n) / min;
     });
     return total;
 }
 function foundryPlanTasks(n) {
     n = Math.max(0, Math.min(n, FOUNDRY_BATTLE_MAX));
-    const chosen = [], left = FOUNDRY_PRIORITY.map(foundryTpl);   // left tetap urut prioritas = pemutus seri
+    const chosen = [], left = FOUNDRY_PRIORITY.map(foundryTpl);
     while (chosen.length < n) {
-        let bi = 0, bs = -1;
-        if (chosen.length < FOUNDRY_PLAN_FIRST.length) bi = left.findIndex(t => t.slot === FOUNDRY_PLAN_FIRST[chosen.length]);
-        else left.forEach((t, i) => { const sc = foundryPlanScore(chosen.concat(t)); if (sc > bs) { bs = sc; bi = i; } });
+        let bi = 0, bs = -Infinity;
+        // Ambil slot kunci dulu selama masih ada di sisa kandidat
+        if (chosen.length < FOUNDRY_PLAN_FIRST.length) {
+            const need = FOUNDRY_PLAN_FIRST[chosen.length];
+            const idx = left.findIndex(t => t && t.slot === need);
+            if (idx >= 0) bi = idx;
+            else left.forEach((t, i) => { const sc = foundryPlanScore(chosen.concat(t)); if (sc > bs) { bs = sc; bi = i; } });
+        } else {
+            left.forEach((t, i) => { const sc = foundryPlanScore(chosen.concat(t)); if (sc > bs) { bs = sc; bi = i; } });
+        }
         chosen.push(left.splice(bi, 1)[0]);
     }
     return chosen.sort((a, b) => a.slot - b.slot);
 }
-function foundryShortages(positions) {   // positions: hasil foundryPlanTasks (posisi template terpilih)
+function foundryShortages(positions) {
     const out = [], cnt = foundryPlanCover(positions);
     [1, 2, 3].forEach(ph => Object.entries(FOUNDRY_MIN[ph]).forEach(([key, min]) => {
         const n = cnt[ph][key] || 0;
