@@ -46,8 +46,10 @@ function exportToCSV() {
         return base;
     });
 
-    const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // CRLF line endings + UTF-8 BOM: without the BOM, Excel on Windows assumes
+    // ANSI and shows Chinese (Mandarin) / other non-Latin text as garbled characters.
+    const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\r\n");
+    const blob = new Blob(['\uFEFF', csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
