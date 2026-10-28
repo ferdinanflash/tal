@@ -74,8 +74,8 @@ function foundryTpl(slot) {
 // Minimal pemain per bangunan agar roster dianggap aman (dipakai peringatan roster).
 const FOUNDRY_MIN = {
     1: { proto1: 2, proto2: 2, rep1: 2, rep2: 2, rep3: 2, rep4: 2, boiler: 1, transit: 1 },
-    2: { foundry: 3, proto1: 1, proto2: 1, rep1: 2, rep2: 2, rep3: 2, rep4: 2, muni: 1, merc: 1, transit: 1 },
-    3: { foundry: 3, proto1: 1, proto2: 1, rep1: 2, rep2: 2, rep3: 2, rep4: 2, workshop: 1 }
+    2: { foundry: 3, proto1: 1, proto2: 1, rep1: 2, rep2: 2, rep3: 2, rep4: 2, boiler: 1, muni: 1, merc: 1, transit: 1 },
+    3: { foundry: 3, proto1: 1, proto2: 1, rep1: 2, rep2: 2, rep3: 2, rep4: 2, boiler: 1, muni: 1, merc: 1, transit: 1, workshop: 1 }
 };
 // Checklist kesiapan per pemain, disimpan sebagai bitmask di kolom foundry_ready.
 const FOUNDRY_CHECKS = [
@@ -132,8 +132,11 @@ const FOUNDRY_PRIORITY = [1, 2, 3, 8, 9, 4, 5, 6, 7, 22, 25, 14, 16, 18, 20, 10,
 // Planner tugas berbasis cakupan 3 fase. Untuk n pemain Battle, pilih n dari 30 posisi template satu per satu:
 // tiap langkah mengambil posisi yang paling menambah skor, yaitu poin/menit bangunan x lama fase x
 // (pemain terpasang / minimal pemain, maks 1) dijumlahkan untuk Phase 1, 2, 3 menurut FOUNDRY_MIN.
-// Posisi pertama selalu Commander. Bila skor seri, urutan FOUNDRY_PRIORITY yang menentukan.
+// Kunci awal FOUNDRY_PLAN_FIRST (Commander, penjaga Boiler Room) selalu dipilih dulu. Bila skor seri, urutan FOUNDRY_PRIORITY yang menentukan.
 // Hasil diurutkan menurut nomor template, sehingga pemain terkuat mendapat role teratas (Commander, Rally Leader, ...).
+// Kunci awal (nomor slot template) yang selalu dipilih lebih dulu: Commander (transit Phase 1, Foundry Phase 2-3) lalu
+// penjaga Boiler Room (Phase 1-3). Boiler memotong waktu kontrol bangunan 50% sehingga harus direbut paling awal.
+const FOUNDRY_PLAN_FIRST = [1, 22];
 const FOUNDRY_PHASE_MINUTES = [15, 15, 30];   // Phase 1: 0-15, Phase 2: 15-30, Phase 3: 30-60
 const FOUNDRY_WORKSHOP_VALUE = 240;           // asumsi nilai Weapon Workshop (FOUNDRY_B.workshop.m = 0); ubah bila perlu
 function foundryPlanScore(positions) {
@@ -153,7 +156,7 @@ function foundryPlanTasks(n) {
     const chosen = [], left = FOUNDRY_PRIORITY.map(foundryTpl);   // left tetap urut prioritas = pemutus seri
     while (chosen.length < n) {
         let bi = 0, bs = -1;
-        if (chosen.length === 0) bi = left.findIndex(t => t.slot === 1);
+        if (chosen.length < FOUNDRY_PLAN_FIRST.length) bi = left.findIndex(t => t.slot === FOUNDRY_PLAN_FIRST[chosen.length]);
         else left.forEach((t, i) => { const sc = foundryPlanScore(chosen.concat(t)); if (sc > bs) { bs = sc; bi = i; } });
         chosen.push(left.splice(bi, 1)[0]);
     }
