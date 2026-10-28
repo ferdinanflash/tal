@@ -922,6 +922,87 @@ function foundrySetAllTaskFilters(checked) {
     foundryRender();
 }
 
+// Hitung posisi mark nama pemain (anti-tumpuk + garis penghubung ke bangunan).
+// Dipakai SVG interaktif dan export PNG agar hasilnya konsisten.
+// filters: Set role | null/undefined = tampilkan semua.
+function foundryComputeTaskMarks(L, ph, filters) {
+    const PAD = 4, MARK_H = 20, GAP = 4;
+    const SLOT_RING = [
+        [0, 36], [0, -36], [42, 0], [-42, 0],
+        [36, 28], [-36, 28], [36, -28], [-36, -28],
+        [0, 58], [0, -58], [64, 0], [-64, 0],
+        [50, 46], [-50, 46], [50, -46], [-50, -46],
+        [22, 72], [-22, 72], [22, -72], [-22, -72],
+        [78, 22], [-78, 22], [78, -22], [-78, -22]
+    ];
+    const items = [];
+    Object.entries(FOUNDRY_B).filter(([, b]) => b.x).forEach(([key, b]) => {
+        const ps = foundryAssigned(L, key, ph).filter(p => !filters || filters.has(p.foundry_role || ''));
+        ps.forEach((p, i) => {
+            const col = FOUNDRY_ROLE_COLOR[p.foundry_role] || '#e5e7eb';
+            const rawName = (p.nickname || '?').trim();
+            const label = rawName.length > 8 ? rawName.slice(0, 7) + '…' : rawName;
+            const tw = Math.max(28, Math.min(72, label.length * 7 + 12));
+            const slot = SLOT_RING[i % SLOT_RING.length];
+            const ring = Math.floor(i / SLOT_RING.length);
+            const scale = 1 + ring * 0.55;
+            let x = b.x + slot[0] * scale;
+            let y = b.y + slot[1] * scale;
+            x = Math.max(tw / 2 + PAD, Math.min(FOUNDRY_MAP.w - tw / 2 - PAD, x));
+            y = Math.max(MARK_H / 2 + PAD, Math.min(FOUNDRY_MAP.h - MARK_H / 2 - PAD, y));
+            items.push({ p, b, key, col, label, tw, x, y, bx: b.x, by: b.y, markH: MARK_H });
+        });
+    });
+    const overlaps = (a, b) => {
+        const dx = Math.abs(a.x - b.x), dy = Math.abs(a.y - b.y);
+        return dx < (a.tw + b.tw) / 2 + GAP && dy < MARK_H + GAP;
+    };
+    for (let iter = 0; iter < 28; iter++) {
+        let moved = false;
+        for (let i = 0; i < items.length; i++) {
+            for (let j = i + 1; j < items.length; j++) {
+                const a = items[i], b = items[j];
+                if (!overlaps(a, b)) continue;
+                const dx = a.x - b.x || 0.01, dy = a.y - b.y || 0.01;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                const needX = (a.tw + b.tw) / 2 + GAP - Math.abs(dx);
+                const needY = MARK_H + GAP - Math.abs(dy);
+                const push = 0.55;
+                if (needX > 0 && needX >= needY) {
+                    const sx = (dx / dist) * needX * push;
+                    a.x += sx; b.x -= sx;
+                } else if (needY > 0) {
+                    const sy = (dy / dist) * needY * push;
+                    a.y += sy; b.y -= sy;
+                }
+                moved = true;
+            }
+        }
+        items.forEach(it => {
+            it.x = Math.max(it.tw / 2 + PAD, Math.min(FOUNDRY_MAP.w - it.tw / 2 - PAD, it.x));
+            it.y = Math.max(MARK_H / 2 + PAD, Math.min(FOUNDRY_MAP.h - MARK_H / 2 - PAD, it.y));
+        });
+        if (!moved) break;
+    }
+    // Hitung titik ujung garis di tepi label (paling dekat ke bangunan)
+    items.forEach(it => {
+        const halfW = it.tw / 2, halfH = MARK_H / 2;
+        let ex = it.x, ey = it.y;
+        const dx = it.bx - it.x, dy = it.by - it.y;
+        if (Math.abs(dx) * halfH > Math.abs(dy) * halfW) {
+            ex = it.x + (dx > 0 ? halfW : -halfW);
+            ey = it.y + (halfW * dy) / (Math.abs(dx) || 1);
+            ey = Math.max(it.y - halfH, Math.min(it.y + halfH, ey));
+        } else {
+            ey = it.y + (dy > 0 ? halfH : -halfH);
+            ex = it.x + (halfH * dx) / (Math.abs(dy) || 1);
+            ex = Math.max(it.x - halfW, Math.min(it.x + halfW, ex));
+        }
+        it.ex = ex; it.ey = ey;
+    });
+    return items;
+}
+
 // Isi SVG peta (gambar + lingkaran bangunan + mark slot). Dipakai halaman utama dan Live Share.
 // opts: { interactive, filters (Set | null), marks (bool) }
 function foundryMapSvgInner(L, ph, opts = {}) {
@@ -932,21 +1013,19 @@ function foundryMapSvgInner(L, ph, opts = {}) {
             <circle cx="${b.x}" cy="${b.y}" r="${b.r}" fill="${b.c}" fill-opacity=".55" stroke="${b.c}" stroke-width="8"/>
             <text x="${b.x}" y="${b.y + 16}" text-anchor="middle" class="fy-n">${n}</text></g>`;
     }).join('');
-    const marks = opts.marks === false ? '' : Object.entries(FOUNDRY_B).filter(([, b]) => b.x).map(([key, b]) => {
-        const ps = foundryAssigned(L, key, ph).filter(p => !opts.filters || opts.filters.has(p.foundry_role || ''));
-        return ps.map((p, i) => {
-            const col = FOUNDRY_ROLE_COLOR[p.foundry_role] || '#e5e7eb';
-            // Nama singkat: max 8 karakter agar mark tidak terlalu lebar
-            const rawName = (p.nickname || '?').trim();
-            const label = rawName.length > 8 ? rawName.slice(0, 7) + '…' : rawName;
-            // Lebar dinamis berdasarkan panjang nama (~7px/char + padding)
-            const tw = Math.max(28, Math.min(72, label.length * 7 + 12));
-            const dx = ((i % 3) - 1) * (tw + 6), dy = 34 + Math.floor(i / 3) * 24;
-            const x = Math.max(tw / 2 + 4, Math.min(FOUNDRY_MAP.w - tw / 2 - 4, Math.max(53, Math.min(FOUNDRY_MAP.w - 53, b.x)) + dx));
-            const y = Math.max(14, Math.min(FOUNDRY_MAP.h - 14, b.y + dy));
-            return `<g class="fy-task-mark" tabindex="0" role="img" aria-label="#${p.foundry_slot} ${escapeHtml(p.nickname)} — ${escapeHtml(p.foundry_role || 'Task')}" transform="translate(${x},${y})"><title>#${p.foundry_slot} · ${escapeHtml(p.nickname)} · ${escapeHtml(p.foundry_role || 'Task')} · ${escapeHtml(b.n)}</title><rect x="${-tw / 2}" y="-10" width="${tw}" height="20" rx="6" fill="${col}" stroke="#111827" stroke-width="2"/><text x="0" y="5" text-anchor="middle" class="fy-task-mark-text">${escapeHtml(label)}</text></g>`;
+
+    let marks = '';
+    if (opts.marks !== false) {
+        const items = foundryComputeTaskMarks(L, ph, opts.filters);
+        const lines = items.map(it =>
+            `<line class="fy-task-line" x1="${it.bx}" y1="${it.by}" x2="${it.ex}" y2="${it.ey}" stroke="${it.col}" stroke-width="1.25" stroke-opacity="0.75"/>`
+        ).join('');
+        const labels = items.map(it => {
+            const { p, b, col, label, tw, x, y, markH } = it;
+            return `<g class="fy-task-mark" tabindex="0" role="img" aria-label="#${p.foundry_slot} ${escapeHtml(p.nickname)} — ${escapeHtml(p.foundry_role || 'Task')}" transform="translate(${x},${y})"><title>#${p.foundry_slot} · ${escapeHtml(p.nickname)} · ${escapeHtml(p.foundry_role || 'Task')} · ${escapeHtml(b.n)}</title><rect x="${-tw / 2}" y="${-markH / 2}" width="${tw}" height="${markH}" rx="6" fill="${col}" stroke="#111827" stroke-width="2"/><text x="0" y="4" text-anchor="middle" class="fy-task-mark-text">${escapeHtml(label)}</text></g>`;
         }).join('');
-    }).join('');
+        marks = `<g class="fy-task-lines" pointer-events="none">${lines}</g>${labels}`;
+    }
     return `<image href="${FOUNDRY_MAP.src}" x="0" y="0" width="${FOUNDRY_MAP.w}" height="${FOUNDRY_MAP.h}"/>${nodes}<g class="fy-task-zone-labels"><text x="38" y="22" class="fy-zone-label">ROAM</text><text x="516" y="22" text-anchor="middle" class="fy-zone-label">WORKSHOP</text></g>${marks}`;
 }
 
@@ -1035,18 +1114,19 @@ async function foundryExportPng(legion = foundryMapLegion, phase = foundryPhase)
             });
             x.textAlign = 'center'; x.font = `800 12px ${font}`; x.lineWidth = 3; x.strokeStyle = 'rgba(0,0,0,.8)'; x.fillStyle = '#fff';
             [['ROAM', 38], ['WORKSHOP', 516]].forEach(([t, px]) => { x.strokeText(t, px, oy + 22); x.fillText(t, px, oy + 22); });
-            Object.entries(FOUNDRY_B).filter(([, b]) => b.x).forEach(([key, b]) => {
-                foundryAssigned(legion, key, ph).forEach((p, i) => {
-                    const rawName = (p.nickname || '?').trim();
-                    const label = rawName.length > 8 ? rawName.slice(0, 7) + '…' : rawName;
-                    const tw = Math.max(28, Math.min(72, label.length * 7 + 12));
-                    const mx = Math.max(tw / 2 + 4, Math.min(W - tw / 2 - 4, Math.max(53, Math.min(W - 53, b.x)) + ((i % 3) - 1) * (tw + 6)));
-                    const my = oy + Math.max(14, Math.min(MH - 14, b.y + 34 + Math.floor(i / 3) * 24));
-                    x.beginPath(); if (x.roundRect) x.roundRect(mx - tw / 2, my - 10, tw, 20, 6); else x.rect(mx - tw / 2, my - 10, tw, 20);
-                    x.fillStyle = FOUNDRY_ROLE_COLOR[p.foundry_role] || '#e5e7eb'; x.fill();
-                    x.lineWidth = 2; x.strokeStyle = '#111827'; x.stroke();
-                    x.fillStyle = '#111827'; x.font = `800 10px ${font}`; x.textAlign = 'center'; x.fillText(label, mx, my + 1);
-                });
+            // Mark nama + garis penghubung (posisi anti-tumpuk, sama dengan SVG)
+            const markItems = foundryComputeTaskMarks(legion, ph, null);
+            markItems.forEach(it => {
+                x.strokeStyle = it.col; x.globalAlpha = 0.75; x.lineWidth = 1.25; x.lineCap = 'round';
+                x.beginPath(); x.moveTo(it.bx, oy + it.by); x.lineTo(it.ex, oy + it.ey); x.stroke();
+                x.globalAlpha = 1;
+            });
+            markItems.forEach(it => {
+                const mx = it.x, my = oy + it.y, tw = it.tw, h = it.markH;
+                x.beginPath(); if (x.roundRect) x.roundRect(mx - tw / 2, my - h / 2, tw, h, 6); else x.rect(mx - tw / 2, my - h / 2, tw, h);
+                x.fillStyle = it.col; x.fill();
+                x.lineWidth = 2; x.strokeStyle = '#111827'; x.stroke();
+                x.fillStyle = '#111827'; x.font = `800 10px ${font}`; x.textAlign = 'center'; x.fillText(it.label, mx, my + 1);
             });
         });
         // daftar pemain & tugas

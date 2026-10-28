@@ -1519,6 +1519,7 @@ body.fdt-shared-open { overflow:hidden; }
 .fy-task-filter small { display: block; color: #9ca3af; margin-top: 8px; }
 .fy-task-mark { cursor: help; pointer-events: all; }
 .fy-task-mark-text { fill: #111827; font-size: 10px; font-weight: 800; pointer-events: none; }
+.fy-task-line { pointer-events: none; stroke-linecap: round; }
 .fy-zone-label { fill: #fff; font-size: 12px; font-weight: 800; paint-order: stroke; stroke: rgba(0,0,0,.8); stroke-width: 3px; }
 
 /* Foundry read-only live share map */
