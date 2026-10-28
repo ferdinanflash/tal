@@ -33,9 +33,9 @@ LOCAL: || LOKAL: || 本地时间：
 UTC: || UTC: || UTC：
 PRESIDENT PANEL || PANEL PRESIDEN || 会长面板
 Foundry Battle Roster || Roster Pertempuran Foundry || Foundry 战斗名单
-Imperial Foundry || Foundry Kekaisaran || 帝国铸造厂
-Prototype Site I || Lokasi Prototipe I || 原型地点 I
-Prototype Site II || Lokasi Prototipe II || 原型地点 II
+Imperial Foundry || Tanur Imperial || 帝国铸造厂
+Prototype Site I || Situs Prototipe I || 原型地点 I
+Prototype Site II || Situs Prototipe II || 原型地点 II
 Repair Facility IV || Fasilitas Perbaikan IV || 维修设施 IV
 Repair Facility II || Fasilitas Perbaikan II || 维修设施 II
 Repair Facility III || Fasilitas Perbaikan III || 维修设施 III
@@ -113,7 +113,7 @@ Type game ID or nickname... || Ketik Game ID atau nama panggilan... || 输入游
 Bulk Assign Foundry || Penugasan Massal Foundry || Foundry 批量分配
 The selected players fill the next free slots, ordered from highest Power. || Pemain terpilih mengisi slot kosong berikutnya, diurutkan dari Power tertinggi. || 所选玩家按战力从高到低填入下一个空位。
 No Commander assigned. || Commander belum ditetapkan. || 尚未分配指挥官。
-No Rally Leader to attack the Imperial Foundry. || Belum ada Rally Leader untuk menyerang Imperial Foundry. || 尚未分配集结队长攻击帝国铸造厂。
+No Rally Leader to attack the Imperial Foundry. || Belum ada Pemimpin Rally untuk menyerang Tanur Imperial. || 尚未分配集结队长攻击帝国铸造厂。
 Battle || Pertempuran || 战斗
 Substitute || Cadangan || 替补
 Foundry Live Map || Peta Live Foundry || Foundry 实时地图
@@ -555,7 +555,7 @@ Redeem Code || Tukarkan Kode || 兑换码 || I-redeem ang Code || Riscatta codic
 Login || Masuk || 登录 || Mag-login || Accedi || เข้าสู่ระบบ
 PRESIDENT PANEL || PANEL PRESIDEN || 会长面板 || PANEL NG PANGULO || PANNELLO DEL PRESIDENTE || แผงประธาน
 Foundry Battle Roster || Roster Pertempuran Foundry || Foundry 战斗名单 || Listahan ng Labanan sa Foundry || Elenco battaglia Foundry || รายชื่อการต่อสู้ Foundry
-Imperial Foundry || Foundry Kekaisaran || 帝国铸造厂 || Imperial Foundry || Fonderia imperiale || โรงหล่อจักรวรรดิ
+Imperial Foundry || Tanur Imperial || 帝国铸造厂 || Imperial Foundry || Fonderia imperiale || โรงหล่อจักรวรรดิ
 Strategy Guide || Panduan Strategi || 战略指南 || Gabay sa Estratehiya || Guida strategica || คู่มือกลยุทธ์
 Live Map Share || Bagikan Peta Live || 实时地图分享 || Ibahagi ang Live Map || Condivisione mappa live || แชร์แผนที่สด
 Select Player || Pilih Pemain || 选择玩家 || Pumili ng Manlalaro || Seleziona giocatore || เลือกผู้เล่น
