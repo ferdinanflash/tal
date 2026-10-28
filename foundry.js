@@ -139,14 +139,25 @@ const FOUNDRY_PRIORITY = [1, 2, 3, 8, 9, 4, 5, 6, 7, 22, 25, 14, 16, 18, 20, 10,
 const FOUNDRY_PLAN_FIRST = [1, 22];
 const FOUNDRY_PHASE_MINUTES = [15, 15, 30];   // Phase 1: 0-15, Phase 2: 15-30, Phase 3: 30-60
 const FOUNDRY_WORKSHOP_VALUE = 240;           // asumsi nilai Weapon Workshop (FOUNDRY_B.workshop.m = 0); ubah bila perlu
+// Cakupan per fase untuk daftar posisi template: pemain yang bertugas langsung + march penguatan Rally Leader/Joiner
+// (kalkulasi Joiner terbaru). Kekuatan posisi memakai urutan slot (slot kecil = lebih kuat) karena Power asli baru
+// dipasangkan setelah rencana dipilih.
+function foundryPlanCover(positions) {
+    const cnt = { 1: {}, 2: {}, 3: {} };
+    positions.forEach(t => [1, 2, 3].forEach(ph => { const k = t['p' + ph]; cnt[ph][k] = (cnt[ph][k] || 0) + 1; }));
+    const members = positions.filter(t => FOUNDRY_REINFORCE_ROLES.includes(t.role))
+        .map(t => ({ id: 'plan' + t.slot, foundry_role: t.role, foundry_slot: t.slot, troops_power: 1000 - t.slot, foundry_p1: t.p1, foundry_p2: t.p2, foundry_p3: t.p3 }));
+    const jp = foundryJoinerCalc(members, (k, ph) => cnt[ph][k] || 0);
+    [1, 2, 3].forEach(ph => Object.entries(jp.phases[ph].add).forEach(([k, v]) => { cnt[ph][k] = (cnt[ph][k] || 0) + v; }));
+    return cnt;
+}
 function foundryPlanScore(positions) {
+    const cnt = foundryPlanCover(positions);
     let total = 0;
     [1, 2, 3].forEach(ph => {
-        const cnt = {};
-        positions.forEach(t => { const k = t['p' + ph]; cnt[k] = (cnt[k] || 0) + 1; });
         Object.entries(FOUNDRY_MIN[ph]).forEach(([k, min]) => {
             const val = k === 'workshop' ? FOUNDRY_WORKSHOP_VALUE : (FOUNDRY_B[k].m || 0);
-            total += FOUNDRY_PHASE_MINUTES[ph - 1] * val * Math.min(cnt[k] || 0, min) / min;
+            total += FOUNDRY_PHASE_MINUTES[ph - 1] * val * Math.min(cnt[ph][k] || 0, min) / min;
         });
     });
     return total;
@@ -162,10 +173,10 @@ function foundryPlanTasks(n) {
     }
     return chosen.sort((a, b) => a.slot - b.slot);
 }
-function foundryShortages(list) {
-    const out = [];
+function foundryShortages(positions) {   // positions: hasil foundryPlanTasks (posisi template terpilih)
+    const out = [], cnt = foundryPlanCover(positions);
     [1, 2, 3].forEach(ph => Object.entries(FOUNDRY_MIN[ph]).forEach(([key, min]) => {
-        const n = list.filter(o => foundryTarget(o, ph) === key).length;
+        const n = cnt[ph][key] || 0;
         if (n < min) out.push(`P${ph} ${foundryName(key)} ${n}/${min}`);
     }));
     return out;
@@ -307,9 +318,10 @@ function foundryWarnings(legion, phase) {
     if (rally.orphans.length) out.push({ lvl: 'warn', msg: foundryL(`${rally.orphans.length} Joiner belum punya Rally Leader untuk bergabung.`, `${rally.orphans.length} Joiner(s) have no Rally Leader to join.`) });
     const noTarget = battle.filter(p => !p.foundry_role || !p.foundry_p1 || !p.foundry_p2).length;
     if (noTarget) out.push({ lvl: 'warn', msg: foundryL(`${noTarget} pemain Battle belum punya tugas atau target lengkap.`, `${noTarget} battle players have no complete task or target.`) });
+    const jplan = foundryJoinerPlan(legion);   // march penguatan Rally Leader/Joiner ikut dihitung (sama dengan tabel Garrison)
     (phase ? [phase] : [1, 2, 3]).forEach(ph => {
         Object.entries(FOUNDRY_MIN[ph]).forEach(([key, min]) => {
-            const n = foundryAssigned(legion, key, ph).length;
+            const n = foundryAssigned(legion, key, ph).length + (jplan.phases[ph].add[key] || 0);
             if (n < min) out.push({ lvl: 'warn', msg: foundryL(`Phase ${ph}: ${foundryName(key)} baru ${n} dari minimal ${min} pemain.`, `Phase ${ph}: ${foundryName(key)} has ${n} of at least ${min} players.`) });
         });
     });
@@ -368,10 +380,12 @@ function foundrySetJoinerMarches(n) {
     foundryRender();
 }
 const FOUNDRY_REINFORCE_ROLES = ['Rally Leader', 'Joiner'];   // peran yang mengirim march penguatan ke bangunan lain
-function foundryJoinerPlan(legion) {
+// Inti perhitungan march penguatan (dipakai tampilan Garrison DAN planner Isi Otomatis, jadi hasilnya selalu sama).
+// members: pemain/posisi Rally Leader & Joiner ({id, foundry_role, foundry_slot, troops_power, foundry_p1/p2/p3});
+// assignedCount(k, ph): jumlah pemain yang bertugas langsung di bangunan k pada fase ph.
+function foundryJoinerCalc(members, assignedCount) {
     const pw = p => Number(p.troops_power) || 0;
-    const joiners = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle' && FOUNDRY_REINFORCE_ROLES.includes(p.foundry_role))
-        .sort((a, b) => pw(b) - pw(a) || a.foundry_slot - b.foundry_slot);
+    const joiners = members.slice().sort((a, b) => pw(b) - pw(a) || a.foundry_slot - b.foundry_slot);
     const jr = p => p.foundry_role === 'Joiner' ? 0 : 1;   // seri: Joiner lebih dulu daripada Rally Leader
     const phases = {};
     [1, 2, 3].forEach(ph => {
@@ -380,14 +394,14 @@ function foundryJoinerPlan(legion) {
         const can = (j, k) => left.get(j.id) > 0 && foundryTarget(j, ph) !== k && !asg.get(j.id).includes(k);
         const send = (j, k) => { asg.get(j.id).push(k); left.set(j.id, left.get(j.id) - 1); add[k] = (add[k] || 0) + 1; };
         blds.forEach(k => {
-            let need = (FOUNDRY_MIN[ph][k] || 0) - foundryAssigned(legion, k, ph).length;
+            let need = (FOUNDRY_MIN[ph][k] || 0) - assignedCount(k, ph);
             while (need > 0) {
                 const c = joiners.filter(j => can(j, k)).sort((a, b) => left.get(b.id) - left.get(a.id) || jr(a) - jr(b) || pw(b) - pw(a))[0];
                 if (!c) break;
                 send(c, k); need--;
             }
         });
-        const gar = k => foundryAssigned(legion, k, ph).length + (add[k] || 0);
+        const gar = k => assignedCount(k, ph) + (add[k] || 0);
         for (;;) {   // sisa march: bangunan dengan nilai poin / (garrison + 1) tertinggi lebih dulu, agar menyebar
             const js = joiners.filter(j => left.get(j.id) > 0).sort((a, b) => left.get(b.id) - left.get(a.id) || jr(a) - jr(b) || pw(b) - pw(a));
             let pick = null;
@@ -401,6 +415,10 @@ function foundryJoinerPlan(legion) {
         phases[ph] = { asg, add, left };
     });
     return { joiners, phases };
+}
+function foundryJoinerPlan(legion) {
+    const members = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle' && FOUNDRY_REINFORCE_ROLES.includes(p.foundry_role));
+    return foundryJoinerCalc(members, (k, ph) => foundryAssigned(legion, k, ph).length);
 }
 function foundryJoinerMarchHtml(legion) {
     const plan = foundryJoinerPlan(legion);
@@ -491,7 +509,7 @@ async function foundryRecalcTasks(legion) {
     if (!ps.length) { showToast(foundryL(`${legion} belum punya pemain Battle.`, `${legion} has no battle players.`), 'info'); return; }
     const plan = foundryPlanTasks(ps.length);
     const assign = ps.map((p, i) => ({ p, pos: plan[i], slot: i + 1 }));
-    const short = foundryShortages(plan.map(t => ({ foundry_p1: t.p1, foundry_p2: t.p2, foundry_p3: t.p3 })));
+    const short = foundryShortages(plan);
     const msg = foundryL(
         `Hitung ulang tugas ${legion}? ${ps.length} pemain Battle diurutkan berdasarkan Power; nomor slot, role, dan target Phase 1–3 akan ditimpa (cadangan tidak berubah). ` + (short.length ? `Belum cukup penjaga: ${short.slice(0, 6).join(', ')}${short.length > 6 ? ` +${short.length - 6} lagi` : ''}.` : 'Semua bangunan terisi cukup.'),
         `Recalculate ${legion} tasks? ${ps.length} battle players are ranked by power; slot numbers, roles and Phase 1–3 targets will be overwritten (substitutes unchanged). ` + (short.length ? `Not enough players: ${short.slice(0, 6).join(', ')}${short.length > 6 ? ` +${short.length - 6} more` : ''}.` : 'Every building has enough players.'));
@@ -804,7 +822,7 @@ function foundryLegionJobs(l) {
         if (foundryExt) patch.foundry_cover = covers[j];
         jobs.push({ p, patch });
     });
-    const short = foundryShortages(plan.map(t => ({ foundry_p1: t.p1, foundry_p2: t.p2, foundry_p3: t.p3 })));
+    const short = foundryShortages(plan);
     return { jobs: jobs.filter(j => Object.keys(j.patch).some(k => (j.p[k] ?? null) !== (j.patch[k] ?? null))), short, nBattle: battle.length };
 }
 
@@ -816,8 +834,8 @@ async function foundryAutoFill() {
     const results = FOUNDRY_LEGIONS.map(l => ({ l, ...foundryLegionJobs(l) }));
     const gaps = results.filter(r => r.short.length).map(r => `${r.l}: ${r.short.slice(0, 4).join(', ')}${r.short.length > 4 ? ` +${r.short.length - 4}` : ''}`);
     const msg = foundryL(
-        'Susun ulang & hitung ulang roster berdasarkan Troops Power? Slot, role, dan target Phase 1, 2, 3 dihitung dari kebutuhan tiap fase; cadangan diurutkan dan dipasangkan ke slot Battle yang paling kritis bila belum punya pasangan. Legion dan status tiap pemain tetap; tidak ada pemain baru yang ditambahkan.' + (gaps.length ? ` Belum cukup penjaga: ${gaps.join(' | ')}.` : ' Semua bangunan terisi cukup.'),
-        'Re-arrange and recalculate the roster by Troops Power? Slots, roles and Phase 1, 2, 3 targets are calculated from each phase\'s needs; substitutes are ranked and paired with the most critical Battle slots if unpaired. Each player keeps their Legion and status; no new players are added.' + (gaps.length ? ` Not enough players: ${gaps.join(' | ')}.` : ' Every building has enough players.'));
+        'Susun ulang & hitung ulang roster berdasarkan Troops Power? Slot, role, dan target Phase 1, 2, 3 dihitung dari kebutuhan tiap fase, termasuk march penguatan Rally Leader & Joiner ke bangunan (sama dengan tabel Garrison); cadangan diurutkan dan dipasangkan ke slot Battle yang paling kritis bila belum punya pasangan. Legion dan status tiap pemain tetap; tidak ada pemain baru yang ditambahkan.' + (gaps.length ? ` Belum cukup penjaga: ${gaps.join(' | ')}.` : ' Semua bangunan terisi cukup.'),
+        'Re-arrange and recalculate the roster by Troops Power? Slots, roles and Phase 1, 2, 3 targets are calculated from each phase\'s needs, including the reinforcement marches of Rally Leaders & Joiners (same as the Garrison table); substitutes are ranked and paired with the most critical Battle slots if unpaired. Each player keeps their Legion and status; no new players are added.' + (gaps.length ? ` Not enough players: ${gaps.join(' | ')}.` : ' Every building has enough players.'));
     if (!await showCustomConfirmAsync(msg, '#f59e0b')) return;
     const jobs = results.flatMap(r => r.jobs);
     try {
