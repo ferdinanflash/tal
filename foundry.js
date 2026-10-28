@@ -303,6 +303,8 @@ function foundryWarnings(legion, phase) {
     if (battle.length < FOUNDRY_BATTLE_MAX) out.push({ lvl: 'info', msg: foundryL(`Slot Battle baru terisi ${battle.length} dari ${FOUNDRY_BATTLE_MAX}.`, `Only ${battle.length} of ${FOUNDRY_BATTLE_MAX} battle slots are filled.`) });
     if (!battle.some(p => p.foundry_role === 'Commander')) out.push({ lvl: 'warn', msg: foundryL('Belum ada Commander.', 'No Commander assigned.') });
     if (!battle.some(p => p.foundry_role === 'Rally Leader')) out.push({ lvl: 'warn', msg: foundryL('Belum ada Rally Leader untuk menyerang Imperial Foundry.', 'No Rally Leader to attack the Imperial Foundry.') });
+    const rally = foundryRallyTeams(legion);
+    if (rally.orphans.length) out.push({ lvl: 'warn', msg: foundryL(`${rally.orphans.length} Joiner belum punya Rally Leader untuk bergabung.`, `${rally.orphans.length} Joiner(s) have no Rally Leader to join.`) });
     const noTarget = battle.filter(p => !p.foundry_role || !p.foundry_p1 || !p.foundry_p2).length;
     if (noTarget) out.push({ lvl: 'warn', msg: foundryL(`${noTarget} pemain Battle belum punya tugas atau target lengkap.`, `${noTarget} battle players have no complete task or target.`) });
     (phase ? [phase] : [1, 2, 3]).forEach(ph => {
@@ -325,6 +327,128 @@ function foundryWarningsHtml(legion, phase) {
 }
 function foundryExtNotice() {
     return foundryExt ? '' : `<div class="fy-warn-box"><strong>ℹ️ ${foundryL('Kolom baru belum ada', 'New columns missing')}</strong><p>${foundryL('Jalankan supabase_foundry_p3.sql di Supabase SQL Editor agar target Phase 3, cadangan pengganti, dan checklist aktif.', 'Run supabase_foundry_p3.sql in the Supabase SQL Editor to enable Phase 3 targets, substitute cover and the checklist.')}</p></div>`;
+}
+
+// ---------- KALKULASI JOINER (otomatis) ----------
+// Joiner dipasangkan ke Rally Leader secara otomatis dari data roster (tidak disimpan di database, jadi selalu
+// ikut berubah bila Power, role, atau target pemain berubah). Aturan:
+// 1) Joiner diurutkan dari Power tertinggi. 2) Joiner lebih dulu diarahkan ke Rally Leader dengan target Phase 1
+// yang sama (satu lokasi, tidak perlu teleport). 3) Di antara kandidat, pilih tim dengan total Power terendah
+// (Power Rally Leader ikut dihitung) agar kekuatan rally seimbang; seri -> jumlah Joiner lebih sedikit -> slot lebih kecil.
+function foundryRallyTeams(legion) {
+    const battle = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle');
+    const pw = p => Number(p.troops_power) || 0;
+    const teams = battle.filter(p => p.foundry_role === 'Rally Leader')
+        .sort((a, b) => (a.foundry_slot - b.foundry_slot))
+        .map(l => ({ leader: l, joiners: [], power: pw(l) }));
+    const joiners = battle.filter(p => p.foundry_role === 'Joiner').sort((a, b) => pw(b) - pw(a) || a.foundry_slot - b.foundry_slot);
+    if (!teams.length) return { teams, orphans: joiners };
+    joiners.forEach(j => {
+        const same = teams.filter(t => t.leader.foundry_p1 && t.leader.foundry_p1 === j.foundry_p1);
+        const pool = same.length ? same : teams;
+        const best = pool.reduce((a, b) => (b.power < a.power || (b.power === a.power && b.joiners.length < a.joiners.length)) ? b : a);
+        best.joiners.push(j); best.power += pw(j);
+    });
+    teams.forEach(t => t.joiners.sort((a, b) => a.foundry_slot - b.foundry_slot));
+    return { teams, orphans: [] };
+}
+function foundryJoinerOf(p, legion) {   // Rally Leader tempat Joiner p bergabung (null bila tidak ada)
+    const t = foundryRallyTeams(legion || p.foundry_legion).teams.find(x => x.joiners.some(j => j.id === p.id));
+    return t ? t.leader : null;
+}
+// Joiner = pemain yang mengirim beberapa march (default 5, bisa 6) untuk memperkuat garrison beberapa bangunan sekaligus.
+// Rencana march dihitung otomatis per fase (tidak disimpan): (1) isi dulu kekurangan garrison tiap bangunan menurut
+// FOUNDRY_MIN, bangunan bernilai poin tertinggi lebih dulu, Joiner dengan sisa march terbanyak lebih dulu;
+// (2) sisa march memperkuat bangunan bernilai tinggi lainnya. Satu Joiner maksimal 1 march per bangunan dan tidak
+// mengirim march ke bangunan tempat ia sendiri bertugas pada fase itu.
+let foundryJoinerMarches = Math.min(6, Math.max(1, Number((() => { try { return localStorage.getItem('foundry-joiner-marches'); } catch (e) { return 5; } })()) || 5));
+function foundrySetJoinerMarches(n) {
+    foundryJoinerMarches = Math.min(6, Math.max(1, Number(n) || 5));
+    try { localStorage.setItem('foundry-joiner-marches', String(foundryJoinerMarches)); } catch (e) {}
+    foundryRender();
+}
+const FOUNDRY_REINFORCE_ROLES = ['Rally Leader', 'Joiner'];   // peran yang mengirim march penguatan ke bangunan lain
+function foundryJoinerPlan(legion) {
+    const pw = p => Number(p.troops_power) || 0;
+    const joiners = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle' && FOUNDRY_REINFORCE_ROLES.includes(p.foundry_role))
+        .sort((a, b) => pw(b) - pw(a) || a.foundry_slot - b.foundry_slot);
+    const jr = p => p.foundry_role === 'Joiner' ? 0 : 1;   // seri: Joiner lebih dulu daripada Rally Leader
+    const phases = {};
+    [1, 2, 3].forEach(ph => {
+        const blds = FOUNDRY_KEYS.filter(k => FOUNDRY_B[k].m > 0 && FOUNDRY_B[k].ph <= ph).sort((a, b) => FOUNDRY_B[b].m - FOUNDRY_B[a].m);
+        const left = new Map(joiners.map(j => [j.id, foundryJoinerMarches])), asg = new Map(joiners.map(j => [j.id, []])), add = {};
+        const can = (j, k) => left.get(j.id) > 0 && foundryTarget(j, ph) !== k && !asg.get(j.id).includes(k);
+        const send = (j, k) => { asg.get(j.id).push(k); left.set(j.id, left.get(j.id) - 1); add[k] = (add[k] || 0) + 1; };
+        blds.forEach(k => {
+            let need = (FOUNDRY_MIN[ph][k] || 0) - foundryAssigned(legion, k, ph).length;
+            while (need > 0) {
+                const c = joiners.filter(j => can(j, k)).sort((a, b) => left.get(b.id) - left.get(a.id) || jr(a) - jr(b) || pw(b) - pw(a))[0];
+                if (!c) break;
+                send(c, k); need--;
+            }
+        });
+        const gar = k => foundryAssigned(legion, k, ph).length + (add[k] || 0);
+        for (;;) {   // sisa march: bangunan dengan nilai poin / (garrison + 1) tertinggi lebih dulu, agar menyebar
+            const js = joiners.filter(j => left.get(j.id) > 0).sort((a, b) => left.get(b.id) - left.get(a.id) || jr(a) - jr(b) || pw(b) - pw(a));
+            let pick = null;
+            for (const j of js) {
+                const ks = blds.filter(k => can(j, k)).sort((a, b) => FOUNDRY_B[b].m / (gar(b) + 1) - FOUNDRY_B[a].m / (gar(a) + 1));
+                if (ks.length) { pick = [j, ks[0]]; break; }
+            }
+            if (!pick) break;
+            send(pick[0], pick[1]);
+        }
+        phases[ph] = { asg, add, left };
+    });
+    return { joiners, phases };
+}
+function foundryJoinerMarchHtml(legion) {
+    const plan = foundryJoinerPlan(legion);
+    if (!plan.joiners.length) return '';
+    const M = foundryJoinerMarches;
+    const opt = [4, 5, 6].map(n => `<option value="${n}" ${n === M ? 'selected' : ''}>${n}</option>`).join('');
+    const sel = `<label class="fy-note">${foundryL('March per pemain', 'Marches per player')}: <select onchange="foundrySetJoinerMarches(this.value)">${opt}</select></label>`;
+    const rows = plan.joiners.map(j => `<tr><td style="text-align:left">#${j.foundry_slot} ${escapeHtml(j.nickname)}<small>${j.foundry_role} · ${foundryPower(j)}</small></td>${[1, 2, 3].map(ph => {
+        const a = plan.phases[ph].asg.get(j.id);
+        return `<td>${a.length ? a.map(k => escapeHtml(foundryName(k))).join('<br>') : '–'}<small>${a.length}/${M} march</small></td>`;
+    }).join('')}</tr>`).join('');
+    return `${sel}<div class="table-container"><table class="fy-table fy-sum-table"><thead><tr><th>${foundryL('Rally Leader & Joiner → bangunan yang diperkuat (1 march per bangunan)', 'Rally Leader & Joiner → reinforced buildings (1 march per building)')}</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function foundryGarrisonHtml(legion) {
+    // Garrison per bangunan = pemain yang bertugas di sana + march Joiner yang memperkuat bangunan itu.
+    const plan = foundryJoinerPlan(legion);
+    const keys = FOUNDRY_KEYS.filter(k => [1, 2, 3].some(ph => plan.phases[ph].add[k] || foundryAssigned(legion, k, ph).some(p => p.foundry_role === 'Joiner' || p.foundry_role === 'Rally Leader')));
+    if (!keys.length) return '';
+    const pw = ps => ps.reduce((t, p) => t + (Number(p.troops_power) || 0), 0);
+    const cell = (k, ph) => {
+        const ps = foundryAssigned(legion, k, ph), add = plan.phases[ph].add[k] || 0;
+        if (!ps.length && !add) return '<td class="fy-sum-na">–</td>';
+        const c = r => ps.filter(p => p.foundry_role === r).length;
+        const parts = [['RL', 'Rally Leader'], ['Joiner', 'Joiner'], ['Holder', 'Holder']].map(([a, r]) => c(r) ? `${a} ${c(r)}` : '').filter(Boolean);
+        const other = ps.length - c('Rally Leader') - c('Joiner') - c('Holder');
+        if (other) parts.push(`+${other}`);
+        if (add) parts.push(`+${add} march`);
+        const tot = ps.length + add, min = FOUNDRY_MIN[ph][k] || 0;
+        return `<td class="${min ? (tot >= min ? 'fy-sum-ok' : 'fy-sum-bad') : ''}">${tot}${min ? '/' + min : ''}<small>${parts.join(' · ')}</small><small>${foundryFmtPower(pw(ps))}</small></td>`;
+    };
+    const rows = keys.map(k => `<tr><td>${escapeHtml(FOUNDRY_B[k].n)}</td>${[1, 2, 3].map(ph => cell(k, ph)).join('')}</tr>`).join('');
+    return `${foundryJoinerMarchHtml(legion)}<div class="table-container"><table class="fy-table fy-sum-table"><thead><tr><th>${foundryL('Garrison per bangunan (termasuk march penguatan)', 'Garrison per building (incl. reinforcement marches)')}</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th></tr></thead><tbody>${rows}</tbody></table></div>
+        <p class="fy-note">${foundryL('Rally Leader dan Joiner masing-masing mengirim beberapa march (5–6) ke beberapa bangunan sekaligus, jadi satu pemain bisa punya banyak tugas; tiap march dihitung sebagai 1 penjaga di bangunan itu. Format: total / minimal, rincian, lalu Power pemain yang bertugas di sana.', 'Each Rally Leader and Joiner sends several marches (5–6) to several buildings, so one player can have many tasks; each march counts as 1 garrison player at that building. Format: total / minimum, breakdown, then power of players stationed there.')}</p>`;
+}
+function foundryRallyHtml(legion) {
+    const { teams, orphans } = foundryRallyTeams(legion);
+    if (!teams.length && !orphans.length) return '';
+    const total = teams.reduce((t, x) => t + x.power, 0) || 1;
+    const nm = p => `#${p.foundry_slot} ${escapeHtml(p.nickname)}`;
+    const rows = teams.map(t => {
+        const js = t.joiners.length ? t.joiners.map(j => `${nm(j)} <small>${foundryPower(j)}</small>`).join('<br>') : '<span class="fy-empty">–</span>';
+        return `<tr><td style="text-align:left">${nm(t.leader)}<small>${foundryPower(t.leader)} · P1 ${escapeHtml(foundryName(t.leader.foundry_p1))}</small></td>
+            <td style="text-align:left">${js}</td><td>${t.joiners.length}</td><td><b>${foundryFmtPower(t.power)}</b><small>${Math.round(t.power / total * 100)}%</small></td></tr>`;
+    }).join('');
+    const warn = orphans.length ? `<p class="fy-note fy-w-warn">⚠️ ${foundryL(`${orphans.length} Joiner belum punya Rally Leader: ${orphans.map(p => p.nickname).join(', ')}.`, `${orphans.length} Joiner(s) have no Rally Leader: ${orphans.map(p => p.nickname).join(', ')}.`)}</p>` : '';
+    const body = teams.length ? `<div class="table-container"><table class="fy-table fy-sum-table"><thead><tr><th>Rally Leader</th><th>Joiner</th><th>${foundryL('Jumlah', 'Count')}</th><th>${foundryL('Power tim', 'Team power')}</th></tr></thead><tbody>${rows}</tbody></table></div>` : '';
+    return `<details class="fy-sum" open><summary>🤝 ${foundryL('Kalkulasi Joiner otomatis (garrison)', 'Automatic Joiner calculation (garrison)')} · ${legion}</summary>${foundryGarrisonHtml(legion)}${body}${warn}
+        <p class="fy-note">${foundryL('Joiner diurutkan dari Power tertinggi, dipasangkan ke Rally Leader dengan target Phase 1 yang sama, lalu diseimbangkan menurut total Power tim (Power Rally Leader ikut dihitung). Diperbarui otomatis saat roster atau role berubah.', 'Joiners are ranked by power, matched to Rally Leaders with the same Phase 1 target, then balanced by total team power (the Rally Leader\'s power is included). Updates automatically when the roster or roles change.')}</p></details>`;
 }
 
 // ---------- KALKULASI TUGAS ----------
@@ -421,7 +545,11 @@ function foundryRosterHtml(legion) {
         const roleCell = edit && p
             ? `<select class="fy-manual-task" aria-label="Task for ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_role',this.value)">${[...FOUNDRY_ROLES, 'Substitute'].map(r => `<option value="${r}" ${role === r ? 'selected' : ''}>${escapeHtml(r)}</option>`).join('')}</select>`
             : escapeHtml(role);
-        return `<tr class="${p ? '' : 'fy-row-empty'}"><td>${slot}</td><td>${who(p, 'Battle', slot)}</td><td>${idCell(p)}</td><td>${p ? foundryPower(p) : ''}</td><td>${roleCell}</td><td>${targetCell(p, 'foundry_p1', k1, 'Phase 1')}</td><td>${targetCell(p, 'foundry_p2', k2, 'Phase 2')}</td>${foundryExt ? `<td>${targetCell(p, 'foundry_p3', k3, 'Phase 3')}</td>` : ''}</tr>`;
+        let rallyTag = '';
+        if (p && role === 'Joiner') { const L = foundryJoinerOf(p, legion); rallyTag = L ? `<small class="fy-rally-tag">→ #${L.foundry_slot} ${escapeHtml(L.nickname)}</small>` : `<small class="fy-rally-tag fy-w-warn">${foundryL('belum ada Rally Leader', 'no Rally Leader')}</small>`; }
+        else if (p && role === 'Rally Leader') { const T = foundryRallyTeams(legion).teams.find(x => x.leader.id === p.id); if (T) rallyTag = `<small class="fy-rally-tag">${T.joiners.length} Joiner · ${foundryFmtPower(T.power)}</small>`; }
+        if (p && (role === 'Joiner' || role === 'Rally Leader')) { const a = foundryJoinerPlan(legion).phases; const n = [1, 2, 3].map(ph => (a[ph].asg.get(p.id) || []).length); rallyTag += `<small class="fy-rally-tag">${foundryL('Penguatan', 'Reinforce')}: ${n.join('/')} march</small>`; }
+        return `<tr class="${p ? '' : 'fy-row-empty'}"><td>${slot}</td><td>${who(p, 'Battle', slot)}</td><td>${idCell(p)}</td><td>${p ? foundryPower(p) : ''}</td><td>${roleCell}${rallyTag}</td><td>${targetCell(p, 'foundry_p1', k1, 'Phase 1')}</td><td>${targetCell(p, 'foundry_p2', k2, 'Phase 2')}</td>${foundryExt ? `<td>${targetCell(p, 'foundry_p3', k3, 'Phase 3')}</td>` : ''}</tr>`;
     };
     const subRow = (slot) => {
         const p = foundryFind(legion, 'Substitute', slot);
@@ -449,7 +577,7 @@ function foundryRosterHtml(legion) {
     let battle = '', subs = '';
     for (let i = 1; i <= FOUNDRY_BATTLE_MAX; i++) battle += battleRow(i);
     for (let i = 1; i <= FOUNDRY_SUB_MAX; i++) subs += subRow(i);
-    return `${foundryExtNotice()}${foundryWarningsHtml(legion)}${foundryToolsHtml(legion)}${foundrySummaryHtml(legion)}
+    return `${foundryExtNotice()}${foundryWarningsHtml(legion)}${foundryToolsHtml(legion)}${foundrySummaryHtml(legion)}${foundryRallyHtml(legion)}
         <div class="fy-counter"><span class="fy-badge fy-b-battle">Battle ${nb} / ${FOUNDRY_BATTLE_MAX}</span><span class="fy-badge fy-b-sub">${foundryL('Cadangan', 'Substitutes')} ${ns} / ${FOUNDRY_SUB_MAX}</span></div>
         <div class="table-container"><table class="fy-table">${battleHead}<tbody>${battle}</tbody></table></div>
         <h3 class="fy-h">Pemain Cadangan</h3>
@@ -727,7 +855,8 @@ async function foundryCopyText() {
         if (mode === 'all') {
             for (let i = 1; i <= FOUNDRY_BATTLE_MAX; i++) {
                 const p = foundryFind(l, 'Battle', i);
-                if (p) lines.push(`${i}. ${p.nickname} — ${p.foundry_role} | P1: ${foundryName(foundryTarget(p, 1))} | P2: ${foundryName(foundryTarget(p, 2))} | P3: ${foundryName(foundryTarget(p, 3))}`);
+                const jl = p && p.foundry_role === 'Joiner' ? foundryJoinerOf(p, l) : null;
+                if (p) lines.push(`${i}. ${p.nickname} — ${p.foundry_role}${jl ? ' → ' + jl.nickname : ''} | P1: ${foundryName(foundryTarget(p, 1))} | P2: ${foundryName(foundryTarget(p, 2))} | P3: ${foundryName(foundryTarget(p, 3))}`);
             }
         } else {
             const ph = Number(mode);
@@ -736,6 +865,7 @@ async function foundryCopyText() {
                 if (ps.length) lines.push(`**${foundryName(k)}** (${ps.length}): ` + ps.map(p => `#${p.foundry_slot} ${p.nickname}`).join(', '));
             });
         }
+        if (mode === '2' || mode === 2) foundryRallyTeams(l).teams.forEach(t => lines.push(`**Rally ${t.leader.nickname}** (${foundryFmtPower(t.power)}): ${t.joiners.map(j => j.nickname).join(', ') || '-'}`));
         const subs = [];
         for (let i = 1; i <= FOUNDRY_SUB_MAX; i++) {
             const p = foundryFind(l, 'Substitute', i);

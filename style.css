@@ -1764,3 +1764,6 @@ body.fy-shared-open { overflow:hidden; }
 .fy-map-all-item h4 { color: #fcd34d; font-size: .9rem; margin: 0 0 4px; text-align: center; }
 .fy-map-all .fy-map { max-width: 100%; margin: 0 auto; }
 #foundry-shared-map .fy-map-all { width: min(100%, 1400px); margin: 8px auto; }
+
+.fy-rally-tag { display: block; color: #fb923c; font-size: .7rem; font-weight: 600; margin-top: 2px; }
+.fy-w-warn { color: #fbbf24; }
