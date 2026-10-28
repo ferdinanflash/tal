@@ -68,7 +68,7 @@ const FOUNDRY_TEMPLATE = [
 // Collector: Phase 2 kumpulkan Arsenal Supplies (roam), Phase 3 buru Weapon Workshop.
 function foundryTpl(slot) {
     const t = FOUNDRY_TEMPLATE[slot - 1];
-    return t ? { role: t[0], p1: t[1], p2: t[2], p3: t[0] === 'Collector' ? 'workshop' : t[2] } : null;
+    return t ? { slot, role: t[0], p1: t[1], p2: t[2], p3: t[0] === 'Collector' ? 'workshop' : t[2] } : null;
 }
 
 // Minimal pemain per bangunan agar roster dianggap aman (dipakai peringatan roster).
@@ -129,8 +129,35 @@ function foundryNullPatch() {
 // penjaga Prototype, Joiner), lalu Boiler/Transit, satu penjaga tiap Repair, Mobile, penjaga kedua,
 // dan terakhir Collector.
 const FOUNDRY_PRIORITY = [1, 2, 3, 8, 9, 4, 5, 6, 7, 22, 25, 14, 16, 18, 20, 10, 11, 12, 13, 15, 17, 19, 21, 23, 24, 26, 27, 28, 29, 30];
+// Planner tugas berbasis cakupan 3 fase. Untuk n pemain Battle, pilih n dari 30 posisi template satu per satu:
+// tiap langkah mengambil posisi yang paling menambah skor, yaitu poin/menit bangunan x lama fase x
+// (pemain terpasang / minimal pemain, maks 1) dijumlahkan untuk Phase 1, 2, 3 menurut FOUNDRY_MIN.
+// Posisi pertama selalu Commander. Bila skor seri, urutan FOUNDRY_PRIORITY yang menentukan.
+// Hasil diurutkan menurut nomor template, sehingga pemain terkuat mendapat role teratas (Commander, Rally Leader, ...).
+const FOUNDRY_PHASE_MINUTES = [15, 15, 30];   // Phase 1: 0-15, Phase 2: 15-30, Phase 3: 30-60
+const FOUNDRY_WORKSHOP_VALUE = 240;           // asumsi nilai Weapon Workshop (FOUNDRY_B.workshop.m = 0); ubah bila perlu
+function foundryPlanScore(positions) {
+    let total = 0;
+    [1, 2, 3].forEach(ph => {
+        const cnt = {};
+        positions.forEach(t => { const k = t['p' + ph]; cnt[k] = (cnt[k] || 0) + 1; });
+        Object.entries(FOUNDRY_MIN[ph]).forEach(([k, min]) => {
+            const val = k === 'workshop' ? FOUNDRY_WORKSHOP_VALUE : (FOUNDRY_B[k].m || 0);
+            total += FOUNDRY_PHASE_MINUTES[ph - 1] * val * Math.min(cnt[k] || 0, min) / min;
+        });
+    });
+    return total;
+}
 function foundryPlanTasks(n) {
-    return FOUNDRY_PRIORITY.slice(0, Math.max(0, Math.min(n, FOUNDRY_BATTLE_MAX))).sort((a, b) => a - b).map(foundryTpl);
+    n = Math.max(0, Math.min(n, FOUNDRY_BATTLE_MAX));
+    const chosen = [], left = FOUNDRY_PRIORITY.map(foundryTpl);   // left tetap urut prioritas = pemutus seri
+    while (chosen.length < n) {
+        let bi = 0, bs = -1;
+        if (chosen.length === 0) bi = left.findIndex(t => t.slot === 1);
+        else left.forEach((t, i) => { const sc = foundryPlanScore(chosen.concat(t)); if (sc > bs) { bs = sc; bi = i; } });
+        chosen.push(left.splice(bi, 1)[0]);
+    }
+    return chosen.sort((a, b) => a.slot - b.slot);
 }
 function foundryShortages(list) {
     const out = [];
@@ -619,22 +646,50 @@ async function foundryBulkSubmit() {
     foundryRender();
 }
 
-// Isi otomatis: hanya menyusun ulang pemain yang SUDAH ada di tiap Legion. Legion dan status
-// (Battle / Cadangan) setiap pemain dipertahankan; tidak ada pemain baru yang ditambahkan.
-// Per Legion + status: urut power -> slot 1..n. Role & target phase dihitung ulang mengikuti FOUNDRY_TEMPLATE.
+// Susun satu Legion. Battle: urut Power -> slot 1..n, role & target Phase 1-3 dari foundryPlanTasks (cakupan
+// bangunan per fase). Cadangan: urut Power -> slot 1..n. Cover cadangan ikut pindah ke slot baru pemain yang
+// sama; cadangan yang belum punya cover diberi slot Battle paling kritis (urutan FOUNDRY_PRIORITY) yang belum dicover.
+function foundryLegionJobs(l) {
+    const byPower = (a, b) => (Number(b.troops_power) || 0) - (Number(a.troops_power) || 0) || (Number(a.foundry_slot) || 0) - (Number(b.foundry_slot) || 0);
+    const battle = foundryPlayers.filter(p => p.foundry_legion === l && p.foundry_status === 'Battle').sort(byPower).slice(0, FOUNDRY_BATTLE_MAX);
+    const subs = foundryPlayers.filter(p => p.foundry_legion === l && p.foundry_status === 'Substitute').sort(byPower).slice(0, FOUNDRY_SUB_MAX);
+    const plan = foundryPlanTasks(battle.length);
+    const jobs = [], newSlotOf = new Map();
+    battle.forEach((p, i) => {
+        newSlotOf.set(Number(p.foundry_slot), i + 1);
+        const patch = { foundry_slot: i + 1, foundry_role: plan[i].role, foundry_p1: plan[i].p1, foundry_p2: plan[i].p2 };
+        if (foundryExt) { patch.foundry_p3 = plan[i].p3; patch.foundry_cover = null; }
+        jobs.push({ p, patch });
+    });
+    const covers = subs.map(p => foundryExt ? (newSlotOf.get(Number(p.foundry_cover)) || null) : null);
+    if (foundryExt) {
+        const taken = new Set(covers.filter(Boolean));
+        const critical = battle.map((p, i) => ({ slot: i + 1, rank: FOUNDRY_PRIORITY.indexOf(plan[i].slot) }))
+            .sort((a, b) => a.rank - b.rank).map(x => x.slot).filter(s => !taken.has(s));
+        covers.forEach((c, j) => { if (!c && critical.length) covers[j] = critical.shift(); });
+    }
+    subs.forEach((p, j) => {
+        const patch = { foundry_slot: j + 1 };
+        if (foundryExt) patch.foundry_cover = covers[j];
+        jobs.push({ p, patch });
+    });
+    const short = foundryShortages(plan.map(t => ({ foundry_p1: t.p1, foundry_p2: t.p2, foundry_p3: t.p3 })));
+    return { jobs: jobs.filter(j => Object.keys(j.patch).some(k => (j.p[k] ?? null) !== (j.patch[k] ?? null))), short, nBattle: battle.length };
+}
+
+// Isi otomatis: menyusun ulang pemain yang SUDAH ada di tiap Legion. Legion dan status (Battle / Cadangan)
+// setiap pemain dipertahankan; tidak ada pemain baru yang ditambahkan.
 async function foundryAutoFill() {
     if (!foundryCanEdit()) return;
     if (!foundryPlayers.some(foundryInRoster)) { showToast(foundryL('Belum ada pemain di roster Foundry. Assign pemain ke Legion dulu.', 'No players in the Foundry roster yet. Assign players to a Legion first.'), 'info'); return; }
-    if (!await showCustomConfirmAsync(foundryL('Susun ulang & hitung ulang roster berdasarkan Troops Power? Legion dan status Battle/Cadangan tiap pemain tetap; tidak ada pemain baru yang ditambahkan.', 'Re-arrange and recalculate the roster by Troops Power? Each player keeps their Legion and Battle/Substitute status; no new players are added.'), '#f59e0b')) return;
+    const results = FOUNDRY_LEGIONS.map(l => ({ l, ...foundryLegionJobs(l) }));
+    const gaps = results.filter(r => r.short.length).map(r => `${r.l}: ${r.short.slice(0, 4).join(', ')}${r.short.length > 4 ? ` +${r.short.length - 4}` : ''}`);
+    const msg = foundryL(
+        'Susun ulang & hitung ulang roster berdasarkan Troops Power? Slot, role, dan target Phase 1, 2, 3 dihitung dari kebutuhan tiap fase; cadangan diurutkan dan dipasangkan ke slot Battle yang paling kritis bila belum punya pasangan. Legion dan status tiap pemain tetap; tidak ada pemain baru yang ditambahkan.' + (gaps.length ? ` Belum cukup penjaga: ${gaps.join(' | ')}.` : ' Semua bangunan terisi cukup.'),
+        'Re-arrange and recalculate the roster by Troops Power? Slots, roles and Phase 1, 2, 3 targets are calculated from each phase\'s needs; substitutes are ranked and paired with the most critical Battle slots if unpaired. Each player keeps their Legion and status; no new players are added.' + (gaps.length ? ` Not enough players: ${gaps.join(' | ')}.` : ' Every building has enough players.'));
+    if (!await showCustomConfirmAsync(msg, '#f59e0b')) return;
+    const jobs = results.flatMap(r => r.jobs);
     try {
-        const jobs = [];
-        FOUNDRY_LEGIONS.forEach(l => ['Battle', 'Substitute'].forEach(st => {
-            const max = st === 'Battle' ? FOUNDRY_BATTLE_MAX : FOUNDRY_SUB_MAX;
-            foundryPlayers.filter(p => p.foundry_legion === l && p.foundry_status === st)
-                .sort((a, b) => Number(b.troops_power || 0) - Number(a.troops_power || 0))
-                .slice(0, max)
-                .forEach((p, idx) => jobs.push({ p, patch: foundryPatchFor(l, st, idx + 1) }));
-        }));
         const client = getSupabase();
         for (let i = 0; i < jobs.length; i += 20) {
             const res = await Promise.all(jobs.slice(i, i + 20).map(j => client.from('troops_power').update(j.patch).eq('id', j.p.id)));
@@ -642,9 +697,10 @@ async function foundryAutoFill() {
             if (bad) throw bad.error;
         }
         jobs.forEach(j => Object.assign(j.p, j.patch));
-        showToast(foundryL('Roster Foundry disusun ulang (Legion & status tetap).', 'Foundry roster re-arranged (Legion & status unchanged).'), 'success');
+        showToast(foundryL(`Roster Foundry dihitung ulang (${jobs.length} pemain diperbarui; Legion & status tetap).`, `Foundry roster recalculated (${jobs.length} players updated; Legion & status unchanged).`), gaps.length ? 'warning' : 'success');
     } catch (e) {
         showToast(foundryL('Gagal mengisi otomatis. Pastikan supabase_foundry_roster.sql dan supabase_foundry_p3.sql sudah dijalankan.', 'Auto-fill failed. Make sure supabase_foundry_roster.sql and supabase_foundry_p3.sql have been run.'), 'error');
+        await foundryLoad(); return;
     }
     foundryRender();
 }
