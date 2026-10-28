@@ -1,7 +1,4 @@
-// Site-wide EN / ID / Simplified Chinese dictionary
-document.addEventListener('DOMContentLoaded', function () {
-  if (!window.I18N) return;
-  I18N.addText(`
+I18N.addText(`
 # Navigation and common interface
 Home || Beranda || 首页
 Back to Menu || Kembali ke Menu || 返回菜单
@@ -578,7 +575,7 @@ STATUS || STATUS || 状态 || STATUS || STATO || สถานะ
 ACTION || AKSI || 操作 || AKSYON || AZIONE || การดำเนินการ
 
 # Full-site six-language audit: common labels and messages
-Home ||  ||  || Tahanan || Home || หน้าแรก
+Home ||  ||  || Unang pahina || Home || หน้าแรก
 Back to Menu ||  ||  || Bumalik sa Menu || Torna al menu || กลับไปที่เมนู
 Close ||  ||  || Isara || Chiudi || ปิด
 Cancel ||  ||  || Kanselahin || Annulla || ยกเลิก
@@ -734,6 +731,278 @@ PANEL || PANEL || 面板 || PANEL || PANNELLO || แผงควบคุม
 
 
 
+
+# Full TL / IT / TH completion pass (2026-10-29)
+# Fills missing Filipino, Italian, Thai. ID/ZH left empty to preserve existing via merge.
++ Assign Player ||  ||  || + Magtalaga ng Manlalaro || + Assegna giocatore || + กำหนดผู้เล่น
+1 Battle Group · up to 60 per alliance · No Substitute ||  ||  || 1 Battle Group · hanggang 60 bawat alyansa · Walang Substitute || 1 gruppo di battaglia · fino a 60 per alleanza · Nessun sostituto || 1 กลุ่ม Battle · สูงสุด 60 ต่อพันธมิตร · ไม่มีตัวสำรอง
+1. Before battle ||  ||  || 1. Bago ang battle || 1. Prima della battaglia || 1. ก่อนการต่อสู้
+2 Legions · each 30 Battle + 20 Substitute ||  ||  || 2 Legion · bawat isa 30 Battle + 20 Substitute || 2 Legioni · ciascuna 30 Battle + 20 Substitute || 2 Legion · แต่ละอัน 30 Battle + 20 Substitute
+2. Battle timeline ||  ||  || 2. Timeline ng battle || 2. Cronologia della battaglia || 2. ไทม์ไลน์การต่อสู้
+3. Spires (30-minute alliance buff) ||  ||  || 3. Spires (30-minutong alliance buff) || 3. Spire (buff alleanza di 30 minuti) || 3. Spire (บัฟพันธมิตร 30 นาที)
+4. Becoming Frostdragon Tyrant ||  ||  || 4. Pagiging Frostdragon Tyrant || 4. Diventare Frostdragon Tyrant || 4. การเป็น Frostdragon Tyrant
+5. Common mistakes ||  ||  || 5. Mga karaniwang pagkakamali || 5. Errori comuni || 5. ข้อผิดพลาดที่พบบ่อย
+6. Personal points ||  ||  || 6. Personal points || 6. Punti personali || 6. คะแนนส่วนตัว
+7. Task duties ||  ||  || 7. Mga tungkulin sa task || 7. Compiti e ruoli || 7. หน้าที่ตามภารกิจ
+: gather Dragonite as soon as it appears (15 minutes after the Capital opens) and check again at every 30-minute refresh. Escort or hide gatherers if enemies are nearby. Collectors are the lowest-power players and multitask: until Dragonite opens (75 minutes after the Battlefield opens) they carry out their other duty, usually Capital Reinforcer. ||  ||  || : magtipon ng Dragonite sa oras na lumitaw (15 minuto pagkatapos bumukas ang Capital) at tingnan ulit sa bawat 30-minutong refresh. I-escort o itago ang gatherers kung may kalaban. Ang Collectors ang pinakamababang power at multi-task: hanggang magbukas ang Dragonite (75 minuto pagkatapos magbukas ang Battlefield) ginagawa nila ang ibang duty, karaniwang Capital Reinforcer. || : raccogli Dragonite non appena appare (15 minuti dopo l'apertura della Capitale) e controlla di nuovo a ogni refresh di 30 minuti. Scorta o nascondi i raccoglitori se ci sono nemici. I Collector sono i giocatori di power più basso e multitasking: finché non apre Dragonite (75 minuti dopo l'apertura del campo) svolgono l'altro incarico, di solito Rinforzo Capitale. || : เก็บ Dragonite ทันทีที่ปรากฏ (15 นาทีหลังเมืองหลวงเปิด) และตรวจอีกครั้งทุก 30 นาที คุ้มกันหรือซ่อนผู้เก็บหากมีศัตรู ผู้เก็บเป็นผู้เล่นพลังต่ำสุดและทำหลายหน้าที่: จนกว่า Dragonite จะเปิด (75 นาทีหลังสนามเปิด) พวกเขาทำหน้าที่อื่น มักเป็นผู้เสริมเมืองหลวง
+: protect the Capital against enemy rallies and attacks. Stay close to the Capital, join defensive reinforcements when the captain is under pressure, and make sure the Capital is never left uncovered. ||  ||  || : protektahan ang Capital laban sa enemy rallies at attacks. Manatiling malapit sa Capital, sumali sa defensive reinforcements kapag nape-pressure ang captain, at tiyaking hindi kailanman naiiwanang walang takip ang Capital. || : proteggi la Capitale da rally e attacchi nemici. Resta vicino alla Capitale, unisciti ai rinforzi difensivi quando il capitano è sotto pressione e assicurati che la Capitale non resti mai scoperta. || : ปกป้องเมืองหลวงจากการรวมพลและการโจมตีของศัตรู อยู่ใกล้เมืองหลวง เข้าร่วมเสริมแนวรับเมื่อหัวหน้าถูกกดดัน และอย่าปล่อยเมืองหลวงไม่มีคนดูแล
+: send your troops into the Rally Captain's Capital garrison and keep them there. Refill the garrison right after losses and do not leave the Capital while the captain is holding it. ||  ||  || : ipadala ang tropa mo sa Capital garrison ng Rally Captain at panatilihin doon. Punan ulit ang garrison pagkatapos ng losses at huwag umalis sa Capital habang hawak ito ng captain. || : invia le tue truppe nella guarnigione della Capitale del Capitano di rally e tienile lì. Riempi la guarnigione subito dopo le perdite e non lasciare la Capitale mentre il capitano la tiene. || : ส่งทหารเข้ากองกำลังเมืองหลวงของหัวหน้ารวมพลและให้อยู่ที่นั่น เติมกองหลังสูญเสีย และอย่าออกจากเมืองหลวงขณะที่หัวหน้ายังยึดอยู่
+: starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it. ||  ||  || : nagsisimula at namumuno sa Capital rallies at siya lang ang nag-iipon ng occupation time. Manatili sa Capital, panatilihing puno ang garrison, at huwag ibigay ang captain role maliban kung tinawag ng leader. || : avvia e guida i rally sulla Capitale ed è l'unico che accumula tempo di occupazione. Resta sulla Capitale, tieni la guarnigione piena e non cedere il ruolo di capitano a meno che il leader non lo chieda. || : เริ่มและนำรวมพลเมืองหลวง และเป็นคนเดียวที่สะสมเวลายึด อยู่ที่เมืองหลวง รักษากองกำลังให้เต็ม และอย่าส่งมอบบทบาทหัวหน้าจนกว่าหัวหน้าจะเรียก
+: take and hold the Blade Spire (+20% Troop Attack) during its vulnerable window, and rally or reinforce as needed to keep it. ||  ||  || : kunin at hawakan ang Blade Spire (+20% Troop Attack) sa vulnerable window nito, at mag-rally o mag-reinforce kung kailangan para mapanatili. || : prendi e tieni la Spira Lama (+20% Attacco truppe) durante la finestra vulnerabile, e fai rally o rinforza se serve per tenerla. || : ยึดและครอง Blade Spire (+20% โจมตีทหาร) ในช่วงโจมตีได้ และรวมพลหรือเสริมตามจำเป็นเพื่อรักษาไว้
+: take and hold the Dragonbane Spire (+20% Troop Lethality) during its vulnerable window. Move on to the next objective once the window closes. ||  ||  || : kunin at hawakan ang Dragonbane Spire (+20% Troop Lethality) sa vulnerable window nito. Lumipat sa susunod na objective kapag nagsara ang window. || : prendi e tieni la Spira Dragonbane (+20% Letalità truppe) durante la finestra vulnerabile. Passa al prossimo obiettivo quando la finestra si chiude. || : ยึดและครอง Dragonbane Spire (+20% ความรุนแรงทหาร) ในช่วงโจมตีได้ ย้ายไปเป้าถัดไปเมื่อหน้าต่างปิด
+: take and hold the Life Spire (+20% Troop Health) during its 30-minute vulnerable window. Coordinate with your group so the buff is secured as soon as the window opens. ||  ||  || : kunin at hawakan ang Life Spire (+20% Troop Health) sa 30-minutong vulnerable window nito. Makipag-coordinate sa grupo para ma-secure ang buff sa oras na bumukas ang window. || : prendi e tieni la Spira Vita (+20% Salute truppe) durante la finestra vulnerabile di 30 minuti. Coordinati col gruppo per assicurare il buff appena si apre la finestra. || : ยึดและครอง Life Spire (+20% พลังชีวิตทหาร) ในช่วง 30 นาทีที่โจมตีได้ ประสานกับกลุ่มเพื่อล็อกบัฟทันทีที่หน้าต่างเปิด
+: take and hold the Shield Spire (+20% Troop Defense) during its vulnerable window, and keep enough troops there to stop the enemy from retaking it. ||  ||  || : kunin at hawakan ang Shield Spire (+20% Troop Defense) sa vulnerable window nito, at mag-iwan ng sapat na tropa para hindi mabawi ng kalaban. || : prendi e tieni la Spira Scudo (+20% Difesa truppe) durante la finestra vulnerabile, e lascia abbastanza truppe per impedire al nemico di riprenderla. || : ยึดและครอง Shield Spire (+20% ป้องกันทหาร) ในช่วงโจมตีได้ และคงทหารไว้พอที่จะกันศัตรูแย่งคืน
+: the Chief the alliance is backing to become Frostdragon Tyrant. Hold the Capital as Rally Captain for as long as possible, avoid unnecessary captain changes, and keep your troops healed. ||  ||  || : ang Chief na sinusuportahan ng alyansa para maging Frostdragon Tyrant. Hawakan ang Capital bilang Rally Captain nang matagal hangga't maaari, iwasan ang hindi kinakailangang pagpapalit ng captain, at panatilihing gumagaling ang tropa. || : il Capo che l'alleanza sostiene per diventare Frostdragon Tyrant. Tieni la Capitale come Capitano di rally il più a lungo possibile, evita cambi di capitano inutili e tieni le truppe curate. || : หัวหน้าที่พันธมิตรหนุนให้เป็น Frostdragon Tyrant ยึดเมืองหลวงในฐานะหัวหน้ารวมพลให้นานที่สุด หลีกเลี่ยงการเปลี่ยนหัวหน้าที่ไม่จำเป็น และรักษาทหารให้พร้อม
+: your battle group. Players join the Capital, Spires and Dragonite calls of their own group. A player belongs to only one group. ||  ||  || : ang battle group mo. Sumasali ang players sa Capital, Spires at Dragonite calls ng sarili nilang grupo. Isang grupo lang ang pag-aarian ng isang player. || : il tuo gruppo di battaglia. I giocatori si uniscono alle chiamate di Capitale, Spire e Dragonite del proprio gruppo. Un giocatore appartiene a un solo gruppo. || : กลุ่มต่อสู้ของคุณ ผู้เล่นเข้าร่วมการเรียกเมืองหลวง Spire และ Dragonite ของกลุ่มตนเอง ผู้เล่นอยู่ได้เพียงกลุ่มเดียว
+Account {0} updated. ||  ||  || Na-update ang account {0}. || Account {0} aggiornato. || อัปเดตบัญชี {0} แล้ว
+Active Theme ||  ||  || Active Theme || Tema attivo || ธีมที่ใช้งาน
+All Alliances ({0}) ||  ||  || Lahat ng Alyansa ({0}) || Tutte le alleanze ({0}) || พันธมิตรทั้งหมด ({0})
+All Phase ||  ||  || Lahat ng Phase || Tutte le fasi || ทุกช่วง
+All Phases ||  ||  || Lahat ng Phase || Tutte le fasi || ทุกช่วง
+All troops power global rank ||  ||  || Global rank ng all troops power || Classifica globale potenza truppe || อันดับพลังทหารทั่วโลก
+Alliance A / Alliance B ||  ||  || Alliance A / Alliance B || Alleanza A / Alleanza B || พันธมิตร A / พันธมิตร B
+Alliance code ||  ||  || Code ng alyansa || Codice alleanza || รหัสพันธมิตร
+Alliance name ||  ||  || Pangalan ng alyansa || Nome alleanza || ชื่อพันธมิตร
+Are you sure you want to delete this player entry? ||  ||  || Sigurado ka bang gusto mong tanggalin ang entry ng manlalarong ito? || Sei sicuro di voler eliminare questa voce giocatore? || แน่ใจหรือว่าต้องการลบรายการผู้เล่นนี้?
+Assign Player to Legion ||  ||  || Italaga ang Manlalaro sa Legion || Assegna giocatore alla legione || กำหนดผู้เล่นเข้า Legion
+Auto-fill ||  ||  || Auto-fill || Compila automaticamente || เติมอัตโนมัติ
+Auto-fill (by Power) ||  ||  || Auto-fill (ayon sa Power) || Compila automaticamente (per Power) || เติมอัตโนมัติ (ตามพลัง)
+Battle / Legion Management ||  ||  || Pamamahala ng Battle / Legion || Gestione Battle / Legione || จัดการ Battle / Legion
+Battle Events ||  ||  || Mga Battle Event || Eventi di battaglia || อีเวนต์การต่อสู้
+Battle Power ||  ||  || Battle Power || Potenza di battaglia || พลังต่อสู้
+Battle preparation, assignments and phase-by-phase reminders. ||  ||  || Paghahanda sa battle, assignment at paalala bawat phase. || Preparazione alla battaglia, assegnazioni e promemoria fase per fase. || การเตรียมการต่อสู้ การมอบหมาย และเตือนความจำทีละช่วง
+Battle quota is full! (Maximum 30 players) ||  ||  || Puno na ang Battle quota! (Maximum 30 players) || Quota Battle piena! (Massimo 30 giocatori) || โควต้า Battle เต็มแล้ว! (สูงสุด 30 ผู้เล่น)
+Battle Theme ||  ||  || Battle Theme || Tema battaglia || ธีมการต่อสู้
+Battlefield is open for 7 hours. Cities start in the Border Region. ||  ||  || Bukas ang battlefield nang 7 oras. Nagsisimula ang mga lungsod sa Border Region. || Il campo di battaglia è aperto per 7 ore. Le città iniziano nella Regione di Confine. || สนามรบเปิด 7 ชั่วโมง เมืองเริ่มที่เขตชายแดน
+Battlefield open (UTC) ||  ||  || Bukas ang battlefield (UTC) || Campo di battaglia aperto (UTC) || สนามรบเปิด (UTC)
+Battlefield schedule not set. ||  ||  || Hindi pa naka-set ang schedule ng battlefield. || Orario del campo di battaglia non impostato. || ยังไม่ได้ตั้งตารางสนามรบ
+Bulk Assign ||  ||  || Maramihang Pagtatalaga || Assegnazione multipla || กำหนดแบบกลุ่ม
+Bulk Remove ||  ||  || Maramihang Tanggalin || Rimozione multipla || ลบหลายรายการ
+Capital Defense ||  ||  || Capital Defense || Difesa Capitale || ป้องกันเมืองหลวง
+Capital Reinforcer ||  ||  || Capital Reinforcer || Rinforzo Capitale || ผู้เสริมเมืองหลวง
+Central control for the five alliances, player roster, battle and system settings. ||  ||  || Sentral na kontrol para sa limang alyansa, player roster, battle at system settings. || Controllo centrale per le cinque alleanze, roster giocatori, battaglia e impostazioni di sistema. || ศูนย์ควบคุมสำหรับห้าพันธมิตร รายชื่อผู้เล่น การต่อสู้ และการตั้งค่าระบบ
+Chart ||  ||  || Chart || Grafico || กราฟ
+Chart image downloaded. ||  ||  || Na-download ang chart image. || Immagine del grafico scaricata. || ดาวน์โหลดรูปกราฟแล้ว
+Checklist saved. ||  ||  || Na-save ang checklist. || Checklist salvata. || บันทึกเช็คลิสต์แล้ว
+Choose language ||  ||  || Pumili ng wika || Scegli lingua || เลือกภาษา
+Choose the battle mode for the whole site. This is global: every visitor and staff member sees the change. ||  ||  || Piliin ang battle mode para sa buong site. Global ito: bawat bisita at staff ay makikita ang pagbabago. || Scegli la modalità di battaglia per tutto il sito. È globale: ogni visitatore e membro dello staff vede il cambiamento. || เลือกโหมดการต่อสู้สำหรับทั้งไซต์ นี่เป็นแบบทั่วโลก: ผู้เยี่ยมชมและพนักงานทุกคนจะเห็นการเปลี่ยนแปลง
+Close FDT Guide ||  ||  || Isara ang FDT Guide || Chiudi guida FDT || ปิดคู่มือ FDT
+Close guide ||  ||  || Isara ang guide || Chiudi guida || ปิดคู่มือ
+Close/Open Reservation ||  ||  || Isara/Buksan ang Reservasyon || Chiudi/Apri prenotazione || ปิด/เปิดการจอง
+Copy for Discord ||  ||  || Kopyahin para sa Discord || Copia per Discord || คัดลอกสำหรับ Discord
+Copy Live Share Chart link: ||  ||  || Kopyahin ang Live Share Chart link: || Copia link Live Share Chart: || คัดลอกลิงก์ Live Share Chart:
+Copy Live Share Foundry link: ||  ||  || Kopyahin ang Live Share Foundry link: || Copia link Live Share Foundry: || คัดลอกลิงก์ Live Share Foundry:
+CSV Downloaded successfully! ||  ||  || Matagumpay na na-download ang CSV! || CSV scaricato con successo! || ดาวน์โหลด CSV สำเร็จ!
+Dispatch (48h): R4/R5 select up to 60 combatants per alliance. Players not dispatched can still help by healing troops. ||  ||  || Dispatch (48h): R4/R5 pumili ng hanggang 60 combatant bawat alyansa. Ang hindi na-dispatch ay puwedeng tumulong sa pagpapagaling ng tropa. || Invio (48h): R4/R5 selezionano fino a 60 combattenti per alleanza. Chi non è inviato può comunque aiutare curando le truppe. || ส่งกำลัง (48 ชม.): R4/R5 เลือกนักรบได้สูงสุด 60 คนต่อพันธมิตร ผู้ที่ไม่ถูกส่งยังช่วยรักษาทหารได้
+Dragonite Collector ||  ||  || Dragonite Collector || Raccoglitore Dragonite || ผู้เก็บ Dragonite
+Dragonite Collectors are already arranged this way. ||  ||  || Ganito na ang ayos ng mga Dragonite Collector. || I raccoglitori Dragonite sono già disposti così. || ผู้เก็บ Dragonite จัดเรียงแบบนี้อยู่แล้ว
+Dragonite Collectors per alliance group (lowest power first). Recommended 5–{0}: ||  ||  || Mga Dragonite Collector bawat grupo ng alyansa (pinakamababang power muna). Inirerekomenda 5–{0}: || Raccoglitori Dragonite per gruppo alleanza (dal power più basso). Consigliati 5–{0}: || ผู้เก็บ Dragonite ต่อกลุ่มพันธมิตร (พลังต่ำก่อน) แนะนำ 5–{0}:
+Dragonite Collectors updated ({0} players). ||  ||  || Na-update ang Dragonite Collectors ({0} players). || Raccoglitori Dragonite aggiornati ({0} giocatori). || อัปเดตผู้เก็บ Dragonite แล้ว ({0} ผู้เล่น)
+Dragonite gathering appears 15 minutes after the Capital opens and also refreshes every 30 minutes. ||  ||  || Lumilitaw ang Dragonite gathering 15 minuto pagkatapos bumukas ang Capital at nire-refresh din tuwing 30 minuto. || La raccolta Dragonite appare 15 minuti dopo l'apertura della Capitale e si aggiorna ogni 30 minuti. || การเก็บ Dragonite ปรากฏ 15 นาทีหลังเมืองหลวงเปิด และรีเฟรชทุก 30 นาทีเช่นกัน
+e.g. 150000000 ||  ||  || hal. 150000000 || es. 150000000 || เช่น 150000000
+Edit President Info ||  ||  || I-edit ang Info ng Presidente || Modifica info presidente || แก้ไขข้อมูลประธาน
+Enter a number between 0 and {0}. ||  ||  || Maglagay ng numero mula 0 hanggang {0}. || Inserisci un numero tra 0 e {0}. || ใส่ตัวเลขระหว่าง 0 ถึง {0}
+Enter Game ID ||  ||  || Ilagay ang Game ID || Inserisci Game ID || ใส่ Game ID
+Enter gift code ||  ||  || Ilagay ang gift code || Inserisci codice regalo || ใส่รหัสของขวัญ
+Enter guild name ||  ||  || Ilagay ang pangalan ng guild || Inserisci nome gilda || ใส่ชื่อกิลด์
+Enter nickname ||  ||  || Ilagay ang nickname || Inserisci nickname || ใส่ชื่อเล่น
+Enter password ||  ||  || Ilagay ang password || Inserisci password || ใส่รหัสผ่าน
+Enter president name ||  ||  || Ilagay ang pangalan ng presidente || Inserisci nome presidente || ใส่ชื่อประธาน
+Enter username ||  ||  || Ilagay ang username || Inserisci nome utente || ใส่ชื่อผู้ใช้
+Error inserting data: {0} ||  ||  || Error sa pagpasok ng data: {0} || Errore nell'inserimento dati: {0} || ข้อผิดพลาดในการใส่ข้อมูล: {0}
+Eve of Battle (59h): finalize the Tyrant candidate, Rally Captains, Spire teams, Dragonite collectors and communication calls. ||  ||  || Eve of Battle (59h): tapusin ang kandidato sa Tyrant, Rally Captains, Spire teams, Dragonite collectors at communication calls. || Vigilia di battaglia (59h): finalizza il candidato Tyrant, i capitani di rally, le squadre Spire, i raccoglitori Dragonite e le chiamate di comunicazione. || คืนก่อนรบ (59 ชม.): ยืนยันผู้สมัคร Tyrant, หัวหน้ารวมพล, ทีม Spire, ผู้เก็บ Dragonite และการเรียกสื่อสาร
+Events Leaderboard Record ||  ||  || Talaan ng Events Leaderboard || Record classifica eventi || บันทึกกระดานผู้นำอีเวนต์
+Every Battle player has one group task (Alliance A or B) plus one or more role tasks. Check your task on the roster before the Eve of Battle and follow your group leader's calls. ||  ||  || Bawat Battle player ay may isang group task (Alliance A o B) at isa o higit pang role task. Tingnan ang task mo sa roster bago ang Eve of Battle at sundin ang tawag ng group leader. || Ogni giocatore Battle ha un compito di gruppo (Alleanza A o B) più uno o più compiti di ruolo. Controlla il tuo compito nel roster prima della Vigilia di battaglia e segui le chiamate del leader di gruppo. || ผู้เล่น Battle ทุกคนมีภารกิจกลุ่ม (พันธมิตร A หรือ B) และภารกิจบทบาทอย่างน้อยหนึ่งอย่าง ตรวจภารกิจในรายชื่อก่อนคืนก่อนรบ และฟังการเรียกของหัวหน้ากลุ่ม
+Every Battle player has one group task (Alliance A or B) plus one or more role tasks. Check your tasks in the roster. ||  ||  || Bawat Battle player ay may isang group task (Alliance A o B) at isa o higit pang role task. Tingnan ang tasks mo sa roster. || Ogni giocatore Battle ha un compito di gruppo (Alleanza A o B) più uno o più compiti di ruolo. Controlla i tuoi compiti nel roster. || ผู้เล่น Battle ทุกคนมีภารกิจกลุ่ม (พันธมิตร A หรือ B) และภารกิจบทบาทอย่างน้อยหนึ่งอย่าง ตรวจในรายชื่อ
+Export CSV ||  ||  || I-export ang CSV || Esporta CSV || ส่งออก CSV
+Failed to load accounts: {0} ||  ||  || Hindi ma-load ang mga account: {0} || Caricamento account non riuscito: {0} || โหลดบัญชีไม่สำเร็จ: {0}
+Failed to load global Battle Theme: {0} ||  ||  || Hindi ma-load ang global Battle Theme: {0} || Caricamento tema battaglia globale non riuscito: {0} || โหลดธีมการต่อสู้ทั่วโลกไม่สำเร็จ: {0}
+Failed to save schedule: {0} ||  ||  || Hindi na-save ang schedule: {0} || Salvataggio orario non riuscito: {0} || บันทึกตารางไม่สำเร็จ: {0}
+Failed to switch global Battle Theme: {0} ||  ||  || Hindi mapalitan ang global Battle Theme: {0} || Cambio tema battaglia globale non riuscito: {0} || สลับธีมการต่อสู้ทั่วโลกไม่สำเร็จ: {0}
+Failed to update account: {0} ||  ||  || Hindi na-update ang account: {0} || Aggiornamento account non riuscito: {0} || อัปเดตบัญชีไม่สำเร็จ: {0}
+FDT Roster Chart ||  ||  || FDT Roster Chart || Grafico roster FDT || กราฟรายชื่อ FDT
+Filter ||  ||  || Filter || Filtro || ตัวกรอง
+Frostdragon Escorts appear in the Border Region when the Capital opens and refresh every 30 minutes. ||  ||  || Lumilitaw ang Frostdragon Escorts sa Border Region kapag bumukas ang Capital at nire-refresh tuwing 30 minuto. || Le Scorte Frostdragon compaiono nella Regione di Confine quando apre la Capitale e si aggiornano ogni 30 minuti. || Frostdragon Escorts ปรากฏในเขตชายแดนเมื่อเมืองหลวงเปิด และรีเฟรชทุก 30 นาที
+Frostdragon roster is locked. ||  ||  || Naka-lock ang Frostdragon roster. || Il roster Frostdragon è bloccato. || รายชื่อ Frostdragon ถูกล็อก
+Frostdragon roster is locked. Unlock it in President Panel to make changes. ||  ||  || Naka-lock ang Frostdragon roster. I-unlock sa President Panel para makapagbago. || Il roster Frostdragon è bloccato. Sbloccalo nel Pannello Presidente per apportare modifiche. || รายชื่อ Frostdragon ถูกล็อก ปลดล็อกในแผงประธานเพื่อแก้ไข
+Frostdragon roster locked. ||  ||  || Naka-lock ang Frostdragon roster. || Roster Frostdragon bloccato. || ล็อครายชื่อ Frostdragon แล้ว
+Frostdragon roster unlocked. ||  ||  || Na-unlock ang Frostdragon roster. || Roster Frostdragon sbloccato. || ปลดล็อครายชื่อ Frostdragon แล้ว
+Frostdragon schedule saved (UTC). ||  ||  || Na-save ang Frostdragon schedule (UTC). || Orario Frostdragon salvato (UTC). || บันทึกตาราง Frostdragon แล้ว (UTC)
+Frostdragon tasks saved. ||  ||  || Na-save ang Frostdragon tasks. || Compiti Frostdragon salvati. || บันทึกภารกิจ Frostdragon แล้ว
+Frostdragon Tyrant ||  ||  || Frostdragon Tyrant || Frostdragon Tyrant || Frostdragon Tyrant
+FULL ACCESS CONTROL CENTER ||  ||  || FULL ACCESS CONTROL CENTER || CENTRO CONTROLLO ACCESSO COMPLETO || ศูนย์ควบคุมการเข้าถึงเต็ม
+FULL ACCESS STAFF ||  ||  || FULL ACCESS STAFF || STAFF ACCESSO COMPLETO || พนักงานเข้าถึงเต็ม
+gather Dragonite as soon as it appears (15 minutes after the Capital opens) and check again at every 30-minute refresh. Escort or hide gatherers if enemies are nearby. Collectors are the lowest-power players and multitask: until Dragonite opens (75 minutes after the Battlefield opens) they carry out their other duty, usually Capital Reinforcer. ||  ||  || magtipon ng Dragonite sa oras na lumitaw (15 minuto pagkatapos bumukas ang Capital) at tingnan ulit sa bawat 30-minutong refresh. I-escort o itago ang gatherers kung may kalaban. Ang Collectors ang pinakamababang power at multi-task: hanggang magbukas ang Dragonite (75 minuto pagkatapos magbukas ang Battlefield) ginagawa nila ang ibang duty, karaniwang Capital Reinforcer. || raccogli Dragonite non appena appare (15 minuti dopo l'apertura della Capitale) e controlla di nuovo a ogni refresh di 30 minuti. Scorta o nascondi i raccoglitori se ci sono nemici. I Collector sono i giocatori di power più basso e multitasking: finché non apre Dragonite (75 minuti dopo l'apertura del campo) svolgono l'altro incarico, di solito Rinforzo Capitale. || เก็บ Dragonite ทันทีที่ปรากฏ (15 นาทีหลังเมืองหลวงเปิด) และตรวจอีกครั้งทุก 30 นาที คุ้มกันหรือซ่อนผู้เก็บหากมีศัตรู ผู้เก็บเป็นผู้เล่นพลังต่ำสุดและทำหลายหน้าที่: จนกว่า Dragonite จะเปิด (75 นาทีหลังสนามเปิด) พวกเขาทำหน้าที่อื่น มักเป็นผู้เสริมเมืองหลวง
+Gift Code ||  ||  || Gift Code || Codice regalo || รหัสของขวัญ
+Global Battle Theme: {0} ||  ||  || Global Battle Theme: {0} || Tema battaglia globale: {0} || ธีมการต่อสู้ทั่วโลก: {0}
+Global Leaderboard ||  ||  || Global Leaderboard || Classifica globale || กระดานผู้นำทั่วโลก
+Guild Name ||  ||  || Pangalan ng Guild || Nome gilda || ชื่อกิลด์
+Hero Power ||  ||  || Hero Power || Potenza eroe || พลังฮีโร่
+Home ||  ||  || Unang pahina || Home || หน้าแรก
+How to use ||  ||  || Paano gamitin || Come usare || วิธีใช้
+Ignoring Spires or leaving Capital Defense uncovered. ||  ||  || Hindi pinapansin ang Spires o iniwang walang takip ang Capital Defense. || Ignorare le Spire o lasciare scoperta la Difesa della Capitale. || เพิกเฉยต่อ Spire หรือปล่อยการป้องกันเมืองหลวงไม่มีคนดูแล
+Language / Bahasa / 语言 ||  ||  || Wika / Language / 语言 || Lingua / Language / 语言 || ภาษา / Language / 语言
+Last updated: {0} ||  ||  || Huling na-update: {0} || Ultimo aggiornamento: {0} || อัปเดตล่าสุด: {0}
+Legion 1 Official Roster ||  ||  || Opisyal na Roster ng Legion 1 || Roster ufficiale Legione 1 || รายชื่อทางการ Legion 1
+Life Spire: +20% Troop Health. Shield Spire: +20% Troop Defense. Dragonbane Spire: +20% Troop Lethality. Blade Spire: +20% Troop Attack. The alliance that dominates a Spire during its vulnerable period gets the buff for 30 minutes. ||  ||  || Life Spire: +20% Troop Health. Shield Spire: +20% Troop Defense. Dragonbane Spire: +20% Troop Lethality. Blade Spire: +20% Troop Attack. Ang alyansang nangingibabaw sa Spire sa panahong vulnerable ay makakakuha ng buff nang 30 minuto. || Spira Vita: +20% Salute truppe. Spira Scudo: +20% Difesa truppe. Spira Dragonbane: +20% Letalità truppe. Spira Lama: +20% Attacco truppe. L'alleanza che domina una Spira nel periodo vulnerabile ottiene il buff per 30 minuti. || Life Spire: +20% พลังชีวิตทหาร Shield Spire: +20% ป้องกันทหาร Dragonbane Spire: +20% ความรุนแรงทหาร Blade Spire: +20% โจมตีทหาร พันธมิตรที่ครอง Spire ในช่วงโจมตีได้จะได้บัฟ 30 นาที
+Loading Foundry roster… ||  ||  || Naglo-load ng Foundry roster… || Caricamento roster Foundry… || กำลังโหลดรายชื่อ Foundry…
+Loading roster chart… ||  ||  || Naglo-load ng roster chart… || Caricamento grafico roster… || กำลังโหลดกราฟรายชื่อ…
+Local Time: ||  ||  || Oras ng Lokal: || Ora locale: || เวลาท้องถิ่น:
+LOCAL: ||  ||  || LOKAL: || LOCALE: || ท้องถิ่น:
+Login to export the roster. ||  ||  || Mag-login para i-export ang roster. || Accedi per esportare il roster. || เข้าสู่ระบบเพื่อส่งออกรายชื่อ
+Login to view the roster chart. ||  ||  || Mag-login para makita ang roster chart. || Accedi per vedere il grafico del roster. || เข้าสู่ระบบเพื่อดูกราฟรายชื่อ
+Logout ||  ||  || Mag-logout || Esci || ออกจากระบบ
+Logout (DEMON) ||  ||  || Mag-logout (DEMON) || Esci (DEMON) || ออกจากระบบ (DEMON)
+Made With ❤️ By: ||  ||  || Ginawa nang may ❤️ nina: || Realizzato con ❤️ da: || สร้างด้วย ❤️ โดย:
+Manage the existing Legion rosters and player assignments. ||  ||  || Pamahalaan ang umiiral na Legion roster at assignment ng manlalaro. || Gestisci i roster delle Legioni esistenti e le assegnazioni dei giocatori. || จัดการรายชื่อ Legion ที่มีอยู่และการมอบหมายผู้เล่น
+Map ||  ||  || Mapa || Mappa || แผนที่
+Match Time: 12:00 UTC ||  ||  || Oras ng Laban: 12:00 UTC || Orario partita: 12:00 UTC || เวลาแมตช์: 12:00 UTC
+Match Time: Sunday, 12:00 UTC ||  ||  || Oras ng Laban: Linggo, 12:00 UTC || Orario partita: domenica, 12:00 UTC || เวลาแมตช์: วันอาทิตย์ 12:00 UTC
+Maximum players ||  ||  || Maximum players || Giocatori massimi || ผู้เล่นสูงสุด
+Members must already be in the alliance before sign-up ends, or they cannot be dispatched. ||  ||  || Dapat nasa alyansa na ang members bago matapos ang sign-up, o hindi sila made-dispatch. || I membri devono già essere nell'alleanza prima della fine dell'iscrizione, altrimenti non possono essere inviati. || สมาชิกต้องอยู่ในพันธมิตรก่อนสิ้นสุดการลงทะเบียน มิฉะนั้นจะไม่สามารถถูกส่งได้
+Menu ||  ||  || Menu || Menu || เมนู
+min ||  ||  || min || min || นาที
+Min. 6 characters ||  ||  || Min. 6 characters || Min. 6 caratteri || อย่างน้อย 6 ตัวอักษร
+Minimum power ||  ||  || Minimum power || Potenza minima || พลังขั้นต่ำ
+Minister Reservation ||  ||  || Reservasyon ng Ministro || Prenotazione Ministro || การจองรัฐมนตรี
+Move to {0} ||  ||  || Ilipat sa {0} || Sposta in {0} || ย้ายไป {0}
+Name ||  ||  || Pangalan || Nome || ชื่อ
+No ||  ||  || Hindi || No || ไม่
+No Battle roster players yet. Assign players to the Frostdragon roster to see charts. ||  ||  || Wala pang manlalaro sa Battle roster. Magtalaga sa Frostdragon roster para makita ang chart. || Nessun giocatore nel roster Battle. Assegna giocatori al roster Frostdragon per vedere i grafici. || ยังไม่มีผู้เล่นในรายชื่อ Battle กำหนดผู้เล่นไปยังรายชื่อ Frostdragon เพื่อดูกราฟ
+No data to export! ||  ||  || Walang data na i-export! || Nessun dato da esportare! || ไม่มีข้อมูลให้ส่งออก!
+No players match your search. ||  ||  || Walang manlalarong tumugma sa iyong search. || Nessun giocatore corrisponde alla ricerca. || ไม่มีผู้เล่นที่ตรงกับการค้นหา
+No Rally Leader to attack the Imperial Foundry. ||  ||  || Walang Rally Leader para salakayin ang Imperial Foundry. || Nessun capo rally per attaccare la Fonderia Imperiale. || ยังไม่มีหัวหน้ารวมพลสำหรับโจมตีโรงหล่อจักรวรรดิ
+No schedule set ||  ||  || Walang naka-set na schedule || Nessun orario impostato || ยังไม่ได้ตั้งตาราง
+Not assigning anyone to Dragonite gathering and its 30-minute refresh. ||  ||  || Walang itinatalaga sa Dragonite gathering at sa 30-minutong refresh nito. || Non assegnare nessuno alla raccolta Dragonite e al suo refresh ogni 30 minuti. || ไม่มอบหมายใครไปเก็บ Dragonite และการรีเฟรชทุก 30 นาที
+Nothing to change. ||  ||  || Walang babaguhin. || Niente da modificare. || ไม่มีอะไรให้เปลี่ยน
+Official Roster ||  ||  || Opisyal na Roster || Roster ufficiale || รายชื่อทางการ
+One Player ID per line to redeem for multiple accounts at once, or pick an alliance above to auto-fill every ID in that alliance. ||  ||  || Isang Player ID bawat linya para i-redeem sa maraming account, o piliin ang alyansa sa itaas para auto-fill ang lahat ng ID doon. || Un Player ID per riga per riscattare su più account, oppure scegli un'alleanza sopra per compilare automaticamente tutti gli ID. || หนึ่ง Player ID ต่อบรรทัดเพื่อแลกหลายบัญชี หรือเลือกพันธมิตรด้านบนเพื่อเติม ID ทั้งหมดอัตโนมัติ
+Only the President can switch the Battle theme. ||  ||  || Tanging ang Presidente ang pwedeng magpalit ng Battle theme. || Solo il Presidente può cambiare il tema di battaglia. || มีเพียงประธานที่สลับธีมการต่อสู้ได้
+Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid rotating captains. ||  ||  || Tanging ang Rally Captain ang nag-iipon ng occupation time, hindi ang mga reinforcer, kaya pumili ng isang kandidato at iwasang magpalit-palit ng captain. || Solo il Capitano di rally accumula tempo di occupazione, i rinforzi no: scegli un solo candidato ed evita di ruotare i capitani. || มีเพียงหัวหน้ารวมพลที่สะสมเวลายึด ผู้เสริมไม่นับ จึงเลือกผู้สมัครคนเดียวและอย่าสลับหัวหน้าบ่อย
+Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days. ||  ||  || Tanging ang Rally Captain ang nag-iipon ng occupation time, hindi ang mga reinforcer, kaya pumili ng isang kandidato at iwasang magpalit-palit ng captain nang walang dahilan. 30 araw ang Tyrant privileges. || Solo il Capitano di rally accumula tempo di occupazione, i rinforzi no: scegli un solo candidato ed evita cambi di capitano inutili. I privilegi Tyrant durano 30 giorni. || มีเพียงหัวหน้ารวมพลที่สะสมเวลายึด ผู้เสริมไม่นับ จึงเลือกผู้สมัครคนเดียวและอย่าเปลี่ยนหัวหน้าโดยไม่จำเป็น สิทธิ์ Tyrant มี 30 วัน
+Open Battle 1 ||  ||  || Buksan ang Battle 1 || Apri Battle 1 || เปิด Battle 1
+Open Battle 2 ||  ||  || Buksan ang Battle 2 || Apri Battle 2 || เปิด Battle 2
+Open Global Ranking ||  ||  || Buksan ang Global Ranking || Apri classifica globale || เปิดอันดับทั่วโลก
+Open the existing player database and manage all five alliances. ||  ||  || Buksan ang umiiral na player database at pamahalaan ang limang alyansa. || Apri il database giocatori esistente e gestisci tutte e cinque le alleanze. || เปิดฐานข้อมูลผู้เล่นที่มีอยู่และจัดการทั้งห้าพันธมิตร
+PANEL ||  ||  || PANEL || PANNELLO || แผง
+Password confirmation does not match. ||  ||  || Hindi tugma ang password confirmation. || La conferma della password non corrisponde. || การยืนยันรหัสผ่านไม่ตรงกัน
+Password must be at least 6 characters. ||  ||  || Ang password ay dapat hindi bababa sa 6 characters. || La password deve avere almeno 6 caratteri. || รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร
+Personal Points come from Carnage Points (severely injuring enemy troops) and Casualty Points (your troops severely injured) in Capital and Spire battles. Sitting in a building without fighting does not earn points. ||  ||  || Ang Personal Points ay galing sa Carnage Points (malubhang nasugatan ang tropa ng kalaban) at Casualty Points (malubhang nasugatan ang tropa mo) sa laban sa Capital at Spire. Ang pag-upo lang sa building nang walang laban ay hindi nagbibigay ng points. || I Punti personali derivano dai Punti Carneficina (ferire gravemente le truppe nemiche) e dai Punti Perdite (le tue truppe gravemente ferite) nelle battaglie di Capitale e Spire. Restare in un edificio senza combattere non dà punti. || คะแนนส่วนตัวมาจากคะแนนสังหาร (ทำให้ทหารศัตรูบาดเจ็บสาหัส) และคะแนนสูญเสีย (ทหารคุณบาดเจ็บสาหัส) ในการรบเมืองหลวงและ Spire การนั่งในอาคารโดยไม่สู้ไม่ให้คะแนน
+Personal Points come from Carnage Points (severely injuring enemy troops) and Casualty Points (your troops severely injured). ||  ||  || Ang Personal Points ay galing sa Carnage Points (malubhang nasugatan ang tropa ng kalaban) at Casualty Points (malubhang nasugatan ang tropa mo). || I Punti personali derivano dai Punti Carneficina (ferire gravemente le truppe nemiche) e dai Punti Perdite (le tue truppe gravemente ferite). || คะแนนส่วนตัวมาจากคะแนนสังหาร (ทำให้ทหารศัตรูบาดเจ็บสาหัส) และคะแนนสูญเสีย (ทหารคุณบาดเจ็บสาหัส)
+Phase ||  ||  || Yugto || Fase || ช่วง
+Player data, alliances and leaderboards stay intact. Each theme keeps its own roster, so switching never overwrites the other. ||  ||  || Nanatiling intact ang player data, alyansa at leaderboard. Bawat theme ay may sariling roster, kaya ang paglipat ay hindi mag-ooverwrite sa isa. || Dati giocatori, alleanze e classifiche restano intatti. Ogni tema ha il proprio roster: il cambio non sovrascrive l'altro. || ข้อมูลผู้เล่น พันธมิตร และกระดานผู้นำยังคงอยู่ แต่ละธีมมีรายชื่อของตัวเอง การสลับจะไม่ทับอีกธีม
+Player ID (FID) ||  ||  || Player ID (FID) || ID giocatore (FID) || รหัสผู้เล่น (FID)
+Player Management ||  ||  || Pamamahala ng Manlalaro || Gestione giocatori || จัดการผู้เล่น
+Player power added successfully! ||  ||  || Matagumpay na naidagdag ang player power! || Potenza giocatore aggiunta con successo! || เพิ่มพลังผู้เล่นสำเร็จ!
+Please enter Game ID! ||  ||  || Pakilagay ang Game ID! || Inserisci il Game ID! || กรุณาใส่ Game ID!
+Please enter Nickname! ||  ||  || Pakilagay ang Nickname! || Inserisci il nickname! || กรุณาใส่ชื่อเล่น!
+Please enter valid Troops Power! ||  ||  || Pakilagay ang wastong Troops Power! || Inserisci una potenza truppe valida! || กรุณาใส่พลังทหารที่ถูกต้อง!
+Please select a match day! ||  ||  || Pumili ng araw ng laban! || Seleziona un giorno di partita! || กรุณาเลือกวันแมตช์!
+Please select a match time! ||  ||  || Pumili ng oras ng laban! || Seleziona un orario di partita! || กรุณาเลือกเวลาแมตช์!
+Power threshold ||  ||  || Power threshold || Soglia di potenza || เกณฑ์พลัง
+President Name ||  ||  || Pangalan ng Presidente || Nome presidente || ชื่อประธาน
+President Panel data refreshed. ||  ||  || Na-refresh ang data ng President Panel. || Dati del Pannello Presidente aggiornati. || รีเฟรชข้อมูลแผงประธานแล้ว
+President Panel is available to full-access staff only. ||  ||  || Ang President Panel ay available lang sa full-access staff. || Il Pannello Presidente è disponibile solo allo staff con accesso completo. || แผงประธานใช้ได้เฉพาะพนักงานที่เข้าถึงเต็มรูปแบบ
+protect the Capital against enemy rallies and attacks. Stay close to the Capital, join defensive reinforcements when the captain is under pressure, and make sure the Capital is never left uncovered. ||  ||  || protektahan ang Capital laban sa enemy rallies at attacks. Manatiling malapit sa Capital, sumali sa defensive reinforcements kapag nape-pressure ang captain, at tiyaking hindi kailanman naiiwanang walang takip ang Capital. || proteggi la Capitale da rally e attacchi nemici. Resta vicino alla Capitale, unisciti ai rinforzi difensivi quando il capitano è sotto pressione e assicurati che la Capitale non resti mai scoperta. || ปกป้องเมืองหลวงจากการรวมพลและการโจมตีของศัตรู อยู่ใกล้เมืองหลวง เข้าร่วมเสริมแนวรับเมื่อหัวหน้าถูกกดดัน และอย่าปล่อยเมืองหลวงไม่มีคนดูแล
+Prototype Site I ||  ||  || Pook ng Prototype I || Sito Prototipo I || ไซต์ต้นแบบ I
+Prototype Site II ||  ||  || Pook ng Prototype II || Sito Prototipo II || ไซต์ต้นแบบ II
+Rally Captain ||  ||  || Rally Captain || Capitano di rally || หัวหน้ารวมพล
+Re-arrange Dragonite Collectors? ||  ||  || Ayusin ulit ang mga Dragonite Collector? || Riordinare i raccoglitori Dragonite? || จัดเรียงผู้เก็บ Dragonite ใหม่?
+Rearmament follows the battle for 55 hours: +500% Healing Speed and -30% Healing Costs. ||  ||  || Sumusunod ang Rearmament pagkatapos ng battle nang 55 oras: +500% Healing Speed at -30% Healing Costs. || Il Riarmamento segue la battaglia per 55 ore: +500% velocità di cura e -30% costi di cura. || ช่วง Rearmament ตามหลังการต่อสู้ 55 ชั่วโมง: ความเร็วรักษา +500% และค่าใช้จ่ายรักษา −30%
+RECENTLY ACCEPTED RESERVATION ||  ||  || KAMAKAILANG TINANGGAP NA RESERVasyon || PRENOTAZIONI ACCETTATE DI RECENTE || การจองที่รับล่าสุด
+Remove this player from Legion roster? ||  ||  || Alisin ang manlalarong ito sa Legion roster? || Rimuovere questo giocatore dal roster della Legione? || ลบผู้เล่นนี้ออกจากรายชื่อ Legion?
+Remove this player from the Frostdragon Tyrant roster? ||  ||  || Alisin ang manlalarong ito sa Frostdragon Tyrant roster? || Rimuovere questo giocatore dal roster Frostdragon Tyrant? || ลบผู้เล่นนี้ออกจากรายชื่อ Frostdragon Tyrant?
+Remove {0} selected player(s) from {1}? ||  ||  || Alisin ang {0} napiling manlalaro mula sa {1}? || Rimuovere {0} giocatore/i selezionato/i da {1}? || ลบผู้เล่นที่เลือก {0} คนจาก {1}?
+Repair Facility II ||  ||  || Pasilidad sa Pag-aayos II || Struttura di Riparazione II || สถานซ่อม II
+Repair Facility III ||  ||  || Pasilidad sa Pag-aayos III || Struttura di Riparazione III || สถานซ่อม III
+Repair Facility IV ||  ||  || Pasilidad sa Pag-aayos IV || Struttura di Riparazione IV || สถานซ่อม IV
+Reset this browser's local snow preference? The global Battle Theme is stored in Supabase and will not be changed. ||  ||  || I-reset ang local snow preference ng browser na ito? Ang global Battle Theme ay naka-store sa Supabase at hindi magbabago. || Reimpostare la preferenza neve locale di questo browser? Il Battle Theme globale è in Supabase e non verrà modificato. || รีเซ็ตการตั้งค่าหิมะในเบราว์เซอร์นี้? ธีม Battle ทั่วไซต์เก็บใน Supabase และจะไม่เปลี่ยน
+Roster deadline (UTC) ||  ||  || Deadline ng roster (UTC) || Scadenza roster (UTC) || กำหนดส่งรายชื่อ (UTC)
+Roster lock update failed: {0} ||  ||  || Bigong i-update ang roster lock: {0} || Aggiornamento blocco roster non riuscito: {0} || อัปเดตการล็อกรายชื่อล้มเหลว: {0}
+Rotating random Rally Captains, which splits occupation time. ||  ||  || Pagpapalit-palit ng random na Rally Captains, na naghahati sa occupation time. || Ruotare a caso i Capitani di rally, che spezza il tempo di occupazione. || สลับหัวหน้ารวมพลแบบสุ่ม ทำให้เวลายึดถูกแบ่ง
+Schedule 1 ||  ||  || Schedule 1 || Orario 1 || ตาราง 1
+Schedule 2 ||  ||  || Schedule 2 || Orario 2 || ตาราง 2
+Schedule for {0} updated! ||  ||  || Na-update ang schedule para sa {0}! || Orario per {0} aggiornato! || อัปเดตตารางสำหรับ {0} แล้ว!
+Schedule save failed: {0} ||  ||  || Bigong mag-save ng schedule: {0} || Salvataggio orario non riuscito: {0} || บันทึกตารางล้มเหลว: {0}
+Search nickname or Game ID... ||  ||  || Maghanap ng nickname o Game ID... || Cerca nickname o Game ID... || ค้นหาชื่อเล่นหรือ Game ID...
+Search... ||  ||  || Maghanap... || Cerca... || ค้นหา...
+Select all shown ||  ||  || Piliin ang lahat na ipinapakita || Seleziona tutti i visualizzati || เลือกทั้งหมดที่แสดง
+Select Alliance ||  ||  || Pumili ng Alyansa || Seleziona alleanza || เลือกพันธมิตร
+Select Alliance, Global Leaderboard, or Legion Roster ||  ||  || Pumili ng Alyansa, Global Leaderboard, o Legion Roster || Seleziona Alleanza, Classifica globale o Roster Legione || เลือกพันธมิตร กระดานผู้นำทั่วโลก หรือรายชื่อ Legion
+Select at least one player first. ||  ||  || Pumili muna ng kahit isang manlalaro. || Seleziona almeno un giocatore prima. || เลือกผู้เล่นอย่างน้อยหนึ่งคนก่อน
+Select Day ||  ||  || Pumili ng Araw || Seleziona giorno || เลือกวัน
+Select Legion and Phase ||  ||  || Piliin ang Legion at Phase || Seleziona legione e fase || เลือก Legion และช่วง
+Select Match Time ||  ||  || Pumili ng Oras ng Laban || Seleziona orario partita || เลือกเวลาแมตช์
+Select Preferred Time ||  ||  || Pumili ng Preferred Time || Seleziona orario preferito || เลือกเวลาที่ต้องการ
+send your troops into the Rally Captain's Capital garrison and keep them there. Refill the garrison right after losses and do not leave the Capital while the captain is holding it. ||  ||  || ipadala ang tropa mo sa Capital garrison ng Rally Captain at panatilihin doon. Punan ulit ang garrison pagkatapos ng losses at huwag umalis sa Capital habang hawak ito ng captain. || invia le tue truppe nella guarnigione della Capitale del Capitano di rally e tienile lì. Riempi la guarnigione subito dopo le perdite e non lasciare la Capitale mentre il capitano la tiene. || ส่งทหารเข้ากองกำลังเมืองหลวงของหัวหน้ารวมพลและให้อยู่ที่นั่น เติมกองหลังสูญเสีย และอย่าออกจากเมืองหลวงขณะที่หัวหน้ายังยึดอยู่
+Share link copied. ||  ||  || Nakopya ang share link. || Link di condivisione copiato. || คัดลอกลิงก์แชร์แล้ว
+Sign-up (48h): the Alliance Leader or an R4 registers. Only a limited number of top alliances per Zone qualify. ||  ||  || Sign-up (48h): ang Alliance Leader o R4 ang magre-register. Limitado lang ang top alliances bawat Zone na kwalipikado. || Iscrizione (48h): il Leader dell'alleanza o un R4 si registra. Solo un numero limitato di alleanze top per Zona si qualifica. || ลงทะเบียน (48 ชม.): หัวหน้าพันธมิตรหรือ R4 เป็นผู้ลงทะเบียน มีเพียงพันธมิตรอันดับต้นของแต่ละโซนจำนวนจำกัดที่ผ่านคุณสมบัติ
+Slot ||  ||  || Slot || Slot || ช่อง
+Snow ||  ||  || Snow || Neve || หิมะ
+Snow OFF ||  ||  || Snow OFF || Neve OFF || หิมะ ปิด
+Snow ON ||  ||  || Snow ON || Neve ON || หิมะ เปิด
+Spending all healing resources before Rearmament. ||  ||  || Ginagastos ang lahat ng healing resources bago ang Rearmament. || Spendere tutte le risorse di cura prima del Riarmamento. || ใช้ทรัพยากรรักษาหมดก่อนช่วง Rearmament
+Spire Blade ||  ||  || Spire Blade || Spira Lama || Spire ดาบ
+Spire Dragonbane ||  ||  || Spire Dragonbane || Spira Dragonbane || Spire Dragonbane
+Spire Life ||  ||  || Spire Life || Spira Vita || Spire ชีวิต
+Spire Shield ||  ||  || Spire Shield || Spira Scudo || Spire โล่
+Spires alternate 30 minutes vulnerable and 30 minutes protected. ||  ||  || Ang Spires ay nag-aalternate ng 30 minutong vulnerable at 30 minutong protektado. || Le Spire alternano 30 minuti vulnerabili e 30 minuti protette. || Spire สลับ 30 นาทีที่โจมตีได้ และ 30 นาทีที่ป้องกัน
+Staff access required. ||  ||  || Kailangan ng staff access. || Accesso staff richiesto. || ต้องมีสิทธิ์พนักงาน
+starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it. ||  ||  || nagsisimula at namumuno sa Capital rallies at siya lang ang nag-iipon ng occupation time. Manatili sa Capital, panatilihing puno ang garrison, at huwag ibigay ang captain role maliban kung tinawag ng leader. || avvia e guida i rally sulla Capitale ed è l'unico che accumula tempo di occupazione. Resta sulla Capitale, tieni la guarnigione piena e non cedere il ruolo di capitano a meno che il leader non lo chieda. || เริ่มและนำรวมพลเมืองหลวง และเป็นคนเดียวที่สะสมเวลายึด อยู่ที่เมืองหลวง รักษากองกำลังให้เต็ม และอย่าส่งมอบบทบาทหัวหน้าจนกว่าหัวหน้าจะเรียก
+starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital. ||  ||  || nagsisimula at namumuno sa Capital rallies at siya lang ang nag-iipon ng occupation time. Manatili sa Capital. || avvia e guida i rally sulla Capitale ed è l'unico che accumula tempo di occupazione. Resta sulla Capitale. || เริ่มและนำรวมพลเมืองหลวง และเป็นคนเดียวที่สะสมเวลายึด อยู่ที่เมืองหลวง
+STATUS ||  ||  || STATUS || STATO || สถานะ
+Staying in the Dragon Crypt expecting a Shield: Shields are removed there and cannot be activated. ||  ||  || Nanatili sa Dragon Crypt na umaasang may Shield: tinatanggal doon ang Shield at hindi maa-activate. || Restare nella Cripta del Drago aspettando uno Scudo: lì gli Scudi vengono rimossi e non si possono attivare. || อยู่ใน Dragon Crypt โดยหวังโล่: โล่จะถูกลบที่นั่นและเปิดใช้ไม่ได้
+Substitute Players: ||  ||  || Mga Substitute Player: || Giocatori sostituti: || ผู้เล่นสำรอง:
+Substitute quota is full! (Maximum 20 players) ||  ||  || Puno na ang Substitute quota! (Maximum 20 players) || Quota sostituti piena! (Massimo 20 giocatori) || โควต้าตัวสำรองเต็มแล้ว! (สูงสุด 20 ผู้เล่น)
+take and hold the Blade Spire (+20% Troop Attack) during its vulnerable window, and rally or reinforce as needed to keep it. ||  ||  || kunin at hawakan ang Blade Spire (+20% Troop Attack) sa vulnerable window nito, at mag-rally o mag-reinforce kung kailangan para mapanatili. || prendi e tieni la Spira Lama (+20% Attacco truppe) durante la finestra vulnerabile, e fai rally o rinforza se serve per tenerla. || ยึดและครอง Blade Spire (+20% โจมตีทหาร) ในช่วงโจมตีได้ และรวมพลหรือเสริมตามจำเป็นเพื่อรักษาไว้
+take and hold the Dragonbane Spire (+20% Troop Lethality) during its vulnerable window. Move on to the next objective once the window closes. ||  ||  || kunin at hawakan ang Dragonbane Spire (+20% Troop Lethality) sa vulnerable window nito. Lumipat sa susunod na objective kapag nagsara ang window. || prendi e tieni la Spira Dragonbane (+20% Letalità truppe) durante la finestra vulnerabile. Passa al prossimo obiettivo quando la finestra si chiude. || ยึดและครอง Dragonbane Spire (+20% ความรุนแรงทหาร) ในช่วงโจมตีได้ ย้ายไปเป้าถัดไปเมื่อหน้าต่างปิด
+take and hold the Life Spire (+20% Troop Health) during its 30-minute vulnerable window. Coordinate with your group so the buff is secured as soon as the window opens. ||  ||  || kunin at hawakan ang Life Spire (+20% Troop Health) sa 30-minutong vulnerable window nito. Makipag-coordinate sa grupo para ma-secure ang buff sa oras na bumukas ang window. || prendi e tieni la Spira Vita (+20% Salute truppe) durante la finestra vulnerabile di 30 minuti. Coordinati col gruppo per assicurare il buff appena si apre la finestra. || ยึดและครอง Life Spire (+20% พลังชีวิตทหาร) ในช่วง 30 นาทีที่โจมตีได้ ประสานกับกลุ่มเพื่อล็อกบัฟทันทีที่หน้าต่างเปิด
+take and hold the Shield Spire (+20% Troop Defense) during its vulnerable window, and keep enough troops there to stop the enemy from retaking it. ||  ||  || kunin at hawakan ang Shield Spire (+20% Troop Defense) sa vulnerable window nito, at mag-iwan ng sapat na tropa para hindi mabawi ng kalaban. || prendi e tieni la Spira Scudo (+20% Difesa truppe) durante la finestra vulnerabile, e lascia abbastanza truppe per impedire al nemico di riprenderla. || ยึดและครอง Shield Spire (+20% ป้องกันทหาร) ในช่วงโจมตีได้ และคงทหารไว้พอที่จะกันศัตรูแย่งคืน
+Target: ||  ||  || Target: || Obiettivo: || เป้าหมาย:
+The Capital becomes vulnerable 1 hour after opening, leaving a 6-hour Capital battle. ||  ||  || Nagiging vulnerable ang Capital 1 oras pagkatapos magbukas, kaya 6 na oras ang Capital battle. || La Capitale diventa vulnerabile 1 ora dopo l'apertura, lasciando 6 ore di battaglia per la Capitale. || เมืองหลวงเปิดให้โจมตีได้ 1 ชั่วโมงหลังเปิดสนาม เหลือการแย่งเมืองหลวง 6 ชั่วโมง
+The Chief the alliance is backing to become Frostdragon Tyrant. Hold the Capital as Rally Captain for as long as possible, avoid unnecessary captain changes, and keep your troops healed. ||  ||  || Ang Chief na sinusuportahan ng alyansa para maging Frostdragon Tyrant. Hawakan ang Capital bilang Rally Captain nang matagal hangga't maaari, iwasan ang hindi kinakailangang pagpapalit ng captain, at panatilihing gumagaling ang tropa. || Il Capo che l'alleanza sostiene per diventare Frostdragon Tyrant. Tieni la Capitale come Capitano di rally il più a lungo possibile, evita cambi di capitano inutili e tieni le truppe curate. || หัวหน้าที่พันธมิตรหนุนให้เป็น Frostdragon Tyrant ยึดเมืองหลวงในฐานะหัวหน้ารวมพลให้นานที่สุด หลีกเลี่ยงการเปลี่ยนหัวหน้าที่ไม่จำเป็น และรักษาทหารให้พร้อม
+The Chief with the longest total Capital occupation time wins; on a tie, whoever reached that time first. ||  ||  || Ang Chief na may pinakamahabang total Capital occupation time ang panalo; kung tabla, kung sino ang unang umabot sa oras na iyon. || Vince il Capo con il tempo totale di occupazione della Capitale più lungo; in caso di parità, chi ha raggiunto quel tempo per primo. || หัวหน้าที่มีเวลายึดเมืองหลวงรวมนานที่สุดชนะ หากเสมอกัน คนที่ถึงเวลานั้นก่อนจะชนะ
+The Chief with the longest total Capital occupation time wins; on a tie, whoever reached that time first. Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days. ||  ||  || Ang Chief na may pinakamahabang total Capital occupation time ang panalo; kung tabla, kung sino ang unang umabot sa oras na iyon. Tanging ang Rally Captain ang nag-iipon ng occupation time, hindi ang mga reinforcer, kaya pumili ng isang kandidato at iwasang magpalit-palit ng captain nang walang dahilan. 30 araw ang Tyrant privileges. || Vince il Capo con il tempo totale di occupazione della Capitale più lungo; in caso di parità, chi ha raggiunto quel tempo per primo. Solo il Capitano di rally accumula tempo di occupazione, i rinforzi no: scegli un solo candidato ed evita cambi di capitano inutili. I privilegi Tyrant durano 30 giorni. || หัวหน้าที่มีเวลายึดเมืองหลวงรวมนานที่สุดชนะ หากเสมอกัน คนที่ถึงเวลานั้นก่อนจะชนะ มีเพียงหัวหน้ารวมพลที่สะสมเวลายึด ผู้เสริมไม่นับ จึงเลือกผู้สมัครคนเดียวและอย่าเปลี่ยนหัวหน้าโดยไม่จำเป็น สิทธิ์ Tyrant มี 30 วัน
+The selected players fill the next free slots, ordered from highest Power. ||  ||  || Ang mga napiling manlalaro ay pupuno sa susunod na bakanteng slot, mula sa pinakamataas na Power. || I giocatori selezionati riempiono i prossimi slot liberi, ordinati dal Power più alto. || ผู้เล่นที่เลือกจะเติมช่องว่างถัดไป เรียงจากพลังสูงสุด
+This updates the footer shown to everyone. ||  ||  || Ine-update nito ang footer na nakikita ng lahat. || Aggiorna il footer visibile a tutti. || อัปเดตส่วนท้ายที่ทุกคนเห็น
+Threshold ||  ||  || Threshold || Soglia || เกณฑ์
+Time slot (UTC+0) ||  ||  || Time slot (UTC+0) || Fascia oraria (UTC+0) || ช่วงเวลา (UTC+0)
+Tip: verify event-specific mechanics in-game before battle. ||  ||  || Tip: i-verify ang event-specific mechanics in-game bago ang battle. || Suggerimento: verifica in gioco le meccaniche specifiche dell'evento prima della battaglia. || เคล็ดลับ: ตรวจสอบกลไกเฉพาะอีเวนต์ในเกมก่อนต่อสู้
+Toggle snow effect ||  ||  || I-toggle ang snow effect || Attiva/disattiva effetto neve || สลับเอฟเฟกต์หิมะ
+Total Hero Power ||  ||  || Kabuuang Hero Power || Potenza eroe totale || พลังฮีโร่รวม
+Total Players ||  ||  || Kabuuang Manlalaro || Giocatori totali || ผู้เล่นทั้งหมด
+Total Troops Power ||  ||  || Kabuuang Troops Power || Potenza truppe totale || พลังทหารรวม
+Transfer Portal ||  ||  || Transfer Portal || Portale trasferimento || พอร์ทัลโอนย้าย
+Troops Power Leaderboard ||  ||  || Leaderboard ng Troops Power || Classifica potenza truppe || กระดานผู้นำพลังทหาร
+Tyrant Candidate ||  ||  || Kandidato sa Tyrant || Candidato Tyrant || ผู้สมัคร Tyrant
+Unable to download chart image. ||  ||  || Hindi ma-download ang chart image. || Impossibile scaricare l'immagine del grafico. || ไม่สามารถดาวน์โหลดรูปกราฟได้
+Unable to generate chart image. ||  ||  || Hindi ma-generate ang chart image. || Impossibile generare l'immagine del grafico. || ไม่สามารถสร้างรูปกราฟได้
+Unable to load the roster chart. Please try again. ||  ||  || Hindi ma-load ang roster chart. Subukan ulit. || Impossibile caricare il grafico del roster. Riprova. || ไม่สามารถโหลดกราฟรายชื่อได้ โปรดลองอีกครั้ง
+Unable to save checklist: {0} ||  ||  || Hindi ma-save ang checklist: {0} || Impossibile salvare la checklist: {0} || ไม่สามารถบันทึกเช็คลิสต์: {0}
+Unable to save task: {0} ||  ||  || Hindi ma-save ang task: {0} || Impossibile salvare il compito: {0} || ไม่สามารถบันทึกภารกิจ: {0}
+Use the existing schedule system for the active Battle group(s). ||  ||  || Gamitin ang umiiral na schedule system para sa active Battle group(s). || Usa il sistema di orari esistente per i gruppi di battaglia attivi. || ใช้ระบบตารางเวลาที่มีอยู่สำหรับกลุ่ม Battle ที่ใช้งาน
+Username cannot be empty. ||  ||  || Hindi pwedeng walang laman ang username. || Il nome utente non può essere vuoto. || ชื่อผู้ใช้ห้ามว่าง
+Username: 2-32 chars, letters/numbers/. _ - only. ||  ||  || Username: 2-32 chars, letters/numbers/. _ - only. || Nome utente: 2-32 caratteri, solo lettere/numeri/. _ - || ชื่อผู้ใช้: 2-32 ตัวอักษร ใช้ได้เฉพาะตัวอักษร/ตัวเลข/. _ -
+UTC-0: ||  ||  || UTC-0: || UTC-0: || UTC-0:
+UTC: ||  ||  || UTC: || UTC: || UTC:
+View Applicants ||  ||  || Tingnan ang mga Aplikante || Vedi candidati || ดูผู้สมัคร
+view only ||  ||  || tingnan lang || sola lettura || ดูอย่างเดียว
+View the complete Troops Power ranking across ARX, IDN, VNX, ZXC and CAT. ||  ||  || Tingnan ang kumpletong ranking ng Troops Power sa ARX, IDN, VNX, ZXC at CAT. || Visualizza la classifica completa della potenza truppe tra ARX, IDN, VNX, ZXC e CAT. || ดูอันดับพลังทหารทั้งหมดของ ARX, IDN, VNX, ZXC และ CAT
+WoS Tool ||  ||  || WoS Tool || Strumento WoS || เครื่องมือ WoS
+You don't have permission to add players. ||  ||  || Wala kang permiso na magdagdag ng manlalaro. || Non hai il permesso di aggiungere giocatori. || คุณไม่มีสิทธิ์เพิ่มผู้เล่น
+You don't have permission to edit this player's alliance. ||  ||  || Wala kang permiso na i-edit ang alyansa ng manlalarong ito. || Non hai il permesso di modificare l'alleanza di questo giocatore. || คุณไม่มีสิทธิ์แก้ไขพันธมิตรของผู้เล่นนี้
+You don't have permission to edit this roster. ||  ||  || Wala kang permiso na i-edit ang roster na ito. || Non hai il permesso di modificare questo roster. || คุณไม่มีสิทธิ์แก้ไขรายชื่อนี้
+You don't have permission to save changes for this player. ||  ||  || Wala kang permiso na i-save ang changes para sa manlalarong ito. || Non hai il permesso di salvare le modifiche per questo giocatore. || คุณไม่มีสิทธิ์บันทึกการเปลี่ยนแปลงของผู้เล่นนี้
+You don't have permission to set this legion's schedule. ||  ||  || Wala kang permiso na i-set ang schedule ng legion na ito. || Non hai il permesso di impostare l'orario di questa legione. || คุณไม่มีสิทธิ์ตั้งตารางของ Legion นี้
+your battle group. Players join the Capital, Spires and Dragonite calls of their own group. A player belongs to only one group. ||  ||  || ang battle group mo. Sumasali ang players sa Capital, Spires at Dragonite calls ng sarili nilang grupo. Isang grupo lang ang pag-aarian ng isang player. || il tuo gruppo di battaglia. I giocatori si uniscono alle chiamate di Capitale, Spire e Dragonite del proprio gruppo. Un giocatore appartiene a un solo gruppo. || กลุ่มต่อสู้ของคุณ ผู้เล่นเข้าร่วมการเรียกเมืองหลวง Spire และ Dragonite ของกลุ่มตนเอง ผู้เล่นอยู่ได้เพียงกลุ่มเดียว
+{0} is already active. ||  ||  || Aktibo na ang {0}. || {0} è già attivo. || {0} ใช้งานอยู่แล้ว
+{0} updates failed; the rest were saved. ||  ||  || {0} updates ang bigo; na-save ang iba. || {0} aggiornamenti non riusciti; il resto è stato salvato. || {0} รายการอัปเดตล้มเหลว ส่วนที่เหลือบันทึกแล้ว
+
+# ID/ZH fill for keys that only had TL/IT/TH
+Every Battle player has one group task (Alliance A or B) plus one or more role tasks. Check your task on the roster before the Eve of Battle and follow your group leader's calls. || Setiap pemain Battle punya satu tugas grup (Alliance A atau B) plus satu atau lebih tugas peran. Cek tugasmu di roster sebelum Eve of Battle dan ikuti panggilan ketua grup. || 每位战斗玩家有一项小组任务（联盟 A 或 B）以及一项或多项角色任务。战前夕请在名单中查看任务并听从小组长指挥。 ||  ||  || 
+Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days. || Hanya Rally Captain yang mengumpulkan waktu pendudukan, reinforcer tidak, jadi pilih satu kandidat dan hindari pergantian kapten yang tidak perlu. Hak istimewa Tyrant berlaku 30 hari. || 只有集结队长累计占领时间，增援者不计入，因此选定一名候选人并避免不必要的队长轮换。暴君特权持续 30 天。 ||  ||  || 
+Personal Points come from Carnage Points (severely injuring enemy troops) and Casualty Points (your troops severely injured) in Capital and Spire battles. Sitting in a building without fighting does not earn points. || Poin Pribadi berasal dari Carnage Points (melukai parah pasukan musuh) dan Casualty Points (pasukanmu terluka parah) di pertempuran Capital dan Spire. Hanya duduk di bangunan tanpa bertarung tidak memberi poin. || 个人积分来自首都与尖塔战斗中的屠杀积分（重伤敌方部队）和伤亡积分（己方部队重伤）。待在建筑内不战斗不得分。 ||  ||  || 
+starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it. || memulai dan memimpin rally Capital dan satu-satunya yang mengumpulkan waktu pendudukan. Tetap di Capital, jaga garnisun penuh, dan jangan serahkan peran kapten kecuali pemimpin yang memerintahkan. || 发起并领导首都集结，是唯一累计占领时间的人。守在首都、保持驻军满员，除非队长下令否则不要交出队长角色。 ||  ||  || 
 `);
   I18N.apply(document.body);
 });
