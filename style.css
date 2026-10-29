@@ -1768,3 +1768,14 @@ body.fy-shared-open { overflow:hidden; }
 
 .fy-rally-tag { display: block; color: #fb923c; font-size: .7rem; font-weight: 600; margin-top: 2px; }
 .fy-w-warn { color: #fbbf24; }
+
+/* iOS Safari auto-zooms into any focused form control whose font-size is < 16px.
+   Force 16px on touch devices so the page no longer jumps when the keyboard opens.
+   Pinch-to-zoom stays enabled (accessibility); only the focus auto-zoom is avoided. */
+@media (hover: none) and (pointer: coarse) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]),
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}
