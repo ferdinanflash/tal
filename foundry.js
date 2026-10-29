@@ -122,11 +122,12 @@ function foundryTpl(slot) {
 }
 
 // Minimal pemain per bangunan (peringatan roster + skor planner).
-// Angka diset agar roster penuh (30) menutup semua, dan roster tipis tetap prioritas ke bangunan bernilai tinggi.
+// Mengikuti tab Strategi: Situs Prototipe dan tiap Fasilitas Perbaikan masing-masing minimal 2 penjaga sepanjang battle
+// (poin besar, harus ditahan terus); angka ini juga dipakai planner agar roster tipis tetap memprioritaskan bangunan bernilai tinggi.
 const FOUNDRY_MIN = {
-    1: { proto1: 2, proto2: 2, rep1: 1, rep2: 1, rep3: 1, rep4: 1, boiler: 2, transit: 2 },
-    2: { foundry: 4, proto1: 1, proto2: 1, rep1: 1, rep2: 1, rep3: 1, rep4: 1, boiler: 1, muni: 1, merc: 1, transit: 1 },
-    3: { foundry: 4, proto1: 1, proto2: 1, rep1: 1, rep2: 1, rep3: 1, rep4: 1, boiler: 1, muni: 1, merc: 1, transit: 1, workshop: 2 }
+    1: { proto1: 2, proto2: 2, rep1: 2, rep2: 2, rep3: 2, rep4: 2, boiler: 2, transit: 2 },
+    2: { foundry: 4, proto1: 2, proto2: 2, rep1: 2, rep2: 2, rep3: 2, rep4: 2, boiler: 1, muni: 1, merc: 1, transit: 1 },
+    3: { foundry: 4, proto1: 2, proto2: 2, rep1: 2, rep2: 2, rep3: 2, rep4: 2, boiler: 1, muni: 1, merc: 1, transit: 1, workshop: 2 }
 };
 // Checklist kesiapan per pemain, disimpan sebagai bitmask di kolom foundry_ready.
 const FOUNDRY_CHECKS = [
@@ -195,19 +196,35 @@ const FOUNDRY_STRAT_MULT = {
     workshop: 1.25
 };
 // Cakupan per fase = pemain di bangunan + march penguatan RL/Joiner (sama dengan tabel Garrison).
-function foundryPlanCover(positions) {
-    const cnt = { 1: {}, 2: {}, 3: {} };
-    positions.forEach(t => [1, 2, 3].forEach(ph => { const k = t['p' + ph]; if (k) cnt[ph][k] = (cnt[ph][k] || 0) + 1; }));
+// foundryPlanCoverParts memisahkan keduanya: st = pemain yang bertugas di bangunan, add = march penguatan.
+function foundryPlanCoverParts(positions) {
+    const st = { 1: {}, 2: {}, 3: {} };
+    positions.forEach(t => [1, 2, 3].forEach(ph => { const k = t['p' + ph]; if (k) st[ph][k] = (st[ph][k] || 0) + 1; }));
     const members = positions.filter(t => FOUNDRY_REINFORCE_ROLES.includes(t.role))
         .map(t => ({ id: 'plan' + t.slot, foundry_role: t.role, foundry_slot: t.slot, troops_power: 1000 - t.slot, foundry_p1: t.p1, foundry_p2: t.p2, foundry_p3: t.p3 }));
-    const jp = foundryJoinerCalc(members, (k, ph) => cnt[ph][k] || 0);
-    [1, 2, 3].forEach(ph => Object.entries(jp.phases[ph].add).forEach(([k, v]) => { cnt[ph][k] = (cnt[ph][k] || 0) + v; }));
+    const jp = foundryJoinerCalc(members, (k, ph) => st[ph][k] || 0);
+    const add = { 1: {}, 2: {}, 3: {} };
+    [1, 2, 3].forEach(ph => Object.entries(jp.phases[ph].add).forEach(([k, v]) => { add[ph][k] = v; }));
+    return { st, add };
+}
+function foundryPlanCover(positions) {
+    const { st, add } = foundryPlanCoverParts(positions);
+    const cnt = { 1: {}, 2: {}, 3: {} };
+    [1, 2, 3].forEach(ph => { [...Object.keys(st[ph]), ...Object.keys(add[ph])].forEach(k => { cnt[ph][k] = (st[ph][k] || 0) + (add[ph][k] || 0); }); });
     return cnt;
 }
+// March penguatan hanya bantuan sementara dari pemain yang bertugas di tempat lain, jadi di skor planner nilainya
+// separuh pemain yang benar-benar menjaga, dan tiap bangunan penghasil poin tetap wajib punya penjaga sendiri
+// (Holder Prototipe/Perbaikan/Ketel/Transit tidak boleh digantikan sepenuhnya oleh march Joiner).
+const FOUNDRY_MARCH_WEIGHT = 0.5;
 // Skor strategi: poin/menit × menit fase × multiplier strategis × rasio cakupan (diminishing setelah min),
 // + bonus first-capture di P1, + penalti bila Proto kiri/kanan timpang, + penalti missing critical.
 function foundryPlanScore(positions) {
-    const cnt = foundryPlanCover(positions);
+    const parts = foundryPlanCoverParts(positions);
+    const cnt = { 1: {}, 2: {}, 3: {} };
+    [1, 2, 3].forEach(ph => [...Object.keys(parts.st[ph]), ...Object.keys(parts.add[ph])].forEach(k => {
+        cnt[ph][k] = (parts.st[ph][k] || 0) + FOUNDRY_MARCH_WEIGHT * (parts.add[ph][k] || 0);
+    }));
     let total = 0;
     [1, 2, 3].forEach(ph => {
         const mins = FOUNDRY_PHASE_MINUTES[ph - 1];
@@ -239,6 +256,11 @@ function foundryPlanScore(positions) {
         [1, 'boiler'], [1, 'transit'], [1, 'proto1'], [1, 'proto2'],
         [2, 'foundry'], [3, 'foundry']
     ];
+    // Bangunan penghasil poin tanpa penjaga sendiri (hanya mengandalkan march) kehilangan separuh nilainya.
+    [1, 2, 3].forEach(ph => Object.keys(FOUNDRY_MIN[ph]).forEach(k => {
+        if (k === 'workshop' || (parts.st[ph][k] || 0) > 0) return;
+        total -= 0.5 * FOUNDRY_PHASE_MINUTES[ph - 1] * (FOUNDRY_B[k].m || 0) * (FOUNDRY_STRAT_MULT[k] || 1);
+    }));
     critical.forEach(([ph, k]) => {
         const min = (FOUNDRY_MIN[ph][k] || 1);
         const n = cnt[ph][k] || 0;
