@@ -2,7 +2,23 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8">
-			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<meta id="viewport-meta" name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+/* iPhone Safari "Request Desktop Website": the UA becomes "Macintosh" but Safari can keep
+   width=device-width, so the max-width:600px mobile CSS still applies. Detect that case
+   (Mac UA + touch + phone-sized screen; iPads and real Macs are excluded) and force a
+   desktop-width layout viewport. Normal iPhone mobile mode is untouched. */
+(function () {
+  try {
+    var isMacUA = /Macintosh/.test(navigator.userAgent);
+    var isTouch = navigator.maxTouchPoints > 1;
+    var isPhoneScreen = Math.min(screen.width, screen.height) < 700;
+    if (isMacUA && isTouch && isPhoneScreen) {
+      document.getElementById('viewport-meta').setAttribute('content', 'width=1024');
+    }
+  } catch (e) {}
+})();
+</script>
 				<title>3475 Battle League</title>
 				<meta name="description" content="3475 3475 Battle League - Alliance troops power leaderboard, legion roster, and match scheduling.">
 				<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E">
