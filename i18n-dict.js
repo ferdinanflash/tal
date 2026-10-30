@@ -1004,5 +1004,3 @@ Only the Rally Captain accumulates occupation time, reinforcers do not, so pick 
 Personal Points come from Carnage Points (severely injuring enemy troops) and Casualty Points (your troops severely injured) in Capital and Spire battles. Sitting in a building without fighting does not earn points. || Poin Pribadi berasal dari Carnage Points (melukai parah pasukan musuh) dan Casualty Points (pasukanmu terluka parah) di pertempuran Capital dan Spire. Hanya duduk di bangunan tanpa bertarung tidak memberi poin. || 个人积分来自首都与尖塔战斗中的屠杀积分（重伤敌方部队）和伤亡积分（己方部队重伤）。待在建筑内不战斗不得分。 ||  ||  || 
 starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it. || memulai dan memimpin rally Capital dan satu-satunya yang mengumpulkan waktu pendudukan. Tetap di Capital, jaga garnisun penuh, dan jangan serahkan peran kapten kecuali pemimpin yang memerintahkan. || 发起并领导首都集结，是唯一累计占领时间的人。守在首都、保持驻军满员，除非队长下令否则不要交出队长角色。 ||  ||  || 
 `);
-  I18N.apply(document.body);
-});
