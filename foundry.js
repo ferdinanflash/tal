@@ -1,9 +1,81 @@
-// ================= FOUNDRY BATTLE ROSTER (IDN) =================
-// Roster, peta, dan strategi Foundry Battle untuk alliance IDN.
-// Data roster disimpan di kolom foundry_* pada tabel troops_power (lihat supabase_foundry_roster.sql).
+// ================= FOUNDRY BATTLE PLANNER =================
+// Dua mode memakai UI yang sama (roster, peta, fase, role, chart, checklist, live edit):
+//   - 'foundry' : Foundry Battle IDN (kolom foundry_*)
+//   - 'tundra'  : Tundra Arm League Legion 1/2 (kolom legion + legion_role + tundra_*)
+// Lihat supabase_foundry_roster.sql / supabase_tundra_foundry.sql
 const FOUNDRY_ALLIANCE = 'IDN';
 const FOUNDRY_LEGIONS = ['Legion 1', 'Legion 2'];
-const FOUNDRY_BATTLE_MAX = 30, FOUNDRY_SUB_MAX = 10;
+// Kapasitas dinamis per mode (Foundry IDN = 30/10, Tundra = 30/20)
+function foundryBattleMax() { return 30; }
+function foundrySubMax() { return foundryMode === 'tundra' ? 20 : 10; }
+// Kompatibilitas: baca sebagai angka sesuai mode aktif
+Object.defineProperty(window, 'FOUNDRY_BATTLE_MAX', { get() { return foundryBattleMax(); }, configurable: true });
+Object.defineProperty(window, 'FOUNDRY_SUB_MAX', { get() { return foundrySubMax(); }, configurable: true });
+
+/** @type {'foundry'|'tundra'} */
+let foundryMode = 'foundry';
+
+const FOUNDRY_MODE_META = {
+    foundry: {
+        title: 'Foundry Battle Roster',
+        subtitleId: 'Aliansi IDN · 2 Legion · 30 Battle + 10 Substitutes per Legion',
+        subtitleEn: 'IDN Alliance · 2 Legion · 30 Battle + 10 Substitutes per Legion',
+        menuLabel: '🏭 Foundry Battle Roster (IDN)',
+        sharePrefix: 'Foundry',
+    },
+    tundra: {
+        title: 'Tundra Arm League — Battle Plan',
+        subtitleId: 'Tundra · Legion 1 & 2 · 30 Battle + 20 Substitute · Peta · Fase · Role',
+        subtitleEn: 'Tundra · Legion 1 & 2 · 30 Battle + 20 Substitute · Map · Phases · Roles',
+        menuLabel: '❄️ Tundra Battle Plan (Legion 1 & 2)',
+        sharePrefix: 'Tundra',
+    }
+};
+
+// Map in-memory foundry_* shape ↔ DB columns for the active mode.
+function foundryDbPatch(patch) {
+    if (foundryMode !== 'tundra' || !patch || typeof patch !== 'object') return patch;
+    const out = {};
+    const map = {
+        foundry_legion: 'legion',
+        foundry_status: 'legion_role',
+        foundry_slot: 'tundra_slot',
+        foundry_role: 'tundra_role',
+        foundry_p1: 'tundra_p1',
+        foundry_p2: 'tundra_p2',
+        foundry_p3: 'tundra_p3',
+        foundry_cover: 'tundra_cover',
+        foundry_ready: 'tundra_ready'
+    };
+    Object.keys(patch).forEach(k => {
+        out[map[k] || k] = patch[k];
+    });
+    return out;
+}
+function foundryNormalizePlayer(p) {
+    if (!p || foundryMode !== 'tundra') return p;
+    // Project Tundra columns onto foundry_* so the rest of the UI stays unchanged.
+    return Object.assign({}, p, {
+        foundry_legion: p.legion || null,
+        foundry_status: p.legion_role || null,
+        foundry_slot: p.tundra_slot != null ? p.tundra_slot : null,
+        foundry_role: p.tundra_role || null,
+        foundry_p1: p.tundra_p1 || null,
+        foundry_p2: p.tundra_p2 || null,
+        foundry_p3: p.tundra_p3 || null,
+        foundry_cover: p.tundra_cover != null ? p.tundra_cover : null,
+        foundry_ready: p.tundra_ready != null ? p.tundra_ready : 0
+    });
+}
+function foundryApplyModeChrome() {
+    const meta = FOUNDRY_MODE_META[foundryMode] || FOUNDRY_MODE_META.foundry;
+    const page = document.getElementById('foundry-page');
+    if (page) page.dataset.foundryMode = foundryMode;
+    const title = page && page.querySelector('.page-title');
+    const sub = page && page.querySelector('.page-subtitle');
+    if (title) title.textContent = meta.title;
+    if (sub) sub.textContent = foundryLanguage === 'en' ? meta.subtitleEn : meta.subtitleId;
+}
 
 // Koordinat marker diselaraskan dengan map Foundry baru (554x554 px).
 const FOUNDRY_MAP = { src: 'foundry-map.webp', w: 554, h: 554 };
@@ -154,7 +226,14 @@ let foundryTaskFilters = new Set(FOUNDRY_ROLES);
 let foundryLiveEdit = false;
 let foundryLiveEditPlayerId = null; // open popover player id
 
-function foundryCanEdit() { return typeof canEditAlliance === 'function' && canEditAlliance(FOUNDRY_ALLIANCE); }
+function foundryCanEdit() {
+    if (foundryMode === 'tundra') {
+        // Tundra: any staff who can manage Legion 1 or Legion 2
+        return typeof canManageLegion === 'function'
+            && (canManageLegion('Legion 1') || canManageLegion('Legion 2'));
+    }
+    return typeof canEditAlliance === 'function' && canEditAlliance(FOUNDRY_ALLIANCE);
+}
 function foundryLiveEditAllowed() { return foundryCanEdit(); }
 function foundryToggleLiveEdit() {
     if (!foundryLiveEditAllowed()) {
@@ -244,8 +323,14 @@ document.addEventListener('click', e => {
 function foundryName(key) { return (FOUNDRY_B[key] || {}).n || '-'; }
 function foundryPower(p) { return canViewSensitive() ? Number(p.troops_power || 0).toLocaleString('en-US') : MASKED_TEXT; }
 function foundrySetPlayers(data) {
-    foundryPlayers = data || [];
-    foundryExt = !foundryPlayers.length || ('foundry_p3' in foundryPlayers[0]);
+    const list = (data || []).map(foundryNormalizePlayer);
+    foundryPlayers = list;
+    if (foundryMode === 'tundra') {
+        // Tundra uses tundra_p3 (or falls back); treat as extended if column present on any row / after migration
+        foundryExt = !list.length || ('tundra_p3' in (data[0] || {})) || ('foundry_p3' in list[0]);
+    } else {
+        foundryExt = !list.length || ('foundry_p3' in (data[0] || {}));
+    }
 }
 
 // Target efektif pemain pada fase tertentu. Bangunan yang belum terbuka pada fase itu dianggap 'roam'.
@@ -369,7 +454,7 @@ function foundryPlanScore(positions) {
     return total;
 }
 function foundryPlanTasks(n) {
-    n = Math.max(0, Math.min(n, FOUNDRY_BATTLE_MAX));
+    n = Math.max(0, Math.min(n, foundryBattleMax()));
     const chosen = [], left = FOUNDRY_PRIORITY.map(foundryTpl);
     while (chosen.length < n) {
         let bi = 0, bs = -Infinity;
@@ -401,26 +486,54 @@ function foundryFmtPower(n) {
 }
 
 async function openFoundry() {
+    foundryMode = 'foundry';
+    return foundryOpenPage();
+}
+async function openTundraFoundry() {
+    foundryMode = 'tundra';
+    return foundryOpenPage();
+}
+async function foundryOpenPage() {
     document.getElementById('alliance-menu-page').classList.add('hidden');
     document.getElementById('troops-table-page').classList.add('hidden');
     document.getElementById('foundry-page').classList.remove('hidden');
+    foundryApplyModeChrome();
     document.getElementById('foundry-admin-bar').classList.toggle('hidden', !foundryCanEdit());
     await foundryLoad();
 }
 
 function closeFoundry() {
     document.getElementById('foundry-page').classList.add('hidden');
+    foundryCloseLiveEditor();
     showAllianceMenu();
 }
 
 async function foundryLoad() {
     const client = getSupabase();
     if (!client) return;
-    const { data, error } = await client.from('troops_power').select('*')
-        .eq('alliance', FOUNDRY_ALLIANCE).order('troops_power', { ascending: false });
-    if (error) { showToast(foundryL('Gagal memuat data pemain IDN', 'Failed to load IDN player data'), 'error'); return; }
+    // Foundry mode: IDN only. Tundra mode: all players (roster = those with legion 1/2).
+    let query = client.from('troops_power').select('*').order('troops_power', { ascending: false });
+    if (foundryMode !== 'tundra') query = query.eq('alliance', FOUNDRY_ALLIANCE);
+    const { data, error } = await query;
+    if (error) {
+        showToast(
+            foundryMode === 'tundra'
+                ? foundryL('Gagal memuat roster Tundra', 'Failed to load Tundra roster')
+                : foundryL('Gagal memuat data pemain IDN', 'Failed to load IDN player data'),
+            'error'
+        );
+        return;
+    }
     foundrySetPlayers(data);
+    foundryApplyModeChrome();
     foundryRender();
+}
+
+/** Persist a foundry_* shaped patch; remaps columns when mode is tundra. */
+async function foundryDbUpdate(id, patch) {
+    const dbPatch = foundryDbPatch(patch);
+    const { error } = await getSupabase().from('troops_power').update(dbPatch).eq('id', id);
+    return { error, dbPatch };
 }
 
 function foundryInRoster(p) { return !!p.foundry_legion && !!p.foundry_status; }
@@ -527,7 +640,7 @@ function foundryWarnings(legion, phase) {
     const battle = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle');
     const subs = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Substitute');
     if (!battle.length) return [{ lvl: 'info', msg: foundryL(`${legion} belum punya pemain Battle.`, `${legion} has no battle players yet.`) }];
-    if (battle.length < FOUNDRY_BATTLE_MAX) out.push({ lvl: 'info', msg: foundryL(`Slot Battle baru terisi ${battle.length} dari ${FOUNDRY_BATTLE_MAX}.`, `Only ${battle.length} of ${FOUNDRY_BATTLE_MAX} battle slots are filled.`) });
+    if (battle.length < foundryBattleMax()) out.push({ lvl: 'info', msg: foundryL(`Slot Battle baru terisi ${battle.length} dari ${foundryBattleMax()}.`, `Only ${battle.length} of ${foundryBattleMax()} battle slots are filled.`) });
     if (!battle.some(p => p.foundry_role === 'Commander')) out.push({ lvl: 'warn', msg: foundryL('Belum ada Commander.', 'No Commander assigned.') });
     if (!battle.some(p => p.foundry_role === 'Rally Leader')) out.push({ lvl: 'warn', msg: foundryL('Belum ada Pemimpin Rally untuk menyerang Tanur Imperial.', 'No Rally Leader to attack the Imperial Foundry.') });
     const rally = foundryRallyTeams(legion);
@@ -541,7 +654,7 @@ function foundryWarnings(legion, phase) {
             if (n < min) out.push({ lvl: 'warn', msg: foundryL(`Phase ${ph}: ${foundryName(key)} baru ${n} dari minimal ${min} pemain.`, `Phase ${ph}: ${foundryName(key)} has ${n} of at least ${min} players.`) });
         });
     });
-    if (subs.length < FOUNDRY_SUB_MAX) out.push({ lvl: 'info', msg: foundryL(`Cadangan baru terisi ${subs.length} dari ${FOUNDRY_SUB_MAX}.`, `Only ${subs.length} of ${FOUNDRY_SUB_MAX} substitutes are filled.`) });
+    if (subs.length < foundrySubMax()) out.push({ lvl: 'info', msg: foundryL(`Cadangan baru terisi ${subs.length} dari ${foundrySubMax()}.`, `Only ${subs.length} of ${foundrySubMax()} substitutes are filled.`) });
     if (foundryExt) {
         const open = subs.filter(p => !p.foundry_cover).length;
         if (open) out.push({ lvl: 'info', msg: foundryL(`${open} cadangan belum punya slot yang digantikan.`, `${open} substitutes have no slot to replace.`) });
@@ -743,11 +856,11 @@ async function foundryRecalcTasks(legion) {
     try {
         const client = getSupabase();
         for (let i = 0; i < jobs.length; i += 20) {
-            const res = await Promise.all(jobs.slice(i, i + 20).map(j => client.from('troops_power').update(j.patch).eq('id', j.p.id)));
+            const res = await Promise.all(jobs.slice(i, i + 20).map(j => client.from('troops_power').update(foundryDbPatch(j.patch)).eq('id', j.p.id)));
             const bad = res.find(r => r.error);
             if (bad) throw bad.error;
         }
-        jobs.forEach(j => Object.assign(j.p, j.patch));
+        jobs.forEach(j => { Object.assign(j.p, j.patch); if (foundryMode === 'tundra') Object.assign(j.p, foundryDbPatch(j.patch)); });
         showToast(foundryL(`Tugas ${legion} dihitung ulang untuk ${ps.length} pemain.`, `${legion} tasks recalculated for ${ps.length} players.`), 'success');
     } catch (e) {
         showToast(foundryL('Gagal menghitung tugas. Muat ulang halaman lalu periksa data roster.', 'Could not calculate tasks. Reload the page and check the roster data.'), 'error');
@@ -792,7 +905,7 @@ function foundryRosterHtml(legion) {
             const c = Number(p.foundry_cover) || 0;
             if (edit) {
                 let o = `<option value="">— ${foundryL('belum ditentukan', 'not set')} —</option>`;
-                for (let i = 1; i <= FOUNDRY_BATTLE_MAX; i++) {
+                for (let i = 1; i <= foundryBattleMax(); i++) {
                     const b = foundryFind(legion, 'Battle', i);
                     o += `<option value="${i}" ${c === i ? 'selected' : ''}>#${i} ${b ? escapeHtml(b.nickname) + ' (' + escapeHtml(b.foundry_role || '-') + ')' : foundryL('(kosong)', '(empty)')}</option>`;
                 }
@@ -809,10 +922,10 @@ function foundryRosterHtml(legion) {
     const nb = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle').length;
     const ns = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Substitute').length;
     let battle = '', subs = '';
-    for (let i = 1; i <= FOUNDRY_BATTLE_MAX; i++) battle += battleRow(i);
-    for (let i = 1; i <= FOUNDRY_SUB_MAX; i++) subs += subRow(i);
+    for (let i = 1; i <= foundryBattleMax(); i++) battle += battleRow(i);
+    for (let i = 1; i <= foundrySubMax(); i++) subs += subRow(i);
     return `${foundryExtNotice()}${foundryWarningsHtml(legion)}${foundryToolsHtml(legion)}${foundrySummaryHtml(legion)}${foundryRallyHtml(legion)}
-        <div class="fy-counter"><span class="fy-badge fy-b-battle">Battle ${nb} / ${FOUNDRY_BATTLE_MAX}</span><span class="fy-badge fy-b-sub">${foundryL('Cadangan', 'Substitutes')} ${ns} / ${FOUNDRY_SUB_MAX}</span></div>
+        <div class="fy-counter"><span class="fy-badge fy-b-battle">Battle ${nb} / ${foundryBattleMax()}</span><span class="fy-badge fy-b-sub">${foundryL('Cadangan', 'Substitutes')} ${ns} / ${foundrySubMax()}</span></div>
         <div class="table-container"><table class="fy-table">${battleHead}<tbody>${battle}</tbody></table></div>
         <h3 class="fy-h">Pemain Cadangan</h3>
         <p class="fy-note">${foundryL('Cadangan baru bisa masuk battlefield setelah menit 3. Tentukan slot yang akan digantikan sebelum battle.', 'Substitutes can only enter the battlefield after minute 3. Decide which slot each one replaces before the battle.')}</p>
@@ -821,9 +934,16 @@ function foundryRosterHtml(legion) {
 
 async function foundryClear(p) {
     const nulls = foundryNullPatch();
-    const { error } = await getSupabase().from('troops_power').update(nulls).eq('id', p.id);
+    const { error } = await foundryDbUpdate(p.id, nulls);
     if (error) throw error;
     Object.assign(p, nulls);
+    if (foundryMode === 'tundra') {
+        // Keep in-memory legion fields in sync with null patch
+        p.legion = null; p.legion_role = null;
+        p.tundra_slot = null; p.tundra_role = null;
+        p.tundra_p1 = null; p.tundra_p2 = null; p.tundra_p3 = null;
+        p.tundra_cover = null; p.tundra_ready = 0;
+    }
 }
 
 async function foundryUpdateTask(playerId, field, value) {
@@ -832,7 +952,7 @@ async function foundryUpdateTask(playerId, field, value) {
     if ((field === 'foundry_p3' || field === 'foundry_cover') && !foundryExt) { showToast(foundryL('Jalankan supabase_foundry_p3.sql dulu.', 'Run supabase_foundry_p3.sql first.'), 'warning'); foundryRender(); return; }
     let v = value === '' ? null : value;
     if (field === 'foundry_cover') {
-        if (v !== null) { v = Number(v); if (!Number.isInteger(v) || v < 1 || v > FOUNDRY_BATTLE_MAX) return; }
+        if (v !== null) { v = Number(v); if (!Number.isInteger(v) || v < 1 || v > foundryBattleMax()) return; }
     } else {
         if (!Object.prototype.hasOwnProperty.call(allowed, field) || (v && !allowed[field].includes(v))) return;
     }
@@ -840,9 +960,10 @@ async function foundryUpdateTask(playerId, field, value) {
     if (!player) return;
     const patch = { [field]: v };
     try {
-        const { error } = await getSupabase().from('troops_power').update(patch).eq('id', player.id);
+        const { error } = await foundryDbUpdate(player.id, patch);
         if (error) throw error;
         Object.assign(player, patch);
+        if (foundryMode === 'tundra') Object.assign(player, foundryDbPatch(patch));
         showToast(foundryLanguage === 'en' ? 'Player task saved.' : 'Tugas pemain berhasil disimpan.', 'success');
     } catch (e) {
         showToast(foundryLanguage === 'en' ? 'Could not save task. Check Supabase permissions and roster columns.' : 'Tugas gagal disimpan. Periksa izin Supabase dan kolom roster.', 'error');
@@ -871,12 +992,16 @@ async function foundryAssign(legion, status, slot, idValue) {
         if (idValue) {
             const p = foundryPlayers.find(x => String(x.id) === String(idValue));
             const patch = foundryPatchFor(legion, status, slot);
-            const { error } = await getSupabase().from('troops_power').update(patch).eq('id', p.id);
+            const { error } = await foundryDbUpdate(p.id, patch);
             if (error) throw error;
             Object.assign(p, patch);
+            if (foundryMode === 'tundra') Object.assign(p, foundryDbPatch(patch));
         }
     } catch (e) {
-        showToast(foundryL('Gagal menyimpan. Pastikan supabase_foundry_roster.sql (dan supabase_foundry_p3.sql) sudah dijalankan.', 'Save failed. Make sure supabase_foundry_roster.sql (and supabase_foundry_p3.sql) have been run.'), 'error');
+        const hint = foundryMode === 'tundra'
+            ? foundryL('Gagal menyimpan. Pastikan supabase_tundra_foundry.sql sudah dijalankan.', 'Save failed. Make sure supabase_tundra_foundry.sql has been run.')
+            : foundryL('Gagal menyimpan. Pastikan supabase_foundry_roster.sql (dan supabase_foundry_p3.sql) sudah dijalankan.', 'Save failed. Make sure supabase_foundry_roster.sql (and supabase_foundry_p3.sql) have been run.');
+        showToast(hint, 'error');
     }
     foundryRender();
 }
@@ -890,7 +1015,7 @@ const foundryBulkSel = new Set();
 function foundryBulkTarget() {
     return { legion: document.getElementById('fy-bulk-legion').value, status: document.getElementById('fy-bulk-status').value };
 }
-function foundryBulkMax(status) { return status === 'Battle' ? FOUNDRY_BATTLE_MAX : FOUNDRY_SUB_MAX; }
+function foundryBulkMax(status) { return status === 'Battle' ? foundryBattleMax() : foundrySubMax(); }
 function foundryBulkFreeSlots(legion, status) {
     const slots = [];
     for (let i = 1; i <= foundryBulkMax(status); i++) if (!foundryFind(legion, status, i)) slots.push(i);
@@ -1009,7 +1134,7 @@ async function foundryBulkSubmit() {
         const client = getSupabase();
         for (let i = 0; i < jobs.length; i += 20) {
             const batch = jobs.slice(i, i + 20);
-            const res = await Promise.all(batch.map(j => client.from('troops_power').update(j.patch).eq('id', j.p.id)));
+            const res = await Promise.all(batch.map(j => client.from('troops_power').update(foundryDbPatch(j.patch)).eq('id', j.p.id)));
             res.forEach((r, k) => { if (!r.error) { Object.assign(batch[k].p, batch[k].patch); done++; } });
             const bad = res.find(r => r.error);
             if (bad) throw bad.error;
@@ -1029,8 +1154,8 @@ async function foundryBulkSubmit() {
 // sama; cadangan yang belum punya cover diberi slot Battle paling kritis (urutan FOUNDRY_PRIORITY) yang belum dicover.
 function foundryLegionJobs(l) {
     const byPower = (a, b) => (Number(b.troops_power) || 0) - (Number(a.troops_power) || 0) || (Number(a.foundry_slot) || 0) - (Number(b.foundry_slot) || 0);
-    const battle = foundryPlayers.filter(p => p.foundry_legion === l && p.foundry_status === 'Battle').sort(byPower).slice(0, FOUNDRY_BATTLE_MAX);
-    const subs = foundryPlayers.filter(p => p.foundry_legion === l && p.foundry_status === 'Substitute').sort(byPower).slice(0, FOUNDRY_SUB_MAX);
+    const battle = foundryPlayers.filter(p => p.foundry_legion === l && p.foundry_status === 'Battle').sort(byPower).slice(0, foundryBattleMax());
+    const subs = foundryPlayers.filter(p => p.foundry_legion === l && p.foundry_status === 'Substitute').sort(byPower).slice(0, foundrySubMax());
     const plan = foundryPlanTasks(battle.length);
     const jobs = [], newSlotOf = new Map();
     battle.forEach((p, i) => {
@@ -1070,11 +1195,11 @@ async function foundryAutoFill() {
     try {
         const client = getSupabase();
         for (let i = 0; i < jobs.length; i += 20) {
-            const res = await Promise.all(jobs.slice(i, i + 20).map(j => client.from('troops_power').update(j.patch).eq('id', j.p.id)));
+            const res = await Promise.all(jobs.slice(i, i + 20).map(j => client.from('troops_power').update(foundryDbPatch(j.patch)).eq('id', j.p.id)));
             const bad = res.find(r => r.error);
             if (bad) throw bad.error;
         }
-        jobs.forEach(j => Object.assign(j.p, j.patch));
+        jobs.forEach(j => { Object.assign(j.p, j.patch); if (foundryMode === 'tundra') Object.assign(j.p, foundryDbPatch(j.patch)); });
         showToast(foundryL(`Roster Foundry dihitung ulang (${jobs.length} pemain diperbarui; Legion & status tetap).`, `Foundry roster recalculated (${jobs.length} players updated; Legion & status unchanged).`), gaps.length ? 'warning' : 'success');
     } catch (e) {
         showToast(foundryL('Gagal mengisi otomatis. Pastikan supabase_foundry_roster.sql dan supabase_foundry_p3.sql sudah dijalankan.', 'Auto-fill failed. Make sure supabase_foundry_roster.sql and supabase_foundry_p3.sql have been run.'), 'error');
@@ -1100,7 +1225,7 @@ async function foundryCopyText() {
     legions.forEach(l => {
         lines.push('', `__${l}__`);
         if (mode === 'all') {
-            for (let i = 1; i <= FOUNDRY_BATTLE_MAX; i++) {
+            for (let i = 1; i <= foundryBattleMax(); i++) {
                 const p = foundryFind(l, 'Battle', i);
                 const jl = p && p.foundry_role === 'Joiner' ? foundryJoinerOf(p, l) : null;
                 if (p) lines.push(`${i}. ${p.nickname} — ${p.foundry_role}${jl ? ' → ' + jl.nickname : ''} | P1: ${foundryName(foundryTarget(p, 1))} | P2: ${foundryName(foundryTarget(p, 2))} | P3: ${foundryName(foundryTarget(p, 3))}`);
@@ -1114,7 +1239,7 @@ async function foundryCopyText() {
         }
         if (mode === '2' || mode === 2) foundryRallyTeams(l).teams.forEach(t => lines.push(`**Rally ${t.leader.nickname}** (${foundryFmtPower(t.power)}): ${t.joiners.map(j => j.nickname).join(', ') || '-'}`));
         const subs = [];
-        for (let i = 1; i <= FOUNDRY_SUB_MAX; i++) {
+        for (let i = 1; i <= foundrySubMax(); i++) {
             const p = foundryFind(l, 'Substitute', i);
             if (p) subs.push(p.nickname + (p.foundry_cover ? ` (→#${p.foundry_cover})` : ''));
         }
@@ -1435,7 +1560,7 @@ async function foundryToggleReady(playerId, bit, checked) {
     const next = checked ? (foundryReadyBits(p) | (1 << bit)) : (foundryReadyBits(p) & ~(1 << bit));
     const y = window.scrollY;
     try {
-        const { error } = await getSupabase().from('troops_power').update({ foundry_ready: next }).eq('id', p.id);
+        const { error } = await foundryDbUpdate(p.id, { foundry_ready: next });
         if (error) throw error;
         p.foundry_ready = next;
     } catch (e) {
@@ -1577,6 +1702,7 @@ function foundryStrategyHtmlEn() {
 function buildFoundryShareUrl(legion = foundryMapLegion, phase = foundryPhase) {
     const u = new URL(location.href); u.search = ''; u.hash = '';
     u.searchParams.set('foundry', 'map');
+    u.searchParams.set('mode', foundryMode === 'tundra' ? 'tundra' : 'foundry');
     u.searchParams.set('legion', FOUNDRY_LEGIONS.includes(legion) ? legion : 'Legion 1');
     u.searchParams.set('phase', String(foundryNormPhase(phase)));
     u.searchParams.set('lang', foundryLanguage);
@@ -1641,7 +1767,7 @@ async function openFoundrySharedMap(legion, phase) {
       try {
         if (!silent || !foundryPlayers.length) {
           const client = getSupabase(); if (!client) throw new Error('Supabase tidak tersedia');
-          const { data, error } = await client.from('troops_power').select('*').eq('alliance', FOUNDRY_ALLIANCE).order('troops_power', {ascending:false});
+          const { data, error } = await client.from('troops_power').select('*').order('troops_power', {ascending:false});
           if (error) throw error;
           foundrySetPlayers(data);
         }
@@ -1664,7 +1790,7 @@ async function openFoundrySharedMap(legion, phase) {
     await load(); timer=setInterval(load,30000);
     window.addEventListener('pagehide',()=>{if(timer)clearInterval(timer);},{once:true});
 }
-document.addEventListener('DOMContentLoaded',()=>{const q=new URLSearchParams(location.search);if(q.get('foundry')==='map')openFoundrySharedMap(q.get('legion')||'Legion 1',q.get('phase')||1);});
+document.addEventListener('DOMContentLoaded',()=>{const q=new URLSearchParams(location.search);if(q.get('foundry')==='map'){foundryMode=q.get('mode')==='tundra'?'tundra':'foundry';openFoundrySharedMap(q.get('legion')||'Legion 1',q.get('phase')||1);}});
 
 
 // ---------- VIEW AS CHART (+ LIVE SHARE) ----------
@@ -1691,7 +1817,7 @@ function foundryChartSvg(legion, phase) {
     let y = 30;
     out.push(T(PAD, y, `Foundry Battle · IDN · ${legion} · Phase ${phase} (${FOUNDRY_PHASE_RANGE[phase - 1]} ${en ? 'min' : 'mnt'})`, { fill: '#fcd34d', size: 16, weight: 700 }));
     y += 20;
-    out.push(T(PAD, y, `${battle.length}/${FOUNDRY_BATTLE_MAX} Battle · ${subs.length}/${FOUNDRY_SUB_MAX} ${en ? 'Substitutes' : 'Cadangan'}` +
+    out.push(T(PAD, y, `${battle.length}/${foundryBattleMax()} Battle · ${subs.length}/${foundrySubMax()} ${en ? 'Substitutes' : 'Cadangan'}` +
         (showPw && battle.length ? ` · ${en ? 'Total power' : 'Total Power'} ${foundryFmtPower(sum(battle))}` : ''), { fill: '#94a3b8', size: 12 }));
     y += 14;
     const section = title => { y += 18; out.push(T(PAD, y, title, { fill: '#7dd3fc', size: 13, weight: 700 })); y += 10; };
@@ -1840,6 +1966,7 @@ async function foundryChartExportPng(legion = foundryChartLegion, phase = foundr
 function buildFoundryChartShareUrl(legion = foundryChartLegion, phase = foundryChartPhase) {
     const u = new URL(location.href); u.search = ''; u.hash = '';
     u.searchParams.set('foundry', 'chart');
+    u.searchParams.set('mode', foundryMode === 'tundra' ? 'tundra' : 'foundry');
     u.searchParams.set('legion', FOUNDRY_LEGIONS.includes(legion) ? legion : 'Legion 1');
     u.searchParams.set('phase', String([1, 2, 3].includes(Number(phase)) ? Number(phase) : 1));
     u.searchParams.set('lang', foundryLanguage);
@@ -1886,7 +2013,9 @@ async function openFoundrySharedChart(legion, phase) {
         try {
             const client = getSupabase(); if (!client) throw new Error('Supabase tidak tersedia');
             if (typeof authReady !== 'undefined') await authReady; // sesi login menentukan apakah Power ditampilkan
-            const { data, error } = await client.from('troops_power').select('*').eq('alliance', FOUNDRY_ALLIANCE).order('troops_power', { ascending: false });
+            let q = client.from('troops_power').select('*').order('troops_power', { ascending: false });
+            if (foundryMode !== 'tundra') q = q.eq('alliance', FOUNDRY_ALLIANCE);
+            const { data, error } = await q;
             if (error) throw error;
             foundrySetPlayers(data); foundryChartLegion = legion; foundryChartPhase = phase;
             const keep = body.scrollTop;
@@ -1915,5 +2044,8 @@ async function openFoundrySharedChart(legion, phase) {
 }
 document.addEventListener('DOMContentLoaded', () => {
     const q = new URLSearchParams(location.search);
-    if (q.get('foundry') === 'chart') openFoundrySharedChart(q.get('legion') || 'Legion 1', Number(q.get('phase') || 1));
+    if (q.get('foundry') === 'chart') {
+        foundryMode = q.get('mode') === 'tundra' ? 'tundra' : 'foundry';
+        openFoundrySharedChart(q.get('legion') || 'Legion 1', Number(q.get('phase') || 1));
+    }
 });

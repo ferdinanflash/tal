@@ -196,6 +196,12 @@
 						<span class="arrow">&gt;</span>
 					</div>
 
+					<!-- TUNDRA ARM LEAGUE BATTLE PLAN (same Foundry system: map / phases / roles) -->
+					<div class="list-item foundry-menu-btn" id="tundra-foundry-menu-btn" onclick="openTundraFoundry()" role="button" tabindex="0" aria-label="Tundra Arm League Battle Plan" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openTundraFoundry()}">
+						<span class="alliance-name">❄️ Tundra Battle Plan (Legion 1 &amp; 2)</span>
+						<span class="arrow">&gt;</span>
+					</div>
+
 					<div class="list-spacer"></div>
 
 					<!-- ALLIANCE & GLOBAL BUTTONS -->
@@ -991,7 +997,7 @@
 </div>
 
 	<script src="frostdragon.js?v=16"></script>
-	<script src="foundry.js?v=20"></script>
+	<script src="foundry.js?v=23"></script>
 	<script>
 	  // Register the service worker only on HTTPS or localhost.
 	  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
