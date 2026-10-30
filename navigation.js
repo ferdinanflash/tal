@@ -46,6 +46,16 @@ function selectLegion(legionName) {
     if (typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') {
         legionName = 'Legion 1';
     }
+
+    // Tundra Arm League: Legion 1/2 memakai sistem Foundry (peta, fase, role) — bukan tabel biasa.
+    const isFdtTheme = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
+    if (!isFdtTheme && typeof openTundraFoundry === 'function') {
+        viewMode = 'LEGION';
+        currentSelection = legionName;
+        openTundraFoundry(legionName);
+        return;
+    }
+
     viewMode = 'LEGION';
     currentSelection = legionName;
     resetTableControls();
@@ -60,7 +70,6 @@ function selectLegion(legionName) {
     document.getElementById('bulk-assign-top-btn').style.display = canManageLegion(legionName) ? "inline-block" : "none";
     document.getElementById('bulk-remove-top-btn').style.display = canManageLegion(legionName) ? "inline-block" : "none";
 
-    const isFdtTheme = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
     document.getElementById('selected-alliance-title').innerText = isFdtTheme ? 'FDT Roster' : `${legionName} Official Roster`;
 
     if (typeof syncFdtUi === 'function') syncFdtUi();
@@ -69,6 +78,8 @@ function selectLegion(legionName) {
 
 function showAllianceMenu() {
     document.getElementById('troops-table-page').classList.add('hidden');
+    const foundryPage = document.getElementById('foundry-page');
+    if (foundryPage) foundryPage.classList.add('hidden');
     document.getElementById('alliance-menu-page').classList.remove('hidden');
     if (typeof syncFdtUi === 'function') syncFdtUi();
 }

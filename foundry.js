@@ -489,8 +489,14 @@ async function openFoundry() {
     foundryMode = 'foundry';
     return foundryOpenPage();
 }
-async function openTundraFoundry() {
+/** Buka battle plan Tundra (sistem Foundry). legion opsional: 'Legion 1' | 'Legion 2'. */
+async function openTundraFoundry(legion) {
     foundryMode = 'tundra';
+    if (FOUNDRY_LEGIONS.includes(legion)) {
+        foundryTab = legion;
+        foundryMapLegion = legion;
+        foundryChartLegion = legion;
+    }
     return foundryOpenPage();
 }
 async function foundryOpenPage() {
