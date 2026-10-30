@@ -150,8 +150,97 @@ let foundrySelected = 'foundry';
 let foundryTaskMarksOn = true;
 let foundryCountMarksOn = true;  // angka besar di lingkaran bangunan
 let foundryTaskFilters = new Set(FOUNDRY_ROLES);
+// Live Edit on Map / Chart tabs: staff with IDN edit rights can change role & phase targets in place.
+let foundryLiveEdit = false;
+let foundryLiveEditPlayerId = null; // open popover player id
 
 function foundryCanEdit() { return typeof canEditAlliance === 'function' && canEditAlliance(FOUNDRY_ALLIANCE); }
+function foundryLiveEditAllowed() { return foundryCanEdit(); }
+function foundryToggleLiveEdit() {
+    if (!foundryLiveEditAllowed()) {
+        foundryLiveEdit = false;
+        showToast(foundryL('Anda tidak punya izin mengubah roster IDN.', 'You do not have permission to edit the IDN roster.'), 'warning');
+        return;
+    }
+    foundryLiveEdit = !foundryLiveEdit;
+    if (!foundryLiveEdit) foundryCloseLiveEditor();
+    foundryRender();
+}
+function foundryLiveEditBtnHtml() {
+    if (!foundryLiveEditAllowed()) return '';
+    const on = foundryLiveEdit;
+    return `<button type="button" class="btn-apply fy-live-edit-btn ${on ? 'fy-on fy-live-edit-on' : ''}" onclick="foundryToggleLiveEdit()" aria-pressed="${on}">✏️ ${on ? foundryL('Live Edit: ON', 'Live Edit: ON') : foundryL('Live Edit', 'Live Edit')}</button>`;
+}
+function foundryBuildingOptionsHtml(current) {
+    return '<option value="">—</option>' + FOUNDRY_KEYS.map(k =>
+        `<option value="${k}" ${current === k ? 'selected' : ''}>${escapeHtml(FOUNDRY_B[k].n)}</option>`
+    ).join('');
+}
+function foundryRoleOptionsHtml(current) {
+    return [...FOUNDRY_ROLES, 'Substitute'].map(r =>
+        `<option value="${r}" ${current === r ? 'selected' : ''}>${escapeHtml(r)}</option>`
+    ).join('');
+}
+function foundryLiveEditorFieldsHtml(p) {
+    if (!p) return '';
+    const role = p.foundry_role || '';
+    const k1 = p.foundry_p1 || '', k2 = p.foundry_p2 || '', k3 = p.foundry_p3 || p.foundry_p2 || '';
+    return `<div class="fy-live-fields">
+      <label>${foundryL('Peran', 'Role')}<select onchange="foundryUpdateTask('${p.id}','foundry_role',this.value)">${foundryRoleOptionsHtml(role)}</select></label>
+      <label>P1<select onchange="foundryUpdateTask('${p.id}','foundry_p1',this.value)">${foundryBuildingOptionsHtml(k1)}</select></label>
+      <label>P2<select onchange="foundryUpdateTask('${p.id}','foundry_p2',this.value)">${foundryBuildingOptionsHtml(k2)}</select></label>
+      ${foundryExt ? `<label>P3<select onchange="foundryUpdateTask('${p.id}','foundry_p3',this.value)">${foundryBuildingOptionsHtml(k3)}</select></label>` : ''}
+    </div>`;
+}
+function foundryOpenLiveEditor(playerId, clientX, clientY) {
+    if (!foundryLiveEdit || !foundryLiveEditAllowed()) return;
+    const p = foundryPlayers.find(x => String(x.id) === String(playerId));
+    if (!p) return;
+    foundryLiveEditPlayerId = String(p.id);
+    let pop = document.getElementById('fy-live-editor');
+    if (!pop) {
+        pop = document.createElement('div');
+        pop.id = 'fy-live-editor';
+        pop.className = 'fy-live-editor';
+        pop.addEventListener('click', e => e.stopPropagation());
+        document.body.appendChild(pop);
+    }
+    pop.innerHTML = `<div class="fy-live-editor-head">
+      <strong>#${p.foundry_slot || '—'} ${escapeHtml(p.nickname || '')}</strong>
+      <button type="button" class="fy-live-editor-close" onclick="foundryCloseLiveEditor()" aria-label="Close">×</button>
+    </div>
+    <p class="fy-live-editor-meta">${escapeHtml(p.foundry_legion || '')} · ${escapeHtml(p.foundry_status || '')}${canViewSensitive() && p.game_id ? ' · ID ' + escapeHtml(p.game_id) : ''}</p>
+    ${foundryLiveEditorFieldsHtml(p)}
+    <p class="fy-live-editor-note">${foundryL('Perubahan disimpan langsung.', 'Changes save instantly.')}</p>`;
+    pop.classList.add('open');
+    // Position near click, keep on-screen
+    const pad = 12, w = 300, h = pop.offsetHeight || 260;
+    let x = (clientX || window.innerWidth / 2) + 8;
+    let y = (clientY || window.innerHeight / 2) + 8;
+    if (x + w > window.innerWidth - pad) x = Math.max(pad, (clientX || 0) - w - 8);
+    if (y + h > window.innerHeight - pad) y = Math.max(pad, window.innerHeight - h - pad);
+    pop.style.left = x + 'px';
+    pop.style.top = y + 'px';
+}
+function foundryCloseLiveEditor() {
+    foundryLiveEditPlayerId = null;
+    const pop = document.getElementById('fy-live-editor');
+    if (pop) { pop.classList.remove('open'); pop.innerHTML = ''; }
+}
+function foundryOnMapMarkClick(playerId, evt) {
+    if (!foundryLiveEdit || !foundryLiveEditAllowed()) return;
+    if (evt) { evt.preventDefault(); evt.stopPropagation(); }
+    const e = evt || window.event;
+    foundryOpenLiveEditor(playerId, e && e.clientX, e && e.clientY);
+}
+// Close live editor when clicking outside
+document.addEventListener('click', e => {
+    const pop = document.getElementById('fy-live-editor');
+    if (!pop || !pop.classList.contains('open')) return;
+    if (pop.contains(e.target)) return;
+    if (e.target.closest && e.target.closest('.fy-task-mark')) return;
+    foundryCloseLiveEditor();
+});
 function foundryName(key) { return (FOUNDRY_B[key] || {}).n || '-'; }
 function foundryPower(p) { return canViewSensitive() ? Number(p.troops_power || 0).toLocaleString('en-US') : MASKED_TEXT; }
 function foundrySetPlayers(data) {
@@ -758,7 +847,20 @@ async function foundryUpdateTask(playerId, field, value) {
     } catch (e) {
         showToast(foundryLanguage === 'en' ? 'Could not save task. Check Supabase permissions and roster columns.' : 'Tugas gagal disimpan. Periksa izin Supabase dan kolom roster.', 'error');
     }
+    const keepId = foundryLiveEditPlayerId;
+    const pop = document.getElementById('fy-live-editor');
+    const left = pop && pop.classList.contains('open') ? pop.style.left : null;
+    const top = pop && pop.classList.contains('open') ? pop.style.top : null;
     foundryRender();
+    // Keep the floating editor open on the same player after a successful save + re-render
+    if (keepId && foundryLiveEdit) {
+        const p = foundryPlayers.find(x => String(x.id) === String(keepId));
+        if (p) {
+            foundryOpenLiveEditor(keepId);
+            const pop2 = document.getElementById('fy-live-editor');
+            if (pop2 && left != null) { pop2.style.left = left; pop2.style.top = top; }
+        }
+    }
 }
 
 async function foundryAssign(legion, status, slot, idValue) {
@@ -1152,7 +1254,12 @@ function foundryMapSvgInner(L, ph, opts = {}) {
         ).join('');
         const labels = items.map(it => {
             const { p, b, col, label, tw, x, y, markH } = it;
-            return `<g class="fy-task-mark" tabindex="0" role="img" aria-label="#${p.foundry_slot} ${escapeHtml(p.nickname)} — ${escapeHtml(p.foundry_role || 'Task')}" transform="translate(${x},${y})"><title>#${p.foundry_slot} · ${escapeHtml(p.nickname)} · ${escapeHtml(p.foundry_role || 'Task')} · ${escapeHtml(b.n)}</title><rect x="${-tw / 2}" y="${-markH / 2}" width="${tw}" height="${markH}" rx="6" fill="${col}" stroke="#111827" stroke-width="2"/><text x="0" y="4" text-anchor="middle" class="fy-task-mark-text">${escapeHtml(label)}</text></g>`;
+            const live = opts.liveEdit && foundryLiveEditAllowed();
+            const click = live
+                ? ` onclick="foundryOnMapMarkClick('${p.id}',event)" style="cursor:pointer"`
+                : '';
+            const role = live ? 'button' : 'img';
+            return `<g class="fy-task-mark${live ? ' fy-task-mark--edit' : ''}" tabindex="0" role="${role}" aria-label="#${p.foundry_slot} ${escapeHtml(p.nickname)} — ${escapeHtml(p.foundry_role || 'Task')}" transform="translate(${x},${y})"${click}><title>#${p.foundry_slot} · ${escapeHtml(p.nickname)} · ${escapeHtml(p.foundry_role || 'Task')} · ${escapeHtml(b.n)}${live ? ' · click to edit' : ''}</title><rect x="${-tw / 2}" y="${-markH / 2}" width="${tw}" height="${markH}" rx="6" fill="${col}" stroke="${live ? '#fcd34d' : '#111827'}" stroke-width="${live ? 2.5 : 2}"/><text x="0" y="4" text-anchor="middle" class="fy-task-mark-text">${escapeHtml(label)}</text></g>`;
         }).join('');
         marks = `<g class="fy-task-lines" pointer-events="none">${lines}</g>${labels}`;
     }
@@ -1177,25 +1284,38 @@ function foundryMapLegendHtml(forShare) {
 function foundryMapHtml() {
     const L = foundryMapLegion, ph = foundryPhase;
     const b = FOUNDRY_B[foundrySelected];
+    const live = foundryLiveEdit && foundryLiveEditAllowed();
+    const mapOpts = { interactive: true, filters: foundryTaskFilters, marks: foundryTaskMarksOn, counts: foundryCountMarksOn, liveEdit: live };
     const list = (phase) => {
         const ps = foundryAssigned(L, foundrySelected, phase);
-        return ps.length ? ps.map(p => `<li>#${p.foundry_slot} ${escapeHtml(p.nickname)} <small>(${escapeHtml(p.foundry_role)})</small></li>`).join('') : '<li class="fy-empty">belum ada</li>';
+        if (!ps.length) return '<li class="fy-empty">belum ada</li>';
+        if (live) {
+            return ps.map(p => `<li class="fy-live-list-item">
+                <button type="button" class="fy-live-name" onclick="foundryOpenLiveEditor('${p.id}', event.clientX, event.clientY)">#${p.foundry_slot} ${escapeHtml(p.nickname)}</button>
+                <small>(${escapeHtml(p.foundry_role || '—')})</small>
+                ${foundryLiveEditorFieldsHtml(p)}
+            </li>`).join('');
+        }
+        return ps.map(p => `<li>#${p.foundry_slot} ${escapeHtml(p.nickname)} <small>(${escapeHtml(p.foundry_role)})</small></li>`).join('');
     };
     const pts = b.m ? `<p><b>${b.f.toLocaleString('en-US')}</b> ${foundryL('poin first capture', 'first-capture points')} + <b>${b.m.toLocaleString('en-US')}</b> ${foundryL('poin/menit', 'points/min')}</p>` : '';
+    const liveBadge = live ? `<p class="fy-live-banner"><b class="fy-edit-badge">✏️ Live Edit on</b> — ${foundryL('Ketuk mark nama di peta atau pemain di daftar untuk mengubah peran & target. Perubahan langsung tersimpan.', 'Tap a name mark on the map or a player in the list to change role & targets. Changes save instantly.')}</p>` : '';
     return `${foundryExtNotice()}<div class="fy-controls">
+        ${foundryLiveEditBtnHtml()}
         <button class="btn-apply" type="button" onclick="shareFoundryMapLink()">🔗 Live Share Map</button>
         <button class="btn-apply" type="button" onclick="foundryExportPng()">🖼️ ${foundryL('Ekspor PNG', 'Export PNG')}</button>
         ${FOUNDRY_LEGIONS.map(l => `<button class="btn-apply ${l === L ? 'fy-on' : ''}" onclick="foundrySetMapLegion('${l}')">${l}</button>`).join('')}
         ${[1, 2, 3].map(n => `<button class="btn-apply ${n === ph ? 'fy-on' : ''}" onclick="foundrySetPhase(${n})">Phase ${n} (${FOUNDRY_PHASE_RANGE[n - 1]} ${foundryL('mnt', 'min')})</button>`).join('')}
         <button class="btn-apply ${ph === 'all' ? 'fy-on' : ''}" onclick="foundrySetPhase('all')">🧭 ${foundryPhaseLabel('all')}</button></div>
+        ${liveBadge}
         ${foundryWarningsHtml(L, ph === 'all' ? null : ph)}
         <div class="fy-task-filter"><div class="fy-task-filter-head"><strong>Mark tugas pemain</strong>
             <button class="btn-apply ${foundryTaskMarksOn ? 'fy-on' : ''}" onclick="foundryToggleTaskMarks()">${foundryTaskMarksOn ? 'Nama: ON' : 'Nama: OFF'}</button>
             <button class="btn-apply ${foundryCountMarksOn ? 'fy-on' : ''}" onclick="foundryToggleCountMarks()">${foundryCountMarksOn ? 'Angka: ON' : 'Angka: OFF'}</button>
             <button class="btn-apply" onclick="foundrySetAllTaskFilters(true)">Pilih semua</button>
             <button class="btn-apply" onclick="foundrySetAllTaskFilters(false)">Matikan semua</button>
-        </div><div class="fy-task-filter-options">${FOUNDRY_ROLES.map(r => `<label><input type="checkbox" ${foundryTaskFilters.has(r) ? 'checked' : ''} onchange="foundryToggleTaskFilter('${r}',this.checked)"><span>${r}</span></label>`).join('')}</div><small>Mark menampilkan nama pemain yang ditugaskan ke bangunan pada phase terpilih. Arahkan/ketuk mark untuk melihat slot, tugas, dan target. Tombol Angka mengontrol angka besar di lingkaran.</small></div>
-        ${ph === 'all' ? foundryMapAllHtml(L, { interactive: true, filters: foundryTaskFilters, marks: foundryTaskMarksOn, counts: foundryCountMarksOn }) : `<svg viewBox="0 0 ${FOUNDRY_MAP.w} ${FOUNDRY_MAP.h}" class="fy-map" role="img" aria-label="Peta Foundry Battle">${foundryMapSvgInner(L, ph, { interactive: true, filters: foundryTaskFilters, marks: foundryTaskMarksOn, counts: foundryCountMarksOn })}</svg>`}
+        </div><div class="fy-task-filter-options">${FOUNDRY_ROLES.map(r => `<label><input type="checkbox" ${foundryTaskFilters.has(r) ? 'checked' : ''} onchange="foundryToggleTaskFilter('${r}',this.checked)"><span>${r}</span></label>`).join('')}</div><small>Mark menampilkan nama pemain yang ditugaskan ke bangunan pada phase terpilih. Arahkan/ketuk mark untuk melihat slot, tugas, dan target. Tombol Angka mengontrol angka besar di lingkaran.${live ? ' ' + foundryL('Mode Live Edit: ketuk mark untuk mengedit.', 'Live Edit mode: tap a mark to edit.') : ''}</small></div>
+        ${ph === 'all' ? foundryMapAllHtml(L, mapOpts) : `<svg viewBox="0 0 ${FOUNDRY_MAP.w} ${FOUNDRY_MAP.h}" class="fy-map${live ? ' fy-map--live' : ''}" role="img" aria-label="Peta Foundry Battle">${foundryMapSvgInner(L, ph, mapOpts)}</svg>`}
         <div class="fy-extra">${['roam', 'workshop'].map(k => `<button class="btn-apply ${k === foundrySelected ? 'fy-on' : ''}" onclick="foundryPickBuilding('${k}')">${escapeHtml(FOUNDRY_B[k].n)}</button>`).join('')}</div>
         <p class="fy-note">Angka di lingkaran = jumlah pemain yang ditugaskan pada bangunan untuk phase terpilih. Mark kecil = nama pemain; gunakan filter tugas untuk menampilkan peran tertentu.</p>
         ${foundryMapLegendHtml(false)}
@@ -1648,15 +1768,51 @@ function foundryChartNote() {
         'Building bars = players assigned (white tick = minimum, red = below minimum). Roster bars = Troops Power (visible after login).');
 }
 
+function foundryChartLiveTableHtml(legion, phase) {
+    if (!(foundryLiveEdit && foundryLiveEditAllowed())) return '';
+    const battle = foundryPlayers
+        .filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle')
+        .sort((a, b) => Number(a.foundry_slot) - Number(b.foundry_slot));
+    if (!battle.length) {
+        return `<div class="fy-live-chart-panel"><p class="fy-empty">${foundryL('Belum ada pemain Battle di legion ini.', 'No Battle players in this legion yet.')}</p></div>`;
+    }
+    const rows = battle.map(p => {
+        const tgt = foundryTarget(p, phase);
+        const tgtName = tgt ? foundryName(tgt) : '—';
+        return `<tr>
+          <td>${p.foundry_slot || '—'}</td>
+          <td><button type="button" class="fy-live-name" onclick="foundryOpenLiveEditor('${p.id}', event.clientX, event.clientY)">${escapeHtml(p.nickname || '-')}</button></td>
+          <td>${canViewSensitive() ? escapeHtml(p.game_id || '') : ''}</td>
+          <td><select class="fy-manual-task" aria-label="Role ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_role',this.value)">${foundryRoleOptionsHtml(p.foundry_role || '')}</select></td>
+          <td><select class="fy-manual-task" aria-label="P1 ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_p1',this.value)">${foundryBuildingOptionsHtml(p.foundry_p1 || '')}</select></td>
+          <td><select class="fy-manual-task" aria-label="P2 ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_p2',this.value)">${foundryBuildingOptionsHtml(p.foundry_p2 || '')}</select></td>
+          ${foundryExt ? `<td><select class="fy-manual-task" aria-label="P3 ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_p3',this.value)">${foundryBuildingOptionsHtml(p.foundry_p3 || p.foundry_p2 || '')}</select></td>` : ''}
+          <td><span class="fy-live-phase-tgt" style="border-color:${(FOUNDRY_B[tgt]||{}).c||'#64748b'}">${escapeHtml(tgtName)}</span></td>
+        </tr>`;
+    }).join('');
+    return `<div class="fy-live-chart-panel">
+      <div class="fy-live-chart-head"><b class="fy-edit-badge">✏️ Live Edit on</b>
+        <small>${foundryL('Ubah peran & target di tabel; chart di atas ikut terbarui. Perubahan langsung tersimpan.', 'Change role & targets in the table; the chart above updates. Changes save instantly.')}</small>
+      </div>
+      <div class="fy-live-table-wrap"><table class="fy-live-table">
+        <thead><tr><th>#</th><th>${foundryL('Nickname', 'Nickname')}</th><th>ID</th><th>${foundryL('Peran', 'Role')}</th><th>P1</th><th>P2</th>${foundryExt ? '<th>P3</th>' : ''}<th>${foundryL('Target fase ini', 'This phase target')}</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </div>`;
+}
 function foundryChartHtml() {
     const L = foundryChartLegion, ph = foundryChartPhase;
+    const live = foundryLiveEdit && foundryLiveEditAllowed();
     return `${foundryExtNotice()}<div class="fy-controls">
+        ${foundryLiveEditBtnHtml()}
         <button class="btn-apply" type="button" onclick="shareFoundryChartLink()">🔗 Live Share Chart</button>
         <button class="btn-apply" type="button" onclick="foundryChartExportPng()">🖼️ ${foundryL('Ekspor PNG', 'Export PNG')}</button>
         ${FOUNDRY_LEGIONS.map(l => `<button class="btn-apply ${l === L ? 'fy-on' : ''}" onclick="foundrySetChartLegion('${l}')">${l}</button>`).join('')}
         ${[1, 2, 3].map(n => `<button class="btn-apply ${n === ph ? 'fy-on' : ''}" onclick="foundrySetChartPhase(${n})">Phase ${n} (${FOUNDRY_PHASE_RANGE[n - 1]} ${foundryL('mnt', 'min')})</button>`).join('')}</div>
+        ${live ? `<p class="fy-live-banner"><b class="fy-edit-badge">✏️ Live Edit on</b> — ${foundryL('Edit roster lewat tabel di bawah chart.', 'Edit the roster via the table under the chart.')}</p>` : ''}
         ${foundryWarningsHtml(L, ph)}
         <div class="fy-chart-wrap">${foundryChartSvg(L, ph).svg}</div>
+        ${foundryChartLiveTableHtml(L, ph)}
         <p class="fy-note">${foundryChartNote()}</p>`;
 }
 function foundrySetChartLegion(l) { foundryChartLegion = l; foundryRender(); }

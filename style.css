@@ -1910,3 +1910,165 @@ body.fy-shared-open { overflow:hidden; }
 .flag-it{background-image:url("data:image/svg+xml,%3Csvg%20viewBox='0%200%2030%2020'%20xmlns='http://www.w3.org/2000/svg'%3E%3Crect%20width='10'%20height='20'%20fill='%23009246'/%3E%3Crect%20x='10'%20width='10'%20height='20'%20fill='%23fff'/%3E%3Crect%20x='20'%20width='10'%20height='20'%20fill='%23ce2b37'/%3E%3C/svg%3E")}
 .flag-th{background-image:url("data:image/svg+xml,%3Csvg%20viewBox='0%200%2030%2020'%20xmlns='http://www.w3.org/2000/svg'%3E%3Crect%20width='30'%20height='20'%20fill='%23a51931'/%3E%3Crect%20y='3.33'%20width='30'%20height='13.34'%20fill='%23f4f5f8'/%3E%3Crect%20y='6.67'%20width='30'%20height='6.66'%20fill='%232d2a4a'/%3E%3C/svg%3E")}
 .flag-gb{background-image:url("data:image/svg+xml,%3Csvg%20viewBox='0%200%2030%2020'%20xmlns='http://www.w3.org/2000/svg'%3E%3Crect%20width='30'%20height='20'%20fill='%23012169'/%3E%3Cpath%20d='M0%2C0%2030%2C20M30%2C0%200%2C20'%20stroke='%23fff'%20stroke-width='4'/%3E%3Cpath%20d='M0%2C0%2030%2C20M30%2C0%200%2C20'%20stroke='%23c8102e'%20stroke-width='1.6'/%3E%3Cpath%20d='M15%2C0V20M0%2C10H30'%20stroke='%23fff'%20stroke-width='6.5'/%3E%3Cpath%20d='M15%2C0V20M0%2C10H30'%20stroke='%23c8102e'%20stroke-width='3.6'/%3E%3C/svg%3E")}
+
+/* ==== Foundry Live Edit (Map + Chart) ==== */
+.fy-live-edit-btn.fy-live-edit-on,
+.fy-live-edit-btn.fy-on {
+  background: linear-gradient(135deg, #b45309, #92400e) !important;
+  border-color: #fbbf24 !important;
+  color: #fffbeb !important;
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.35);
+}
+.fy-edit-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid #f59e0b;
+  color: #fcd34d;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+.fy-live-banner {
+  margin: 8px 0 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #e2e8f0;
+  font-size: 0.88rem;
+}
+.fy-map--live .fy-task-mark--edit { cursor: pointer; }
+.fy-map--live .fy-task-mark--edit:hover rect {
+  filter: brightness(1.15);
+}
+.fy-live-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0;
+  border-bottom: 1px solid #2d3039;
+}
+.fy-live-list-item:last-child { border-bottom: none; }
+.fy-live-name {
+  background: none;
+  border: none;
+  color: #fcd34d;
+  font-weight: 700;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+  font-size: inherit;
+}
+.fy-live-name:hover { text-decoration: underline; color: #fde68a; }
+.fy-live-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 6px;
+}
+.fy-live-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+.fy-live-fields select,
+.fy-live-table select.fy-manual-task {
+  width: 100%;
+  min-height: 34px;
+  border-radius: 8px;
+  border: 1px solid #374151;
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 4px 6px;
+  font-size: 0.8rem;
+}
+.fy-live-editor {
+  position: fixed;
+  z-index: 10050;
+  width: min(300px, calc(100vw - 24px));
+  background: linear-gradient(145deg, #1e2230, #151821);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+  padding: 12px 14px 14px;
+  display: none;
+  color: #e2e8f0;
+}
+.fy-live-editor.open { display: block; }
+.fy-live-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.fy-live-editor-head strong { color: #fcd34d; font-size: 0.95rem; }
+.fy-live-editor-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+.fy-live-editor-close:hover { color: #fff; }
+.fy-live-editor-meta {
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+.fy-live-editor-note {
+  margin: 10px 0 0;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+.fy-live-chart-panel {
+  margin: 12px auto 8px;
+  max-width: 960px;
+  background: #1c1d22;
+  border: 1px solid #2d3039;
+  border-radius: 14px;
+  padding: 12px;
+}
+.fy-live-chart-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 10px;
+}
+.fy-live-chart-head small { color: #94a3b8; font-size: 0.82rem; }
+.fy-live-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.fy-live-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+.fy-live-table th,
+.fy-live-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid #2d3039;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.fy-live-table th {
+  color: #7dd3fc;
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+.fy-live-table td { color: #e2e8f0; }
+.fy-live-phase-tgt {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #64748b;
+  font-size: 0.78rem;
+  color: #e2e8f0;
+}
