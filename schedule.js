@@ -32,7 +32,12 @@ async function submitMatchSchedule() {
     // Stored as e.g. "Saturday, 12:00 UTC" (time options already include "UTC")
     const matchTime = `${matchDay}, ${matchTimeOnly}`;
 
-    const fieldName = editingScheduleLegion === 'Legion 1' ? 'legion1_schedule' : 'legion2_schedule';
+    const fieldName = ({
+        'Legion 1': 'legion1_schedule',
+        'Legion 2': 'legion2_schedule',
+        'Legion 1 - Alliance B': 'legion1b_schedule',
+        'Legion 2 - Alliance B': 'legion2b_schedule'
+    })[editingScheduleLegion] || 'legion1_schedule';
 
     const confirmed = await showCustomConfirmAsync(
         `Save ${editingScheduleLegion} match time as ${matchTime}?`,
@@ -63,23 +68,23 @@ async function loadLegionSchedules() {
     if (!client) return;
 
     try {
-        const { data } = await client.from('footer_settings').select('legion1_schedule, legion2_schedule').eq('id', 'main').single();
+        const { data } = await client.from('footer_settings').select('legion1_schedule, legion2_schedule, legion1b_schedule, legion2b_schedule').eq('id', 'main').single();
         if (data) {
-            const l1Container = document.getElementById('display-schedule-legion-1');
-            if (data.legion1_schedule) {
-                l1Container.querySelector('.schedule-time-val').innerText = data.legion1_schedule;
-                l1Container.style.display = "block";
-            } else {
-                l1Container.style.display = "none";
-            }
-
-            const l2Container = document.getElementById('display-schedule-legion-2');
-            if (data.legion2_schedule) {
-                l2Container.querySelector('.schedule-time-val').innerText = data.legion2_schedule;
-                l2Container.style.display = "block";
-            } else {
-                l2Container.style.display = "none";
-            }
+            const applySched = (id, value) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (value) {
+                    const span = el.querySelector('.schedule-time-val');
+                    if (span) span.innerText = value;
+                    el.style.display = 'block';
+                } else {
+                    el.style.display = 'none';
+                }
+            };
+            applySched('display-schedule-legion-1', data.legion1_schedule);
+            applySched('display-schedule-legion-2', data.legion2_schedule);
+            applySched('display-schedule-legion-1b', data.legion1b_schedule);
+            applySched('display-schedule-legion-2b', data.legion2b_schedule);
         }
     } catch (err) {}
 }

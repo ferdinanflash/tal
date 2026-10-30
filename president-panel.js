@@ -7,8 +7,11 @@ function canOpenPresidentPanel() {
 }
 
 let globalBattleTheme = 'tundra';
+let globalAllianceBEnabled = false;
 let battleThemePollId = null;
 let battleThemeLoading = false;
+
+function isAllianceBEnabled() { return !!globalAllianceBEnabled; }
 
 function getBattleTheme() {
     return globalBattleTheme === 'frostdragon' ? 'frostdragon' : 'tundra';
@@ -33,16 +36,19 @@ async function loadGlobalBattleTheme({silent = true, forceApply = true} = {}) {
     try {
         const { data, error } = await client
             .from('footer_settings')
-            .select('battle_theme')
+            .select('battle_theme, alliance_b_enabled')
             .eq('id', 'main')
             .single();
 
         if (error) throw error;
         const nextTheme = data?.battle_theme === 'frostdragon' ? 'frostdragon' : 'tundra';
-        const changed = nextTheme !== globalBattleTheme;
+        const nextB = !!data?.alliance_b_enabled;
+        const changed = nextTheme !== globalBattleTheme || nextB !== globalAllianceBEnabled;
         globalBattleTheme = nextTheme;
+        globalAllianceBEnabled = nextB;
         if (changed || forceApply) {
             applyBattleTheme();
+            applyAllianceBVisibility();
             if (canOpenPresidentPanel()) refreshPresidentPanel();
         }
     } catch (err) {
@@ -76,11 +82,21 @@ function startGlobalBattleThemeSync() {
                     filter: 'id=eq.main'
                 }, (payload) => {
                     const nextTheme = payload?.new?.battle_theme === 'frostdragon' ? 'frostdragon' : 'tundra';
+                    const nextB = !!payload?.new?.alliance_b_enabled;
+                    let msg = null;
                     if (nextTheme !== globalBattleTheme) {
                         globalBattleTheme = nextTheme;
                         applyBattleTheme();
+                        msg = `Battle Theme changed globally to ${nextTheme === 'frostdragon' ? 'Frostdragon Tyrant' : 'Tundra Arm League'}`;
+                    }
+                    if (nextB !== globalAllianceBEnabled) {
+                        globalAllianceBEnabled = nextB;
+                        applyAllianceBVisibility();
+                        msg = nextB ? 'Alliance B reserve legions enabled' : 'Alliance B reserve legions disabled';
+                    }
+                    if (msg) {
                         if (canOpenPresidentPanel()) refreshPresidentPanel();
-                        showToast(`Battle Theme changed globally to ${nextTheme === 'frostdragon' ? 'Frostdragon Tyrant' : 'Tundra Arm League'}`, 'info');
+                        showToast(msg, 'info');
                     }
                 })
                 .subscribe();
@@ -130,6 +146,8 @@ function presidentOpenInfo() {
 }
 
 async function refreshPresidentPanel() {
+    applyAllianceBVisibility();
+
     if (!canOpenPresidentPanel()) return;
     const frost = getBattleTheme() === 'frostdragon';
     let players = Array.isArray(loadedTroopsData) ? loadedTroopsData : [];
@@ -231,6 +249,47 @@ function switchBattleTheme(theme) {
     }, '#7c3aed');
 }
 
+
+function applyAllianceBVisibility() {
+    const frost = getBattleTheme() === 'frostdragon';
+    const show = !frost && isAllianceBEnabled();
+    ['legion-btn-1b', 'legion-btn-2b'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('hidden', !show);
+    });
+    const cb = document.getElementById('pp-alliance-b-enabled');
+    if (cb) cb.checked = isAllianceBEnabled();
+    const st = document.getElementById('pp-alliance-b-status');
+    if (st) st.textContent = isAllianceBEnabled() ? 'Enabled — visible on main menu' : 'Disabled';
+    const card = document.getElementById('pp-alliance-b-card');
+    if (card) card.classList.toggle('pp-disabled-theme', frost);
+    // Schedule buttons for Alliance B
+    const s1b = document.getElementById('edit-schedule-legion-1b');
+    const s2b = document.getElementById('edit-schedule-legion-2b');
+    if (s1b) s1b.classList.toggle('hidden', !show || !canManageLegion('Legion 1 - Alliance B'));
+    if (s2b) s2b.classList.toggle('hidden', !show || !canManageLegion('Legion 2 - Alliance B'));
+}
+
+async function presidentToggleAllianceB(enabled) {
+    if (!canOpenPresidentPanel()) {
+        showToast('President Panel only.', 'warning');
+        applyAllianceBVisibility();
+        return;
+    }
+    const client = getSupabase();
+    if (!client) return;
+    const next = !!enabled;
+    const { error } = await client.from('footer_settings').update({ alliance_b_enabled: next }).eq('id', 'main');
+    if (error) {
+        showToast('Failed to update Alliance B: ' + (error.message || error), 'error');
+        applyAllianceBVisibility();
+        return;
+    }
+    globalAllianceBEnabled = next;
+    applyAllianceBVisibility();
+    showToast(next ? 'Alliance B legions enabled on main menu' : 'Alliance B legions hidden', 'success');
+}
+
 function applyBattleTheme() {
     const frost = getBattleTheme() === 'frostdragon';
     document.body.classList.toggle('theme-frostdragon', frost);
@@ -290,6 +349,7 @@ function applyBattleTheme() {
     }
 
     if (typeof renderTable === 'function' && viewMode === 'LEGION') renderTable();
+    applyAllianceBVisibility();
 }
 
 // ================= STAFF ACCOUNTS (change username / password) =================

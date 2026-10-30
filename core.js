@@ -77,8 +77,21 @@ const STAFF_ROLES = {
 };
 
 const ALL_ALLIANCES = ['ARX', 'IDN', 'VNX', 'ZXC', 'CAT'];
-const ALL_LEGIONS = ['Legion 1', 'Legion 2'];
+const ALL_LEGIONS_MAIN = ['Legion 1', 'Legion 2'];
+const ALL_LEGIONS_ALLIANCE_B = ['Legion 1 - Alliance B', 'Legion 2 - Alliance B'];
+const ALL_LEGIONS = [...ALL_LEGIONS_MAIN, ...ALL_LEGIONS_ALLIANCE_B];
 const FULL_ACCESS_ROLE = { scope: 'full', alliances: ALL_ALLIANCES, legions: ALL_LEGIONS };
+
+/** Base legion for permission / schedule mapping (Alliance B → main). */
+function legionBaseName(legionName) {
+    if (legionName === 'Legion 1 - Alliance B') return 'Legion 1';
+    if (legionName === 'Legion 2 - Alliance B') return 'Legion 2';
+    return legionName;
+}
+function isAllianceBLegion(legionName) {
+    return ALL_LEGIONS_ALLIANCE_B.includes(legionName);
+}
+
 
 let currentUserRole = null; // computed on login / session restore
 
@@ -107,7 +120,13 @@ function canEditAlliance(allianceCode) {
 function canManageLegion(legionName) {
     if (!isAdmin || !currentUserRole) return false;
     if (currentUserRole.scope === 'full') return true;
-    if (currentUserRole.scope === 'legion') return (currentUserRole.legions || []).includes(legionName);
+    if (currentUserRole.scope === 'legion') {
+        const legs = currentUserRole.legions || [];
+        // Staff with Legion 1 also manage Legion 1 - Alliance B (and same for 2)
+        if (legs.includes(legionName)) return true;
+        const base = typeof legionBaseName === 'function' ? legionBaseName(legionName) : legionName;
+        return legs.includes(base);
+    }
     return false;
 }
 
@@ -450,8 +469,12 @@ function updateAdminUI() {
     // actually allowed to manage, not both by default.
     const scheduleBtn1 = document.getElementById('edit-schedule-legion-1');
     const scheduleBtn2 = document.getElementById('edit-schedule-legion-2');
+    const scheduleBtn1b = document.getElementById('edit-schedule-legion-1b');
+    const scheduleBtn2b = document.getElementById('edit-schedule-legion-2b');
     if (scheduleBtn1) scheduleBtn1.classList.toggle('hidden', !canManageLegion('Legion 1'));
     if (scheduleBtn2) scheduleBtn2.classList.toggle('hidden', !canManageLegion('Legion 2'));
+    if (scheduleBtn1b) scheduleBtn1b.classList.toggle('hidden', !canManageLegion('Legion 1 - Alliance B') || !(typeof isAllianceBEnabled === 'function' && isAllianceBEnabled()));
+    if (scheduleBtn2b) scheduleBtn2b.classList.toggle('hidden', !canManageLegion('Legion 2 - Alliance B') || !(typeof isAllianceBEnabled === 'function' && isAllianceBEnabled()));
 
     // "Edit President Info" is only for full-access staff.
     const editPresidentBtn = document.getElementById('edit-president-btn');

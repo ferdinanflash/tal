@@ -33,7 +33,7 @@
 				<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 				<link rel="icon" href="icons/favicon.ico" sizes="any">
 				<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-				<link rel="stylesheet" href="style.css?v=39">
+				<link rel="stylesheet" href="style.css?v=40">
 
 
 
@@ -41,16 +41,16 @@
                     <script src="i18n.js?v=12" defer></script>
                     <script src="i18n-dict.js?v=20261031-six-lang-full1" defer></script>
 					<!-- Modular application scripts: load in dependency order. -->
-					<script src="core.js?v=29" defer></script>
+					<script src="core.js?v=24" defer></script>
 					<script src="navigation.js?v=23" defer></script>
-					<script src="schedule.js?v=18" defer></script>
+					<script src="schedule.js?v=8" defer></script>
 					<script src="leaderboard.js?v=25" defer></script>
 					<script src="player.js?v=22" defer></script>
 					<script src="legion.js?v=23" defer></script>
 					<script src="export.js?v=20" defer></script>
 					<script src="footer.js?v=18" defer></script>
 					<script src="effects.js?v=18" defer></script>
-					<script src="president-panel.js?v=11" defer></script>
+					<script src="president-panel.js?v=12" defer></script>
 					<script src="redeem.js?v=4" defer></script>
 				</head>
 	<body>
@@ -180,6 +180,44 @@
 							</div>
 						</div>
 						<div id="display-schedule-legion-2" class="schedule-display schedule-display-l2">
+							⏰ Match Time: <span class="schedule-time-val">-</span>
+						</div>
+					</div>
+
+					<!-- LEGION 1 - ALLIANCE B (cadangan; hanya jika diaktifkan President Panel) -->
+					<div class="list-item legion-btn legion-btn-1b hidden" id="legion-btn-1b" onclick="selectLegion('Legion 1 - Alliance B')" role="button" tabindex="0" aria-label="Legion 1 Alliance B roster">
+						<div class="legion-btn-header">
+							<span class="legion-btn-label">
+								<svg class="clash-svg legion-icon-blue" viewBox="0 0 100 100">
+									<use href="#clash-sword-icon"></use>
+								</svg>
+								LEGION 1 — Alliance B (30 / 20)
+							</span>
+							<div class="legion-btn-actions">
+								<button class="admin-schedule-btn hidden" id="edit-schedule-legion-1b" onclick="event.stopPropagation(); openScheduleModal('Legion 1 - Alliance B')">Set Schedule</button>
+								<span class="arrow legion-btn-arrow">&gt;</span>
+							</div>
+						</div>
+						<div id="display-schedule-legion-1b" class="schedule-display schedule-display-l1b" style="display:none">
+							⏰ Match Time: <span class="schedule-time-val">-</span>
+						</div>
+					</div>
+
+					<!-- LEGION 2 - ALLIANCE B -->
+					<div class="list-item legion-btn legion-btn-2b hidden" id="legion-btn-2b" onclick="selectLegion('Legion 2 - Alliance B')" role="button" tabindex="0" aria-label="Legion 2 Alliance B roster">
+						<div class="legion-btn-header">
+							<span class="legion-btn-label">
+								<svg class="clash-svg legion-icon-red" viewBox="0 0 100 100">
+									<use href="#clash-sword-icon"></use>
+								</svg>
+								LEGION 2 — Alliance B (30 / 20)
+							</span>
+							<div class="legion-btn-actions">
+								<button class="admin-schedule-btn hidden" id="edit-schedule-legion-2b" onclick="event.stopPropagation(); openScheduleModal('Legion 2 - Alliance B')">Set Schedule</button>
+								<span class="arrow legion-btn-arrow">&gt;</span>
+							</div>
+						</div>
+						<div id="display-schedule-legion-2b" class="schedule-display schedule-display-l2b" style="display:none">
 							⏰ Match Time: <span class="schedule-time-val">-</span>
 						</div>
 					</div>
@@ -557,6 +595,20 @@
 					<h3><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#swords-icon"></use></svg> Battle / Legion Management</h3>
 					<p id="pp-battle-description">Manage the existing Legion rosters and player assignments.</p>
 					<div class="pp-actions-row"><button class="btn-apply legion-action-btn" onclick="presidentOpenBattle('Legion 1')">Open Battle 1</button><button id="pp-legion2-btn" class="btn-apply legion-action-btn" onclick="presidentOpenBattle('Legion 2')">Open Battle 2</button></div>
+				</div>
+
+				<div class="pp-card" id="pp-alliance-b-card">
+					<h3>🛡️ Legion Cadangan — Alliance B</h3>
+					<p>Optional reserve legions for Tundra Arm League. When enabled, <b>Legion 1 - Alliance B</b> and <b>Legion 2 - Alliance B</b> appear on the main menu (30 Battle + 20 Substitute each).</p>
+					<div class="pp-actions-row" style="align-items:center;gap:12px;flex-wrap:wrap">
+						<label class="pp-toggle-label" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">
+							<input type="checkbox" id="pp-alliance-b-enabled" onchange="presidentToggleAllianceB(this.checked)">
+							<span id="pp-alliance-b-status">Disabled</span>
+						</label>
+						<button class="btn-apply legion-action-btn" type="button" onclick="presidentOpenBattle('Legion 1 - Alliance B')">Open Legion 1 — B</button>
+						<button class="btn-apply legion-action-btn" type="button" onclick="presidentOpenBattle('Legion 2 - Alliance B')">Open Legion 2 — B</button>
+					</div>
+					<div class="pp-feature-note">Roster data uses the same <code>legion</code> column. Players in Alliance B legions are separate from main Legion 1 / 2.</div>
 				</div>
 
 				<div class="pp-card">
@@ -992,7 +1044,7 @@
 </div>
 
 	<script src="frostdragon.js?v=16"></script>
-	<script src="foundry.js?v=27"></script>
+	<script src="foundry.js?v=28"></script>
 	<script>
 	  // Register the service worker only on HTTPS or localhost.
 	  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

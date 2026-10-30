@@ -5,6 +5,18 @@
 // Lihat supabase_foundry_roster.sql / supabase_tundra_foundry.sql
 const FOUNDRY_ALLIANCE = 'IDN';
 const FOUNDRY_LEGIONS = ['Legion 1', 'Legion 2'];
+const TUNDRA_ALLIANCE_B_LEGIONS = ['Legion 1 - Alliance B', 'Legion 2 - Alliance B'];
+function isFoundryLegionName(name) {
+    return FOUNDRY_LEGIONS.includes(name) || (foundryMode === 'tundra' && TUNDRA_ALLIANCE_B_LEGIONS.includes(name));
+}
+function foundryLegionList() {
+    if (foundryMode === 'tundra') {
+        const extra = (typeof isAllianceBEnabled === 'function' && isAllianceBEnabled()) ? TUNDRA_ALLIANCE_B_LEGIONS : [];
+        return foundryLockedLegion ? [foundryLockedLegion] : [...FOUNDRY_LEGIONS, ...extra];
+    }
+    return FOUNDRY_LEGIONS;
+}
+
 // Kapasitas dinamis per mode (Foundry IDN = 30/10, Tundra = 30/20)
 function foundryBattleMax() { return 30; }
 function foundrySubMax() { return foundryMode === 'tundra' ? 20 : 10; }
@@ -72,7 +84,7 @@ let foundryLockedLegion = null;
 
 function foundryActiveLegion() {
     if (foundryLockedLegion) return foundryLockedLegion;
-    if (FOUNDRY_LEGIONS.includes(foundryTab)) return foundryTab;
+    if (FOUNDRY_LEGIONS.includes(foundryTab) || TUNDRA_ALLIANCE_B_LEGIONS.includes(foundryTab)) return foundryTab;
     return foundryMapLegion || 'Legion 1';
 }
 
@@ -388,7 +400,10 @@ function foundrySetPlayers(data) {
 function foundryEnsureTundraSlots() {
     if (foundryMode !== 'tundra') return;
     const pending = []; // { p, slot, status, legion }
-    for (const legion of FOUNDRY_LEGIONS) {
+    const _slotLegions = foundryMode === 'tundra'
+        ? [...FOUNDRY_LEGIONS, ...TUNDRA_ALLIANCE_B_LEGIONS]
+        : FOUNDRY_LEGIONS;
+    for (const legion of _slotLegions) {
         for (const status of ['Battle', 'Substitute']) {
             const max = status === 'Battle' ? foundryBattleMax() : foundrySubMax();
             const group = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === status);
@@ -606,7 +621,7 @@ async function openFoundry() {
 /** Buka battle plan Tundra (sistem Foundry). legion dikunci ke Legion 1 atau 2. */
 async function openTundraFoundry(legion) {
     foundryMode = 'tundra';
-    if (FOUNDRY_LEGIONS.includes(legion)) {
+    if (isFoundryLegionName(legion) || TUNDRA_ALLIANCE_B_LEGIONS.includes(legion) || FOUNDRY_LEGIONS.includes(legion)) {
         foundryLockedLegion = legion;
         foundryTab = legion;
         foundryMapLegion = legion;
@@ -691,7 +706,7 @@ function foundryRender() {
         }
     });
     const body = document.getElementById('foundry-body');
-    if (FOUNDRY_LEGIONS.includes(foundryTab)) body.innerHTML = foundryRosterHtml(foundryTab);
+    if (FOUNDRY_LEGIONS.includes(foundryTab) || TUNDRA_ALLIANCE_B_LEGIONS.includes(foundryTab)) body.innerHTML = foundryRosterHtml(foundryTab);
     else if (foundryTab === 'map') body.innerHTML = foundryMapHtml();
     else if (foundryTab === 'chart') body.innerHTML = foundryChartHtml();
     else if (foundryTab === 'checklist') body.innerHTML = foundryChecklistHtml();
