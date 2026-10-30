@@ -2072,3 +2072,62 @@ body.fy-shared-open { overflow:hidden; }
   font-size: 0.78rem;
   color: #e2e8f0;
 }
+
+/* ==== Foundry / Tundra roster mobile layout ==== */
+#foundry-page .page-title {
+  font-size: clamp(1.15rem, 4.5vw, 1.75rem);
+  line-height: 1.25;
+  word-break: break-word;
+}
+#foundry-page .page-subtitle {
+  font-size: 0.85rem;
+  line-height: 1.35;
+  opacity: 0.9;
+}
+#foundry-page.fy-locked-legion .fy-tab[data-tab="Legion 1"],
+#foundry-page.fy-locked-legion .fy-tab[data-tab="Legion 2"] {
+  /* inactive legion already hidden via JS; keep active visible */
+}
+@media (max-width: 700px) {
+  .fy-table { min-width: 0 !important; width: 100%; }
+  .fy-table thead { display: none; }
+  .fy-table, .fy-table tbody, .fy-table tr, .fy-table td {
+    display: block;
+    width: 100%;
+  }
+  .fy-table tr {
+    background: #1c1d22;
+    border: 1px solid #2d3039;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+  }
+  .fy-table td {
+    border: none !important;
+    padding: 4px 0 !important;
+    text-align: left !important;
+  }
+  .fy-table td:first-child {
+    font-weight: 800;
+    color: #fcd34d;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+  .fy-table td select {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+  .fy-table .fy-manual-task {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+  .fy-admin { gap: 6px; }
+  .fy-admin .btn-apply, .fy-admin select.btn-apply {
+    flex: 1 1 calc(50% - 6px);
+    min-height: 40px;
+    font-size: 0.8rem;
+  }
+  .fy-tabs { gap: 6px; }
+  .fy-tab { flex: 0 0 auto; font-size: 0.8rem; padding: 8px 10px; }
+}

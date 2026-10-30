@@ -67,14 +67,47 @@ function foundryNormalizePlayer(p) {
         foundry_ready: p.tundra_ready != null ? p.tundra_ready : 0
     });
 }
+/** Saat dibuka dari tombol LEGION 1/2, kunci UI ke legion itu saja (tanpa tab legion lain). */
+let foundryLockedLegion = null;
+
+function foundryActiveLegion() {
+    if (foundryLockedLegion) return foundryLockedLegion;
+    if (FOUNDRY_LEGIONS.includes(foundryTab)) return foundryTab;
+    return foundryMapLegion || 'Legion 1';
+}
+
 function foundryApplyModeChrome() {
     const meta = FOUNDRY_MODE_META[foundryMode] || FOUNDRY_MODE_META.foundry;
     const page = document.getElementById('foundry-page');
-    if (page) page.dataset.foundryMode = foundryMode;
+    if (page) {
+        page.dataset.foundryMode = foundryMode;
+        page.dataset.lockedLegion = foundryLockedLegion || '';
+        page.classList.toggle('fy-locked-legion', !!foundryLockedLegion);
+    }
     const title = page && page.querySelector('.page-title');
     const sub = page && page.querySelector('.page-subtitle');
-    if (title) title.textContent = meta.title;
-    if (sub) sub.textContent = foundryLanguage === 'en' ? meta.subtitleEn : meta.subtitleId;
+    if (foundryMode === 'tundra' && foundryLockedLegion) {
+        if (title) title.textContent = foundryLanguage === 'en'
+            ? `${foundryLockedLegion} — Tundra Battle Plan`
+            : `${foundryLockedLegion} — Rencana Battle Tundra`;
+        if (sub) sub.textContent = foundryLanguage === 'en'
+            ? `30 Battle + 20 Substitute · Map · Phases · Roles`
+            : `30 Battle + 20 Cadangan · Peta · Fase · Role`;
+    } else {
+        if (title) title.textContent = meta.title;
+        if (sub) sub.textContent = foundryLanguage === 'en' ? meta.subtitleEn : meta.subtitleId;
+    }
+    // Sembunyikan tab Legion yang bukan legion terkunci
+    document.querySelectorAll('.fy-tab').forEach(b => {
+        const tab = b.getAttribute('data-tab');
+        if (foundryLockedLegion && FOUNDRY_LEGIONS.includes(tab) && tab !== foundryLockedLegion) {
+            b.classList.add('hidden');
+            b.style.display = 'none';
+        } else {
+            b.classList.remove('hidden');
+            b.style.display = '';
+        }
+    });
 }
 
 // Koordinat marker diselaraskan dengan map Foundry baru (554x554 px).
@@ -245,6 +278,12 @@ function foundryToggleLiveEdit() {
     if (!foundryLiveEdit) foundryCloseLiveEditor();
     foundryRender();
 }
+
+function foundryLegionSwitchHtml(current, onClickName) {
+    const legs = foundryLockedLegion ? [foundryLockedLegion] : FOUNDRY_LEGIONS;
+    return legs.map(l => `<button class="btn-apply ${l === current ? 'fy-on' : ''}" onclick="${onClickName}('${l}')">${l}</button>`).join('');
+}
+
 function foundryLiveEditBtnHtml() {
     if (!foundryLiveEditAllowed()) return '';
     const on = foundryLiveEdit;
@@ -327,9 +366,73 @@ function foundrySetPlayers(data) {
     foundryPlayers = list;
     if (foundryMode === 'tundra') {
         // Tundra uses tundra_p3 (or falls back); treat as extended if column present on any row / after migration
-        foundryExt = !list.length || ('tundra_p3' in (data[0] || {})) || ('foundry_p3' in list[0]);
+        foundryExt = !list.length || ('tundra_p3' in (data[0] || {})) || list.some(p => 'foundry_p3' in p);
+        // Data lama: sudah ada legion + legion_role tapi belum tundra_slot → isi slot otomatis (urut power)
+        foundryEnsureTundraSlots();
     } else {
         foundryExt = !list.length || ('foundry_p3' in (data[0] || {}));
+    }
+}
+
+/** Isi foundry_slot / tundra_slot untuk anggota legion yang belum punya nomor slot. */
+function foundryEnsureTundraSlots() {
+    if (foundryMode !== 'tundra') return;
+    const pending = []; // { p, slot, status, legion }
+    for (const legion of FOUNDRY_LEGIONS) {
+        for (const status of ['Battle', 'Substitute']) {
+            const max = status === 'Battle' ? foundryBattleMax() : foundrySubMax();
+            const group = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === status);
+            const used = new Set();
+            group.forEach(p => {
+                const s = Number(p.foundry_slot);
+                if (Number.isInteger(s) && s >= 1 && s <= max) used.add(s);
+            });
+            const need = group
+                .filter(p => {
+                    const s = Number(p.foundry_slot);
+                    return !(Number.isInteger(s) && s >= 1 && s <= max);
+                })
+                .sort((a, b) => (Number(b.troops_power) || 0) - (Number(a.troops_power) || 0));
+            let next = 1;
+            for (const p of need) {
+                while (used.has(next) && next <= max) next++;
+                if (next > max) break;
+                p.foundry_slot = next;
+                p.tundra_slot = next;
+                // Role default dari template bila belum ada
+                if (!p.foundry_role) {
+                    const tpl = status === 'Battle' ? foundryTpl(next) : null;
+                    p.foundry_role = tpl ? tpl.role : 'Substitute';
+                    p.tundra_role = p.foundry_role;
+                    if (tpl) {
+                        if (!p.foundry_p1) { p.foundry_p1 = tpl.p1; p.tundra_p1 = tpl.p1; }
+                        if (!p.foundry_p2) { p.foundry_p2 = tpl.p2; p.tundra_p2 = tpl.p2; }
+                        if (!p.foundry_p3 && foundryExt) { p.foundry_p3 = tpl.p3; p.tundra_p3 = tpl.p3; }
+                    }
+                }
+                used.add(next);
+                pending.push({ p, slot: next, status, legion });
+                next++;
+            }
+        }
+    }
+    // Persist slot (dan role default) di background — tidak blokir render
+    if (pending.length && typeof getSupabase === 'function') {
+        const client = getSupabase();
+        if (client) {
+            (async () => {
+                for (const { p, slot, status, legion } of pending) {
+                    const patch = {
+                        foundry_slot: slot,
+                        foundry_role: p.foundry_role || null,
+                        foundry_p1: p.foundry_p1 || null,
+                        foundry_p2: p.foundry_p2 || null
+                    };
+                    if (foundryExt) patch.foundry_p3 = p.foundry_p3 || null;
+                    try { await foundryDbUpdate(p.id, patch); } catch (e) { /* ignore per-row */ }
+                }
+            })();
+        }
     }
 }
 
@@ -487,15 +590,19 @@ function foundryFmtPower(n) {
 
 async function openFoundry() {
     foundryMode = 'foundry';
+    foundryLockedLegion = null;
     return foundryOpenPage();
 }
-/** Buka battle plan Tundra (sistem Foundry). legion opsional: 'Legion 1' | 'Legion 2'. */
+/** Buka battle plan Tundra (sistem Foundry). legion dikunci ke Legion 1 atau 2. */
 async function openTundraFoundry(legion) {
     foundryMode = 'tundra';
     if (FOUNDRY_LEGIONS.includes(legion)) {
+        foundryLockedLegion = legion;
         foundryTab = legion;
         foundryMapLegion = legion;
         foundryChartLegion = legion;
+    } else {
+        foundryLockedLegion = null;
     }
     return foundryOpenPage();
 }
@@ -547,10 +654,32 @@ function foundryFind(legion, status, slot) {
     return foundryPlayers.find(p => p.foundry_legion === legion && p.foundry_status === status && Number(p.foundry_slot) === slot);
 }
 
-function foundrySetTab(tab) { foundryTab = tab; foundryRender(); }
+function foundrySetTab(tab) {
+    // Jangan izinkan pindah ke legion lain saat UI dikunci (buka dari LEGION 1/2)
+    if (foundryLockedLegion && FOUNDRY_LEGIONS.includes(tab) && tab !== foundryLockedLegion) return;
+    foundryTab = tab;
+    if (FOUNDRY_LEGIONS.includes(tab)) {
+        foundryMapLegion = tab;
+        foundryChartLegion = tab;
+    }
+    foundryRender();
+}
 
 function foundryRender() {
-    document.querySelectorAll('.fy-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === foundryTab));
+    if (foundryLockedLegion && FOUNDRY_LEGIONS.includes(foundryTab) && foundryTab !== foundryLockedLegion) {
+        foundryTab = foundryLockedLegion;
+    }
+    document.querySelectorAll('.fy-tab').forEach(b => {
+        const tab = b.getAttribute('data-tab');
+        b.classList.toggle('active', tab === foundryTab);
+        if (foundryLockedLegion && FOUNDRY_LEGIONS.includes(tab) && tab !== foundryLockedLegion) {
+            b.classList.add('hidden');
+            b.style.display = 'none';
+        } else {
+            b.classList.remove('hidden');
+            b.style.display = '';
+        }
+    });
     const body = document.getElementById('foundry-body');
     if (FOUNDRY_LEGIONS.includes(foundryTab)) body.innerHTML = foundryRosterHtml(foundryTab);
     else if (foundryTab === 'map') body.innerHTML = foundryMapHtml();
@@ -1039,7 +1168,8 @@ function openFoundryBulkAssign() {
     if (foundryBulkCandidates().length === 0) { showToast(foundryL('Semua pemain IDN sudah masuk roster Foundry.', 'All IDN players are already in the Foundry roster.'), 'info'); return; }
     foundryBulkSel.clear();
     const defLegion = FOUNDRY_LEGIONS.includes(foundryTab) ? foundryTab : foundryMapLegion;
-    document.getElementById('fy-bulk-legion').innerHTML = FOUNDRY_LEGIONS.map(l =>
+    const bulkLegs = foundryLockedLegion ? [foundryLockedLegion] : FOUNDRY_LEGIONS;
+    document.getElementById('fy-bulk-legion').innerHTML = bulkLegs.map(l =>
         `<option value="${l}" ${l === defLegion ? 'selected' : ''}>${l}</option>`).join('');
     document.getElementById('fy-bulk-search').value = '';
     document.getElementById('fy-bulk-modal').classList.remove('hidden');
@@ -1270,7 +1400,11 @@ function foundryPickBuilding(key) { foundrySelected = key; foundryRender(); }
 function foundrySetPhase(n) { foundryPhase = n === 'all' ? 'all' : Number(n); foundryRender(); }
 const foundryNormPhase = v => (String(v).toLowerCase() === 'all' ? 'all' : ([1, 2, 3].includes(Number(v)) ? Number(v) : 1));
 const foundryPhaseLabel = ph => ph === 'all' ? foundryL('Semua Phase', 'All Phases') : `Phase ${ph} (${FOUNDRY_PHASE_RANGE[ph - 1]} ${foundryL('mnt', 'min')})`;
-function foundrySetMapLegion(l) { foundryMapLegion = l; foundryRender(); }
+function foundrySetMapLegion(l) {
+    if (foundryLockedLegion && l !== foundryLockedLegion) return;
+    foundryMapLegion = l;
+    foundryRender();
+}
 
 function foundryToggleTaskMarks() { foundryTaskMarksOn = !foundryTaskMarksOn; foundryRender(); }
 function foundryToggleCountMarks() { foundryCountMarksOn = !foundryCountMarksOn; foundryRender(); }
@@ -1435,7 +1569,7 @@ function foundryMapHtml() {
         ${foundryLiveEditBtnHtml()}
         <button class="btn-apply" type="button" onclick="shareFoundryMapLink()">🔗 Live Share Map</button>
         <button class="btn-apply" type="button" onclick="foundryExportPng()">🖼️ ${foundryL('Ekspor PNG', 'Export PNG')}</button>
-        ${FOUNDRY_LEGIONS.map(l => `<button class="btn-apply ${l === L ? 'fy-on' : ''}" onclick="foundrySetMapLegion('${l}')">${l}</button>`).join('')}
+        ${foundryLegionSwitchHtml(L, 'foundrySetMapLegion')}
         ${[1, 2, 3].map(n => `<button class="btn-apply ${n === ph ? 'fy-on' : ''}" onclick="foundrySetPhase(${n})">Phase ${n} (${FOUNDRY_PHASE_RANGE[n - 1]} ${foundryL('mnt', 'min')})</button>`).join('')}
         <button class="btn-apply ${ph === 'all' ? 'fy-on' : ''}" onclick="foundrySetPhase('all')">🧭 ${foundryPhaseLabel('all')}</button></div>
         ${liveBadge}
@@ -1939,7 +2073,7 @@ function foundryChartHtml() {
         ${foundryLiveEditBtnHtml()}
         <button class="btn-apply" type="button" onclick="shareFoundryChartLink()">🔗 Live Share Chart</button>
         <button class="btn-apply" type="button" onclick="foundryChartExportPng()">🖼️ ${foundryL('Ekspor PNG', 'Export PNG')}</button>
-        ${FOUNDRY_LEGIONS.map(l => `<button class="btn-apply ${l === L ? 'fy-on' : ''}" onclick="foundrySetChartLegion('${l}')">${l}</button>`).join('')}
+        ${foundryLegionSwitchHtml(L, 'foundrySetChartLegion')}
         ${[1, 2, 3].map(n => `<button class="btn-apply ${n === ph ? 'fy-on' : ''}" onclick="foundrySetChartPhase(${n})">Phase ${n} (${FOUNDRY_PHASE_RANGE[n - 1]} ${foundryL('mnt', 'min')})</button>`).join('')}</div>
         ${live ? `<p class="fy-live-banner"><b class="fy-edit-badge">✏️ Live Edit on</b> — ${foundryL('Edit roster lewat tabel di bawah chart.', 'Edit the roster via the table under the chart.')}</p>` : ''}
         ${foundryWarningsHtml(L, ph)}
@@ -1947,7 +2081,11 @@ function foundryChartHtml() {
         ${foundryChartLiveTableHtml(L, ph)}
         <p class="fy-note">${foundryChartNote()}</p>`;
 }
-function foundrySetChartLegion(l) { foundryChartLegion = l; foundryRender(); }
+function foundrySetChartLegion(l) {
+    if (foundryLockedLegion && l !== foundryLockedLegion) return;
+    foundryChartLegion = l;
+    foundryRender();
+}
 function foundrySetChartPhase(n) { foundryChartPhase = n; foundryRender(); }
 
 async function foundryChartExportPng(legion = foundryChartLegion, phase = foundryChartPhase) {
