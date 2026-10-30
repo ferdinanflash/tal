@@ -176,7 +176,7 @@
         const code = document.getElementById('language-current-code');
         const flag = document.getElementById('language-current-flag');
         if (code) code.textContent = ({en:'ENG', id:'ID', zh:'CN', tl:'PH', it:'IT', th:'TH'})[lang] || 'ENG';
-        if (flag) flag.textContent = ({en:'🇺🇸', id:'🇮🇩', zh:'🇨🇳', tl:'🇵🇭', it:'🇮🇹', th:'🇹🇭'})[lang] || '🇺🇸';
+        if (flag) flag.className = 'flag flag-' + (({en:'us', id:'id', zh:'cn', tl:'ph', it:'it', th:'th'})[lang] || 'us');
     }
     function setLang(next, opts) {
         if (!SUPPORTED.includes(next)) return;

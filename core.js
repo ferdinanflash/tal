@@ -367,6 +367,7 @@ function showCustomConfirm(message, onConfirm, buttonColor = '#ef4444') {
 
     msgEl.innerText = message;
     okBtn.style.background = buttonColor;
+    okBtn.dataset.color = String(buttonColor).toLowerCase();
     modal.classList.remove('hidden');
 
     const newOkBtn = okBtn.cloneNode(true);
@@ -382,7 +383,34 @@ function showCustomConfirm(message, onConfirm, buttonColor = '#ef4444') {
     newCancelBtn.addEventListener('click', () => {
         modal.classList.add('hidden');
     });
+
+    // Non-destructive confirms: move focus to OK so ENTER confirms right away.
+    // Red (delete/danger) confirms are left alone to avoid accidental deletes.
+    if (String(buttonColor).toLowerCase() !== '#ef4444') {
+        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+        newOkBtn.focus();
+    }
 }
+
+/* ENTER confirms the custom confirm dialog (e.g. "Update ...'s player data?"),
+   ESC cancels it. Runs in the capture phase and stops propagation so the
+   Add/Edit modal underneath does not also react to the same keypress.
+   Red (#ef4444) destructive confirms are NOT confirmed by ENTER. */
+document.addEventListener('keydown', function (e) {
+    const modal = document.getElementById('confirm-modal');
+    if (!modal || modal.classList.contains('hidden')) return;
+    if (e.key === 'Escape') {
+        e.preventDefault(); e.stopImmediatePropagation();
+        document.getElementById('confirm-cancel-btn')?.click();
+        return;
+    }
+    if (e.key !== 'Enter' || e.isComposing) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (e.repeat) return;
+    const okBtn = document.getElementById('confirm-ok-btn');
+    if (!okBtn || okBtn.dataset.color === '#ef4444') return;
+    okBtn.click();
+}, true);
 
 async function showCustomConfirmAsync(message, buttonColor = '#ef4444') {
     return new Promise((resolve) => {

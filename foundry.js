@@ -424,7 +424,7 @@ function foundryApplyLanguage(root = document.getElementById('foundry-page')) {
   // Modal Bulk Assign berada di luar #foundry-page, jadi diterjemahkan juga.
   if (root.id === 'foundry-page') { const m = document.getElementById('fy-bulk-modal'); if (m) foundryApplyLanguage(m); }
   const btn = document.getElementById('foundry-language-toggle');
-  if (btn) btn.textContent = foundryLanguage === 'en' ? '🇮🇩 Bahasa Indonesia' : (foundryLanguage === 'id' ? '🇨🇳 中文' : '🇬🇧 English');
+  if (btn) btn.innerHTML = foundryLanguage === 'en' ? '<span class="flag flag-id"></span> Bahasa Indonesia' : (foundryLanguage === 'id' ? '<span class="flag flag-cn"></span> 中文' : '<span class="flag flag-gb"></span> English');
 }
 function foundryToggleLanguage() {
   foundryLanguage = foundryLanguage === 'en' ? 'id' : (foundryLanguage === 'id' ? 'zh' : 'en');
@@ -1482,7 +1482,7 @@ async function openFoundrySharedMap(legion, phase) {
     // State marker khusus Live Share (tidak mengubah preferensi halaman utama)
     let shareMarksOn = true, shareCountsOn = true;
     const wrap = document.createElement('div'); wrap.id = 'foundry-shared-map';
-    wrap.innerHTML = `<div class="fdt-shared-bar"><strong>🏭 Foundry Live Map · IDN</strong><span class="fdt-shared-actions"><button id="fy-share-lang">${en()?'🇮🇩 Bahasa Indonesia':'🇬🇧 English'}</button>
+    wrap.innerHTML = `<div class="fdt-shared-bar"><strong>🏭 Foundry Live Map · IDN</strong><span class="fdt-shared-actions"><button id="fy-share-lang">${en()?'<span class="flag flag-id"></span> Bahasa Indonesia':'<span class="flag flag-gb"></span> English'}</button>
       <button id="fy-share-l1">Legion 1</button><button id="fy-share-l2">Legion 2</button>
       <button id="fy-share-p1">Phase 1</button><button id="fy-share-p2">Phase 2</button><button id="fy-share-p3">Phase 3</button><button id="fy-share-pall">🧭 ${foundryPhaseLabel('all')}</button>
       <button id="fy-share-marks" class="fy-share-active">Nama: ON</button>
@@ -1709,7 +1709,7 @@ async function openFoundrySharedChart(legion, phase) {
     if (urlLang === 'en' || urlLang === 'id' || urlLang === 'zh') foundryLanguage = urlLang;
     const en = () => foundryLanguage === 'en';
     const wrap = document.createElement('div'); wrap.id = 'foundry-shared-map';
-    wrap.innerHTML = `<div class="fdt-shared-bar"><strong>📊 Foundry Live Chart · IDN</strong><span class="fdt-shared-actions"><button id="fy-share-lang">${en() ? '🇮🇩 Bahasa Indonesia' : '🇬🇧 English'}</button>
+    wrap.innerHTML = `<div class="fdt-shared-bar"><strong>📊 Foundry Live Chart · IDN</strong><span class="fdt-shared-actions"><button id="fy-share-lang">${en() ? '<span class="flag flag-id"></span> Bahasa Indonesia' : '<span class="flag flag-gb"></span> English'}</button>
       <button id="fy-share-l1">Legion 1</button><button id="fy-share-l2">Legion 2</button>
       <button id="fy-share-p1">Phase 1</button><button id="fy-share-p2">Phase 2</button><button id="fy-share-p3">Phase 3</button>
       <button id="fy-share-png">🖼️ PNG</button>
