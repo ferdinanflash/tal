@@ -1,513 +1,513 @@
 I18N.addText(`
 # Navigation and common interface
-Home || Beranda || 首页
-Back to Menu || Kembali ke Menu || 返回菜单
-Close || Tutup || 关闭
-Cancel || Batal || 取消
-Save || Simpan || 保存
-Delete || Hapus || 删除
-Edit || Ubah || 编辑
-Search || Cari || 搜索
-Refresh || Muat Ulang || 刷新
-Loading... || Memuat... || 加载中...
-Submit || Kirim || 提交
-Apply || Terapkan || 应用
-Reset || Atur Ulang || 重置
-Export || Ekspor || 导出
-Import || Impor || 导入
-Add Player || Tambah Pemain || 添加玩家
-Add || Tambah || 添加
-Remove || Hapus || 移除
-Update || Perbarui || 更新
-Confirm || Konfirmasi || 确认
-Yes || Ya || 是
-No || Tidak || 否
-Close/Open Reservation || Tutup/Buka Reservasi || 关闭/开放预约
-How to use || Cara Penggunaan || 使用说明
-View Applicants || Lihat Pendaftar || 查看申请者
-STATUS || STATUS || 状态
-LOCAL: || LOKAL: || 本地时间：
-UTC: || UTC: || UTC：
-PRESIDENT PANEL || PANEL PRESIDEN || 会长面板
-Foundry Battle Roster || Roster Pertempuran Foundry || Foundry 战斗名单
-Imperial Foundry || Tanur Imperial || 帝国铸造厂
-Prototype Site I || Situs Prototipe I || 原型地点 I
-Prototype Site II || Situs Prototipe II || 原型地点 II
-Repair Facility IV || Fasilitas Perbaikan IV || 维修设施 IV
-Repair Facility II || Fasilitas Perbaikan II || 维修设施 II
-Repair Facility III || Fasilitas Perbaikan III || 维修设施 III
-Bulk Assign || Penetapan Massal || 批量分配
-Auto-fill || Isi Otomatis || 自动填充
-Strategy Guide || Panduan Strategi || 战略指南
-Live Map Share || Bagikan Peta Live || 实时地图分享
-Player || Pemain || 玩家
-Players || Para Pemain || 玩家
-Alliance || Aliansi || 联盟
-Name || Nama || 名称
-Power || Kekuatan || 战力
-Total Power || Total Kekuatan || 总战力
-Task || Tugas || 任务
-Legion || Legiun || 军团
-Battle || Pertempuran || 战斗
-Substitutes || Cadangan || 替补
-Waiting || Menunggu || 等待中
-Accepted || Diterima || 已接受
-Rejected || Ditolak || 已拒绝
-No data available || Tidak ada data || 暂无数据
-Switch language || Ganti bahasa || 切换语言
+Home || Beranda || 首页 || Home || Home || หน้าแรก
+Back to Menu || Kembali ke Menu || 返回菜单 || Bumalik sa Menu || Torna al menu || กลับเมนู
+Close || Tutup || 关闭 || Isara || Chiudi || ปิด
+Cancel || Batal || 取消 || Kanselahin || Annulla || ยกเลิก
+Save || Simpan || 保存 || I-save || Salva || บันทึก
+Delete || Hapus || 删除 || Tanggalin || Elimina || ลบ
+Edit || Ubah || 编辑 || I-edit || Modifica || แก้ไข
+Search || Cari || 搜索 || Maghanap || Cerca || ค้นหา
+Refresh || Muat Ulang || 刷新 || I-refresh || Aggiorna || รีเฟรช
+Loading... || Memuat... || 加载中... || Naglo-load... || Caricamento... || กำลังโหลด...
+Submit || Kirim || 提交 || Isumite || Invia || ส่ง
+Apply || Terapkan || 应用 || Ilapat || Applica || ใช้
+Reset || Atur Ulang || 重置 || I-reset || Reimposta || รีเซ็ต
+Export || Ekspor || 导出 || I-export || Esporta || ส่งออก
+Import || Impor || 导入 || I-import || Importa || นำเข้า
+Add Player || Tambah Pemain || 添加玩家 || Magdagdag ng Player || Aggiungi giocatore || เพิ่มผู้เล่น
+Add || Tambah || 添加 || Idagdag || Aggiungi || เพิ่ม
+Remove || Hapus || 移除 || Alisin || Rimuovi || ลบ
+Update || Perbarui || 更新 || I-update || Aggiorna || อัปเดต
+Confirm || Konfirmasi || 确认 || Kumpirmahin || Conferma || ยืนยัน
+Yes || Ya || 是 || Oo || Sì || ใช่
+No || Tidak || 否 || Hindi || No || ไม่
+Close/Open Reservation || Tutup/Buka Reservasi || 关闭/开放预约 || Close/Open Reservation || Close/Open Reservation || Close/Open Reservation
+How to use || Cara Penggunaan || 使用说明 || How to use || How to use || How to use
+View Applicants || Lihat Pendaftar || 查看申请者 || View Applicants || View Applicants || View Applicants
+STATUS || STATUS || 状态 || STATUS || STATO || สถานะ
+LOCAL: || LOKAL: || 本地时间： || LOKAL: || LOCALE: || ท้องถิ่น:
+UTC: || UTC: || UTC： || UTC: || UTC: || UTC:
+PRESIDENT PANEL || PANEL PRESIDEN || 会长面板 || PANEL NG PANGULO || PANNELLO PRESIDENTE || แผงประธาน
+Foundry Battle Roster || Roster Pertempuran Foundry || Foundry 战斗名单 || Roster ng Foundry Battle || Roster Foundry Battle || บัญชีรายชื่อ Foundry Battle
+Imperial Foundry || Tanur Imperial || 帝国铸造厂 || Imperial Foundry || Imperial Foundry || Imperial Foundry
+Prototype Site I || Situs Prototipe I || 原型地点 I || Prototype Site I || Prototype Site I || Prototype Site I
+Prototype Site II || Situs Prototipe II || 原型地点 II || Prototype Site II || Prototype Site II || Prototype Site II
+Repair Facility IV || Fasilitas Perbaikan IV || 维修设施 IV || Repair Facility IV || Repair Facility IV || Repair Facility IV
+Repair Facility II || Fasilitas Perbaikan II || 维修设施 II || Repair Facility II || Repair Facility II || Repair Facility II
+Repair Facility III || Fasilitas Perbaikan III || 维修设施 III || Repair Facility III || Repair Facility III || Repair Facility III
+Bulk Assign || Penetapan Massal || 批量分配 || Bulk Assign || Assegnazione multipla || มอบหมายจำนวนมาก
+Auto-fill || Isi Otomatis || 自动填充 || Auto-fill || Auto-fill || Auto-fill
+Strategy Guide || Panduan Strategi || 战略指南 || Strategy Guide || Strategy Guide || Strategy Guide
+Live Map Share || Bagikan Peta Live || 实时地图分享 || Live Map Share || Live Map Share || Live Map Share
+Player || Pemain || 玩家 || Player || Giocatore || ผู้เล่น
+Players || Para Pemain || 玩家 || Players || Players || Players
+Alliance || Aliansi || 联盟 || Alyansa || Alleanza || พันธมิตร
+Name || Nama || 名称 || Name || Name || Name
+Power || Kekuatan || 战力 || Power || Potenza || พาวเวอร์
+Total Power || Total Kekuatan || 总战力 || Total Power || Total Power || Total Power
+Task || Tugas || 任务 || Task || Task || Task
+Legion || Legiun || 军团 || Legion || Legione || ลีเจียน
+Battle || Pertempuran || 战斗 || Battle || Battaglia || แบทเทิล
+Substitutes || Cadangan || 替补 || Mga Substitute || Riserve || ตัวสำรอง
+Waiting || Menunggu || 等待中 || Waiting || Waiting || Waiting
+Accepted || Diterima || 已接受 || Accepted || Accepted || Accepted
+Rejected || Ditolak || 已拒绝 || Rejected || Rejected || Rejected
+No data available || Tidak ada data || 暂无数据 || No data available || No data available || No data available
+Switch language || Ganti bahasa || 切换语言 || Switch language || Switch language || Switch language
 
 # Dynamic content and full-site labels
-Language || Bahasa || 语言
-Select tasks || Pilih tugas || 选择任务
-All Alliances || Semua Aliansi || 所有联盟
-All Tasks || Semua Tugas || 所有任务
-No matching players || Tidak ada pemain yang cocok || 没有匹配的玩家
-No Battle roster players yet. Assign players to the Frostdragon roster to see charts. || Belum ada pemain di roster Battle. Tetapkan pemain ke roster Frostdragon untuk melihat grafik. || 尚无战斗名单玩家。请将玩家分配到 Frostdragon 名单以查看图表。
-+ Assign Player || + Tetapkan Pemain || + 分配玩家
-Copy this link: || Salin tautan ini: || 复制此链接：
-Copy Live Share Chart link: || Salin tautan Live Share Chart: || 复制实时分享图表链接：
-Loading roster chart… || Memuat grafik roster… || 正在加载名单图表…
-Unable to load the roster chart. Please try again. || Tidak dapat memuat grafik roster. Silakan coba lagi. || 无法加载名单图表，请重试。
-Dragonite Collectors per alliance group (lowest power first). Recommended 5–{0}: || Pengumpul Dragonite per kelompok aliansi (urutkan dari kekuatan terendah). Disarankan 5–{0}: || 每个联盟组的 Dragonite 收集者（按战力从低到高）。建议 5–{0}：
-Re-arrange Dragonite Collectors? || Atur ulang Pengumpul Dragonite? || 重新安排 Dragonite 收集者？
-Lock roster || Kunci roster || 锁定名单
-Unlock roster || Buka kunci roster || 解锁名单
-view only || hanya lihat || 仅查看
-Battlefield schedule not set. || Jadwal medan perang belum diatur. || 尚未设置战场日程。
-Event phase || Fase acara || 活动阶段
-Schedule not set || Jadwal belum diatur || 尚未设置日程
-All Alliances ({0}) || Semua Aliansi ({0}) || 所有联盟（{0}）
-All Tasks || Semua Tugas || 所有任务
-Assign Player || Tetapkan Pemain || 分配玩家
-Copy link || Salin tautan || 复制链接
-Copy Live Share Foundry link: || Salin tautan Live Share Foundry: || 复制 Foundry 实时分享链接：
-Loading Foundry roster… || Memuat roster Foundry… || 正在加载 Foundry 名单…
-Unable to load map. Check your connection or Supabase read permissions, then refresh. || Tidak dapat memuat peta. Periksa koneksi atau izin baca Supabase, lalu muat ulang. || 无法加载地图。请检查网络连接或 Supabase 读取权限，然后刷新。
-Unable to load chart. Check your connection or Supabase read permissions, then refresh. || Tidak dapat memuat grafik. Periksa koneksi atau izin baca Supabase, lalu muat ulang. || 无法加载图表。请检查网络连接或 Supabase 读取权限，然后刷新。
-Small numbers indicate roster slot numbers. || Angka kecil menunjukkan nomor slot roster. || 小数字表示名单位置编号。
-Phase || Fase || 阶段
-min || menit || 分钟
-No players match your search or filter. || Tidak ada pemain yang cocok dengan pencarian atau filter. || 没有玩家符合搜索或筛选条件。
-No player data available. || Data pemain tidak tersedia. || 没有可用的玩家数据。
-Search nickname... || Cari nama panggilan... || 搜索昵称…
-Search nickname or Game ID... || Cari nama panggilan atau Game ID... || 搜索昵称或游戏 ID…
-Login to see Troops Power totals. || Masuk untuk melihat total kekuatan pasukan. || 登录以查看部队战力总和。
-Snow || Salju || 雪景
-Battle Players: || Pemain Battle: || 战斗玩家：
-No staff accounts found. || Akun staf tidak ditemukan. || 未找到工作人员账号。
-Failed to load accounts: {0} || Gagal memuat akun: {0} || 加载账号失败：{0}
-Are you sure you want to delete this player entry? || Yakin ingin menghapus entri pemain ini? || 确定要删除此玩家条目吗？
-Move to {0} || Pindahkan ke {0} || 移动到 {0}
-Remove this player from the Frostdragon Tyrant roster? || Hapus pemain ini dari roster Frostdragon Tyrant? || 将此玩家从 Frostdragon Tyrant 名单中移除？
-Remove this player from Legion roster? || Hapus pemain ini dari roster Legiun? || 将此玩家从军团名单中移除？
-Remove {0} selected player(s) from {1}? || Hapus {0} pemain terpilih dari {1}? || 从 {1} 中移除已选的 {0} 名玩家？
-Please wait… || Harap tunggu… || 请稍候…
-Reset this browser's local snow preference? The global Battle Theme is stored in Supabase and will not be changed. || Atur ulang preferensi salju lokal browser ini? Tema Battle global tersimpan di Supabase dan tidak akan berubah. || 重置此浏览器的本地雪景偏好？全局战斗主题保存在 Supabase 中，不会更改。
-Select all shown (until slots are full) || Pilih semua yang tampil (hingga slot penuh) || 全选当前显示项（直到位置满员）
-Assign Selected || Tetapkan yang Dipilih || 分配所选玩家
-Search Game ID / Nickname || Cari Game ID / Nama panggilan || 搜索游戏 ID / 昵称
-Type game ID or nickname... || Ketik Game ID atau nama panggilan... || 输入游戏 ID 或昵称…
-Bulk Assign Foundry || Penugasan Massal Foundry || Foundry 批量分配
-The selected players fill the next free slots, ordered from highest Power. || Pemain terpilih mengisi slot kosong berikutnya, diurutkan dari Power tertinggi. || 所选玩家按战力从高到低填入下一个空位。
-No Commander assigned. || Commander belum ditetapkan. || 尚未分配指挥官。
-No Rally Leader to attack the Imperial Foundry. || Belum ada Pemimpin Rally untuk menyerang Tanur Imperial. || 尚未分配集结队长攻击帝国铸造厂。
-Battle || Pertempuran || 战斗
-Substitute || Cadangan || 替补
-Foundry Live Map || Peta Live Foundry || Foundry 实时地图
-Foundry Live Chart || Grafik Live Foundry || Foundry 实时图表
-FDT Roster Chart || Grafik Roster FDT || FDT 名单图表
+Language || Bahasa || 语言 || Language || Language || Language
+Select tasks || Pilih tugas || 选择任务 || Select tasks || Select tasks || Select tasks
+All Alliances || Semua Aliansi || 所有联盟 || All Alliances || All Alliances || All Alliances
+All Tasks || Semua Tugas || 所有任务 || Lahat ng Task || Tutti i compiti || ภารกิจทั้งหมด
+No matching players || Tidak ada pemain yang cocok || 没有匹配的玩家 || No matching players || No matching players || No matching players
+No Battle roster players yet. Assign players to the Frostdragon roster to see charts. || Belum ada pemain di roster Battle. Tetapkan pemain ke roster Frostdragon untuk melihat grafik. || 尚无战斗名单玩家。请将玩家分配到 Frostdragon 名单以查看图表。 || No Battle roster players yet. Assign players to the Frostdragon roster to see charts. || No Battle roster players yet. Assign players to the Frostdragon roster to see charts. || No Battle roster players yet. Assign players to the Frostdragon roster to see charts.
++ Assign Player || + Tetapkan Pemain || + 分配玩家 || + Assign Player || + Assign Player || + Assign Player
+Copy this link: || Salin tautan ini: || 复制此链接： || Copy this link: || Copy this link: || Copy this link:
+Copy Live Share Chart link: || Salin tautan Live Share Chart: || 复制实时分享图表链接： || Kopyahin ang Live Share Chart link: || Copia link Live Share Chart: || คัดลอกลิงก์ Live Share Chart:
+Loading roster chart… || Memuat grafik roster… || 正在加载名单图表… || Nilo-load ang chart ng roster… || Caricamento grafico roster… || กำลังโหลดกราฟรายชื่อ…
+Unable to load the roster chart. Please try again. || Tidak dapat memuat grafik roster. Silakan coba lagi. || 无法加载名单图表，请重试。 || Hindi ma-load ang chart ng roster. Subukan ulit. || Impossibile caricare il grafico del roster. Riprova. || โหลดกราฟรายชื่อไม่สำเร็จ ลองอีกครั้ง
+Dragonite Collectors per alliance group (lowest power first). Recommended 5–{0}: || Pengumpul Dragonite per kelompok aliansi (urutkan dari kekuatan terendah). Disarankan 5–{0}: || 每个联盟组的 Dragonite 收集者（按战力从低到高）。建议 5–{0}： || Dragonite Collectors per alliance group (lowest power first). Recommended 5–{0}: || Dragonite Collectors per alliance group (lowest power first). Recommended 5–{0}: || Dragonite Collectors per alliance group (lowest power first). Recommended 5–{0}:
+Re-arrange Dragonite Collectors? || Atur ulang Pengumpul Dragonite? || 重新安排 Dragonite 收集者？ || Re-arrange Dragonite Collectors? || Re-arrange Dragonite Collectors? || Re-arrange Dragonite Collectors?
+Lock roster || Kunci roster || 锁定名单 || I-lock ang roster || Blocca roster || ล็อครายชื่อ
+Unlock roster || Buka kunci roster || 解锁名单 || I-unlock ang roster || Sblocca roster || ปลดล็อครายชื่อ
+view only || hanya lihat || 仅查看 || tingnan lang || sola lettura || ดูอย่างเดียว
+Battlefield schedule not set. || Jadwal medan perang belum diatur. || 尚未设置战场日程。 || Hindi pa naka-set ang schedule ng battlefield. || Orario del campo di battaglia non impostato. || ยังไม่ได้ตั้งตารางสนามรบ
+Event phase || Fase acara || 活动阶段 || Phase ng event || Fase evento || เฟสอีเวนต์
+Schedule not set || Jadwal belum diatur || 尚未设置日程 || Hindi pa naka-set ang schedule || Orario non impostato || ยังไม่ได้ตั้งตาราง
+All Alliances ({0}) || Semua Aliansi ({0}) || 所有联盟（{0}） || Lahat ng Alyansa ({0}) || Tutte le alleanze ({0}) || พันธมิตรทั้งหมด ({0})
+All Tasks || Semua Tugas || 所有任务 || Lahat ng Task || Tutti i compiti || ภารกิจทั้งหมด
+Assign Player || Tetapkan Pemain || 分配玩家 || Italaga ang Player || Assegna giocatore || มอบหมายผู้เล่น
+Copy link || Salin tautan || 复制链接 || Kopyahin ang link || Copia link || คัดลอกลิงก์
+Copy Live Share Foundry link: || Salin tautan Live Share Foundry: || 复制 Foundry 实时分享链接： || Kopyahin ang Live Share Foundry link: || Copia link Live Share Foundry: || คัดลอกลิงก์ Live Share Foundry:
+Loading Foundry roster… || Memuat roster Foundry… || 正在加载 Foundry 名单… || Nilo-load ang Foundry roster… || Caricamento roster Foundry… || กำลังโหลดรายชื่อ Foundry…
+Unable to load map. Check your connection or Supabase read permissions, then refresh. || Tidak dapat memuat peta. Periksa koneksi atau izin baca Supabase, lalu muat ulang. || 无法加载地图。请检查网络连接或 Supabase 读取权限，然后刷新。 || Hindi ma-load ang mapa. Suriin ang koneksyon o permiso sa pagbasa ng Supabase, pagkatapos i-refresh. || Impossibile caricare la mappa. Controlla la connessione o i permessi di lettura Supabase, poi aggiorna. || โหลดแผนที่ไม่สำเร็จ ตรวจสอบการเชื่อมต่อหรือสิทธิ์อ่าน Supabase แล้วรีเฟรช
+Unable to load chart. Check your connection or Supabase read permissions, then refresh. || Tidak dapat memuat grafik. Periksa koneksi atau izin baca Supabase, lalu muat ulang. || 无法加载图表。请检查网络连接或 Supabase 读取权限，然后刷新。 || Hindi ma-load ang chart. Suriin ang koneksyon o permiso sa pagbasa ng Supabase, pagkatapos i-refresh. || Impossibile caricare il grafico. Controlla la connessione o i permessi di lettura Supabase, poi aggiorna. || โหลดกราฟไม่สำเร็จ ตรวจสอบการเชื่อมต่อหรือสิทธิ์อ่าน Supabase แล้วรีเฟรช
+Small numbers indicate roster slot numbers. || Angka kecil menunjukkan nomor slot roster. || 小数字表示名单位置编号。 || Ang maliliit na numero ay numero ng slot sa roster. || I numeri piccoli indicano i numeri di slot del roster. || ตัวเลขเล็กคือหมายเลขสล็อตรายชื่อ
+Phase || Fase || 阶段 || Phase || Fase || เฟส
+min || menit || 分钟 || min || min || นาที
+No players match your search or filter. || Tidak ada pemain yang cocok dengan pencarian atau filter. || 没有玩家符合搜索或筛选条件。 || Walang player na tumutugma sa paghahanap o filter. || Nessun giocatore corrisponde alla ricerca o al filtro. || ไม่มีผู้เล่นที่ตรงกับการค้นหาหรือตัวกรอง
+No player data available. || Data pemain tidak tersedia. || 没有可用的玩家数据。 || Walang available na data ng player. || Nessun dato giocatore disponibile. || ไม่มีข้อมูลผู้เล่น
+Search nickname... || Cari nama panggilan... || 搜索昵称… || Maghanap ng nickname... || Cerca nickname... || ค้นหาชื่อเล่น...
+Search nickname or Game ID... || Cari nama panggilan atau Game ID... || 搜索昵称或游戏 ID… || Maghanap ng nickname o Game ID... || Cerca nickname o ID di gioco... || ค้นหาชื่อเล่นหรือรหัสเกม...
+Login to see Troops Power totals. || Masuk untuk melihat total kekuatan pasukan. || 登录以查看部队战力总和。 || Mag-login para makita ang kabuuan ng Troops Power. || Accedi per vedere i totali di Troops Power. || เข้าสู่ระบบเพื่อดูยอดพลังทหาร
+Snow || Salju || 雪景 || Snow || Neve || หิมะ
+Battle Players: || Pemain Battle: || 战斗玩家： || Mga Battle Player: || Giocatori Battle: || ผู้เล่นแบทเทิล:
+No staff accounts found. || Akun staf tidak ditemukan. || 未找到工作人员账号。 || Walang nahanap na staff account. || Nessun account staff trovato. || ไม่พบบัญชีสตาฟ
+Failed to load accounts: {0} || Gagal memuat akun: {0} || 加载账号失败：{0} || Nabigong i-load ang mga account: {0} || Caricamento account non riuscito: {0} || โหลดบัญชีไม่สำเร็จ: {0}
+Are you sure you want to delete this player entry? || Yakin ingin menghapus entri pemain ini? || 确定要删除此玩家条目吗？ || Sigurado ka bang tatanggalin ang entry ng player na ito? || Eliminare questa voce del giocatore? || แน่ใจหรือว่าจะลบรายการผู้เล่นนี้?
+Move to {0} || Pindahkan ke {0} || 移动到 {0} || Ilipat sa {0} || Sposta a {0} || ย้ายไป {0}
+Remove this player from the Frostdragon Tyrant roster? || Hapus pemain ini dari roster Frostdragon Tyrant? || 将此玩家从 Frostdragon Tyrant 名单中移除？ || Remove this player from the Frostdragon Tyrant roster? || Remove this player from the Frostdragon Tyrant roster? || Remove this player from the Frostdragon Tyrant roster?
+Remove this player from Legion roster? || Hapus pemain ini dari roster Legiun? || 将此玩家从军团名单中移除？ || Remove this player from Legion roster? || Remove this player from Legion roster? || Remove this player from Legion roster?
+Remove {0} selected player(s) from {1}? || Hapus {0} pemain terpilih dari {1}? || 从 {1} 中移除已选的 {0} 名玩家？ || Remove {0} selected player(s) from {1}? || Remove {0} selected player(s) from {1}? || Remove {0} selected player(s) from {1}?
+Please wait… || Harap tunggu… || 请稍候… || Please wait… || Please wait… || Please wait…
+Reset this browser's local snow preference? The global Battle Theme is stored in Supabase and will not be changed. || Atur ulang preferensi salju lokal browser ini? Tema Battle global tersimpan di Supabase dan tidak akan berubah. || 重置此浏览器的本地雪景偏好？全局战斗主题保存在 Supabase 中，不会更改。 || Reset this browser's local snow preference? The global Battle Theme is stored in Supabase and will not be changed. || Reset this browser's local snow preference? The global Battle Theme is stored in Supabase and will not be changed. || Reset this browser's local snow preference? The global Battle Theme is stored in Supabase and will not be changed.
+Select all shown (until slots are full) || Pilih semua yang tampil (hingga slot penuh) || 全选当前显示项（直到位置满员） || Select all shown (until slots are full) || Select all shown (until slots are full) || Select all shown (until slots are full)
+Assign Selected || Tetapkan yang Dipilih || 分配所选玩家 || Assign Selected || Assign Selected || Assign Selected
+Search Game ID / Nickname || Cari Game ID / Nama panggilan || 搜索游戏 ID / 昵称 || Search Game ID / Nickname || Search Game ID / Nickname || Search Game ID / Nickname
+Type game ID or nickname... || Ketik Game ID atau nama panggilan... || 输入游戏 ID 或昵称… || Type game ID or nickname... || Type game ID or nickname... || Type game ID or nickname...
+Bulk Assign Foundry || Penugasan Massal Foundry || Foundry 批量分配 || Bulk Assign Foundry || Bulk Assign Foundry || Bulk Assign Foundry
+The selected players fill the next free slots, ordered from highest Power. || Pemain terpilih mengisi slot kosong berikutnya, diurutkan dari Power tertinggi. || 所选玩家按战力从高到低填入下一个空位。 || The selected players fill the next free slots, ordered from highest Power. || The selected players fill the next free slots, ordered from highest Power. || The selected players fill the next free slots, ordered from highest Power.
+No Commander assigned. || Commander belum ditetapkan. || 尚未分配指挥官。 || No Commander assigned. || No Commander assigned. || No Commander assigned.
+No Rally Leader to attack the Imperial Foundry. || Belum ada Pemimpin Rally untuk menyerang Tanur Imperial. || 尚未分配集结队长攻击帝国铸造厂。 || No Rally Leader to attack the Imperial Foundry. || No Rally Leader to attack the Imperial Foundry. || No Rally Leader to attack the Imperial Foundry.
+Battle || Pertempuran || 战斗 || Battle || Battaglia || แบทเทิล
+Substitute || Cadangan || 替补 || Substitute || Riserva || ตัวสำรอง
+Foundry Live Map || Peta Live Foundry || Foundry 实时地图 || Foundry Live Map || Foundry Live Map || Foundry Live Map
+Foundry Live Chart || Grafik Live Foundry || Foundry 实时图表 || Foundry Live Chart || Foundry Live Chart || Foundry Live Chart
+FDT Roster Chart || Grafik Roster FDT || FDT 名单图表 || FDT Roster Chart || FDT Roster Chart || FDT Roster Chart
 
 
 # Buttons, pages, roster, events, account and status messages
-Select an option below || Pilih salah satu opsi di bawah || 请选择以下选项
-Minister Reservation || Reservasi Menteri || 部长预约
-Events Leaderboard Record || Rekor Papan Peringkat Acara || 活动排行榜记录
-Transfer Portal || Portal Transfer || 转服门户
-Battle Events || Acara Pertempuran || 战斗活动
-WoS Tool || Alat WoS || WoS 工具
-Current President || Presiden Saat Ini || 当前总统
-RECENTLY ACCEPTED RESERVATION || RESERVASI YANG BARU DITERIMA || 最近接受的预约
-No recent activity || Belum ada aktivitas terbaru || 暂无最近活动
-Made With ❤️ By: || Dibuat dengan ❤️ oleh: || 制作：❤️
-Menu || Menu || 菜单
-Choose language || Pilih bahasa || 选择语言
-Back to Menu || Kembali ke Menu || 返回菜单
-Back || Kembali || 返回
-Next || Berikutnya || 下一步
-Previous || Sebelumnya || 上一步
-Open || Buka || 打开
-Close || Tutup || 关闭
-Enable || Aktifkan || 启用
-Disable || Nonaktifkan || 禁用
-Copy || Salin || 复制
-Copied! || Berhasil disalin! || 已复制！
-Copy link || Salin tautan || 复制链接
-Download || Unduh || 下载
-Upload || Unggah || 上传
-Choose file || Pilih berkas || 选择文件
-Select all || Pilih semua || 全选
-Clear all || Kosongkan semua || 清空全部
-Clear roster || Kosongkan roster || 清空名单
-Save changes || Simpan perubahan || 保存更改
-Discard changes || Buang perubahan || 放弃更改
-Are you sure? || Apakah Anda yakin? || 确定吗？
-Please try again. || Silakan coba lagi. || 请重试。
-Something went wrong. || Terjadi kesalahan. || 出现错误。
-Success || Berhasil || 成功
-Error || Kesalahan || 错误
-Warning || Peringatan || 警告
-Information || Informasi || 信息
-No results found || Tidak ada hasil || 未找到结果
-No players found || Pemain tidak ditemukan || 未找到玩家
-No events found || Acara tidak ditemukan || 未找到活动
-No schedule set || Jadwal belum diatur || 尚未设置日程
-Battle schedule || Jadwal pertempuran || 战斗日程
-Match time || Waktu pertandingan || 比赛时间
-Time slot (UTC+0) || Slot waktu (UTC+0) || 时段（UTC+0）
-Preferred time || Waktu pilihan || 首选时间
-Waiting List || Daftar Tunggu || 等待名单
-Applicants || Pendaftar || 申请者
-Accepted Slots || Slot yang Diterima || 已接受时段
-Slots Left || Slot Tersisa || 剩余时段
-Total Applicants || Total Pendaftar || 申请总数
-Accept || Terima || 接受
-Reject || Tolak || 拒绝
-Move || Pindahkan || 移动
-Move to time || Pindahkan ke waktu || 移动到指定时间
-Remove player || Hapus pemain || 移除玩家
-Add player || Tambah pemain || 添加玩家
-Player name || Nama pemain || 玩家名称
-RANK || PERINGKAT || 排名
-Rank || Peringkat || 排名
-ALLIANCE || ALIANSI || 联盟
-Alliance || Aliansi || 联盟
-NICKNAME || NAMA PANGGILAN || 昵称
-GAME ID || ID GAME || 游戏 ID
-TROOPS POWER || KEKUATAN PASUKAN || 部队战力
-PREF. TIME || WAKTU PILIHAN || 首选时间
-STATUS || STATUS || 状态
-ACTION || AKSI || 操作
-Nickname || Nama panggilan || 昵称
-Game ID || ID Game || 游戏 ID
-Alliance name || Nama aliansi || 联盟名称
-Alliance code || Kode aliansi || 联盟代码
-Troops Power || Kekuatan Pasukan || 部队战力
-Total Troops Power || Total Kekuatan Pasukan || 部队总战力
-Hero Power || Kekuatan Hero || 英雄战力
-Total Hero Power || Total Kekuatan Hero || 英雄总战力
-Battle Power || Kekuatan Tempur || 战斗力
-Roster || Daftar pemain || 名单
-Battle roster || Daftar pemain pertempuran || 战斗名单
-Slot number || Nomor slot || 位置编号
-Slot || Slot || 位置
-Commander || Komandan || 指挥官
-Rally Leader || Pemimpin Rally || 集结队长
-Task assignment || Penugasan tugas || 任务分配
-Select Legion and Phase || Pilih Legion dan Fase || 选择军团和阶段
-All Legions || Semua Legion || 所有军团
-All Phases || Semua fase || 所有阶段
-Phase 1 || Fase 1 || 第一阶段
-Phase 2 || Fase 2 || 第二阶段
-Phase 3 || Fase 3 || 第三阶段
-Task assignment saved. || Penugasan tugas disimpan. || 任务分配已保存。
-Save failed. || Gagal menyimpan. || 保存失败。
-Loading latest data... || Memuat data terbaru... || 正在加载最新数据…
-Loading accounts... || Memuat akun... || 正在加载账号…
-Loading roster chart… || Memuat grafik roster… || 正在加载名单图表…
-Loading Foundry roster… || Memuat roster Foundry… || 正在加载 Foundry 名单…
-All troops power global rank || Peringkat global kekuatan seluruh pasukan || 全部部队战力全球排名
-ALL TROOPS POWER (GLOBAL RANK) || KEKUATAN SELURUH PASUKAN (PERINGKAT GLOBAL) || 全部部队战力（全球排名）
-Bulk Assign || Penugasan Massal || 批量分配
-Auto-fill (by Power) || Isi Otomatis (berdasarkan Kekuatan) || 自动填充（按战力）
-Copy for Discord || Salin untuk Discord || 复制到 Discord
-Clear Roster || Kosongkan Roster || 清空名单
-Frostdragon Tyrant || Frostdragon Tyrant || Frostdragon Tyrant
-Live Map || Peta Langsung || 实时地图
-Share || Bagikan || 分享
-Strategy Guide || Panduan Strategi || 战略指南
-Checklist || Daftar Periksa || 检查清单
-Pre-battle checklist || Daftar periksa sebelum pertempuran || 战前检查清单
-Search... || Cari... || 搜索...
-Filter || Filter || 筛选
-Sort by || Urutkan berdasarkan || 排序方式
-Ascending || Menaik || 升序
-Descending || Menurun || 降序
-Status || Status || 状态
-Active || Aktif || 活跃
-Inactive || Tidak aktif || 未启用
-Pending || Menunggu || 待处理
-Completed || Selesai || 已完成
-Failed || Gagal || 失败
-Not available || Tidak tersedia || 不可用
-Permission denied || Izin ditolak || 权限不足
-Check your connection and try again. || Periksa koneksi Anda lalu coba lagi. || 请检查网络连接后重试。
+Select an option below || Pilih salah satu opsi di bawah || 请选择以下选项 || Select an option below || Select an option below || Select an option below
+Minister Reservation || Reservasi Menteri || 部长预约 || Minister Reservation || Minister Reservation || Minister Reservation
+Events Leaderboard Record || Rekor Papan Peringkat Acara || 活动排行榜记录 || Events Leaderboard Record || Events Leaderboard Record || Events Leaderboard Record
+Transfer Portal || Portal Transfer || 转服门户 || Transfer Portal || Transfer Portal || Transfer Portal
+Battle Events || Acara Pertempuran || 战斗活动 || Battle Events || Battle Events || Battle Events
+WoS Tool || Alat WoS || WoS 工具 || WoS Tool || WoS Tool || WoS Tool
+Current President || Presiden Saat Ini || 当前总统 || Current President || Current President || Current President
+RECENTLY ACCEPTED RESERVATION || RESERVASI YANG BARU DITERIMA || 最近接受的预约 || RECENTLY ACCEPTED RESERVATION || RECENTLY ACCEPTED RESERVATION || RECENTLY ACCEPTED RESERVATION
+No recent activity || Belum ada aktivitas terbaru || 暂无最近活动 || No recent activity || No recent activity || No recent activity
+Made With ❤️ By: || Dibuat dengan ❤️ oleh: || 制作：❤️ || Made With ❤️ By: || Made With ❤️ By: || Made With ❤️ By:
+Menu || Menu || 菜单 || Menu || Menu || Menu
+Choose language || Pilih bahasa || 选择语言 || Choose language || Choose language || Choose language
+Back to Menu || Kembali ke Menu || 返回菜单 || Bumalik sa Menu || Torna al menu || กลับเมนู
+Back || Kembali || 返回 || Bumalik || Indietro || กลับ
+Next || Berikutnya || 下一步 || Susunod || Avanti || ถัดไป
+Previous || Sebelumnya || 上一步 || Nakaraan || Precedente || ก่อนหน้า
+Open || Buka || 打开 || Open || Open || Open
+Close || Tutup || 关闭 || Isara || Chiudi || ปิด
+Enable || Aktifkan || 启用 || Enable || Enable || Enable
+Disable || Nonaktifkan || 禁用 || Disable || Disable || Disable
+Copy || Salin || 复制 || Copy || Copy || Copy
+Copied! || Berhasil disalin! || 已复制！ || Copied! || Copied! || Copied!
+Copy link || Salin tautan || 复制链接 || Kopyahin ang link || Copia link || คัดลอกลิงก์
+Download || Unduh || 下载 || Download || Download || Download
+Upload || Unggah || 上传 || Upload || Upload || Upload
+Choose file || Pilih berkas || 选择文件 || Choose file || Choose file || Choose file
+Select all || Pilih semua || 全选 || Piliin lahat || Seleziona tutto || เลือกทั้งหมด
+Clear all || Kosongkan semua || 清空全部 || I-clear lahat || Cancella tutto || ล้างทั้งหมด
+Clear roster || Kosongkan roster || 清空名单 || Clear roster || Clear roster || Clear roster
+Save changes || Simpan perubahan || 保存更改 || Save changes || Save changes || Save changes
+Discard changes || Buang perubahan || 放弃更改 || Discard changes || Discard changes || Discard changes
+Are you sure? || Apakah Anda yakin? || 确定吗？ || Are you sure? || Are you sure? || Are you sure?
+Please try again. || Silakan coba lagi. || 请重试。 || Please try again. || Please try again. || Please try again.
+Something went wrong. || Terjadi kesalahan. || 出现错误。 || Something went wrong. || Something went wrong. || Something went wrong.
+Success || Berhasil || 成功 || Success || Success || Success
+Error || Kesalahan || 错误 || Error || Error || Error
+Warning || Peringatan || 警告 || Warning || Warning || Warning
+Information || Informasi || 信息 || Information || Information || Information
+No results found || Tidak ada hasil || 未找到结果 || No results found || No results found || No results found
+No players found || Pemain tidak ditemukan || 未找到玩家 || No players found || No players found || No players found
+No events found || Acara tidak ditemukan || 未找到活动 || No events found || No events found || No events found
+No schedule set || Jadwal belum diatur || 尚未设置日程 || No schedule set || No schedule set || No schedule set
+Battle schedule || Jadwal pertempuran || 战斗日程 || Battle schedule || Battle schedule || Battle schedule
+Match time || Waktu pertandingan || 比赛时间 || Match time || Match time || Match time
+Time slot (UTC+0) || Slot waktu (UTC+0) || 时段（UTC+0） || Time slot (UTC+0) || Time slot (UTC+0) || Time slot (UTC+0)
+Preferred time || Waktu pilihan || 首选时间 || Preferred time || Preferred time || Preferred time
+Waiting List || Daftar Tunggu || 等待名单 || Waiting List || Waiting List || Waiting List
+Applicants || Pendaftar || 申请者 || Applicants || Applicants || Applicants
+Accepted Slots || Slot yang Diterima || 已接受时段 || Accepted Slots || Accepted Slots || Accepted Slots
+Slots Left || Slot Tersisa || 剩余时段 || Slots Left || Slots Left || Slots Left
+Total Applicants || Total Pendaftar || 申请总数 || Total Applicants || Total Applicants || Total Applicants
+Accept || Terima || 接受 || Accept || Accept || Accept
+Reject || Tolak || 拒绝 || Reject || Reject || Reject
+Move || Pindahkan || 移动 || Move || Move || Move
+Move to time || Pindahkan ke waktu || 移动到指定时间 || Move to time || Move to time || Move to time
+Remove player || Hapus pemain || 移除玩家 || Remove player || Remove player || Remove player
+Add player || Tambah pemain || 添加玩家 || Add player || Add player || Add player
+Player name || Nama pemain || 玩家名称 || Player name || Player name || Player name
+RANK || PERINGKAT || 排名 || RANK || RANK || RANK
+Rank || Peringkat || 排名 || Rank || Rank || Rank
+ALLIANCE || ALIANSI || 联盟 || ALLIANCE || ALLIANCE || ALLIANCE
+Alliance || Aliansi || 联盟 || Alyansa || Alleanza || พันธมิตร
+NICKNAME || NAMA PANGGILAN || 昵称 || NICKNAME || NICKNAME || NICKNAME
+GAME ID || ID GAME || 游戏 ID || GAME ID || GAME ID || GAME ID
+TROOPS POWER || KEKUATAN PASUKAN || 部队战力 || TROOPS POWER || TROOPS POWER || TROOPS POWER
+PREF. TIME || WAKTU PILIHAN || 首选时间 || PREF. TIME || PREF. TIME || PREF. TIME
+STATUS || STATUS || 状态 || STATUS || STATO || สถานะ
+ACTION || AKSI || 操作 || ACTION || ACTION || ACTION
+Nickname || Nama panggilan || 昵称 || Palayaw || Nickname || ชื่อเล่น
+Game ID || ID Game || 游戏 ID || Game ID || ID di gioco || รหัสเกม
+Alliance name || Nama aliansi || 联盟名称 || Alliance name || Alliance name || Alliance name
+Alliance code || Kode aliansi || 联盟代码 || Alliance code || Alliance code || Alliance code
+Troops Power || Kekuatan Pasukan || 部队战力 || Troops Power || Troops Power || Troops Power
+Total Troops Power || Total Kekuatan Pasukan || 部队总战力 || Total Troops Power || Total Troops Power || Total Troops Power
+Hero Power || Kekuatan Hero || 英雄战力 || Hero Power || Hero Power || Hero Power
+Total Hero Power || Total Kekuatan Hero || 英雄总战力 || Total Hero Power || Total Hero Power || Total Hero Power
+Battle Power || Kekuatan Tempur || 战斗力 || Battle Power || Battle Power || Battle Power
+Roster || Daftar pemain || 名单 || Roster || Roster || Roster
+Battle roster || Daftar pemain pertempuran || 战斗名单 || Battle roster || Battle roster || Battle roster
+Slot number || Nomor slot || 位置编号 || Slot number || Slot number || Slot number
+Slot || Slot || 位置 || Slot || Slot || Slot
+Commander || Komandan || 指挥官 || Commander || Comandante || ผู้บัญชาการ
+Rally Leader || Pemimpin Rally || 集结队长 || Rally Leader || Leader di Rally || หัวหน้ารัลลี
+Task assignment || Penugasan tugas || 任务分配 || Task assignment || Task assignment || Task assignment
+Select Legion and Phase || Pilih Legion dan Fase || 选择军团和阶段 || Select Legion and Phase || Select Legion and Phase || Select Legion and Phase
+All Legions || Semua Legion || 所有军团 || All Legions || All Legions || All Legions
+All Phases || Semua fase || 所有阶段 || All Phases || All Phases || All Phases
+Phase 1 || Fase 1 || 第一阶段 || Phase 1 || Fase 1 || เฟส 1
+Phase 2 || Fase 2 || 第二阶段 || Phase 2 || Fase 2 || เฟส 2
+Phase 3 || Fase 3 || 第三阶段 || Phase 3 || Fase 3 || เฟส 3
+Task assignment saved. || Penugasan tugas disimpan. || 任务分配已保存。 || Task assignment saved. || Task assignment saved. || Task assignment saved.
+Save failed. || Gagal menyimpan. || 保存失败。 || Save failed. || Save failed. || Save failed.
+Loading latest data... || Memuat data terbaru... || 正在加载最新数据… || Loading latest data... || Loading latest data... || Loading latest data...
+Loading accounts... || Memuat akun... || 正在加载账号… || Loading accounts... || Loading accounts... || Loading accounts...
+Loading roster chart… || Memuat grafik roster… || 正在加载名单图表… || Nilo-load ang chart ng roster… || Caricamento grafico roster… || กำลังโหลดกราฟรายชื่อ…
+Loading Foundry roster… || Memuat roster Foundry… || 正在加载 Foundry 名单… || Nilo-load ang Foundry roster… || Caricamento roster Foundry… || กำลังโหลดรายชื่อ Foundry…
+All troops power global rank || Peringkat global kekuatan seluruh pasukan || 全部部队战力全球排名 || All troops power global rank || All troops power global rank || All troops power global rank
+ALL TROOPS POWER (GLOBAL RANK) || KEKUATAN SELURUH PASUKAN (PERINGKAT GLOBAL) || 全部部队战力（全球排名） || ALL TROOPS POWER (GLOBAL RANK) || ALL TROOPS POWER (GLOBAL RANK) || ALL TROOPS POWER (GLOBAL RANK)
+Bulk Assign || Penugasan Massal || 批量分配 || Bulk Assign || Assegnazione multipla || มอบหมายจำนวนมาก
+Auto-fill (by Power) || Isi Otomatis (berdasarkan Kekuatan) || 自动填充（按战力） || Auto-fill (ayon sa Power) || Riempimento automatico (per Power) || เติมอัตโนมัติ (ตามพาวเวอร์)
+Copy for Discord || Salin untuk Discord || 复制到 Discord || Kopyahin para sa Discord || Copia per Discord || คัดลอกสำหรับ Discord
+Clear Roster || Kosongkan Roster || 清空名单 || I-clear ang Roster || Svuota roster || ล้างรายชื่อ
+Frostdragon Tyrant || Frostdragon Tyrant || Frostdragon Tyrant || Frostdragon Tyrant || Frostdragon Tyrant || Frostdragon Tyrant
+Live Map || Peta Langsung || 实时地图 || Live Map || Live Map || Live Map
+Share || Bagikan || 分享 || Share || Share || Share
+Strategy Guide || Panduan Strategi || 战略指南 || Strategy Guide || Strategy Guide || Strategy Guide
+Checklist || Daftar Periksa || 检查清单 || Checklist || Checklist || เช็คลิสต์
+Pre-battle checklist || Daftar periksa sebelum pertempuran || 战前检查清单 || Pre-battle checklist || Pre-battle checklist || Pre-battle checklist
+Search... || Cari... || 搜索... || Search... || Search... || Search...
+Filter || Filter || 筛选 || Filter || Filter || Filter
+Sort by || Urutkan berdasarkan || 排序方式 || Sort by || Sort by || Sort by
+Ascending || Menaik || 升序 || Ascending || Ascending || Ascending
+Descending || Menurun || 降序 || Descending || Descending || Descending
+Status || Status || 状态 || Status || Status || Status
+Active || Aktif || 活跃 || Active || Active || Active
+Inactive || Tidak aktif || 未启用 || Inactive || Inactive || Inactive
+Pending || Menunggu || 待处理 || Pending || Pending || Pending
+Completed || Selesai || 已完成 || Completed || Completed || Completed
+Failed || Gagal || 失败 || Failed || Failed || Failed
+Not available || Tidak tersedia || 不可用 || Not available || Not available || Not available
+Permission denied || Izin ditolak || 权限不足 || Permission denied || Permission denied || Permission denied
+Check your connection and try again. || Periksa koneksi Anda lalu coba lagi. || 请检查网络连接后重试。 || Check your connection and try again. || Check your connection and try again. || Check your connection and try again.
 
 
 # President info and redeem code help
-Edit President Info || Edit Info Presiden || 编辑会长信息
-This updates the footer shown to everyone. || Informasi ini memperbarui footer yang ditampilkan kepada semua orang. || 此处更新的信息将显示在所有人看到的页脚中。
-President Name || Nama Presiden || 会长名称
-Guild Name || Nama Guild || 公会名称
-One Player ID per line to redeem for multiple accounts at once, or pick an alliance above to auto-fill every ID in that alliance. || Masukkan satu Player ID per baris untuk menukarkan kode bagi beberapa akun sekaligus, atau pilih aliansi di atas untuk mengisi otomatis semua ID dalam aliansi tersebut. || 每行输入一个玩家 ID，即可同时为多个账号兑换；也可以选择上方的联盟，自动填入该联盟的所有 ID。
+Edit President Info || Edit Info Presiden || 编辑会长信息 || Edit President Info || Edit President Info || Edit President Info
+This updates the footer shown to everyone. || Informasi ini memperbarui footer yang ditampilkan kepada semua orang. || 此处更新的信息将显示在所有人看到的页脚中。 || This updates the footer shown to everyone. || This updates the footer shown to everyone. || This updates the footer shown to everyone.
+President Name || Nama Presiden || 会长名称 || President Name || President Name || President Name
+Guild Name || Nama Guild || 公会名称 || Guild Name || Guild Name || Guild Name
+One Player ID per line to redeem for multiple accounts at once, or pick an alliance above to auto-fill every ID in that alliance. || Masukkan satu Player ID per baris untuk menukarkan kode bagi beberapa akun sekaligus, atau pilih aliansi di atas untuk mengisi otomatis semua ID dalam aliansi tersebut. || 每行输入一个玩家 ID，即可同时为多个账号兑换；也可以选择上方的联盟，自动填入该联盟的所有 ID。 || One Player ID per line to redeem for multiple accounts at once, or pick an alliance above to auto-fill every ID in that alliance. || One Player ID per line to redeem for multiple accounts at once, or pick an alliance above to auto-fill every ID in that alliance. || One Player ID per line to redeem for multiple accounts at once, or pick an alliance above to auto-fill every ID in that alliance.
 
 # Legion roster and administration
-Login || Masuk || 登录
-Logout || Keluar || 退出登录
-Logout (DEMON) || Keluar (DEMON) || 退出登录（DEMON）
-Redeem Code || Tukarkan Kode || 兑换码
-Assign Player to Legion || Tetapkan Pemain ke Legiun || 将玩家分配至军团
-Bulk Remove || Hapus Massal || 批量移除
-Export CSV || Ekspor CSV || 导出 CSV
-Legion 1 Official Roster || Daftar Resmi Legiun 1 || 第一军团官方名单
-Official Roster || Daftar Resmi || 官方名单
-Troops Power Leaderboard || Papan Peringkat Kekuatan Pasukan || 部队战力排行榜
-FULL ACCESS STAFF || STAF AKSES PENUH || 完全权限工作人员
-Substitute Players: || Pemain Cadangan: || 替补玩家：
-TOP 20 TROOPS POWER || 20 Kekuatan Pasukan Teratas || 部队战力前 20 名
-BATTLE TROOPS POWER || Kekuatan Pasukan Tempur || 战斗部队战力
-SUBSTITUTE TROOPS POWER || Kekuatan Pasukan Cadangan || 替补部队战力
-Last updated: {0} || Terakhir diperbarui: {0} || 最后更新：{0}
-RANK || PERINGKAT || 排名
-ALLIANCE || ALIANSI || 联盟
-NICKNAME || NAMA PANGGILAN || 昵称
-GAME ID || ID GAME || 游戏 ID
-TROOPS POWER || KEKUATAN PASUKAN || 部队战力
-PREF. TIME || WAKTU PILIHAN || 首选时间
-Local Time: || Waktu Lokal: || 本地时间：
-UTC-0: || UTC-0: || UTC-0：
-Language / Bahasa / 语言 || Bahasa || 语言
-Snow ON || Salju Aktif || 雪景开启
-Snow OFF || Salju Nonaktif || 雪景关闭
-President Panel || Panel Presiden || 会长面板
-Current President || Presiden Saat Ini || 当前会长
-No recent activity || Belum ada aktivitas terbaru || 暂无最近活动
-Search nickname or Game ID... || Cari nama panggilan atau ID Game... || 搜索昵称或游戏 ID…
+Login || Masuk || 登录 || Mag-login || Accedi || เข้าสู่ระบบ
+Logout || Keluar || 退出登录 || Mag-logout || Esci || ออกจากระบบ
+Logout (DEMON) || Keluar (DEMON) || 退出登录（DEMON） || Logout (DEMON) || Logout (DEMON) || Logout (DEMON)
+Redeem Code || Tukarkan Kode || 兑换码 || I-redeem ang Code || Riscatta codice || แลกโค้ด
+Assign Player to Legion || Tetapkan Pemain ke Legiun || 将玩家分配至军团 || Assign Player to Legion || Assign Player to Legion || Assign Player to Legion
+Bulk Remove || Hapus Massal || 批量移除 || Bulk Remove || Bulk Remove || Bulk Remove
+Export CSV || Ekspor CSV || 导出 CSV || Export CSV || Export CSV || Export CSV
+Legion 1 Official Roster || Daftar Resmi Legiun 1 || 第一军团官方名单 || Legion 1 Official Roster || Legion 1 Official Roster || Legion 1 Official Roster
+Official Roster || Daftar Resmi || 官方名单 || Official Roster || Official Roster || Official Roster
+Troops Power Leaderboard || Papan Peringkat Kekuatan Pasukan || 部队战力排行榜 || Troops Power Leaderboard || Troops Power Leaderboard || Troops Power Leaderboard
+FULL ACCESS STAFF || STAF AKSES PENUH || 完全权限工作人员 || FULL ACCESS STAFF || FULL ACCESS STAFF || FULL ACCESS STAFF
+Substitute Players: || Pemain Cadangan: || 替补玩家： || Substitute Players: || Substitute Players: || Substitute Players:
+TOP 20 TROOPS POWER || 20 Kekuatan Pasukan Teratas || 部队战力前 20 名 || TOP 20 TROOPS POWER || TOP 20 TROOPS POWER || TOP 20 TROOPS POWER
+BATTLE TROOPS POWER || Kekuatan Pasukan Tempur || 战斗部队战力 || BATTLE TROOPS POWER || BATTLE TROOPS POWER || BATTLE TROOPS POWER
+SUBSTITUTE TROOPS POWER || Kekuatan Pasukan Cadangan || 替补部队战力 || SUBSTITUTE TROOPS POWER || SUBSTITUTE TROOPS POWER || SUBSTITUTE TROOPS POWER
+Last updated: {0} || Terakhir diperbarui: {0} || 最后更新：{0} || Last updated: {0} || Last updated: {0} || Last updated: {0}
+RANK || PERINGKAT || 排名 || RANK || RANK || RANK
+ALLIANCE || ALIANSI || 联盟 || ALLIANCE || ALLIANCE || ALLIANCE
+NICKNAME || NAMA PANGGILAN || 昵称 || NICKNAME || NICKNAME || NICKNAME
+GAME ID || ID GAME || 游戏 ID || GAME ID || GAME ID || GAME ID
+TROOPS POWER || KEKUATAN PASUKAN || 部队战力 || TROOPS POWER || TROOPS POWER || TROOPS POWER
+PREF. TIME || WAKTU PILIHAN || 首选时间 || PREF. TIME || PREF. TIME || PREF. TIME
+Local Time: || Waktu Lokal: || 本地时间： || Local Time: || Local Time: || Local Time:
+UTC-0: || UTC-0: || UTC-0： || UTC-0: || UTC-0: || UTC-0:
+Language / Bahasa / 语言 || Bahasa || 语言 || Language / Bahasa / 语言 || Language / Bahasa / 语言 || Language / Bahasa / 语言
+Snow ON || Salju Aktif || 雪景开启 || Snow ON || Neve ON || หิมะ เปิด
+Snow OFF || Salju Nonaktif || 雪景关闭 || Snow OFF || Neve OFF || หิมะ ปิด
+President Panel || Panel Presiden || 会长面板 || President Panel || President Panel || President Panel
+Current President || Presiden Saat Ini || 当前会长 || Current President || Current President || Current President
+No recent activity || Belum ada aktivitas terbaru || 暂无最近活动 || No recent activity || No recent activity || No recent activity
+Search nickname or Game ID... || Cari nama panggilan atau ID Game... || 搜索昵称或游戏 ID… || Maghanap ng nickname o Game ID... || Cerca nickname o ID di gioco... || ค้นหาชื่อเล่นหรือรหัสเกม...
 
 
 # President Panel — complete interface labels
-FULL ACCESS CONTROL CENTER || PUSAT KENDALI AKSES PENUH || 完整权限控制中心
-Central control for the five alliances, player roster, battle and system settings. || Pusat kendali untuk lima aliansi, daftar pemain, pertempuran, dan pengaturan sistem. || 五个联盟、玩家名单、战斗和系统设置的中央控制台。
-Back || Kembali || 返回
-Refresh || Muat ulang || 刷新
-Total Players || Total Pemain || 玩家总数
-Battle || Tempur || 战斗
-Substitute || Cadangan || 替补
-Active Theme || Tema Aktif || 当前主题
-Battle Theme || Tema Pertempuran || 战斗主题
-Choose the battle mode for the whole site. This is global: every visitor and staff member sees the change. || Pilih mode pertempuran untuk seluruh situs. Pengaturan ini berlaku global bagi semua pengunjung dan staf. || 为整个网站选择战斗模式。此设置为全局设置，所有访客和工作人员都会看到更改。
-ACTIVE || AKTIF || 已启用
-2 Legions · each 30 Battle + 20 Substitute || 2 Legiun · masing-masing 30 Tempur + 20 Cadangan || 2 个军团 · 每个军团 30 名战斗成员 + 20 名替补
-1 Battle Group · up to 60 per alliance · No Substitute || 1 Grup Tempur · maksimal 60 per aliansi · Tanpa Cadangan || 1 个战斗组 · 每个联盟最多 60 人 · 无替补
-Player data, alliances and leaderboards stay intact. Each theme keeps its own roster, so switching never overwrites the other. || Data pemain, aliansi, dan papan peringkat tetap utuh. Setiap tema memiliki roster sendiri sehingga pergantian tema tidak menimpa data tema lain. || 玩家数据、联盟和排行榜都会保留。每个主题使用独立名单，切换主题不会覆盖另一个主题的数据。
-Player Management || Pengelolaan Pemain || 玩家管理
-Open the existing player database and manage all five alliances. || Buka basis data pemain yang ada dan kelola kelima aliansi. || 打开现有玩家数据库并管理全部五个联盟。
-Battle / Legion Management || Pengelolaan Pertempuran / Legiun || 战斗 / 军团管理
-Manage the existing Legion rosters and player assignments. || Kelola roster Legiun dan penempatan pemain yang sudah ada. || 管理现有军团名单和玩家分配。
-Open Battle 1 || Buka Pertempuran 1 || 打开战斗 1
-Open Battle 2 || Buka Pertempuran 2 || 打开战斗 2
-Global Leaderboard || Papan Peringkat Global || 全球排行榜
-View the complete Troops Power ranking across ARX, IDN, VNX, ZXC and CAT. || Lihat peringkat Kekuatan Pasukan lengkap untuk ARX, IDN, VNX, ZXC, dan CAT. || 查看 ARX、IDN、VNX、ZXC 和 CAT 的完整部队战力排名。
-Open Global Ranking || Buka Peringkat Global || 打开全球排名
-Battle Schedule || Jadwal Pertempuran || 战斗日程
-Use the existing schedule system for the active Battle group(s). || Gunakan sistem jadwal yang tersedia untuk grup pertempuran aktif. || 使用现有日程系统管理当前启用的战斗组。
-Schedule 1 || Jadwal 1 || 日程 1
-Schedule 2 || Jadwal 2 || 日程 2
-President Panel is available to full-access staff only. || Panel Presiden hanya tersedia untuk staf dengan akses penuh. || 会长面板仅向拥有完整权限的工作人员开放。
-President Panel data refreshed. || Data Panel Presiden berhasil diperbarui. || 会长面板数据已刷新。
-Choose language || Pilih bahasa || 选择语言
-Toggle snow effect || Aktifkan/nonaktifkan efek salju || 切换飘雪效果
-LOCAL: || LOKAL: || 本地时间：
+FULL ACCESS CONTROL CENTER || PUSAT KENDALI AKSES PENUH || 完整权限控制中心 || FULL ACCESS CONTROL CENTER || FULL ACCESS CONTROL CENTER || FULL ACCESS CONTROL CENTER
+Central control for the five alliances, player roster, battle and system settings. || Pusat kendali untuk lima aliansi, daftar pemain, pertempuran, dan pengaturan sistem. || 五个联盟、玩家名单、战斗和系统设置的中央控制台。 || Central control for the five alliances, player roster, battle and system settings. || Central control for the five alliances, player roster, battle and system settings. || Central control for the five alliances, player roster, battle and system settings.
+Back || Kembali || 返回 || Bumalik || Indietro || กลับ
+Refresh || Muat ulang || 刷新 || I-refresh || Aggiorna || รีเฟรช
+Total Players || Total Pemain || 玩家总数 || Total Players || Total Players || Total Players
+Battle || Tempur || 战斗 || Battle || Battaglia || แบทเทิล
+Substitute || Cadangan || 替补 || Substitute || Riserva || ตัวสำรอง
+Active Theme || Tema Aktif || 当前主题 || Active Theme || Active Theme || Active Theme
+Battle Theme || Tema Pertempuran || 战斗主题 || Battle Theme || Battle Theme || Battle Theme
+Choose the battle mode for the whole site. This is global: every visitor and staff member sees the change. || Pilih mode pertempuran untuk seluruh situs. Pengaturan ini berlaku global bagi semua pengunjung dan staf. || 为整个网站选择战斗模式。此设置为全局设置，所有访客和工作人员都会看到更改。 || Choose the battle mode for the whole site. This is global: every visitor and staff member sees the change. || Choose the battle mode for the whole site. This is global: every visitor and staff member sees the change. || Choose the battle mode for the whole site. This is global: every visitor and staff member sees the change.
+ACTIVE || AKTIF || 已启用 || ACTIVE || ACTIVE || ACTIVE
+2 Legions · each 30 Battle + 20 Substitute || 2 Legiun · masing-masing 30 Tempur + 20 Cadangan || 2 个军团 · 每个军团 30 名战斗成员 + 20 名替补 || 2 Legions · each 30 Battle + 20 Substitute || 2 Legions · each 30 Battle + 20 Substitute || 2 Legions · each 30 Battle + 20 Substitute
+1 Battle Group · up to 60 per alliance · No Substitute || 1 Grup Tempur · maksimal 60 per aliansi · Tanpa Cadangan || 1 个战斗组 · 每个联盟最多 60 人 · 无替补 || 1 Battle Group · up to 60 per alliance · No Substitute || 1 Battle Group · up to 60 per alliance · No Substitute || 1 Battle Group · up to 60 per alliance · No Substitute
+Player data, alliances and leaderboards stay intact. Each theme keeps its own roster, so switching never overwrites the other. || Data pemain, aliansi, dan papan peringkat tetap utuh. Setiap tema memiliki roster sendiri sehingga pergantian tema tidak menimpa data tema lain. || 玩家数据、联盟和排行榜都会保留。每个主题使用独立名单，切换主题不会覆盖另一个主题的数据。 || Player data, alliances and leaderboards stay intact. Each theme keeps its own roster, so switching never overwrites the other. || Player data, alliances and leaderboards stay intact. Each theme keeps its own roster, so switching never overwrites the other. || Player data, alliances and leaderboards stay intact. Each theme keeps its own roster, so switching never overwrites the other.
+Player Management || Pengelolaan Pemain || 玩家管理 || Player Management || Player Management || Player Management
+Open the existing player database and manage all five alliances. || Buka basis data pemain yang ada dan kelola kelima aliansi. || 打开现有玩家数据库并管理全部五个联盟。 || Open the existing player database and manage all five alliances. || Open the existing player database and manage all five alliances. || Open the existing player database and manage all five alliances.
+Battle / Legion Management || Pengelolaan Pertempuran / Legiun || 战斗 / 军团管理 || Battle / Legion Management || Battle / Legion Management || Battle / Legion Management
+Manage the existing Legion rosters and player assignments. || Kelola roster Legiun dan penempatan pemain yang sudah ada. || 管理现有军团名单和玩家分配。 || Manage the existing Legion rosters and player assignments. || Manage the existing Legion rosters and player assignments. || Manage the existing Legion rosters and player assignments.
+Open Battle 1 || Buka Pertempuran 1 || 打开战斗 1 || Open Battle 1 || Open Battle 1 || Open Battle 1
+Open Battle 2 || Buka Pertempuran 2 || 打开战斗 2 || Open Battle 2 || Open Battle 2 || Open Battle 2
+Global Leaderboard || Papan Peringkat Global || 全球排行榜 || Global Leaderboard || Global Leaderboard || Global Leaderboard
+View the complete Troops Power ranking across ARX, IDN, VNX, ZXC and CAT. || Lihat peringkat Kekuatan Pasukan lengkap untuk ARX, IDN, VNX, ZXC, dan CAT. || 查看 ARX、IDN、VNX、ZXC 和 CAT 的完整部队战力排名。 || View the complete Troops Power ranking across ARX, IDN, VNX, ZXC and CAT. || View the complete Troops Power ranking across ARX, IDN, VNX, ZXC and CAT. || View the complete Troops Power ranking across ARX, IDN, VNX, ZXC and CAT.
+Open Global Ranking || Buka Peringkat Global || 打开全球排名 || Open Global Ranking || Open Global Ranking || Open Global Ranking
+Battle Schedule || Jadwal Pertempuran || 战斗日程 || Battle Schedule || Battle Schedule || Battle Schedule
+Use the existing schedule system for the active Battle group(s). || Gunakan sistem jadwal yang tersedia untuk grup pertempuran aktif. || 使用现有日程系统管理当前启用的战斗组。 || Use the existing schedule system for the active Battle group(s). || Use the existing schedule system for the active Battle group(s). || Use the existing schedule system for the active Battle group(s).
+Schedule 1 || Jadwal 1 || 日程 1 || Schedule 1 || Schedule 1 || Schedule 1
+Schedule 2 || Jadwal 2 || 日程 2 || Schedule 2 || Schedule 2 || Schedule 2
+President Panel is available to full-access staff only. || Panel Presiden hanya tersedia untuk staf dengan akses penuh. || 会长面板仅向拥有完整权限的工作人员开放。 || President Panel is available to full-access staff only. || President Panel is available to full-access staff only. || President Panel is available to full-access staff only.
+President Panel data refreshed. || Data Panel Presiden berhasil diperbarui. || 会长面板数据已刷新。 || President Panel data refreshed. || President Panel data refreshed. || President Panel data refreshed.
+Choose language || Pilih bahasa || 选择语言 || Choose language || Choose language || Choose language
+Toggle snow effect || Aktifkan/nonaktifkan efek salju || 切换飘雪效果 || Toggle snow effect || Toggle snow effect || Toggle snow effect
+LOCAL: || LOKAL: || 本地时间： || LOKAL: || LOCALE: || ท้องถิ่น:
 
 # FDT Guide — complete EN / ID / Simplified Chinese translations
-FDT Guide || Panduan FDT || FDT 指南
-Battle preparation, assignments and phase-by-phase reminders. || Persiapan pertempuran, pembagian tugas, dan pengingat untuk setiap fase. || 战斗准备、任务分配和各阶段提醒。
-Close FDT Guide || Tutup Panduan FDT || 关闭 FDT 指南
-1. Before battle || 1. Sebelum pertempuran || 1. 战斗前
-Sign-up (48h): the Alliance Leader or an R4 registers. Only a limited number of top alliances per Zone qualify. || Pendaftaran (48 jam): Pemimpin Aliansi atau anggota R4 mendaftarkan aliansi. Hanya sejumlah terbatas aliansi teratas di setiap Zona yang memenuhi syarat. || 报名（48小时）：由联盟首领或 R4 成员报名。每个区域只有有限数量的顶级联盟符合资格。
-Members must already be in the alliance before sign-up ends, or they cannot be dispatched. || Anggota harus sudah bergabung dengan aliansi sebelum pendaftaran berakhir; jika tidak, mereka tidak dapat dikirim ke pertempuran. || 成员必须在报名结束前加入联盟，否则无法被派遣。
-Dispatch (48h): R4/R5 select up to 60 combatants per alliance. Players not dispatched can still help by healing troops. || Penugasan (48 jam): R4/R5 memilih hingga 60 petarung per aliansi. Pemain yang tidak ditugaskan tetap dapat membantu dengan menyembuhkan pasukan. || 派遣（48小时）：R4/R5 每个联盟最多选择 60 名战斗成员。未被派遣的玩家仍可通过治疗部队提供帮助。
-Eve of Battle (59h): finalize the Tyrant candidate, Rally Captains, Spire teams, Dragonite collectors and communication calls. || Menjelang Pertempuran (59 jam): tetapkan kandidat Tyrant, Rally Captain, tim Spire, pengumpul Dragonite, dan komando komunikasi. || 战斗前夕（59小时）：确定 Tyrant 候选人、集结队长、尖塔队伍、Dragonite 采集者和通讯指令。
-2. Battle timeline || 2. Linimasa pertempuran || 2. 战斗时间线
-Battlefield is open for 7 hours. Cities start in the Border Region. || Medan pertempuran terbuka selama 7 jam. Kota-kota memulai pertempuran di Wilayah Perbatasan. || 战场开放 7 小时。城市从边境区域开始。
-The Capital becomes vulnerable 1 hour after opening, leaving a 6-hour Capital battle. || Ibu Kota mulai dapat diserang 1 jam setelah medan dibuka, sehingga pertempuran di Ibu Kota berlangsung selama 6 jam. || 战场开放 1 小时后，首都进入可攻击状态，首都争夺战持续 6 小时。
-Frostdragon Escorts appear in the Border Region when the Capital opens and refresh every 30 minutes. || Frostdragon Escort muncul di Wilayah Perbatasan saat Ibu Kota terbuka dan muncul kembali setiap 30 menit. || 首都开放时，冰霜巨龙护卫会在边境区域出现，并每 30 分钟刷新一次。
-Dragonite gathering appears 15 minutes after the Capital opens and also refreshes every 30 minutes. || Pengumpulan Dragonite dimulai 15 menit setelah Ibu Kota terbuka dan diperbarui setiap 30 menit. || 首都开放 15 分钟后开始采集 Dragonite，此后每 30 分钟刷新一次。
-Spires alternate 30 minutes vulnerable and 30 minutes protected. || Spire bergantian berada dalam kondisi dapat diserang selama 30 menit dan terlindungi selama 30 menit. || 尖塔每 30 分钟在可攻击和受保护状态之间交替。
-Rearmament follows the battle for 55 hours: +500% Healing Speed and -30% Healing Costs. || Fase Rearmament berlangsung selama 55 jam setelah pertempuran: Kecepatan Penyembuhan +500% dan Biaya Penyembuhan -30%. || 战斗结束后进入 55 小时的整备阶段：治疗速度 +500%，治疗费用 -30%。
-3. Spires (30-minute alliance buff) || 3. Spire (buff aliansi selama 30 menit) || 3. 尖塔（联盟增益持续 30 分钟）
-Life Spire: +20% Troop Health. Shield Spire: +20% Troop Defense. Dragonbane Spire: +20% Troop Lethality. Blade Spire: +20% Troop Attack. The alliance that dominates a Spire during its vulnerable period gets the buff for 30 minutes. || Life Spire: Kesehatan Pasukan +20%. Shield Spire: Pertahanan Pasukan +20%. Dragonbane Spire: Daya Mematikan Pasukan +20%. Blade Spire: Serangan Pasukan +20%. Aliansi yang menguasai Spire selama periode rentannya memperoleh buff selama 30 menit. || 生命尖塔：部队生命值 +20%。护盾尖塔：部队防御 +20%。屠龙尖塔：部队杀伤力 +20%。刀锋尖塔：部队攻击 +20%。在尖塔可被攻击期间占领它的联盟可获得持续 30 分钟的增益。
-4. Becoming Frostdragon Tyrant || 4. Menjadi Frostdragon Tyrant || 4. 成为冰霜巨龙 Tyrant
-The Chief with the longest total Capital occupation time wins; on a tie, whoever reached that time first. || Chief dengan total waktu menduduki Ibu Kota paling lama akan menang; jika seri, pemenangnya adalah yang lebih dahulu mencapai waktu tersebut. || 首都累计占领时间最长的 Chief 获胜；若时间相同，则由先达到该时间者获胜。
-Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days. || Hanya Rally Captain yang mengumpulkan waktu pendudukan; pemain yang memperkuat tidak mendapatkannya. Karena itu, pilih satu kandidat dan hindari pergantian kapten yang tidak perlu. Hak istimewa Tyrant berlangsung selama 30 hari. || 只有集结队长会累计占领时间，增援者不会累计。因此请选定一名候选人，避免不必要地更换队长。Tyrant 特权持续 30 天。
-5. Common mistakes || 5. Kesalahan umum || 5. 常见错误
-Rotating random Rally Captains, which splits occupation time. || Terus mengganti Rally Captain secara acak sehingga waktu pendudukan terbagi. || 随意轮换集结队长，导致占领时间被分散。
-Ignoring Spires or leaving Capital Defense uncovered. || Mengabaikan Spire atau membiarkan pertahanan Ibu Kota tanpa penjagaan. || 忽视尖塔，或让首都防守出现空缺。
-Not assigning anyone to Dragonite gathering and its 30-minute refresh. || Tidak menugaskan pemain untuk mengumpulkan Dragonite dan memantau penyegarannya setiap 30 menit. || 没有安排人员采集 Dragonite，也没有跟进每 30 分钟的刷新。
-Staying in the Dragon Crypt expecting a Shield: Shields are removed there and cannot be activated. || Tetap berada di Dragon Crypt dengan berharap mendapatkan Shield: Shield akan dihapus di sana dan tidak dapat diaktifkan. || 留在龙之秘窟中期待获得护盾：护盾会在此处被移除，无法启用。
-Spending all healing resources before Rearmament. || Menghabiskan semua sumber daya penyembuhan sebelum fase Rearmament. || 在整备阶段开始前耗尽所有治疗资源。
-6. Personal points || 6. Poin pribadi || 6. 个人积分
-Personal Points come from Carnage Points (severely injuring enemy troops) and Casualty Points (your troops severely injured) in Capital and Spire battles. Sitting in a building without fighting does not earn points. || Poin Pribadi berasal dari Carnage Points (melukai pasukan musuh secara parah) dan Casualty Points (pasukan sendiri yang terluka parah) dalam pertempuran di Ibu Kota dan Spire. Berdiam di bangunan tanpa bertempur tidak menghasilkan poin. || 个人积分来自首都和尖塔战斗中的杀戮积分（重创敌方部队）和伤亡积分（己方部队严重受伤）。仅驻守建筑而不战斗不会获得积分。
-7. Task duties || 7. Tugas setiap peran || 7. 各项任务职责
-Every Battle player has one group task (Alliance A or B) plus one or more role tasks. Check your task on the roster before the Eve of Battle and follow your group leader's calls. || Setiap pemain Battle memiliki satu tugas kelompok (Alliance A atau B) serta satu atau lebih tugas peran. Periksa tugas pada roster sebelum Menjelang Pertempuran dan ikuti arahan pemimpin kelompok. || 每位战斗成员都有一个分组任务（联盟 A 或 B）以及一个或多个角色任务。请在战斗前夕前查看名单中的任务，并听从小组负责人的指挥。
-Rally Captain || Kapten Rally || 集结队长
-starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it. || memulai dan memimpin rally ke Ibu Kota serta menjadi satu-satunya yang mengumpulkan waktu pendudukan. Tetap di Ibu Kota, jaga garnisun tetap penuh, dan jangan menyerahkan peran kapten kecuali diperintahkan pemimpin. || 发起并带领首都集结，也是唯一累计占领时间的角色。留守首都并保持驻军充足，除非负责人指示，否则不要交接队长职位。
-Tyrant Candidate || Kandidat Tyrant || Tyrant 候选人
-The Chief the alliance is backing to become Frostdragon Tyrant. Hold the Capital as Rally Captain for as long as possible, avoid unnecessary captain changes, and keep your troops healed. || Chief yang didukung aliansi untuk menjadi Frostdragon Tyrant. Kuasai Ibu Kota sebagai Rally Captain selama mungkin, hindari pergantian kapten yang tidak perlu, dan jaga pasukan tetap pulih. || 联盟支持其成为冰霜巨龙 Tyrant 的 Chief。尽可能长时间担任集结队长并占领首都，避免不必要的队长更换，并保持部队状态良好。
-Capital Reinforcer || Penguat Ibu Kota || 首都增援者
-send your troops into the Rally Captain's Capital garrison and keep them there. Refill the garrison right after losses and do not leave the Capital while the captain is holding it. || kirim pasukan ke garnisun Ibu Kota milik Rally Captain dan tetap di sana. Isi kembali garnisun segera setelah ada korban dan jangan meninggalkan Ibu Kota selama kapten mempertahankannya. || 将部队派入集结队长的首都驻军并留守。出现损失后立即补充驻军，队长守住首都期间不要离开。
-Capital Defense || Pertahanan Ibu Kota || 首都防守
-protect the Capital against enemy rallies and attacks. Stay close to the Capital, join defensive reinforcements when the captain is under pressure, and make sure the Capital is never left uncovered. || lindungi Ibu Kota dari rally dan serangan musuh. Tetap dekat Ibu Kota, bantu penguatan pertahanan saat kapten tertekan, dan pastikan Ibu Kota tidak pernah tanpa penjagaan. || 防御敌方集结和攻击。靠近首都，队长承压时加入防守增援，并确保首都始终有人防守。
-Spire Life || Spire Kehidupan || 生命尖塔
- take and hold the Life Spire (+20% Troop Health) during its 30-minute vulnerable window. Coordinate with your group so the buff is secured as soon as the window opens. || rebut dan pertahankan Life Spire (+20% Kesehatan Pasukan) selama periode 30 menit saat dapat diserang. Koordinasikan dengan kelompok agar buff diamankan segera setelah periode terbuka. || 在 30 分钟可攻击窗口内夺取并守住生命尖塔（部队生命值 +20%）。与小组协调，在窗口开启后尽快获得增益。
-Spire Shield || Spire Perisai || 护盾尖塔
- take and hold the Shield Spire (+20% Troop Defense) during its vulnerable window, and keep enough troops there to stop the enemy from retaking it. || rebut dan pertahankan Shield Spire (+20% Pertahanan Pasukan) selama periode rentan, dan tempatkan pasukan yang cukup agar musuh tidak merebutnya kembali. || 在可攻击窗口内夺取并守住护盾尖塔（部队防御 +20%），并部署足够部队防止敌人夺回。
-Spire Dragonbane || Spire Pembasmi Naga || 屠龙尖塔
-take and hold the Dragonbane Spire (+20% Troop Lethality) during its vulnerable window. Move on to the next objective once the window closes. || rebut dan pertahankan Dragonbane Spire (+20% Daya Mematikan Pasukan) selama periode rentan. Beralih ke sasaran berikutnya setelah periode berakhir. || 在可攻击窗口内夺取并守住屠龙尖塔（部队杀伤力 +20%）。窗口结束后转向下一个目标。
-Spire Blade || Spire Pedang || 刀锋尖塔
-take and hold the Blade Spire (+20% Troop Attack) during its vulnerable window, and rally or reinforce as needed to keep it. || rebut dan pertahankan Blade Spire (+20% Serangan Pasukan) selama periode rentan, lalu lakukan rally atau penguatan bila diperlukan. || 在可攻击窗口内夺取并守住刀锋尖塔（部队攻击 +20%），并根据需要集结或增援以守住它。
-Dragonite Collector || Pengumpul Dragonite || Dragonite 采集者
-gather Dragonite as soon as it appears (15 minutes after the Capital opens) and check again at every 30-minute refresh. Escort or hide gatherers if enemies are nearby. Collectors are the lowest-power players and multitask: until Dragonite opens (75 minutes after the Battlefield opens) they carry out their other duty, usually Capital Reinforcer. || kumpulkan Dragonite segera setelah muncul (15 menit setelah Ibu Kota terbuka) dan periksa kembali setiap 30 menit saat diperbarui. Kawal atau sembunyikan pengumpul jika musuh berada di dekatnya. Pengumpul biasanya pemain dengan kekuatan terendah dan menjalankan tugas ganda: sebelum Dragonite terbuka (75 menit setelah medan pertempuran dibuka), mereka menjalankan tugas lain, biasanya sebagai Penguat Ibu Kota. || Dragonite 出现后立即采集（首都开放 15 分钟后），并在每次 30 分钟刷新时再次查看。附近有敌人时护送或隐藏采集者。采集者通常是战力较低的玩家，需要兼顾其他任务：Dragonite 开放前（战场开放 75 分钟后）执行其他职责，通常担任首都增援者。
-Alliance A / Alliance B || Aliansi A / Aliansi B || 联盟 A / 联盟 B
-your battle group. Players join the Capital, Spires and Dragonite calls of their own group. A player belongs to only one group. || kelompok pertempuran Anda. Pemain mengikuti panggilan untuk Ibu Kota, Spire, dan Dragonite dari kelompoknya sendiri. Setiap pemain hanya boleh tergabung dalam satu kelompok. || 你的战斗小组。玩家应响应所属小组关于首都、尖塔和 Dragonite 的指令。每位玩家只能属于一个小组。
+FDT Guide || Panduan FDT || FDT 指南 || FDT Guide || FDT Guide || FDT Guide
+Battle preparation, assignments and phase-by-phase reminders. || Persiapan pertempuran, pembagian tugas, dan pengingat untuk setiap fase. || 战斗准备、任务分配和各阶段提醒。 || Battle preparation, assignments and phase-by-phase reminders. || Battle preparation, assignments and phase-by-phase reminders. || Battle preparation, assignments and phase-by-phase reminders.
+Close FDT Guide || Tutup Panduan FDT || 关闭 FDT 指南 || Close FDT Guide || Close FDT Guide || Close FDT Guide
+1. Before battle || 1. Sebelum pertempuran || 1. 战斗前 || 1. Before battle || 1. Before battle || 1. Before battle
+Sign-up (48h): the Alliance Leader or an R4 registers. Only a limited number of top alliances per Zone qualify. || Pendaftaran (48 jam): Pemimpin Aliansi atau anggota R4 mendaftarkan aliansi. Hanya sejumlah terbatas aliansi teratas di setiap Zona yang memenuhi syarat. || 报名（48小时）：由联盟首领或 R4 成员报名。每个区域只有有限数量的顶级联盟符合资格。 || Sign-up (48h): the Alliance Leader or an R4 registers. Only a limited number of top alliances per Zone qualify. || Sign-up (48h): the Alliance Leader or an R4 registers. Only a limited number of top alliances per Zone qualify. || Sign-up (48h): the Alliance Leader or an R4 registers. Only a limited number of top alliances per Zone qualify.
+Members must already be in the alliance before sign-up ends, or they cannot be dispatched. || Anggota harus sudah bergabung dengan aliansi sebelum pendaftaran berakhir; jika tidak, mereka tidak dapat dikirim ke pertempuran. || 成员必须在报名结束前加入联盟，否则无法被派遣。 || Members must already be in the alliance before sign-up ends, or they cannot be dispatched. || Members must already be in the alliance before sign-up ends, or they cannot be dispatched. || Members must already be in the alliance before sign-up ends, or they cannot be dispatched.
+Dispatch (48h): R4/R5 select up to 60 combatants per alliance. Players not dispatched can still help by healing troops. || Penugasan (48 jam): R4/R5 memilih hingga 60 petarung per aliansi. Pemain yang tidak ditugaskan tetap dapat membantu dengan menyembuhkan pasukan. || 派遣（48小时）：R4/R5 每个联盟最多选择 60 名战斗成员。未被派遣的玩家仍可通过治疗部队提供帮助。 || Dispatch (48h): R4/R5 select up to 60 combatants per alliance. Players not dispatched can still help by healing troops. || Dispatch (48h): R4/R5 select up to 60 combatants per alliance. Players not dispatched can still help by healing troops. || Dispatch (48h): R4/R5 select up to 60 combatants per alliance. Players not dispatched can still help by healing troops.
+Eve of Battle (59h): finalize the Tyrant candidate, Rally Captains, Spire teams, Dragonite collectors and communication calls. || Menjelang Pertempuran (59 jam): tetapkan kandidat Tyrant, Rally Captain, tim Spire, pengumpul Dragonite, dan komando komunikasi. || 战斗前夕（59小时）：确定 Tyrant 候选人、集结队长、尖塔队伍、Dragonite 采集者和通讯指令。 || Eve of Battle (59h): finalize the Tyrant candidate, Rally Captains, Spire teams, Dragonite collectors and communication calls. || Eve of Battle (59h): finalize the Tyrant candidate, Rally Captains, Spire teams, Dragonite collectors and communication calls. || Eve of Battle (59h): finalize the Tyrant candidate, Rally Captains, Spire teams, Dragonite collectors and communication calls.
+2. Battle timeline || 2. Linimasa pertempuran || 2. 战斗时间线 || 2. Battle timeline || 2. Battle timeline || 2. Battle timeline
+Battlefield is open for 7 hours. Cities start in the Border Region. || Medan pertempuran terbuka selama 7 jam. Kota-kota memulai pertempuran di Wilayah Perbatasan. || 战场开放 7 小时。城市从边境区域开始。 || Battlefield is open for 7 hours. Cities start in the Border Region. || Battlefield is open for 7 hours. Cities start in the Border Region. || Battlefield is open for 7 hours. Cities start in the Border Region.
+The Capital becomes vulnerable 1 hour after opening, leaving a 6-hour Capital battle. || Ibu Kota mulai dapat diserang 1 jam setelah medan dibuka, sehingga pertempuran di Ibu Kota berlangsung selama 6 jam. || 战场开放 1 小时后，首都进入可攻击状态，首都争夺战持续 6 小时。 || The Capital becomes vulnerable 1 hour after opening, leaving a 6-hour Capital battle. || The Capital becomes vulnerable 1 hour after opening, leaving a 6-hour Capital battle. || The Capital becomes vulnerable 1 hour after opening, leaving a 6-hour Capital battle.
+Frostdragon Escorts appear in the Border Region when the Capital opens and refresh every 30 minutes. || Frostdragon Escort muncul di Wilayah Perbatasan saat Ibu Kota terbuka dan muncul kembali setiap 30 menit. || 首都开放时，冰霜巨龙护卫会在边境区域出现，并每 30 分钟刷新一次。 || Frostdragon Escorts appear in the Border Region when the Capital opens and refresh every 30 minutes. || Frostdragon Escorts appear in the Border Region when the Capital opens and refresh every 30 minutes. || Frostdragon Escorts appear in the Border Region when the Capital opens and refresh every 30 minutes.
+Dragonite gathering appears 15 minutes after the Capital opens and also refreshes every 30 minutes. || Pengumpulan Dragonite dimulai 15 menit setelah Ibu Kota terbuka dan diperbarui setiap 30 menit. || 首都开放 15 分钟后开始采集 Dragonite，此后每 30 分钟刷新一次。 || Dragonite gathering appears 15 minutes after the Capital opens and also refreshes every 30 minutes. || Dragonite gathering appears 15 minutes after the Capital opens and also refreshes every 30 minutes. || Dragonite gathering appears 15 minutes after the Capital opens and also refreshes every 30 minutes.
+Spires alternate 30 minutes vulnerable and 30 minutes protected. || Spire bergantian berada dalam kondisi dapat diserang selama 30 menit dan terlindungi selama 30 menit. || 尖塔每 30 分钟在可攻击和受保护状态之间交替。 || Spires alternate 30 minutes vulnerable and 30 minutes protected. || Spires alternate 30 minutes vulnerable and 30 minutes protected. || Spires alternate 30 minutes vulnerable and 30 minutes protected.
+Rearmament follows the battle for 55 hours: +500% Healing Speed and -30% Healing Costs. || Fase Rearmament berlangsung selama 55 jam setelah pertempuran: Kecepatan Penyembuhan +500% dan Biaya Penyembuhan -30%. || 战斗结束后进入 55 小时的整备阶段：治疗速度 +500%，治疗费用 -30%。 || Rearmament follows the battle for 55 hours: +500% Healing Speed and -30% Healing Costs. || Rearmament follows the battle for 55 hours: +500% Healing Speed and -30% Healing Costs. || Rearmament follows the battle for 55 hours: +500% Healing Speed and -30% Healing Costs.
+3. Spires (30-minute alliance buff) || 3. Spire (buff aliansi selama 30 menit) || 3. 尖塔（联盟增益持续 30 分钟） || 3. Spires (30-minute alliance buff) || 3. Spires (30-minute alliance buff) || 3. Spires (30-minute alliance buff)
+Life Spire: +20% Troop Health. Shield Spire: +20% Troop Defense. Dragonbane Spire: +20% Troop Lethality. Blade Spire: +20% Troop Attack. The alliance that dominates a Spire during its vulnerable period gets the buff for 30 minutes. || Life Spire: Kesehatan Pasukan +20%. Shield Spire: Pertahanan Pasukan +20%. Dragonbane Spire: Daya Mematikan Pasukan +20%. Blade Spire: Serangan Pasukan +20%. Aliansi yang menguasai Spire selama periode rentannya memperoleh buff selama 30 menit. || 生命尖塔：部队生命值 +20%。护盾尖塔：部队防御 +20%。屠龙尖塔：部队杀伤力 +20%。刀锋尖塔：部队攻击 +20%。在尖塔可被攻击期间占领它的联盟可获得持续 30 分钟的增益。 || Life Spire: +20% Troop Health. Shield Spire: +20% Troop Defense. Dragonbane Spire: +20% Troop Lethality. Blade Spire: +20% Troop Attack. The alliance that dominates a Spire during its vulnerable period gets the buff for 30 minutes. || Life Spire: +20% Troop Health. Shield Spire: +20% Troop Defense. Dragonbane Spire: +20% Troop Lethality. Blade Spire: +20% Troop Attack. The alliance that dominates a Spire during its vulnerable period gets the buff for 30 minutes. || Life Spire: +20% Troop Health. Shield Spire: +20% Troop Defense. Dragonbane Spire: +20% Troop Lethality. Blade Spire: +20% Troop Attack. The alliance that dominates a Spire during its vulnerable period gets the buff for 30 minutes.
+4. Becoming Frostdragon Tyrant || 4. Menjadi Frostdragon Tyrant || 4. 成为冰霜巨龙 Tyrant || 4. Becoming Frostdragon Tyrant || 4. Becoming Frostdragon Tyrant || 4. Becoming Frostdragon Tyrant
+The Chief with the longest total Capital occupation time wins; on a tie, whoever reached that time first. || Chief dengan total waktu menduduki Ibu Kota paling lama akan menang; jika seri, pemenangnya adalah yang lebih dahulu mencapai waktu tersebut. || 首都累计占领时间最长的 Chief 获胜；若时间相同，则由先达到该时间者获胜。 || The Chief with the longest total Capital occupation time wins; on a tie, whoever reached that time first. || The Chief with the longest total Capital occupation time wins; on a tie, whoever reached that time first. || The Chief with the longest total Capital occupation time wins; on a tie, whoever reached that time first.
+Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days. || Hanya Rally Captain yang mengumpulkan waktu pendudukan; pemain yang memperkuat tidak mendapatkannya. Karena itu, pilih satu kandidat dan hindari pergantian kapten yang tidak perlu. Hak istimewa Tyrant berlangsung selama 30 hari. || 只有集结队长会累计占领时间，增援者不会累计。因此请选定一名候选人，避免不必要地更换队长。Tyrant 特权持续 30 天。 || Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days. || Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days. || Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days.
+5. Common mistakes || 5. Kesalahan umum || 5. 常见错误 || 5. Common mistakes || 5. Common mistakes || 5. Common mistakes
+Rotating random Rally Captains, which splits occupation time. || Terus mengganti Rally Captain secara acak sehingga waktu pendudukan terbagi. || 随意轮换集结队长，导致占领时间被分散。 || Rotating random Rally Captains, which splits occupation time. || Rotating random Rally Captains, which splits occupation time. || Rotating random Rally Captains, which splits occupation time.
+Ignoring Spires or leaving Capital Defense uncovered. || Mengabaikan Spire atau membiarkan pertahanan Ibu Kota tanpa penjagaan. || 忽视尖塔，或让首都防守出现空缺。 || Ignoring Spires or leaving Capital Defense uncovered. || Ignoring Spires or leaving Capital Defense uncovered. || Ignoring Spires or leaving Capital Defense uncovered.
+Not assigning anyone to Dragonite gathering and its 30-minute refresh. || Tidak menugaskan pemain untuk mengumpulkan Dragonite dan memantau penyegarannya setiap 30 menit. || 没有安排人员采集 Dragonite，也没有跟进每 30 分钟的刷新。 || Not assigning anyone to Dragonite gathering and its 30-minute refresh. || Not assigning anyone to Dragonite gathering and its 30-minute refresh. || Not assigning anyone to Dragonite gathering and its 30-minute refresh.
+Staying in the Dragon Crypt expecting a Shield: Shields are removed there and cannot be activated. || Tetap berada di Dragon Crypt dengan berharap mendapatkan Shield: Shield akan dihapus di sana dan tidak dapat diaktifkan. || 留在龙之秘窟中期待获得护盾：护盾会在此处被移除，无法启用。 || Staying in the Dragon Crypt expecting a Shield: Shields are removed there and cannot be activated. || Staying in the Dragon Crypt expecting a Shield: Shields are removed there and cannot be activated. || Staying in the Dragon Crypt expecting a Shield: Shields are removed there and cannot be activated.
+Spending all healing resources before Rearmament. || Menghabiskan semua sumber daya penyembuhan sebelum fase Rearmament. || 在整备阶段开始前耗尽所有治疗资源。 || Spending all healing resources before Rearmament. || Spending all healing resources before Rearmament. || Spending all healing resources before Rearmament.
+6. Personal points || 6. Poin pribadi || 6. 个人积分 || 6. Personal points || 6. Personal points || 6. Personal points
+Personal Points come from Carnage Points (severely injuring enemy troops) and Casualty Points (your troops severely injured) in Capital and Spire battles. Sitting in a building without fighting does not earn points. || Poin Pribadi berasal dari Carnage Points (melukai pasukan musuh secara parah) dan Casualty Points (pasukan sendiri yang terluka parah) dalam pertempuran di Ibu Kota dan Spire. Berdiam di bangunan tanpa bertempur tidak menghasilkan poin. || 个人积分来自首都和尖塔战斗中的杀戮积分（重创敌方部队）和伤亡积分（己方部队严重受伤）。仅驻守建筑而不战斗不会获得积分。 || Personal Points come from Carnage Points (severely injuring enemy troops) and Casualty Points (your troops severely injured) in Capital and Spire battles. Sitting in a building without fighting does not earn points. || Personal Points come from Carnage Points (severely injuring enemy troops) and Casualty Points (your troops severely injured) in Capital and Spire battles. Sitting in a building without fighting does not earn points. || Personal Points come from Carnage Points (severely injuring enemy troops) and Casualty Points (your troops severely injured) in Capital and Spire battles. Sitting in a building without fighting does not earn points.
+7. Task duties || 7. Tugas setiap peran || 7. 各项任务职责 || 7. Task duties || 7. Task duties || 7. Task duties
+Every Battle player has one group task (Alliance A or B) plus one or more role tasks. Check your task on the roster before the Eve of Battle and follow your group leader's calls. || Setiap pemain Battle memiliki satu tugas kelompok (Alliance A atau B) serta satu atau lebih tugas peran. Periksa tugas pada roster sebelum Menjelang Pertempuran dan ikuti arahan pemimpin kelompok. || 每位战斗成员都有一个分组任务（联盟 A 或 B）以及一个或多个角色任务。请在战斗前夕前查看名单中的任务，并听从小组负责人的指挥。 || Every Battle player has one group task (Alliance A or B) plus one or more role tasks. Check your task on the roster before the Eve of Battle and follow your group leader's calls. || Every Battle player has one group task (Alliance A or B) plus one or more role tasks. Check your task on the roster before the Eve of Battle and follow your group leader's calls. || Every Battle player has one group task (Alliance A or B) plus one or more role tasks. Check your task on the roster before the Eve of Battle and follow your group leader's calls.
+Rally Captain || Kapten Rally || 集结队长 || Rally Captain || Rally Captain || Rally Captain
+starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it. || memulai dan memimpin rally ke Ibu Kota serta menjadi satu-satunya yang mengumpulkan waktu pendudukan. Tetap di Ibu Kota, jaga garnisun tetap penuh, dan jangan menyerahkan peran kapten kecuali diperintahkan pemimpin. || 发起并带领首都集结，也是唯一累计占领时间的角色。留守首都并保持驻军充足，除非负责人指示，否则不要交接队长职位。 || starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it. || starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it. || starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it.
+Tyrant Candidate || Kandidat Tyrant || Tyrant 候选人 || Tyrant Candidate || Tyrant Candidate || Tyrant Candidate
+The Chief the alliance is backing to become Frostdragon Tyrant. Hold the Capital as Rally Captain for as long as possible, avoid unnecessary captain changes, and keep your troops healed. || Chief yang didukung aliansi untuk menjadi Frostdragon Tyrant. Kuasai Ibu Kota sebagai Rally Captain selama mungkin, hindari pergantian kapten yang tidak perlu, dan jaga pasukan tetap pulih. || 联盟支持其成为冰霜巨龙 Tyrant 的 Chief。尽可能长时间担任集结队长并占领首都，避免不必要的队长更换，并保持部队状态良好。 || The Chief the alliance is backing to become Frostdragon Tyrant. Hold the Capital as Rally Captain for as long as possible, avoid unnecessary captain changes, and keep your troops healed. || The Chief the alliance is backing to become Frostdragon Tyrant. Hold the Capital as Rally Captain for as long as possible, avoid unnecessary captain changes, and keep your troops healed. || The Chief the alliance is backing to become Frostdragon Tyrant. Hold the Capital as Rally Captain for as long as possible, avoid unnecessary captain changes, and keep your troops healed.
+Capital Reinforcer || Penguat Ibu Kota || 首都增援者 || Capital Reinforcer || Capital Reinforcer || Capital Reinforcer
+send your troops into the Rally Captain's Capital garrison and keep them there. Refill the garrison right after losses and do not leave the Capital while the captain is holding it. || kirim pasukan ke garnisun Ibu Kota milik Rally Captain dan tetap di sana. Isi kembali garnisun segera setelah ada korban dan jangan meninggalkan Ibu Kota selama kapten mempertahankannya. || 将部队派入集结队长的首都驻军并留守。出现损失后立即补充驻军，队长守住首都期间不要离开。 || send your troops into the Rally Captain's Capital garrison and keep them there. Refill the garrison right after losses and do not leave the Capital while the captain is holding it. || send your troops into the Rally Captain's Capital garrison and keep them there. Refill the garrison right after losses and do not leave the Capital while the captain is holding it. || send your troops into the Rally Captain's Capital garrison and keep them there. Refill the garrison right after losses and do not leave the Capital while the captain is holding it.
+Capital Defense || Pertahanan Ibu Kota || 首都防守 || Capital Defense || Capital Defense || Capital Defense
+protect the Capital against enemy rallies and attacks. Stay close to the Capital, join defensive reinforcements when the captain is under pressure, and make sure the Capital is never left uncovered. || lindungi Ibu Kota dari rally dan serangan musuh. Tetap dekat Ibu Kota, bantu penguatan pertahanan saat kapten tertekan, dan pastikan Ibu Kota tidak pernah tanpa penjagaan. || 防御敌方集结和攻击。靠近首都，队长承压时加入防守增援，并确保首都始终有人防守。 || protect the Capital against enemy rallies and attacks. Stay close to the Capital, join defensive reinforcements when the captain is under pressure, and make sure the Capital is never left uncovered. || protect the Capital against enemy rallies and attacks. Stay close to the Capital, join defensive reinforcements when the captain is under pressure, and make sure the Capital is never left uncovered. || protect the Capital against enemy rallies and attacks. Stay close to the Capital, join defensive reinforcements when the captain is under pressure, and make sure the Capital is never left uncovered.
+Spire Life || Spire Kehidupan || 生命尖塔 || Spire Life || Spire Life || Spire Life
+take and hold the Life Spire (+20% Troop Health) during its 30-minute vulnerable window. Coordinate with your group so the buff is secured as soon as the window opens. || rebut dan pertahankan Life Spire (+20% Kesehatan Pasukan) selama periode 30 menit saat dapat diserang. Koordinasikan dengan kelompok agar buff diamankan segera setelah periode terbuka. || 在 30 分钟可攻击窗口内夺取并守住生命尖塔（部队生命值 +20%）。与小组协调，在窗口开启后尽快获得增益。 || take and hold the Life Spire (+20% Troop Health) during its 30-minute vulnerable window. Coordinate with your group so the buff is secured as soon as the window opens. || take and hold the Life Spire (+20% Troop Health) during its 30-minute vulnerable window. Coordinate with your group so the buff is secured as soon as the window opens. || take and hold the Life Spire (+20% Troop Health) during its 30-minute vulnerable window. Coordinate with your group so the buff is secured as soon as the window opens.
+Spire Shield || Spire Perisai || 护盾尖塔 || Spire Shield || Spire Shield || Spire Shield
+take and hold the Shield Spire (+20% Troop Defense) during its vulnerable window, and keep enough troops there to stop the enemy from retaking it. || rebut dan pertahankan Shield Spire (+20% Pertahanan Pasukan) selama periode rentan, dan tempatkan pasukan yang cukup agar musuh tidak merebutnya kembali. || 在可攻击窗口内夺取并守住护盾尖塔（部队防御 +20%），并部署足够部队防止敌人夺回。 || take and hold the Shield Spire (+20% Troop Defense) during its vulnerable window, and keep enough troops there to stop the enemy from retaking it. || take and hold the Shield Spire (+20% Troop Defense) during its vulnerable window, and keep enough troops there to stop the enemy from retaking it. || take and hold the Shield Spire (+20% Troop Defense) during its vulnerable window, and keep enough troops there to stop the enemy from retaking it.
+Spire Dragonbane || Spire Pembasmi Naga || 屠龙尖塔 || Spire Dragonbane || Spire Dragonbane || Spire Dragonbane
+take and hold the Dragonbane Spire (+20% Troop Lethality) during its vulnerable window. Move on to the next objective once the window closes. || rebut dan pertahankan Dragonbane Spire (+20% Daya Mematikan Pasukan) selama periode rentan. Beralih ke sasaran berikutnya setelah periode berakhir. || 在可攻击窗口内夺取并守住屠龙尖塔（部队杀伤力 +20%）。窗口结束后转向下一个目标。 || take and hold the Dragonbane Spire (+20% Troop Lethality) during its vulnerable window. Move on to the next objective once the window closes. || take and hold the Dragonbane Spire (+20% Troop Lethality) during its vulnerable window. Move on to the next objective once the window closes. || take and hold the Dragonbane Spire (+20% Troop Lethality) during its vulnerable window. Move on to the next objective once the window closes.
+Spire Blade || Spire Pedang || 刀锋尖塔 || Spire Blade || Spire Blade || Spire Blade
+take and hold the Blade Spire (+20% Troop Attack) during its vulnerable window, and rally or reinforce as needed to keep it. || rebut dan pertahankan Blade Spire (+20% Serangan Pasukan) selama periode rentan, lalu lakukan rally atau penguatan bila diperlukan. || 在可攻击窗口内夺取并守住刀锋尖塔（部队攻击 +20%），并根据需要集结或增援以守住它。 || take and hold the Blade Spire (+20% Troop Attack) during its vulnerable window, and rally or reinforce as needed to keep it. || take and hold the Blade Spire (+20% Troop Attack) during its vulnerable window, and rally or reinforce as needed to keep it. || take and hold the Blade Spire (+20% Troop Attack) during its vulnerable window, and rally or reinforce as needed to keep it.
+Dragonite Collector || Pengumpul Dragonite || Dragonite 采集者 || Dragonite Collector || Dragonite Collector || Dragonite Collector
+gather Dragonite as soon as it appears (15 minutes after the Capital opens) and check again at every 30-minute refresh. Escort or hide gatherers if enemies are nearby. Collectors are the lowest-power players and multitask: until Dragonite opens (75 minutes after the Battlefield opens) they carry out their other duty, usually Capital Reinforcer. || kumpulkan Dragonite segera setelah muncul (15 menit setelah Ibu Kota terbuka) dan periksa kembali setiap 30 menit saat diperbarui. Kawal atau sembunyikan pengumpul jika musuh berada di dekatnya. Pengumpul biasanya pemain dengan kekuatan terendah dan menjalankan tugas ganda: sebelum Dragonite terbuka (75 menit setelah medan pertempuran dibuka), mereka menjalankan tugas lain, biasanya sebagai Penguat Ibu Kota. || Dragonite 出现后立即采集（首都开放 15 分钟后），并在每次 30 分钟刷新时再次查看。附近有敌人时护送或隐藏采集者。采集者通常是战力较低的玩家，需要兼顾其他任务：Dragonite 开放前（战场开放 75 分钟后）执行其他职责，通常担任首都增援者。 || gather Dragonite as soon as it appears (15 minutes after the Capital opens) and check again at every 30-minute refresh. Escort or hide gatherers if enemies are nearby. Collectors are the lowest-power players and multitask: until Dragonite opens (75 minutes after the Battlefield opens) they carry out their other duty, usually Capital Reinforcer. || gather Dragonite as soon as it appears (15 minutes after the Capital opens) and check again at every 30-minute refresh. Escort or hide gatherers if enemies are nearby. Collectors are the lowest-power players and multitask: until Dragonite opens (75 minutes after the Battlefield opens) they carry out their other duty, usually Capital Reinforcer. || gather Dragonite as soon as it appears (15 minutes after the Capital opens) and check again at every 30-minute refresh. Escort or hide gatherers if enemies are nearby. Collectors are the lowest-power players and multitask: until Dragonite opens (75 minutes after the Battlefield opens) they carry out their other duty, usually Capital Reinforcer.
+Alliance A / Alliance B || Aliansi A / Aliansi B || 联盟 A / 联盟 B || Alliance A / Alliance B || Alliance A / Alliance B || Alliance A / Alliance B
+your battle group. Players join the Capital, Spires and Dragonite calls of their own group. A player belongs to only one group. || kelompok pertempuran Anda. Pemain mengikuti panggilan untuk Ibu Kota, Spire, dan Dragonite dari kelompoknya sendiri. Setiap pemain hanya boleh tergabung dalam satu kelompok. || 你的战斗小组。玩家应响应所属小组关于首都、尖塔和 Dragonite 的指令。每位玩家只能属于一个小组。 || your battle group. Players join the Capital, Spires and Dragonite calls of their own group. A player belongs to only one group. || your battle group. Players join the Capital, Spires and Dragonite calls of their own group. A player belongs to only one group. || your battle group. Players join the Capital, Spires and Dragonite calls of their own group. A player belongs to only one group.
 
-The Chief with the longest total Capital occupation time wins; on a tie, whoever reached that time first. Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days. || Chief dengan total waktu menduduki Ibu Kota paling lama akan menang; jika seri, pemenangnya adalah yang lebih dahulu mencapai waktu tersebut. Hanya Rally Captain yang mengumpulkan waktu pendudukan, bukan pemain penguat. Pilih satu kandidat dan hindari pergantian kapten yang tidak perlu. Hak istimewa Tyrant berlangsung selama 30 hari. || 首都累计占领时间最长的 Chief 获胜；若时间相同，则由先达到该时间者获胜。只有集结队长会累计占领时间，增援者不会。请选定一名候选人，避免不必要地更换队长。Tyrant 特权持续 30 天。
-: starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it. || memulai dan memimpin rally ke Ibu Kota serta menjadi satu-satunya yang mengumpulkan waktu pendudukan. Tetap di Ibu Kota, jaga garnisun tetap penuh, dan jangan menyerahkan peran kapten kecuali diperintahkan pemimpin. || 发起并带领首都集结，也是唯一累计占领时间的角色。留守首都并保持驻军充足，除非负责人指示，否则不要交接队长职位。
-: the Chief the alliance is backing to become Frostdragon Tyrant. Hold the Capital as Rally Captain for as long as possible, avoid unnecessary captain changes, and keep your troops healed. || Chief yang didukung aliansi untuk menjadi Frostdragon Tyrant. Kuasai Ibu Kota sebagai Rally Captain selama mungkin, hindari pergantian kapten yang tidak perlu, dan jaga pasukan tetap pulih. || 联盟支持其成为冰霜巨龙 Tyrant 的 Chief。尽可能长时间担任集结队长并占领首都，避免不必要的队长更换，并保持部队状态良好。
-: send your troops into the Rally Captain's Capital garrison and keep them there. Refill the garrison right after losses and do not leave the Capital while the captain is holding it. || kirim pasukan ke garnisun Ibu Kota milik Rally Captain dan tetap di sana. Isi kembali garnisun segera setelah ada korban dan jangan meninggalkan Ibu Kota selama kapten mempertahankannya. || 将部队派入集结队长的首都驻军并留守。出现损失后立即补充驻军，队长守住首都期间不要离开。
-: protect the Capital against enemy rallies and attacks. Stay close to the Capital, join defensive reinforcements when the captain is under pressure, and make sure the Capital is never left uncovered. || lindungi Ibu Kota dari rally dan serangan musuh. Tetap dekat Ibu Kota, bantu penguatan pertahanan saat kapten tertekan, dan pastikan Ibu Kota tidak pernah tanpa penjagaan. || 防御敌方集结和攻击。靠近首都，队长承压时加入防守增援，并确保首都始终有人防守。
-: take and hold the Life Spire (+20% Troop Health) during its 30-minute vulnerable window. Coordinate with your group so the buff is secured as soon as the window opens. || rebut dan pertahankan Life Spire (+20% Kesehatan Pasukan) selama periode 30 menit saat dapat diserang. Koordinasikan dengan kelompok agar buff diamankan segera setelah periode terbuka. || 在 30 分钟可攻击窗口内夺取并守住生命尖塔（部队生命值 +20%）。与小组协调，在窗口开启后尽快获得增益。
-: take and hold the Shield Spire (+20% Troop Defense) during its vulnerable window, and keep enough troops there to stop the enemy from retaking it. || rebut dan pertahankan Shield Spire (+20% Pertahanan Pasukan) selama periode rentan, dan tempatkan pasukan yang cukup agar musuh tidak merebutnya kembali. || 在可攻击窗口内夺取并守住护盾尖塔（部队防御 +20%），并部署足够部队防止敌人夺回。
-: take and hold the Dragonbane Spire (+20% Troop Lethality) during its vulnerable window. Move on to the next objective once the window closes. || rebut dan pertahankan Dragonbane Spire (+20% Daya Mematikan Pasukan) selama periode rentan. Beralih ke sasaran berikutnya setelah periode berakhir. || 在可攻击窗口内夺取并守住屠龙尖塔（部队杀伤力 +20%）。窗口结束后转向下一个目标。
-: take and hold the Blade Spire (+20% Troop Attack) during its vulnerable window, and rally or reinforce as needed to keep it. || rebut dan pertahankan Blade Spire (+20% Serangan Pasukan) selama periode rentan, lalu lakukan rally atau penguatan bila diperlukan. || 在可攻击窗口内夺取并守住刀锋尖塔（部队攻击 +20%），并根据需要集结或增援以守住它。
-: gather Dragonite as soon as it appears (15 minutes after the Capital opens) and check again at every 30-minute refresh. Escort or hide gatherers if enemies are nearby. Collectors are the lowest-power players and multitask: until Dragonite opens (75 minutes after the Battlefield opens) they carry out their other duty, usually Capital Reinforcer. || kumpulkan Dragonite segera setelah muncul (15 menit setelah Ibu Kota terbuka) dan periksa kembali setiap 30 menit saat diperbarui. Kawal atau sembunyikan pengumpul jika musuh berada di dekatnya. Pengumpul biasanya pemain dengan kekuatan terendah dan menjalankan tugas ganda: sebelum Dragonite terbuka (75 menit setelah medan pertempuran dibuka), mereka menjalankan tugas lain, biasanya sebagai Penguat Ibu Kota. || Dragonite 出现后立即采集（首都开放 15 分钟后），并在每次 30 分钟刷新时再次查看。附近有敌人时护送或隐藏采集者。采集者通常是战力较低的玩家，需要兼顾其他任务：Dragonite 开放前（战场开放 75 分钟后）执行其他职责，通常担任首都增援者。
-: your battle group. Players join the Capital, Spires and Dragonite calls of their own group. A player belongs to only one group. || kelompok pertempuran Anda. Pemain mengikuti panggilan untuk Ibu Kota, Spire, dan Dragonite dari kelompoknya sendiri. Setiap pemain hanya boleh tergabung dalam satu kelompok. || 你的战斗小组。玩家应响应所属小组关于首都、尖塔和 Dragonite 的指令。每位玩家只能属于一个小组。
+The Chief with the longest total Capital occupation time wins; on a tie, whoever reached that time first. Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days. || Chief dengan total waktu menduduki Ibu Kota paling lama akan menang; jika seri, pemenangnya adalah yang lebih dahulu mencapai waktu tersebut. Hanya Rally Captain yang mengumpulkan waktu pendudukan, bukan pemain penguat. Pilih satu kandidat dan hindari pergantian kapten yang tidak perlu. Hak istimewa Tyrant berlangsung selama 30 hari. || 首都累计占领时间最长的 Chief 获胜；若时间相同，则由先达到该时间者获胜。只有集结队长会累计占领时间，增援者不会。请选定一名候选人，避免不必要地更换队长。Tyrant 特权持续 30 天。 || The Chief with the longest total Capital occupation time wins; on a tie, whoever reached that time first. Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days. || The Chief with the longest total Capital occupation time wins; on a tie, whoever reached that time first. Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days. || The Chief with the longest total Capital occupation time wins; on a tie, whoever reached that time first. Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days.
+: starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it. || memulai dan memimpin rally ke Ibu Kota serta menjadi satu-satunya yang mengumpulkan waktu pendudukan. Tetap di Ibu Kota, jaga garnisun tetap penuh, dan jangan menyerahkan peran kapten kecuali diperintahkan pemimpin. || 发起并带领首都集结，也是唯一累计占领时间的角色。留守首都并保持驻军充足，除非负责人指示，否则不要交接队长职位。 || : starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it. || : starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it. || : starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it.
+: the Chief the alliance is backing to become Frostdragon Tyrant. Hold the Capital as Rally Captain for as long as possible, avoid unnecessary captain changes, and keep your troops healed. || Chief yang didukung aliansi untuk menjadi Frostdragon Tyrant. Kuasai Ibu Kota sebagai Rally Captain selama mungkin, hindari pergantian kapten yang tidak perlu, dan jaga pasukan tetap pulih. || 联盟支持其成为冰霜巨龙 Tyrant 的 Chief。尽可能长时间担任集结队长并占领首都，避免不必要的队长更换，并保持部队状态良好。 || : the Chief the alliance is backing to become Frostdragon Tyrant. Hold the Capital as Rally Captain for as long as possible, avoid unnecessary captain changes, and keep your troops healed. || : the Chief the alliance is backing to become Frostdragon Tyrant. Hold the Capital as Rally Captain for as long as possible, avoid unnecessary captain changes, and keep your troops healed. || : the Chief the alliance is backing to become Frostdragon Tyrant. Hold the Capital as Rally Captain for as long as possible, avoid unnecessary captain changes, and keep your troops healed.
+: send your troops into the Rally Captain's Capital garrison and keep them there. Refill the garrison right after losses and do not leave the Capital while the captain is holding it. || kirim pasukan ke garnisun Ibu Kota milik Rally Captain dan tetap di sana. Isi kembali garnisun segera setelah ada korban dan jangan meninggalkan Ibu Kota selama kapten mempertahankannya. || 将部队派入集结队长的首都驻军并留守。出现损失后立即补充驻军，队长守住首都期间不要离开。 || : send your troops into the Rally Captain's Capital garrison and keep them there. Refill the garrison right after losses and do not leave the Capital while the captain is holding it. || : send your troops into the Rally Captain's Capital garrison and keep them there. Refill the garrison right after losses and do not leave the Capital while the captain is holding it. || : send your troops into the Rally Captain's Capital garrison and keep them there. Refill the garrison right after losses and do not leave the Capital while the captain is holding it.
+: protect the Capital against enemy rallies and attacks. Stay close to the Capital, join defensive reinforcements when the captain is under pressure, and make sure the Capital is never left uncovered. || lindungi Ibu Kota dari rally dan serangan musuh. Tetap dekat Ibu Kota, bantu penguatan pertahanan saat kapten tertekan, dan pastikan Ibu Kota tidak pernah tanpa penjagaan. || 防御敌方集结和攻击。靠近首都，队长承压时加入防守增援，并确保首都始终有人防守。 || : protect the Capital against enemy rallies and attacks. Stay close to the Capital, join defensive reinforcements when the captain is under pressure, and make sure the Capital is never left uncovered. || : protect the Capital against enemy rallies and attacks. Stay close to the Capital, join defensive reinforcements when the captain is under pressure, and make sure the Capital is never left uncovered. || : protect the Capital against enemy rallies and attacks. Stay close to the Capital, join defensive reinforcements when the captain is under pressure, and make sure the Capital is never left uncovered.
+: take and hold the Life Spire (+20% Troop Health) during its 30-minute vulnerable window. Coordinate with your group so the buff is secured as soon as the window opens. || rebut dan pertahankan Life Spire (+20% Kesehatan Pasukan) selama periode 30 menit saat dapat diserang. Koordinasikan dengan kelompok agar buff diamankan segera setelah periode terbuka. || 在 30 分钟可攻击窗口内夺取并守住生命尖塔（部队生命值 +20%）。与小组协调，在窗口开启后尽快获得增益。 || : take and hold the Life Spire (+20% Troop Health) during its 30-minute vulnerable window. Coordinate with your group so the buff is secured as soon as the window opens. || : take and hold the Life Spire (+20% Troop Health) during its 30-minute vulnerable window. Coordinate with your group so the buff is secured as soon as the window opens. || : take and hold the Life Spire (+20% Troop Health) during its 30-minute vulnerable window. Coordinate with your group so the buff is secured as soon as the window opens.
+: take and hold the Shield Spire (+20% Troop Defense) during its vulnerable window, and keep enough troops there to stop the enemy from retaking it. || rebut dan pertahankan Shield Spire (+20% Pertahanan Pasukan) selama periode rentan, dan tempatkan pasukan yang cukup agar musuh tidak merebutnya kembali. || 在可攻击窗口内夺取并守住护盾尖塔（部队防御 +20%），并部署足够部队防止敌人夺回。 || : take and hold the Shield Spire (+20% Troop Defense) during its vulnerable window, and keep enough troops there to stop the enemy from retaking it. || : take and hold the Shield Spire (+20% Troop Defense) during its vulnerable window, and keep enough troops there to stop the enemy from retaking it. || : take and hold the Shield Spire (+20% Troop Defense) during its vulnerable window, and keep enough troops there to stop the enemy from retaking it.
+: take and hold the Dragonbane Spire (+20% Troop Lethality) during its vulnerable window. Move on to the next objective once the window closes. || rebut dan pertahankan Dragonbane Spire (+20% Daya Mematikan Pasukan) selama periode rentan. Beralih ke sasaran berikutnya setelah periode berakhir. || 在可攻击窗口内夺取并守住屠龙尖塔（部队杀伤力 +20%）。窗口结束后转向下一个目标。 || : take and hold the Dragonbane Spire (+20% Troop Lethality) during its vulnerable window. Move on to the next objective once the window closes. || : take and hold the Dragonbane Spire (+20% Troop Lethality) during its vulnerable window. Move on to the next objective once the window closes. || : take and hold the Dragonbane Spire (+20% Troop Lethality) during its vulnerable window. Move on to the next objective once the window closes.
+: take and hold the Blade Spire (+20% Troop Attack) during its vulnerable window, and rally or reinforce as needed to keep it. || rebut dan pertahankan Blade Spire (+20% Serangan Pasukan) selama periode rentan, lalu lakukan rally atau penguatan bila diperlukan. || 在可攻击窗口内夺取并守住刀锋尖塔（部队攻击 +20%），并根据需要集结或增援以守住它。 || : take and hold the Blade Spire (+20% Troop Attack) during its vulnerable window, and rally or reinforce as needed to keep it. || : take and hold the Blade Spire (+20% Troop Attack) during its vulnerable window, and rally or reinforce as needed to keep it. || : take and hold the Blade Spire (+20% Troop Attack) during its vulnerable window, and rally or reinforce as needed to keep it.
+: gather Dragonite as soon as it appears (15 minutes after the Capital opens) and check again at every 30-minute refresh. Escort or hide gatherers if enemies are nearby. Collectors are the lowest-power players and multitask: until Dragonite opens (75 minutes after the Battlefield opens) they carry out their other duty, usually Capital Reinforcer. || kumpulkan Dragonite segera setelah muncul (15 menit setelah Ibu Kota terbuka) dan periksa kembali setiap 30 menit saat diperbarui. Kawal atau sembunyikan pengumpul jika musuh berada di dekatnya. Pengumpul biasanya pemain dengan kekuatan terendah dan menjalankan tugas ganda: sebelum Dragonite terbuka (75 menit setelah medan pertempuran dibuka), mereka menjalankan tugas lain, biasanya sebagai Penguat Ibu Kota. || Dragonite 出现后立即采集（首都开放 15 分钟后），并在每次 30 分钟刷新时再次查看。附近有敌人时护送或隐藏采集者。采集者通常是战力较低的玩家，需要兼顾其他任务：Dragonite 开放前（战场开放 75 分钟后）执行其他职责，通常担任首都增援者。 || : gather Dragonite as soon as it appears (15 minutes after the Capital opens) and check again at every 30-minute refresh. Escort or hide gatherers if enemies are nearby. Collectors are the lowest-power players and multitask: until Dragonite opens (75 minutes after the Battlefield opens) they carry out their other duty, usually Capital Reinforcer. || : gather Dragonite as soon as it appears (15 minutes after the Capital opens) and check again at every 30-minute refresh. Escort or hide gatherers if enemies are nearby. Collectors are the lowest-power players and multitask: until Dragonite opens (75 minutes after the Battlefield opens) they carry out their other duty, usually Capital Reinforcer. || : gather Dragonite as soon as it appears (15 minutes after the Capital opens) and check again at every 30-minute refresh. Escort or hide gatherers if enemies are nearby. Collectors are the lowest-power players and multitask: until Dragonite opens (75 minutes after the Battlefield opens) they carry out their other duty, usually Capital Reinforcer.
+: your battle group. Players join the Capital, Spires and Dragonite calls of their own group. A player belongs to only one group. || kelompok pertempuran Anda. Pemain mengikuti panggilan untuk Ibu Kota, Spire, dan Dragonite dari kelompoknya sendiri. Setiap pemain hanya boleh tergabung dalam satu kelompok. || 你的战斗小组。玩家应响应所属小组关于首都、尖塔和 Dragonite 的指令。每位玩家只能属于一个小组。 || : your battle group. Players join the Capital, Spires and Dragonite calls of their own group. A player belongs to only one group. || : your battle group. Players join the Capital, Spires and Dragonite calls of their own group. A player belongs to only one group. || : your battle group. Players join the Capital, Spires and Dragonite calls of their own group. A player belongs to only one group.
 
-Tip: verify event-specific mechanics in-game before battle. || Tips: periksa mekanisme khusus event di dalam game sebelum bertempur. || 提示：战斗前请在游戏内确认该活动的具体机制。
-Close guide || Tutup panduan || 关闭指南
+Tip: verify event-specific mechanics in-game before battle. || Tips: periksa mekanisme khusus event di dalam game sebelum bertempur. || 提示：战斗前请在游戏内确认该活动的具体机制。 || Tip: verify event-specific mechanics in-game before battle. || Tip: verify event-specific mechanics in-game before battle. || Tip: verify event-specific mechanics in-game before battle.
+Close guide || Tutup panduan || 关闭指南 || Close guide || Close guide || Close guide
 
 # Home page subtitle and view controls
-Select Alliance, Global Leaderboard, or Legion Roster || Pilih Aliansi, Papan Peringkat Global, atau Roster Legiun || 选择联盟、全球排行榜或军团名单
-Select Alliance, Global Leaderboard, or Battle Group || Pilih Aliansi, Papan Peringkat Global, atau Grup Pertempuran || 选择联盟、全球排行榜或战斗小组
-Select Alliance || Pilih Aliansi || 选择联盟
-All Phase || Semua Fase || 所有阶段
-All Phases || Semua Fase || 所有阶段
-Map || Peta || 地图
-Chart || Grafik || 图表
+Select Alliance, Global Leaderboard, or Legion Roster || Pilih Aliansi, Papan Peringkat Global, atau Roster Legiun || 选择联盟、全球排行榜或军团名单 || Select Alliance, Global Leaderboard, or Legion Roster || Select Alliance, Global Leaderboard, or Legion Roster || Select Alliance, Global Leaderboard, or Legion Roster
+Select Alliance, Global Leaderboard, or Battle Group || Pilih Aliansi, Papan Peringkat Global, atau Grup Pertempuran || 选择联盟、全球排行榜或战斗小组 || Select Alliance, Global Leaderboard, or Battle Group || Select Alliance, Global Leaderboard, or Battle Group || Select Alliance, Global Leaderboard, or Battle Group
+Select Alliance || Pilih Aliansi || 选择联盟 || Select Alliance || Select Alliance || Select Alliance
+All Phase || Semua Fase || 所有阶段 || All Phase || All Phase || All Phase
+All Phases || Semua Fase || 所有阶段 || All Phases || All Phases || All Phases
+Map || Peta || 地图 || Mapa || Mappa || แผนที่
+Chart || Grafik || 图表 || Chart || Grafico || กราฟ
 
 # Alliance names: preserve alliance codes, translate the word Alliance
-ARX Alliance || Aliansi ARX || ARX 联盟
-IDN Alliance || Aliansi IDN || IDN 联盟
-VNX Alliance || Aliansi VNX || VNX 联盟
-ZXC Alliance || Aliansi ZXC || ZXC 联盟
-CAT Alliance || Aliansi CAT || CAT 联盟
-ALL TROOPS POWER (GLOBAL RANK) || KEKUATAN SELURUH PASUKAN (PERINGKAT GLOBAL) || 全部部队战力（全球排名）
-Select Alliance, Global Leaderboard, or Legion Roster || Pilih Aliansi, Papan Peringkat Global, atau Roster Legiun || 选择联盟、全球排行榜或军团名单
-Select Alliance, Global Leaderboard, or Battle Group || Pilih Aliansi, Papan Peringkat Global, atau Grup Pertempuran || 选择联盟、全球排行榜或战斗小组
-All Phase || Semua Fase || 所有阶段
-All Phases || Semua Fase || 所有阶段
-Set Schedule || Atur Jadwal || 设置日程
-Match Time: Sunday, 12:00 UTC || Waktu Pertandingan: Minggu, 12:00 UTC || 比赛时间：星期日 UTC 12:00
-Match Time: 12:00 UTC || Waktu Pertandingan: 12:00 UTC || 比赛时间：UTC 12:00
-Select Day || Pilih Hari || 选择日期
-Select Match Time || Pilih Waktu Pertandingan || 选择比赛时间
-Select Preferred Time || Pilih Waktu Pilihan || 选择首选时间
-FDT Guide || Panduan FDT || FDT 指南
-Foundry Battle Roster (IDN) || Roster Pertempuran Foundry (IDN) || Foundry 战斗名单（IDN）
+ARX Alliance || Aliansi ARX || ARX 联盟 || ARX Alliance || ARX Alliance || ARX Alliance
+IDN Alliance || Aliansi IDN || IDN 联盟 || IDN Alliance || IDN Alliance || IDN Alliance
+VNX Alliance || Aliansi VNX || VNX 联盟 || VNX Alliance || VNX Alliance || VNX Alliance
+ZXC Alliance || Aliansi ZXC || ZXC 联盟 || ZXC Alliance || ZXC Alliance || ZXC Alliance
+CAT Alliance || Aliansi CAT || CAT 联盟 || CAT Alliance || CAT Alliance || CAT Alliance
+ALL TROOPS POWER (GLOBAL RANK) || KEKUATAN SELURUH PASUKAN (PERINGKAT GLOBAL) || 全部部队战力（全球排名） || ALL TROOPS POWER (GLOBAL RANK) || ALL TROOPS POWER (GLOBAL RANK) || ALL TROOPS POWER (GLOBAL RANK)
+Select Alliance, Global Leaderboard, or Legion Roster || Pilih Aliansi, Papan Peringkat Global, atau Roster Legiun || 选择联盟、全球排行榜或军团名单 || Select Alliance, Global Leaderboard, or Legion Roster || Select Alliance, Global Leaderboard, or Legion Roster || Select Alliance, Global Leaderboard, or Legion Roster
+Select Alliance, Global Leaderboard, or Battle Group || Pilih Aliansi, Papan Peringkat Global, atau Grup Pertempuran || 选择联盟、全球排行榜或战斗小组 || Select Alliance, Global Leaderboard, or Battle Group || Select Alliance, Global Leaderboard, or Battle Group || Select Alliance, Global Leaderboard, or Battle Group
+All Phase || Semua Fase || 所有阶段 || All Phase || All Phase || All Phase
+All Phases || Semua Fase || 所有阶段 || All Phases || All Phases || All Phases
+Set Schedule || Atur Jadwal || 设置日程 || Itakda ang Schedule || Imposta orario || ตั้งตาราง
+Match Time: Sunday, 12:00 UTC || Waktu Pertandingan: Minggu, 12:00 UTC || 比赛时间：星期日 UTC 12:00 || Match Time: Sunday, 12:00 UTC || Match Time: Sunday, 12:00 UTC || Match Time: Sunday, 12:00 UTC
+Match Time: 12:00 UTC || Waktu Pertandingan: 12:00 UTC || 比赛时间：UTC 12:00 || Match Time: 12:00 UTC || Match Time: 12:00 UTC || Match Time: 12:00 UTC
+Select Day || Pilih Hari || 选择日期 || Select Day || Select Day || Select Day
+Select Match Time || Pilih Waktu Pertandingan || 选择比赛时间 || Select Match Time || Select Match Time || Select Match Time
+Select Preferred Time || Pilih Waktu Pilihan || 选择首选时间 || Select Preferred Time || Select Preferred Time || Select Preferred Time
+FDT Guide || Panduan FDT || FDT 指南 || FDT Guide || FDT Guide || FDT Guide
+Foundry Battle Roster (IDN) || Roster Pertempuran Foundry (IDN) || Foundry 战斗名单（IDN） || Foundry Battle Roster (IDN) || Foundry Battle Roster (IDN) || Foundry Battle Roster (IDN)
 
 
 # Input placeholders and field labels
-Search nickname or Game ID... || Cari nickname atau ID Game... || 搜索昵称或游戏 ID...
-Enter president name || Masukkan nama presiden || 输入会长名称
-Enter guild name || Masukkan nama guild || 输入公会名称
-Enter nickname || Masukkan nickname || 输入昵称
-Enter Game ID || Masukkan ID Game || 输入游戏 ID
-e.g. 150000000 || mis. 150000000 || 例如 150000000
-Type game ID or nickname... || Ketik ID Game atau nickname... || 输入游戏 ID 或昵称...
-Min. 6 characters || Minimal 6 karakter || 至少 6 个字符
-Enter username || Masukkan nama pengguna || 输入用户名
-Enter password || Masukkan kata sandi || 输入密码
-Enter gift code || Masukkan kode hadiah || 输入礼包码
-Player ID (FID) || ID Pemain (FID) || 玩家 ID（FID）
-Gift Code || Kode Hadiah || 礼包码
-Select all shown || Pilih semua yang ditampilkan || 全选当前显示项
-Battlefield open (UTC) || Medan perang dibuka (UTC) || 战场开启时间（UTC）
-Roster deadline (UTC) || Batas waktu roster (UTC) || 名单截止时间（UTC）
-Threshold || Ambang batas || 阈值
-Power threshold || Ambang kekuatan || 战力阈值
-Minimum power || Kekuatan minimum || 最低战力
-Maximum players || Jumlah maksimum pemain || 玩家人数上限
+Search nickname or Game ID... || Cari nickname atau ID Game... || 搜索昵称或游戏 ID... || Maghanap ng nickname o Game ID... || Cerca nickname o ID di gioco... || ค้นหาชื่อเล่นหรือรหัสเกม...
+Enter president name || Masukkan nama presiden || 输入会长名称 || Enter president name || Enter president name || Enter president name
+Enter guild name || Masukkan nama guild || 输入公会名称 || Enter guild name || Enter guild name || Enter guild name
+Enter nickname || Masukkan nickname || 输入昵称 || Enter nickname || Enter nickname || Enter nickname
+Enter Game ID || Masukkan ID Game || 输入游戏 ID || Enter Game ID || Enter Game ID || Enter Game ID
+e.g. 150000000 || mis. 150000000 || 例如 150000000 || e.g. 150000000 || e.g. 150000000 || e.g. 150000000
+Type game ID or nickname... || Ketik ID Game atau nickname... || 输入游戏 ID 或昵称... || Type game ID or nickname... || Type game ID or nickname... || Type game ID or nickname...
+Min. 6 characters || Minimal 6 karakter || 至少 6 个字符 || Min. 6 characters || Min. 6 characters || Min. 6 characters
+Enter username || Masukkan nama pengguna || 输入用户名 || Enter username || Enter username || Enter username
+Enter password || Masukkan kata sandi || 输入密码 || Enter password || Enter password || Enter password
+Enter gift code || Masukkan kode hadiah || 输入礼包码 || Enter gift code || Enter gift code || Enter gift code
+Player ID (FID) || ID Pemain (FID) || 玩家 ID（FID） || Player ID (FID) || Player ID (FID) || Player ID (FID)
+Gift Code || Kode Hadiah || 礼包码 || Gift Code || Gift Code || Gift Code
+Select all shown || Pilih semua yang ditampilkan || 全选当前显示项 || Select all shown || Select all shown || Select all shown
+Battlefield open (UTC) || Medan perang dibuka (UTC) || 战场开启时间（UTC） || Battlefield open (UTC) || Battlefield open (UTC) || Battlefield open (UTC)
+Roster deadline (UTC) || Batas waktu roster (UTC) || 名单截止时间（UTC） || Roster deadline (UTC) || Roster deadline (UTC) || Roster deadline (UTC)
+Threshold || Ambang batas || 阈值 || Threshold || Threshold || Threshold
+Power threshold || Ambang kekuatan || 战力阈值 || Power threshold || Power threshold || Power threshold
+Minimum power || Kekuatan minimum || 最低战力 || Minimum power || Minimum power || Minimum power
+Maximum players || Jumlah maksimum pemain || 玩家人数上限 || Maximum players || Maximum players || Maximum players
 
 # Toast notifications and validation messages
-Please enter Nickname! || Harap masukkan nickname! || 请输入昵称！
-Please enter Game ID! || Harap masukkan ID Game! || 请输入游戏 ID！
-Please enter valid Troops Power! || Harap masukkan kekuatan pasukan yang valid! || 请输入有效的部队战力！
-You don't have permission to add players. || Anda tidak memiliki izin untuk menambahkan pemain. || 您没有权限添加玩家。
-You don't have permission to edit this player's alliance. || Anda tidak memiliki izin untuk mengubah aliansi pemain ini. || 您没有权限修改该玩家的联盟。
-You don't have permission to save changes for this player. || Anda tidak memiliki izin untuk menyimpan perubahan pemain ini. || 您没有权限保存该玩家的更改。
-Player power added successfully! || Kekuatan pemain berhasil ditambahkan! || 玩家战力添加成功！
-Error inserting data: {0} || Gagal memasukkan data: {0} || 插入数据时出错：{0}
-You don't have permission to set this legion's schedule. || Anda tidak memiliki izin untuk mengatur jadwal legiun ini. || 您没有权限设置该军团的日程。
-Please select a match day! || Harap pilih hari pertandingan! || 请选择比赛日期！
-Please select a match time! || Harap pilih waktu pertandingan! || 请选择比赛时间！
-Schedule for {0} updated! || Jadwal untuk {0} diperbarui! || {0} 的日程已更新！
-Failed to save schedule: {0} || Gagal menyimpan jadwal: {0} || 保存日程失败：{0}
-Login to export the roster. || Silakan login untuk mengekspor roster. || 请登录后导出名单。
-No data to export! || Tidak ada data untuk diekspor! || 没有可导出的数据！
-No players match your search. || Tidak ada pemain yang cocok dengan pencarian Anda. || 没有符合搜索条件的玩家。
-CSV Downloaded successfully! || CSV berhasil diunduh! || CSV 下载成功！
-Select at least one player first. || Pilih setidaknya satu pemain terlebih dahulu. || 请先至少选择一名玩家。
-Please try again. || Silakan coba lagi. || 请重试。
-Share link copied. || Tautan berbagi berhasil disalin. || 分享链接已复制。
-Chart image downloaded. || Gambar grafik berhasil diunduh. || 图表图片已下载。
-Unable to download chart image. || Tidak dapat mengunduh gambar grafik. || 无法下载图表图片。
-Unable to generate chart image. || Tidak dapat membuat gambar grafik. || 无法生成图表图片。
-Frostdragon roster is locked. || Roster Frostdragon terkunci. || Frostdragon 名单已锁定。
-Frostdragon roster is locked. Unlock it in President Panel to make changes. || Roster Frostdragon terkunci. Buka kuncinya di President Panel untuk melakukan perubahan. || Frostdragon 名单已锁定。请在会长面板中解锁后再修改。
-Unable to save task: {0} || Tidak dapat menyimpan tugas: {0} || 无法保存任务：{0}
-Frostdragon tasks saved. || Tugas Frostdragon berhasil disimpan. || Frostdragon 任务已保存。
-You don't have permission to edit this roster. || Anda tidak memiliki izin untuk mengedit roster ini. || 您没有权限编辑此名单。
-Login to view the roster chart. || Silakan login untuk melihat grafik roster. || 请登录后查看名单图表。
-Enter a number between 0 and {0}. || Masukkan angka antara 0 dan {0}. || 请输入介于 0 和 {0} 之间的数字。
-Dragonite Collectors are already arranged this way. || Pengumpul Dragonite sudah diatur seperti ini. || Dragonite 收集者已按此方式安排。
-{0} updates failed; the rest were saved. || {0} pembaruan gagal; sisanya berhasil disimpan. || {0} 项更新失败，其余已保存。
-Dragonite Collectors updated ({0} players). || Pengumpul Dragonite diperbarui ({0} pemain). || Dragonite 收集者已更新（{0} 名玩家）。
-Checklist saved. || Checklist berhasil disimpan. || 清单已保存。
-Unable to save checklist: {0} || Tidak dapat menyimpan checklist: {0} || 无法保存清单：{0}
-Staff access required. || Memerlukan akses staf. || 需要工作人员权限。
-Schedule save failed: {0} || Gagal menyimpan jadwal: {0} || 日程保存失败：{0}
-Frostdragon schedule saved (UTC). || Jadwal Frostdragon berhasil disimpan (UTC). || Frostdragon 日程已保存（UTC）。
-Roster lock update failed: {0} || Gagal memperbarui kunci roster: {0} || 更新名单锁定状态失败：{0}
-Frostdragon roster locked. || Roster Frostdragon dikunci. || Frostdragon 名单已锁定。
-Frostdragon roster unlocked. || Roster Frostdragon dibuka kuncinya. || Frostdragon 名单已解锁。
-Username cannot be empty. || Nama pengguna tidak boleh kosong. || 用户名不能为空。
-Username: 2-32 chars, letters/numbers/. _ - only. || Nama pengguna: 2–32 karakter, hanya huruf/angka/titik/garis bawah/strip. || 用户名需为 2–32 个字符，只能包含字母、数字、点、下划线和连字符。
-Password must be at least 6 characters. || Kata sandi harus minimal 6 karakter. || 密码至少需要 6 个字符。
-Password confirmation does not match. || Konfirmasi kata sandi tidak cocok. || 两次输入的密码不一致。
-Nothing to change. || Tidak ada yang perlu diubah. || 没有需要更改的内容。
-Failed to update account: {0} || Gagal memperbarui akun: {0} || 更新账户失败：{0}
-Account {0} updated. || Akun {0} berhasil diperbarui. || 账户 {0} 已更新。
-President Panel data refreshed. || Data President Panel berhasil diperbarui. || 会长面板数据已刷新。
-Only the President can switch the Battle theme. || Hanya Presiden yang dapat mengganti tema pertempuran. || 只有会长可以切换战斗主题。
-{0} is already active. || {0} sudah aktif. || {0} 已经启用。
-Global Battle Theme: {0} || Tema Pertempuran Global: {0} || 全局战斗主题：{0}
-Failed to load global Battle Theme: {0} || Gagal memuat Tema Pertempuran Global: {0} || 加载全局战斗主题失败：{0}
-Failed to switch global Battle Theme: {0} || Gagal mengganti Tema Pertempuran Global: {0} || 切换全局战斗主题失败：{0}
-Username: 2-32 chars, letters/numbers/. _ - only. || Nama pengguna: 2–32 karakter, hanya huruf/angka/titik/garis bawah/strip. || 用户名需为 2–32 个字符，只能包含字母、数字、点、下划线和连字符。
+Please enter Nickname! || Harap masukkan nickname! || 请输入昵称！ || Please enter Nickname! || Please enter Nickname! || Please enter Nickname!
+Please enter Game ID! || Harap masukkan ID Game! || 请输入游戏 ID！ || Please enter Game ID! || Please enter Game ID! || Please enter Game ID!
+Please enter valid Troops Power! || Harap masukkan kekuatan pasukan yang valid! || 请输入有效的部队战力！ || Please enter valid Troops Power! || Please enter valid Troops Power! || Please enter valid Troops Power!
+You don't have permission to add players. || Anda tidak memiliki izin untuk menambahkan pemain. || 您没有权限添加玩家。 || You don't have permission to add players. || You don't have permission to add players. || You don't have permission to add players.
+You don't have permission to edit this player's alliance. || Anda tidak memiliki izin untuk mengubah aliansi pemain ini. || 您没有权限修改该玩家的联盟。 || You don't have permission to edit this player's alliance. || You don't have permission to edit this player's alliance. || You don't have permission to edit this player's alliance.
+You don't have permission to save changes for this player. || Anda tidak memiliki izin untuk menyimpan perubahan pemain ini. || 您没有权限保存该玩家的更改。 || You don't have permission to save changes for this player. || You don't have permission to save changes for this player. || You don't have permission to save changes for this player.
+Player power added successfully! || Kekuatan pemain berhasil ditambahkan! || 玩家战力添加成功！ || Player power added successfully! || Player power added successfully! || Player power added successfully!
+Error inserting data: {0} || Gagal memasukkan data: {0} || 插入数据时出错：{0} || Error inserting data: {0} || Error inserting data: {0} || Error inserting data: {0}
+You don't have permission to set this legion's schedule. || Anda tidak memiliki izin untuk mengatur jadwal legiun ini. || 您没有权限设置该军团的日程。 || You don't have permission to set this legion's schedule. || You don't have permission to set this legion's schedule. || You don't have permission to set this legion's schedule.
+Please select a match day! || Harap pilih hari pertandingan! || 请选择比赛日期！ || Please select a match day! || Please select a match day! || Please select a match day!
+Please select a match time! || Harap pilih waktu pertandingan! || 请选择比赛时间！ || Please select a match time! || Please select a match time! || Please select a match time!
+Schedule for {0} updated! || Jadwal untuk {0} diperbarui! || {0} 的日程已更新！ || Schedule for {0} updated! || Schedule for {0} updated! || Schedule for {0} updated!
+Failed to save schedule: {0} || Gagal menyimpan jadwal: {0} || 保存日程失败：{0} || Failed to save schedule: {0} || Failed to save schedule: {0} || Failed to save schedule: {0}
+Login to export the roster. || Silakan login untuk mengekspor roster. || 请登录后导出名单。 || Login to export the roster. || Login to export the roster. || Login to export the roster.
+No data to export! || Tidak ada data untuk diekspor! || 没有可导出的数据！ || No data to export! || No data to export! || No data to export!
+No players match your search. || Tidak ada pemain yang cocok dengan pencarian Anda. || 没有符合搜索条件的玩家。 || No players match your search. || No players match your search. || No players match your search.
+CSV Downloaded successfully! || CSV berhasil diunduh! || CSV 下载成功！ || CSV Downloaded successfully! || CSV Downloaded successfully! || CSV Downloaded successfully!
+Select at least one player first. || Pilih setidaknya satu pemain terlebih dahulu. || 请先至少选择一名玩家。 || Select at least one player first. || Select at least one player first. || Select at least one player first.
+Please try again. || Silakan coba lagi. || 请重试。 || Please try again. || Please try again. || Please try again.
+Share link copied. || Tautan berbagi berhasil disalin. || 分享链接已复制。 || Share link copied. || Share link copied. || Share link copied.
+Chart image downloaded. || Gambar grafik berhasil diunduh. || 图表图片已下载。 || Chart image downloaded. || Chart image downloaded. || Chart image downloaded.
+Unable to download chart image. || Tidak dapat mengunduh gambar grafik. || 无法下载图表图片。 || Unable to download chart image. || Unable to download chart image. || Unable to download chart image.
+Unable to generate chart image. || Tidak dapat membuat gambar grafik. || 无法生成图表图片。 || Unable to generate chart image. || Unable to generate chart image. || Unable to generate chart image.
+Frostdragon roster is locked. || Roster Frostdragon terkunci. || Frostdragon 名单已锁定。 || Frostdragon roster is locked. || Frostdragon roster is locked. || Frostdragon roster is locked.
+Frostdragon roster is locked. Unlock it in President Panel to make changes. || Roster Frostdragon terkunci. Buka kuncinya di President Panel untuk melakukan perubahan. || Frostdragon 名单已锁定。请在会长面板中解锁后再修改。 || Frostdragon roster is locked. Unlock it in President Panel to make changes. || Frostdragon roster is locked. Unlock it in President Panel to make changes. || Frostdragon roster is locked. Unlock it in President Panel to make changes.
+Unable to save task: {0} || Tidak dapat menyimpan tugas: {0} || 无法保存任务：{0} || Unable to save task: {0} || Unable to save task: {0} || Unable to save task: {0}
+Frostdragon tasks saved. || Tugas Frostdragon berhasil disimpan. || Frostdragon 任务已保存。 || Frostdragon tasks saved. || Frostdragon tasks saved. || Frostdragon tasks saved.
+You don't have permission to edit this roster. || Anda tidak memiliki izin untuk mengedit roster ini. || 您没有权限编辑此名单。 || You don't have permission to edit this roster. || You don't have permission to edit this roster. || You don't have permission to edit this roster.
+Login to view the roster chart. || Silakan login untuk melihat grafik roster. || 请登录后查看名单图表。 || Login to view the roster chart. || Login to view the roster chart. || Login to view the roster chart.
+Enter a number between 0 and {0}. || Masukkan angka antara 0 dan {0}. || 请输入介于 0 和 {0} 之间的数字。 || Enter a number between 0 and {0}. || Enter a number between 0 and {0}. || Enter a number between 0 and {0}.
+Dragonite Collectors are already arranged this way. || Pengumpul Dragonite sudah diatur seperti ini. || Dragonite 收集者已按此方式安排。 || Dragonite Collectors are already arranged this way. || Dragonite Collectors are already arranged this way. || Dragonite Collectors are already arranged this way.
+{0} updates failed; the rest were saved. || {0} pembaruan gagal; sisanya berhasil disimpan. || {0} 项更新失败，其余已保存。 || {0} updates failed; the rest were saved. || {0} updates failed; the rest were saved. || {0} updates failed; the rest were saved.
+Dragonite Collectors updated ({0} players). || Pengumpul Dragonite diperbarui ({0} pemain). || Dragonite 收集者已更新（{0} 名玩家）。 || Dragonite Collectors updated ({0} players). || Dragonite Collectors updated ({0} players). || Dragonite Collectors updated ({0} players).
+Checklist saved. || Checklist berhasil disimpan. || 清单已保存。 || Checklist saved. || Checklist saved. || Checklist saved.
+Unable to save checklist: {0} || Tidak dapat menyimpan checklist: {0} || 无法保存清单：{0} || Unable to save checklist: {0} || Unable to save checklist: {0} || Unable to save checklist: {0}
+Staff access required. || Memerlukan akses staf. || 需要工作人员权限。 || Staff access required. || Staff access required. || Staff access required.
+Schedule save failed: {0} || Gagal menyimpan jadwal: {0} || 日程保存失败：{0} || Schedule save failed: {0} || Schedule save failed: {0} || Schedule save failed: {0}
+Frostdragon schedule saved (UTC). || Jadwal Frostdragon berhasil disimpan (UTC). || Frostdragon 日程已保存（UTC）。 || Frostdragon schedule saved (UTC). || Frostdragon schedule saved (UTC). || Frostdragon schedule saved (UTC).
+Roster lock update failed: {0} || Gagal memperbarui kunci roster: {0} || 更新名单锁定状态失败：{0} || Roster lock update failed: {0} || Roster lock update failed: {0} || Roster lock update failed: {0}
+Frostdragon roster locked. || Roster Frostdragon dikunci. || Frostdragon 名单已锁定。 || Frostdragon roster locked. || Frostdragon roster locked. || Frostdragon roster locked.
+Frostdragon roster unlocked. || Roster Frostdragon dibuka kuncinya. || Frostdragon 名单已解锁。 || Frostdragon roster unlocked. || Frostdragon roster unlocked. || Frostdragon roster unlocked.
+Username cannot be empty. || Nama pengguna tidak boleh kosong. || 用户名不能为空。 || Username cannot be empty. || Username cannot be empty. || Username cannot be empty.
+Username: 2-32 chars, letters/numbers/. _ - only. || Nama pengguna: 2–32 karakter, hanya huruf/angka/titik/garis bawah/strip. || 用户名需为 2–32 个字符，只能包含字母、数字、点、下划线和连字符。 || Username: 2-32 chars, letters/numbers/. _ - only. || Username: 2-32 chars, letters/numbers/. _ - only. || Username: 2-32 chars, letters/numbers/. _ - only.
+Password must be at least 6 characters. || Kata sandi harus minimal 6 karakter. || 密码至少需要 6 个字符。 || Password must be at least 6 characters. || Password must be at least 6 characters. || Password must be at least 6 characters.
+Password confirmation does not match. || Konfirmasi kata sandi tidak cocok. || 两次输入的密码不一致。 || Password confirmation does not match. || Password confirmation does not match. || Password confirmation does not match.
+Nothing to change. || Tidak ada yang perlu diubah. || 没有需要更改的内容。 || Nothing to change. || Nothing to change. || Nothing to change.
+Failed to update account: {0} || Gagal memperbarui akun: {0} || 更新账户失败：{0} || Failed to update account: {0} || Failed to update account: {0} || Failed to update account: {0}
+Account {0} updated. || Akun {0} berhasil diperbarui. || 账户 {0} 已更新。 || Account {0} updated. || Account {0} updated. || Account {0} updated.
+President Panel data refreshed. || Data President Panel berhasil diperbarui. || 会长面板数据已刷新。 || President Panel data refreshed. || President Panel data refreshed. || President Panel data refreshed.
+Only the President can switch the Battle theme. || Hanya Presiden yang dapat mengganti tema pertempuran. || 只有会长可以切换战斗主题。 || Only the President can switch the Battle theme. || Only the President can switch the Battle theme. || Only the President can switch the Battle theme.
+{0} is already active. || {0} sudah aktif. || {0} 已经启用。 || {0} is already active. || {0} is already active. || {0} is already active.
+Global Battle Theme: {0} || Tema Pertempuran Global: {0} || 全局战斗主题：{0} || Global Battle Theme: {0} || Global Battle Theme: {0} || Global Battle Theme: {0}
+Failed to load global Battle Theme: {0} || Gagal memuat Tema Pertempuran Global: {0} || 加载全局战斗主题失败：{0} || Failed to load global Battle Theme: {0} || Failed to load global Battle Theme: {0} || Failed to load global Battle Theme: {0}
+Failed to switch global Battle Theme: {0} || Gagal mengganti Tema Pertempuran Global: {0} || 切换全局战斗主题失败：{0} || Failed to switch global Battle Theme: {0} || Failed to switch global Battle Theme: {0} || Failed to switch global Battle Theme: {0}
+Username: 2-32 chars, letters/numbers/. _ - only. || Nama pengguna: 2–32 karakter, hanya huruf/angka/titik/garis bawah/strip. || 用户名需为 2–32 个字符，只能包含字母、数字、点、下划线和连字符。 || Username: 2-32 chars, letters/numbers/. _ - only. || Username: 2-32 chars, letters/numbers/. _ - only. || Username: 2-32 chars, letters/numbers/. _ - only.
 
 
 # Foundry assignment and leaderboard labels
-Switch Role || Ganti Peran || 切换角色
-Target: || Target: || 目标：
-Alliance Category || Kategori Aliansi || 联盟类别
-Legion Role Status || Status Peran Legiun || 军团角色状态
-Select Player || Pilih Pemain || 选择玩家
-Battle (Maximum 30) || Tempur (Maksimal 30) || 战斗（最多 30 人）
-Substitute (Maximum 20) || Cadangan (Maksimal 20) || 替补（最多 20 人）
-Battle quota is full! (Maximum 30 players) || Kuota pemain tempur penuh! (Maksimal 30 pemain) || 战斗名额已满！（最多 30 名玩家）
-Substitute quota is full! (Maximum 20 players) || Kuota pemain cadangan penuh! (Maksimal 20 pemain) || 替补名额已满！（最多 20 名玩家）
-TOP 20 TROOPS POWER || 20 Kekuatan Pasukan Teratas || 部队战力前 20 名
-BATTLE TROOPS POWER || Kekuatan Pasukan Tempur || 战斗部队战力
-SUBSTITUTE TROOPS POWER || Kekuatan Pasukan Cadangan || 替补部队战力
+Switch Role || Ganti Peran || 切换角色 || Switch Role || Switch Role || Switch Role
+Target: || Target: || 目标： || Target: || Target: || Target:
+Alliance Category || Kategori Aliansi || 联盟类别 || Alliance Category || Alliance Category || Alliance Category
+Legion Role Status || Status Peran Legiun || 军团角色状态 || Legion Role Status || Legion Role Status || Legion Role Status
+Select Player || Pilih Pemain || 选择玩家 || Select Player || Select Player || Select Player
+Battle (Maximum 30) || Tempur (Maksimal 30) || 战斗（最多 30 人） || Battle (Maximum 30) || Battle (Maximum 30) || Battle (Maximum 30)
+Substitute (Maximum 20) || Cadangan (Maksimal 20) || 替补（最多 20 人） || Substitute (Maximum 20) || Substitute (Maximum 20) || Substitute (Maximum 20)
+Battle quota is full! (Maximum 30 players) || Kuota pemain tempur penuh! (Maksimal 30 pemain) || 战斗名额已满！（最多 30 名玩家） || Battle quota is full! (Maximum 30 players) || Battle quota is full! (Maximum 30 players) || Battle quota is full! (Maximum 30 players)
+Substitute quota is full! (Maximum 20 players) || Kuota pemain cadangan penuh! (Maksimal 20 pemain) || 替补名额已满！（最多 20 名玩家） || Substitute quota is full! (Maximum 20 players) || Substitute quota is full! (Maximum 20 players) || Substitute quota is full! (Maximum 20 players)
+TOP 20 TROOPS POWER || 20 Kekuatan Pasukan Teratas || 部队战力前 20 名 || TOP 20 TROOPS POWER || TOP 20 TROOPS POWER || TOP 20 TROOPS POWER
+BATTLE TROOPS POWER || Kekuatan Pasukan Tempur || 战斗部队战力 || BATTLE TROOPS POWER || BATTLE TROOPS POWER || BATTLE TROOPS POWER
+SUBSTITUTE TROOPS POWER || Kekuatan Pasukan Cadangan || 替补部队战力 || SUBSTITUTE TROOPS POWER || SUBSTITUTE TROOPS POWER || SUBSTITUTE TROOPS POWER
 
 
 # New languages: Filipino || Italian || Thai
@@ -999,8 +999,75 @@ your battle group. Players join the Capital, Spires and Dragonite calls of their
 {0} updates failed; the rest were saved. ||  ||  || {0} updates ang bigo; na-save ang iba. || {0} aggiornamenti non riusciti; il resto è stato salvato. || {0} รายการอัปเดตล้มเหลว ส่วนที่เหลือบันทึกแล้ว
 
 # ID/ZH fill for keys that only had TL/IT/TH
-Every Battle player has one group task (Alliance A or B) plus one or more role tasks. Check your task on the roster before the Eve of Battle and follow your group leader's calls. || Setiap pemain Battle punya satu tugas grup (Alliance A atau B) plus satu atau lebih tugas peran. Cek tugasmu di roster sebelum Eve of Battle dan ikuti panggilan ketua grup. || 每位战斗玩家有一项小组任务（联盟 A 或 B）以及一项或多项角色任务。战前夕请在名单中查看任务并听从小组长指挥。 ||  ||  || 
-Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days. || Hanya Rally Captain yang mengumpulkan waktu pendudukan, reinforcer tidak, jadi pilih satu kandidat dan hindari pergantian kapten yang tidak perlu. Hak istimewa Tyrant berlaku 30 hari. || 只有集结队长累计占领时间，增援者不计入，因此选定一名候选人并避免不必要的队长轮换。暴君特权持续 30 天。 ||  ||  || 
-Personal Points come from Carnage Points (severely injuring enemy troops) and Casualty Points (your troops severely injured) in Capital and Spire battles. Sitting in a building without fighting does not earn points. || Poin Pribadi berasal dari Carnage Points (melukai parah pasukan musuh) dan Casualty Points (pasukanmu terluka parah) di pertempuran Capital dan Spire. Hanya duduk di bangunan tanpa bertarung tidak memberi poin. || 个人积分来自首都与尖塔战斗中的屠杀积分（重伤敌方部队）和伤亡积分（己方部队重伤）。待在建筑内不战斗不得分。 ||  ||  || 
-starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it. || memulai dan memimpin rally Capital dan satu-satunya yang mengumpulkan waktu pendudukan. Tetap di Capital, jaga garnisun penuh, dan jangan serahkan peran kapten kecuali pemimpin yang memerintahkan. || 发起并领导首都集结，是唯一累计占领时间的人。守在首都、保持驻军满员，除非队长下令否则不要交出队长角色。 ||  ||  || 
+Every Battle player has one group task (Alliance A or B) plus one or more role tasks. Check your task on the roster before the Eve of Battle and follow your group leader's calls. || Setiap pemain Battle punya satu tugas grup (Alliance A atau B) plus satu atau lebih tugas peran. Cek tugasmu di roster sebelum Eve of Battle dan ikuti panggilan ketua grup. || 每位战斗玩家有一项小组任务（联盟 A 或 B）以及一项或多项角色任务。战前夕请在名单中查看任务并听从小组长指挥。 || Every Battle player has one group task (Alliance A or B) plus one or more role tasks. Check your task on the roster before the Eve of Battle and follow your group leader's calls. || Every Battle player has one group task (Alliance A or B) plus one or more role tasks. Check your task on the roster before the Eve of Battle and follow your group leader's calls. || Every Battle player has one group task (Alliance A or B) plus one or more role tasks. Check your task on the roster before the Eve of Battle and follow your group leader's calls.
+Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days. || Hanya Rally Captain yang mengumpulkan waktu pendudukan, reinforcer tidak, jadi pilih satu kandidat dan hindari pergantian kapten yang tidak perlu. Hak istimewa Tyrant berlaku 30 hari. || 只有集结队长累计占领时间，增援者不计入，因此选定一名候选人并避免不必要的队长轮换。暴君特权持续 30 天。 || Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days. || Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days. || Only the Rally Captain accumulates occupation time, reinforcers do not, so pick one candidate and avoid unnecessary captain changes. Tyrant privileges last 30 days.
+Personal Points come from Carnage Points (severely injuring enemy troops) and Casualty Points (your troops severely injured) in Capital and Spire battles. Sitting in a building without fighting does not earn points. || Poin Pribadi berasal dari Carnage Points (melukai parah pasukan musuh) dan Casualty Points (pasukanmu terluka parah) di pertempuran Capital dan Spire. Hanya duduk di bangunan tanpa bertarung tidak memberi poin. || 个人积分来自首都与尖塔战斗中的屠杀积分（重伤敌方部队）和伤亡积分（己方部队重伤）。待在建筑内不战斗不得分。 || Personal Points come from Carnage Points (severely injuring enemy troops) and Casualty Points (your troops severely injured) in Capital and Spire battles. Sitting in a building without fighting does not earn points. || Personal Points come from Carnage Points (severely injuring enemy troops) and Casualty Points (your troops severely injured) in Capital and Spire battles. Sitting in a building without fighting does not earn points. || Personal Points come from Carnage Points (severely injuring enemy troops) and Casualty Points (your troops severely injured) in Capital and Spire battles. Sitting in a building without fighting does not earn points.
+starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it. || memulai dan memimpin rally Capital dan satu-satunya yang mengumpulkan waktu pendudukan. Tetap di Capital, jaga garnisun penuh, dan jangan serahkan peran kapten kecuali pemimpin yang memerintahkan. || 发起并领导首都集结，是唯一累计占领时间的人。守在首都、保持驻军满员，除非队长下令否则不要交出队长角色。 || starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it. || starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it. || starts and leads the Capital rallies and is the only one who accumulates occupation time. Stay on the Capital, keep the garrison full, and do not hand over the captain role unless the leader calls it.
+
+# Foundry UI strings
+Substitute Players || Pemain Cadangan || Substitute Players || Substitute Players || Substitute Players || Substitute Players
+🗺️ Map || 🗺️ Peta || 🗺️ Map || 🗺️ Map || 🗺️ Map || 🗺️ Map
+Strategy || Strategi || Strategy || Strategy || Strategy || Strategy
+📖 Strategy || 📖 Strategi || 📖 Strategy || 📖 Strategy || 📖 Strategy || 📖 Strategy
+IDN Alliance · 2 Legion · 30 Battle + 10 Substitutes per Legion || Aliansi IDN · 2 Legion · 30 Petarung + 10 Cadangan per Legion || IDN Alliance · 2 Legion · 30 Battle + 10 Substitutes per Legion || IDN Alliance · 2 Legion · 30 Battle + 10 Substitutes per Legion || IDN Alliance · 2 Legion · 30 Battle + 10 Substitutes per Legion || IDN Alliance · 2 Legion · 30 Battle + 10 Substitutes per Legion
+⚡ Auto-fill (by Power) || ⚡ Isi Otomatis (by Power) || ⚡ Auto-fill (by Power) || ⚡ Auto-fill (by Power) || ⚡ Auto-fill (by Power) || ⚡ Auto-fill (by Power)
+⚡ Auto-fill (by Power) || ⚡ Isi Otomatis (berdasarkan Power) || ⚡ Auto-fill (by Power) || ⚡ Auto-fill (by Power) || ⚡ Auto-fill (by Power) || ⚡ Auto-fill (by Power)
+📋 Copy for Discord || 📋 Salin untuk Discord || 📋 Copy for Discord || 📋 Copy for Discord || 📋 Copy for Discord || 📋 Copy for Discord
+— empty — || — kosong — || — empty — || — empty — || — empty — || — empty —
+empty || kosong || empty || empty || empty || empty
+none assigned || belum ada || none assigned || none assigned || none assigned || none assigned
+Event overview || Gambaran event || Event overview || Event overview || Event overview || Event overview
+Roster roles || Peran dalam roster || Roster roles || Roster roles || Roster roles || Roster roles
+Roster roles || Peran roster || Roster roles || Roster roles || Roster roles || Roster roles
+Timeline & phase plan || Timeline & rencana per phase || Timeline & phase plan || Timeline & phase plan || Timeline & phase plan || Timeline & phase plan
+Core tactics || Taktik inti || Core tactics || Core tactics || Core tactics || Core tactics
+Building || Bangunan || Building || Building || Building || Building
+Opens || Buka || Opens || Opens || Opens || Opens
+Opens || Terbuka || Opens || Opens || Opens || Opens
+First capture || Poin perebutan pertama || First capture || First capture || First capture || First capture
+Points/min || Poin/menit || Points/min || Points/min || Points/min || Points/min
+Minute 0 || Menit 0 || Minute 0 || Minute 0 || Minute 0 || Minute 0
+Minute 15 || Menit 15 || Minute 15 || Minute 15 || Minute 15 || Minute 15
+Player task markers || Mark tugas pemain || Player task markers || Player task markers || Player task markers || Player task markers
+Markers: ON || Mark: ON || Markers: ON || Markers: ON || Markers: ON || Markers: ON
+Markers: OFF || Mark: OFF || Markers: OFF || Markers: OFF || Markers: OFF || Markers: OFF
+Names: ON || Nama: ON || Names: ON || Names: ON || Names: ON || Names: ON
+Names: OFF || Nama: OFF || Names: OFF || Names: OFF || Names: OFF || Names: OFF
+Counts: ON || Angka: ON || Counts: ON || Counts: ON || Counts: ON || Counts: ON
+Counts: OFF || Angka: OFF || Counts: OFF || Counts: OFF || Counts: OFF || Counts: OFF
+The Counts button toggles the large numbers in the circles. || Tombol Angka mengontrol angka besar di lingkaran. || The Counts button toggles the large numbers in the circles. || The Counts button toggles the large numbers in the circles. || The Counts button toggles the large numbers in the circles. || The Counts button toggles the large numbers in the circles.
+Players & assigned tasks || Pemain & tugas yang ditetapkan || Players & assigned tasks || Players & assigned tasks || Players & assigned tasks || Players & assigned tasks
+Task / Role || Tugas / Peran || Task / Role || Task / Role || Task / Role || Task / Role
+No battle players assigned for this phase. || Belum ada pemain Battle yang ditugaskan pada phase ini. || No battle players assigned for this phase. || No battle players assigned for this phase. || No battle players assigned for this phase. || No battle players assigned for this phase.
+Small markers show player names. || Angka kecil adalah nama pemain. || Small markers show player names. || Small markers show player names. || Small markers show player names. || Small markers show player names.
+Markers show player names assigned to each building for the selected phase. Hover/tap a marker to view slot, role, and target. || Mark menampilkan nama pemain yang ditugaskan ke bangunan pada phase terpilih. Arahkan/ketuk mark untuk melihat slot, tugas, dan target. || Markers show player names assigned to each building for the selected phase. Hover/tap a marker to view slot, role, and target. || Markers show player names assigned to each building for the selected phase. Hover/tap a marker to view slot, role, and target. || Markers show player names assigned to each building for the selected phase. Hover/tap a marker to view slot, role, and target. || Markers show player names assigned to each building for the selected phase. Hover/tap a marker to view slot, role, and target.
+Numbers in circles show assigned players for the selected phase. Small markers show player names; use task filters to show selected roles. || Angka di lingkaran = jumlah pemain yang ditugaskan pada bangunan untuk phase terpilih. Mark kecil = nama pemain; gunakan filter tugas untuk menampilkan peran tertentu. || Numbers in circles show assigned players for the selected phase. Small markers show player names; use task filters to show selected roles. || Numbers in circles show assigned players for the selected phase. Small markers show player names; use task filters to show selected roles. || Numbers in circles show assigned players for the selected phase. Small markers show player names; use task filters to show selected roles. || Numbers in circles show assigned players for the selected phase. Small markers show player names; use task filters to show selected roles.
+Foundry Battle Map || Peta Foundry Battle || Foundry Battle Map || Foundry Battle Map || Foundry Battle Map || Foundry Battle Map
+Supplies || Perbekalan || Supplies || Supplies || Supplies || Supplies
+SUPPLIES || PERBEKALAN || SUPPLIES || SUPPLIES || SUPPLIES || SUPPLIES
+Scout || Pengintai || Scout || Scout || Scout || Scout
+Read-only || Hanya baca || Read-only || Read-only || Read-only || Read-only
+Open site || Buka situs || Open site || Open site || Open site || Open site
+Failed to load IDN player data || Gagal memuat data pemain IDN || Failed to load IDN player data || Failed to load IDN player data || Failed to load IDN player data || Failed to load IDN player data
+You do not have permission to edit the IDN roster. || Anda tidak punya izin mengubah roster IDN. || You do not have permission to edit the IDN roster. || You do not have permission to edit the IDN roster. || You do not have permission to edit the IDN roster. || You do not have permission to edit the IDN roster.
+Foundry Live Share link copied. || Link Live Share Foundry disalin. || Foundry Live Share link copied. || Foundry Live Share link copied. || Foundry Live Share link copied. || Foundry Live Share link copied.
+Read-only · Data loads from Supabase on open. Auto-refreshes every 30 seconds. || Hanya baca · Data dimuat dari Supabase saat dibuka. Refresh otomatis setiap 30 detik. || Read-only · Data loads from Supabase on open. Auto-refreshes every 30 seconds. || Read-only · Data loads from Supabase on open. Auto-refreshes every 30 seconds. || Read-only · Data loads from Supabase on open. Auto-refreshes every 30 seconds. || Read-only · Data loads from Supabase on open. Auto-refreshes every 30 seconds.
+Replaces slot || Menggantikan slot || Replaces slot || Replaces slot || Replaces slot || Replaces slot
+Ready || Siap || Ready || Ready || Ready || Ready
+Fully ready || Siap semua || Fully ready || Fully ready || Fully ready || Fully ready
+Export PNG || Ekspor PNG || Export PNG || Export PNG || Export PNG || Export PNG
+🖼️ Export PNG || 🖼️ Ekspor PNG || 🖼️ Export PNG || 🖼️ Export PNG || 🖼️ Export PNG || 🖼️ Export PNG
+Substitute Players || Pemain Cadangan || Substitute Players || Substitute Players || Substitute Players || Substitute Players
+📊 Chart || 📊 Grafik || 📊 Chart || 📊 Chart || 📊 Chart || 📊 Chart
+Live Share Chart link copied. || Link Live Share Chart disalin. || Live Share Chart link copied. || Live Share Chart link copied. || Live Share Chart link copied. || Live Share Chart link copied.
+< Back to Menu || < Kembali ke Menu || < Back to Menu || < Back to Menu || < Back to Menu || < Back to Menu
+➕ Bulk Assign || ➕ Penugasan Massal || ➕ Bulk Assign || ➕ Bulk Assign || ➕ Bulk Assign || ➕ Bulk Assign
+All phases (per slot) || Semua fase (per slot) || All phases (per slot) || All phases (per slot) || All phases (per slot) || All phases (per slot)
+Phase 1 (per building) || Phase 1 (per bangunan) || Phase 1 (per building) || Phase 1 (per building) || Phase 1 (per building) || Phase 1 (per building)
+Phase 2 (per building) || Phase 2 (per bangunan) || Phase 2 (per building) || Phase 2 (per building) || Phase 2 (per building) || Phase 2 (per building)
+Phase 3 (per building) || Phase 3 (per bangunan) || Phase 3 (per building) || Phase 3 (per building) || Phase 3 (per building) || Phase 3 (per building)
+Legion to copy || Legion untuk disalin || Legion to copy || Legion to copy || Legion to copy || Legion to copy
+Phase to copy || Fase untuk disalin || Phase to copy || Phase to copy || Phase to copy || Phase to copy
+Selected players fill the next free slots, ordered from highest Power. || Pemain yang dipilih mengisi slot kosong berikutnya, urut dari Power tertinggi. || Selected players fill the next free slots, ordered from highest Power. || Selected players fill the next free slots, ordered from highest Power. || Selected players fill the next free slots, ordered from highest Power. || Selected players fill the next free slots, ordered from highest Power.
+0 selected || 0 dipilih || 0 selected || 0 selected || 0 selected || 0 selected
 `);

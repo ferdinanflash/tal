@@ -172,7 +172,16 @@ Object.entries(FOUNDRY_B).forEach(([k, b]) => {
 
 const FOUNDRY_VERIFIED = '27 Okt 2026';
 const FOUNDRY_PHASE_RANGE = ['0–15', '15–30', '30–60'];
-const foundryL = (id, en) => (typeof foundryLanguage !== 'undefined' && foundryLanguage === 'en') ? en : id;
+const foundryL = (id, en) => {
+    const L = (typeof I18N !== 'undefined' && I18N.lang) || foundryLanguage || 'en';
+    if (L === 'en') return en;
+    if (typeof I18N !== 'undefined') {
+        const tr = I18N.t(en, L);
+        if (tr && tr !== en) return tr;
+    }
+    if (L === 'id') return id;
+    return en;
+};
 
 // Template 30 slot (urut dari terkuat). [role, phase1, phase2, phase3?].
 // Strategi inti:
@@ -691,7 +700,16 @@ function foundryRender() {
 }
 
 // ---------- BILINGUAL UI (English / Bahasa Indonesia) ----------
-let foundryLanguage = localStorage.getItem('foundry-language') || 'en';
+let foundryLanguage = (typeof I18N !== 'undefined' && I18N.lang) || localStorage.getItem('foundry-language') || localStorage.getItem('site-language') || 'en';
+if (typeof I18N !== 'undefined' && typeof I18N.onChange === 'function') {
+    I18N.onChange(L => {
+        foundryLanguage = L;
+        const page = document.getElementById('foundry-page');
+        if (page && !page.classList.contains('hidden')) {
+            try { foundryApplyModeChrome(); foundryRender(); } catch (e) { /* ignore */ }
+        }
+    });
+}
 // Pasangan terjemahan [Indonesia, English]. Satu entri bekerja dua arah, jadi tidak ada lagi
 // teks yang salah diterjemahkan ke arah sebaliknya. Teks yang tidak ada di daftar dibiarkan apa adanya.
 const FOUNDRY_I18N_PAIRS = [
@@ -748,10 +766,26 @@ FOUNDRY_I18N_PAIRS.forEach(([id, en]) => {
   if (!FOUNDRY_EN_TO_ID.has(en)) FOUNDRY_EN_TO_ID.set(en, id);
 });
 function foundryT(text) {
-  return (foundryLanguage === 'en' ? FOUNDRY_ID_TO_EN : FOUNDRY_EN_TO_ID).get(text) || text;
+  const L = (typeof I18N !== 'undefined' && I18N.lang) || foundryLanguage || 'en';
+  if (L === 'en') {
+    // If current DOM text is Indonesian, map back to English for consistency
+    return FOUNDRY_ID_TO_EN.get(text) || text;
+  }
+  // Prefer site dictionary (all 6 languages)
+  const en = FOUNDRY_ID_TO_EN.get(text) || text;
+  if (typeof I18N !== 'undefined') {
+    const tr = I18N.t(en, L);
+    if (tr && tr !== en) return tr;
+  }
+  if (L === 'id') return FOUNDRY_EN_TO_ID.get(en) || FOUNDRY_EN_TO_ID.get(text) || text;
+  return text;
 }
 function foundryApplyLanguage(root = document.getElementById('foundry-page')) {
   if (!root) return;
+  // Prefer full site I18N pass when available (covers EN/ID/ZH/TL/IT/TH)
+  if (typeof I18N !== 'undefined' && typeof I18N.apply === 'function') {
+    try { I18N.apply(root); } catch (e) { /* fall through */ }
+  }
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
   nodes.forEach(n => { const raw = n.nodeValue.trim(); if (!raw) return; const translated = foundryT(raw); if (translated !== raw) n.nodeValue = n.nodeValue.replace(raw, translated); });

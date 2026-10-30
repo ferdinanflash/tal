@@ -181,7 +181,7 @@
     function setLang(next, opts) {
         if (!SUPPORTED.includes(next)) return;
         lang = next;
-        try { localStorage.setItem(KEY, lang); localStorage.setItem('foundry-language', lang === 'zh' ? 'en' : lang); } catch (e) { /* ignore */ }
+        try { localStorage.setItem(KEY, lang); localStorage.setItem('foundry-language', lang); } catch (e) { /* ignore */ }
         document.documentElement.lang = HTML_LANG[lang];
         applyHead(); apply(document.body); syncSwitcher();
         if (!opts || !opts.silent) listeners.slice().forEach(fn => { try { fn(lang); } catch (e) { console.warn('i18n listener failed', e); } });
