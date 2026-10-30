@@ -1791,3 +1791,109 @@ body.fy-shared-open { overflow:hidden; }
         font-size: 16px !important;
     }
 }
+
+/* ==================================================================
+   DESKTOP NAVBAR FIX (>= 601px)
+   Lapisan "FINAL FIX" di atas dibuat untuk HP (tombol dibagi rata
+   dengan width:0 + font vw). Di desktop wadahnya menyusut mengikuti
+   isi sehingga tombol terjepit (mis. "Redeem Code" terpecah per huruf).
+   Blok ini mengembalikan satu baris rapi dengan ukuran alami dan
+   sejajar dengan lebar konten utama. Mobile tidak tersentuh.
+   ================================================================== */
+@media screen and (min-width: 601px) {
+    .navbar {
+        padding: 14px 20px;
+        justify-content: center;
+    }
+    .navbar .navbar-controls {
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        gap: 16px;
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 10px;
+    }
+    .navbar .navbar-controls .btn-snow-toggle {
+        align-self: center;
+        min-height: 40px;
+        padding: 8px 14px;
+        font-size: 0.82rem;
+    }
+    .navbar .navbar-main-btns {
+        display: flex !important;
+        flex: 0 0 auto;
+        width: auto !important;
+        flex-wrap: nowrap;
+        align-items: stretch !important;
+        justify-content: flex-end;
+        gap: 10px !important;
+    }
+    /* Semua item bar: lebar mengikuti isi, satu baris, tinggi seragam */
+    .navbar .navbar-main-btns > .site-language-switcher,
+    .navbar .navbar-main-btns > .btn-redeem,
+    .navbar .navbar-main-btns > .btn-admin,
+    .navbar .navbar-main-btns > .president-panel-top-btn {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none;
+        margin: 0;
+    }
+    .navbar .navbar-main-btns > .site-language-switcher .language-current,
+    .navbar .navbar-main-btns > .btn-redeem,
+    .navbar .navbar-main-btns > .btn-admin,
+    .navbar .navbar-main-btns > .president-panel-top-btn {
+        width: auto !important;
+        min-height: 40px;
+        padding: 8px 16px !important;
+        font-size: 0.85rem !important;
+        line-height: 1.2;
+        white-space: nowrap !important;
+        overflow: visible;
+        overflow-wrap: normal;
+        word-break: keep-all !important;
+        letter-spacing: normal;
+        text-overflow: clip;
+    }
+    .navbar .navbar-main-btns > .site-language-switcher .language-current {
+        width: 100% !important;
+        min-width: 96px !important;
+        flex-wrap: nowrap;
+        gap: 6px;
+    }
+    .navbar .navbar-main-btns > .btn-redeem { gap: 6px; }
+    .navbar .navbar-main-btns > .btn-redeem svg { display: inline-block; width: 16px; height: 16px; }
+    .navbar .navbar-main-btns > .btn-redeem span,
+    .navbar .navbar-main-btns > .president-panel-top-btn .pp-panel-word {
+        white-space: nowrap !important;
+        overflow-wrap: normal !important;
+        word-break: keep-all !important;
+    }
+    .navbar .navbar-main-btns > .president-panel-top-btn .pp-panel-word { display: inline; }
+
+    /* Dropdown bahasa: daftar vertikal, ikon + nama sebaris, mudah diklik */
+    .navbar .site-language-switcher .language-options {
+        min-width: 170px !important;
+        padding: 6px !important;
+        gap: 2px !important;
+        border-radius: 12px !important;
+        top: calc(100% + 6px) !important;
+    }
+    .navbar .site-language-switcher .language-options button {
+        flex-direction: row !important;
+        justify-content: flex-start !important;
+        gap: 10px !important;
+        min-height: 40px !important;
+        padding: 6px 12px !important;
+        font-size: 0.88rem !important;
+        border-radius: 8px !important;
+    }
+    .navbar .site-language-switcher .language-options button:hover { background: #221d13; }
+    .navbar .site-language-switcher .language-options .language-flag { font-size: 1.2rem !important; }
+
+    /* Jam: sedikit lebih lega di layar lebar */
+    #live-clock-container { padding: 9px 16px; font-size: 0.9rem; }
+}
