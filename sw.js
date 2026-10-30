@@ -6,13 +6,19 @@
  */
 'use strict';
 
-const SW_VERSION = 'tal-foundry-sw-v13';
+const SW_VERSION = 'tal-foundry-sw-v14';
 const STATIC_CACHE = `${SW_VERSION}-static`;
 const PAGE_CACHE = `${SW_VERSION}-pages`;
 const CORE_ASSETS = [
   './',
   './index.html',
-  './style.css'
+  './style.css',
+  './manifest.webmanifest',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-512-maskable.png',
+  './icons/apple-touch-icon.png',
+  './icons/favicon.ico'
 ];
 
 self.addEventListener('install', (event) => {
