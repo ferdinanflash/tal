@@ -1,6 +1,6 @@
 {
-  "name": "3475 Tundra Arm League",
-  "short_name": "3475 TAL",
+  "name": "3475 - Battle Events",
+  "short_name": "3475 - Battle Events",
   "description": "Alliance troops power leaderboard, legion roster, Foundry battle map, and match scheduling for state 3475.",
   "start_url": "./",
   "scope": "./",
