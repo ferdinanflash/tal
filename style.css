@@ -1963,8 +1963,13 @@ body.fy-shared-open { overflow:hidden; }
 .fy-live-name:hover { text-decoration: underline; color: #fde68a; }
 .fy-live-fields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 6px;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+@media (min-width: 400px) {
+  .fy-live-fields {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 .fy-live-fields label {
   display: flex;
@@ -1976,18 +1981,31 @@ body.fy-shared-open { overflow:hidden; }
 .fy-live-fields select,
 .fy-live-table select.fy-manual-task {
   width: 100%;
-  min-height: 34px;
+  min-height: 38px;
   border-radius: 8px;
   border: 1px solid #374151;
   background: #0f172a;
   color: #f8fafc;
-  padding: 4px 6px;
-  font-size: 0.8rem;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+.fy-live-fields select {
+  /* full building names visible */
+  min-width: 0;
+  max-width: 100%;
+}
+.fy-live-fields select option {
+  white-space: normal;
+  font-size: 0.85rem;
 }
 .fy-live-editor {
   position: fixed;
   z-index: 10050;
-  width: min(300px, calc(100vw - 24px));
+  width: min(360px, calc(100vw - 24px));
+  max-height: min(90vh, 520px);
+  overflow-y: auto;
   background: linear-gradient(145deg, #1e2230, #151821);
   border: 1px solid rgba(245, 158, 11, 0.45);
   border-radius: 14px;
@@ -2130,4 +2148,11 @@ body.fy-shared-open { overflow:hidden; }
   }
   .fy-tabs { gap: 6px; }
   .fy-tab { flex: 0 0 auto; font-size: 0.8rem; padding: 8px 10px; }
+}
+.fy-live-field-full {
+  grid-column: 1 / -1;
+}
+.fy-live-fields label.fy-live-field-full select {
+  font-size: 0.88rem;
+  line-height: 1.3;
 }

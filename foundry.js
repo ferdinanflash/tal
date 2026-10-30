@@ -303,11 +303,12 @@ function foundryLiveEditorFieldsHtml(p) {
     if (!p) return '';
     const role = p.foundry_role || '';
     const k1 = p.foundry_p1 || '', k2 = p.foundry_p2 || '', k3 = p.foundry_p3 || p.foundry_p2 || '';
+    const nameOf = k => (FOUNDRY_B[k] && FOUNDRY_B[k].n) || '—';
     return `<div class="fy-live-fields">
-      <label>${foundryL('Peran', 'Role')}<select onchange="foundryUpdateTask('${p.id}','foundry_role',this.value)">${foundryRoleOptionsHtml(role)}</select></label>
-      <label>P1<select onchange="foundryUpdateTask('${p.id}','foundry_p1',this.value)">${foundryBuildingOptionsHtml(k1)}</select></label>
-      <label>P2<select onchange="foundryUpdateTask('${p.id}','foundry_p2',this.value)">${foundryBuildingOptionsHtml(k2)}</select></label>
-      ${foundryExt ? `<label>P3<select onchange="foundryUpdateTask('${p.id}','foundry_p3',this.value)">${foundryBuildingOptionsHtml(k3)}</select></label>` : ''}
+      <label class="fy-live-field-full">${foundryL('Peran', 'Role')}<select onchange="foundryUpdateTask('${p.id}','foundry_role',this.value)">${foundryRoleOptionsHtml(role)}</select></label>
+      <label class="fy-live-field-full">P1 · ${foundryL('Fase 1', 'Phase 1')}<select title="${escapeHtml(nameOf(k1))}" onchange="foundryUpdateTask('${p.id}','foundry_p1',this.value)">${foundryBuildingOptionsHtml(k1)}</select></label>
+      <label class="fy-live-field-full">P2 · ${foundryL('Fase 2', 'Phase 2')}<select title="${escapeHtml(nameOf(k2))}" onchange="foundryUpdateTask('${p.id}','foundry_p2',this.value)">${foundryBuildingOptionsHtml(k2)}</select></label>
+      ${foundryExt ? `<label class="fy-live-field-full">P3 · ${foundryL('Fase 3', 'Phase 3')}<select title="${escapeHtml(nameOf(k3))}" onchange="foundryUpdateTask('${p.id}','foundry_p3',this.value)">${foundryBuildingOptionsHtml(k3)}</select></label>` : ''}
     </div>`;
 }
 function foundryOpenLiveEditor(playerId, clientX, clientY) {
@@ -332,7 +333,7 @@ function foundryOpenLiveEditor(playerId, clientX, clientY) {
     <p class="fy-live-editor-note">${foundryL('Perubahan disimpan langsung.', 'Changes save instantly.')}</p>`;
     pop.classList.add('open');
     // Position near click, keep on-screen
-    const pad = 12, w = 300, h = pop.offsetHeight || 260;
+    const pad = 12, w = Math.min(360, window.innerWidth - 24), h = pop.offsetHeight || 280;
     let x = (clientX || window.innerWidth / 2) + 8;
     let y = (clientY || window.innerHeight / 2) + 8;
     if (x + w > window.innerWidth - pad) x = Math.max(pad, (clientX || 0) - w - 8);
