@@ -304,3 +304,19 @@ function editDuplicatePlayer() {
     openEditModal(existing.id, existing);
     showToast(`Editing existing player: ${existing.nickname || existing.game_id}`, 'info');
 }
+
+/* Press ENTER inside the Add/Edit Troops Power modal to save (same as clicking
+   Submit / Update Data). Ignored on <select>, buttons and textareas so those
+   keep their native Enter behaviour, and while composing text with an IME. */
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || e.isComposing || e.repeat) return;
+    if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
+    const modal = document.getElementById('add-modal');
+    if (!modal || modal.classList.contains('hidden') || !modal.contains(e.target)) return;
+    const tag = e.target.tagName;
+    if (tag === 'SELECT' || tag === 'BUTTON' || tag === 'TEXTAREA') return;
+    const submitBtn = document.getElementById('modal-submit-btn');
+    if (submitBtn && submitBtn.disabled) return;
+    e.preventDefault();
+    submitPlayerData();
+});
