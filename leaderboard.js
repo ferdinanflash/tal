@@ -300,8 +300,9 @@ function renderTable() {
     } else if (currentSelection !== 'ALL') {
         const top20 = sortedByPower.slice(0, 20).reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
         const total = loadedTroopsData.reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
+        const totalPlayers = loadedTroopsData.length;
 
-        summaryBoxContainer.style.gridTemplateColumns = "1fr 1fr";
+        summaryBoxContainer.style.gridTemplateColumns = "repeat(3, 1fr)";
         summaryBoxContainer.innerHTML = `
             <div style="padding: 12px; background: linear-gradient(135deg, #1e2230 0%, #111827 100%); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 10px; text-align: center;">
                 <div style="font-size: 0.75rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Top 20 Troops Power</div>
@@ -311,12 +312,17 @@ function renderTable() {
                 <div style="font-size: 0.75rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Total Troops Power</div>
                 <div style="font-size: 1.25rem; font-weight: 900; color: #3b82f6;">${total.toLocaleString('en-US')}</div>
             </div>
+            <div style="padding: 12px; background: linear-gradient(135deg, #1e2230 0%, #111827 100%); border: 1px solid rgba(244, 114, 182, 0.45); border-radius: 10px; text-align: center;">
+                <div style="font-size: 0.75rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Total Players</div>
+                <div style="font-size: 1.25rem; font-weight: 900; color: #f472b6;">${totalPlayers.toLocaleString('en-US')}</div>
+            </div>
         `;
     } else {
         const top20 = sortedByPower.slice(0, 20).reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
         const top50 = sortedByPower.slice(0, 50).reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
         const top100 = sortedByPower.slice(0, 100).reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
         const allState = loadedTroopsData.reduce((sum, p) => sum + (Number(p.troops_power) || 0), 0);
+        const totalPlayers = loadedTroopsData.length;
 
         summaryBoxContainer.style.gridTemplateColumns = "repeat(2, 1fr)";
         summaryBoxContainer.innerHTML = `
@@ -335,6 +341,10 @@ function renderTable() {
             <div style="padding: 10px; background: linear-gradient(135deg, #1e2230 0%, #111827 100%); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 10px; text-align: center;">
                 <div style="font-size: 0.7rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 3px;">All Troops Power in this State</div>
                 <div style="font-size: 1.1rem; font-weight: 900; color: #4ade80;">${allState.toLocaleString('en-US')}</div>
+            </div>
+            <div style="padding: 10px; background: linear-gradient(135deg, #1e2230 0%, #111827 100%); border: 1px solid rgba(244, 114, 182, 0.45); border-radius: 10px; text-align: center; grid-column: 1 / -1;">
+                <div style="font-size: 0.7rem; color: #8a8d98; font-weight: 600; text-transform: uppercase; margin-bottom: 3px;">Total Players</div>
+                <div style="font-size: 1.1rem; font-weight: 900; color: #f472b6;">${totalPlayers.toLocaleString('en-US')}</div>
             </div>
         `;
     }
