@@ -802,7 +802,9 @@ const FOUNDRY_I18N_PAIRS = [
 ['Pemain yang dipilih mengisi slot kosong berikutnya, urut dari Power tertinggi.','Selected players fill the next free slots, ordered from highest Power.'],
 ['Cari Game ID / Nickname','Search Game ID / Nickname'],['Ketik game ID atau nickname...','Type game ID or nickname...'],
 ['Pilih semua yang tampil (sampai slot penuh)','Select all shown (until slots are full)'],
-['Assign Terpilih','Assign Selected'],['0 dipilih','0 selected']
+['Assign Terpilih','Assign Selected'],['0 dipilih','0 selected'],
+['Alliance Category','Alliance Category'],['Kategori Aliansi','Alliance Category'],
+['Semua Aliansi','All Alliances']
 ];
 const FOUNDRY_ID_TO_EN = new Map(), FOUNDRY_EN_TO_ID = new Map();
 FOUNDRY_I18N_PAIRS.forEach(([id, en]) => {
@@ -1245,9 +1247,14 @@ function foundryBulkFreeSlots(legion, status) {
 }
 function foundryBulkCandidates() { return foundryPlayers.filter(p => !foundryInRoster(p)); }
 function foundryBulkShown() {
+    const allianceEl = document.getElementById('fy-bulk-alliance');
+    const alliance = allianceEl ? allianceEl.value : '';
     const q = document.getElementById('fy-bulk-search').value.trim().toLowerCase();
-    return foundryBulkCandidates().filter(p => !q ||
-        (p.nickname || '').toLowerCase().includes(q) || String(p.game_id || '').toLowerCase().includes(q));
+    return foundryBulkCandidates().filter(p => {
+        if (alliance && p.alliance !== alliance) return false;
+        if (!q) return true;
+        return (p.nickname || '').toLowerCase().includes(q) || String(p.game_id || '').toLowerCase().includes(q);
+    });
 }
 
 function openFoundryBulkAssign() {
@@ -1258,6 +1265,21 @@ function openFoundryBulkAssign() {
     const bulkLegs = foundryLockedLegion ? [foundryLockedLegion] : FOUNDRY_LEGIONS;
     document.getElementById('fy-bulk-legion').innerHTML = bulkLegs.map(l =>
         `<option value="${l}" ${l === defLegion ? 'selected' : ''}>${l}</option>`).join('');
+
+    // Alliance filter (useful especially in Tundra mode where all alliances are loaded)
+    const candidates = foundryBulkCandidates();
+    const allianceEl = document.getElementById('fy-bulk-alliance');
+    if (allianceEl) {
+        const present = (typeof ALL_ALLIANCES !== 'undefined' ? ALL_ALLIANCES : []).filter(a =>
+            candidates.some(p => p.alliance === a)
+        );
+        allianceEl.innerHTML = `<option value="">${foundryL('Semua Aliansi', 'All Alliances')} (${candidates.length})</option>` +
+            present.map(a => {
+                const n = candidates.filter(p => p.alliance === a).length;
+                return `<option value="${escapeHtml(a)}">${escapeHtml(a)} (${n})</option>`;
+            }).join('');
+    }
+
     document.getElementById('fy-bulk-search').value = '';
     document.getElementById('fy-bulk-modal').classList.remove('hidden');
     foundryBulkUpdate();
@@ -1273,10 +1295,11 @@ function foundryBulkFilter() {
         : shown.map(p => {
             const id = String(p.id);
             const gid = canViewSensitive() ? escapeHtml(p.game_id) : MASKED_TEXT;
+            const alliance = p.alliance ? `${escapeHtml(p.alliance)} · ` : '';
             return `<label class="bulk-remove-item">
                 <input type="checkbox" value="${escapeHtml(id)}" ${foundryBulkSel.has(id) ? 'checked' : ''} onchange="foundryBulkToggle(this)">
                 <span class="bulk-remove-name">${escapeHtml(p.nickname)}</span>
-                <span class="bulk-remove-meta">${gid} · ${foundryPower(p)}</span>
+                <span class="bulk-remove-meta">${alliance}${gid} · ${foundryPower(p)}</span>
             </label>`;
         }).join('');
     foundryBulkSummary();
