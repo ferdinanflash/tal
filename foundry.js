@@ -1140,10 +1140,10 @@ function foundryRosterHtml(legion) {
     for (let i = 1; i <= foundrySubMax(); i++) subs += subRow(i);
     return `${foundryExtNotice()}${foundryWarningsHtml(legion)}${foundryToolsHtml(legion)}${foundrySummaryHtml(legion)}${foundryRallyHtml(legion)}
         <div class="fy-counter"><span class="fy-badge fy-b-battle">Battle ${nb} / ${foundryBattleMax()}</span><span class="fy-badge fy-b-sub">${foundryL('Cadangan', 'Substitutes')} ${ns} / ${foundrySubMax()}</span></div>
-        <div class="table-container"><table class="fy-table">${battleHead}<tbody>${battle}</tbody></table></div>
+        <div class="table-container"><table class="fy-table fy-table-battle">${battleHead}<tbody>${battle}</tbody></table></div>
         <h3 class="fy-h">Pemain Cadangan</h3>
         <p class="fy-note">${foundryL('Cadangan baru bisa masuk battlefield setelah menit 3. Tentukan slot yang akan digantikan sebelum battle.', 'Substitutes can only enter the battlefield after minute 3. Decide which slot each one replaces before the battle.')}</p>
-        <div class="table-container"><table class="fy-table">${subHead}<tbody>${subs}</tbody></table></div>`;
+        <div class="table-container"><table class="fy-table fy-table-sub">${subHead}<tbody>${subs}</tbody></table></div>`;
 }
 
 async function foundryClear(p) {
