@@ -656,11 +656,18 @@ async function openTundraFoundry(legion) {
 async function foundryOpenPage() {
     document.getElementById('alliance-menu-page').classList.add('hidden');
     document.getElementById('troops-table-page').classList.add('hidden');
-    document.getElementById('foundry-page').classList.remove('hidden');
     foundryApplyModeChrome();
     document.getElementById('foundry-admin-bar').classList.toggle('hidden', !foundryCanEdit());
+    // Tampilkan data lama (bila mode sama) atau placeholder, lalu terjemahkan SEBELUM halaman muncul,
+    // supaya tidak ada jeda bahasa Indonesia saat data dimuat dari server.
+    const body = document.getElementById('foundry-body');
+    if (foundryLoadedMode === foundryMode && foundryPlayers.length) foundryRender();
+    else if (body) body.innerHTML = `<p class="fy-note">${foundryL('Memuat data roster…', 'Loading roster…')}</p>`;
+    foundryApplyLanguage();
+    document.getElementById('foundry-page').classList.remove('hidden');
     await foundryLoad();
 }
+let foundryLoadedMode = null;
 
 function closeFoundry() {
     document.getElementById('foundry-page').classList.add('hidden');
@@ -685,6 +692,7 @@ async function foundryLoad() {
         return;
     }
     foundrySetPlayers(data);
+    foundryLoadedMode = foundryMode;
     foundryApplyModeChrome();
     foundryRender();
 }

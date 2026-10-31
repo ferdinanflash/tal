@@ -2241,29 +2241,29 @@ select.btn-apply option,
 select.btn-apply option:checked,
 .fy-admin select option:checked { background-color: #2563eb; color: #fff; }
 
-/* Roster Battle/Cadangan: muat di lebar layar tanpa scroll horizontal (desktop/tablet) */
+/* Roster Battle/Cadangan (selector tanpa class tambahan): muat di lebar layar tanpa scroll horizontal (desktop/tablet) */
 @media (min-width: 701px) {
-  .fy-table-battle, .fy-table-sub { table-layout: fixed; min-width: 0 !important; width: 100%; }
-  .table-container:has(> .fy-table-battle), .table-container:has(> .fy-table-sub) { overflow-x: visible; }
-  .fy-table-battle th, .fy-table-battle td, .fy-table-sub th, .fy-table-sub td { padding: 8px 6px; min-width: 0 !important; overflow: hidden; text-overflow: ellipsis; }
-  .fy-table-battle th:nth-child(1), .fy-table-battle td:nth-child(1) { width: 4%; }
-  .fy-table-battle th:nth-child(2), .fy-table-battle td:nth-child(2) { width: 18%; }
-  .fy-table-battle th:nth-child(3), .fy-table-battle td:nth-child(3) { width: 11%; }
-  .fy-table-battle th:nth-child(4), .fy-table-battle td:nth-child(4) { width: 8%; }
-  .fy-table-battle th:nth-child(5), .fy-table-battle td:nth-child(5) { width: 15%; }
-  .fy-table-battle th:nth-child(6), .fy-table-battle td:nth-child(6),
-  .fy-table-battle th:nth-child(7), .fy-table-battle td:nth-child(7),
-  .fy-table-battle th:nth-child(8), .fy-table-battle td:nth-child(8) { width: 14.67%; }
-  .fy-table-sub th:nth-child(1), .fy-table-sub td:nth-child(1) { width: 4%; }
-  .fy-table-sub th:nth-child(2), .fy-table-sub td:nth-child(2) { width: 24%; }
-  .fy-table-sub th:nth-child(3), .fy-table-sub td:nth-child(3) { width: 14%; }
-  .fy-table-sub th:nth-child(4), .fy-table-sub td:nth-child(4) { width: 10%; }
-  .fy-table-sub th:nth-child(5), .fy-table-sub td:nth-child(5) { width: 48%; }
-  .fy-table-battle td select, .fy-table-sub td select,
-  .fy-table-battle .fy-manual-task, .fy-table-sub .fy-manual-task {
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)), #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) { table-layout: fixed; min-width: 0 !important; width: 100%; }
+  #foundry-body .table-container:has(> .fy-table:not(.fy-sum-table)) { overflow-x: visible; }
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th, #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td, #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) th, #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) td { padding: 8px 6px; min-width: 0 !important; overflow: hidden; text-overflow: ellipsis; }
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(1), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(1) { width: 4%; }
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(2), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(2) { width: 18%; }
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(3), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(3) { width: 11%; }
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(4), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(4) { width: 8%; }
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(5), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(5) { width: 15%; }
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(6), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(6),
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(7), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(7),
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(8), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(8) { width: 14.67%; }
+  #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) th:nth-child(1), #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) td:nth-child(1) { width: 4%; }
+  #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) th:nth-child(2), #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) td:nth-child(2) { width: 24%; }
+  #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) th:nth-child(3), #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) td:nth-child(3) { width: 14%; }
+  #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) th:nth-child(4), #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) td:nth-child(4) { width: 10%; }
+  #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) th:nth-child(5), #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) td:nth-child(5) { width: 48%; }
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td select, #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) td select,
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) .fy-manual-task, #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) .fy-manual-task {
     width: 100% !important; min-width: 0 !important; max-width: 100%; font-size: .8rem; padding: 6px 4px; text-overflow: ellipsis;
   }
-  .fy-table-battle .fy-rally-tag { max-width: 100%; display: block; font-size: .7rem; }
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) .fy-rally-tag { max-width: 100%; display: block; font-size: .7rem; }
 }
 
 /* Tabel ringkasan & Garrison: juga muat tanpa scroll horizontal */
