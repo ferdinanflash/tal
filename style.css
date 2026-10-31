@@ -2183,10 +2183,10 @@ body.fy-shared-open { overflow:hidden; }
 /* ===== Light-sweep shine for the 5 alliance buttons (color follows each crest) ===== */
 .alliance-item { overflow: hidden; --shine: 251,191,36; --shine-delay: 0s; animation: alliance-border-glow 9s ease-in-out infinite; animation-delay: var(--shine-delay); }
 .alliance-item:has(.crest-arx) { --shine: 251,113,133; --shine-delay: 0s; }
-.alliance-item:has(.crest-idn) { --shine: 252,211,77;  --shine-delay: -1.8s; }
-.alliance-item:has(.crest-vnx) { --shine: 196,181,253; --shine-delay: -3.6s; }
-.alliance-item:has(.crest-zxc) { --shine: 103,232,249; --shine-delay: -5.4s; }
-.alliance-item:has(.crest-cat) { --shine: 134,239,172; --shine-delay: -7.2s; }
+.alliance-item:has(.crest-idn) { --shine: 252,211,77;  --shine-delay: -3.6s; }
+.alliance-item:has(.crest-vnx) { --shine: 196,181,253; --shine-delay: -5.4s; }
+.alliance-item:has(.crest-zxc) { --shine: 103,232,249; --shine-delay: -7.2s; }
+.alliance-item:has(.crest-cat) { --shine: 134,239,172; --shine-delay: -1.8s; }
 .alliance-item::before {
     content: '';
     position: absolute;
