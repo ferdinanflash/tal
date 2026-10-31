@@ -2222,3 +2222,21 @@ body.fy-shared-open { overflow:hidden; }
     32% { border-color: rgba(var(--shine),.7); box-shadow: 0 4px 6px -1px rgba(0,0,0,.2), 0 0 14px rgba(var(--shine),.35); }
 }
 @media (prefers-reduced-motion: reduce) { .alliance-item, .alliance-item::before { animation: none !important; } }
+
+/* Dropdown Foundry/Tundra: teks pilihan harus terbaca (sebelumnya putih di atas putih) */
+select.btn-apply,
+.fy-admin select,
+.fy-table td select,
+.fy-live-table select,
+.fy-live-fields select { color-scheme: dark; }
+select.btn-apply option,
+.fy-admin select option,
+.fy-table td select option,
+.fy-live-table select option,
+.fy-live-fields select option,
+.fy-controls select option {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+select.btn-apply option:checked,
+.fy-admin select option:checked { background-color: #2563eb; color: #fff; }
