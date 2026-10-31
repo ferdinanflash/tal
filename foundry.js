@@ -668,6 +668,39 @@ async function foundryOpenPage() {
     await foundryLoad();
 }
 let foundryLoadedMode = null;
+/** True once background candidate load finished for current mode (Tundra progressive load). */
+let foundryCandidatesReady = false;
+let foundryCandidatesLoading = null; // Promise in-flight, if any
+
+/** Columns actually used by Foundry/TAL UI — avoids shipping the full row payload.
+ *  Falls back to '*' if a migration column is missing on older databases. */
+function foundrySelectCols() {
+    if (foundryMode === 'tundra') {
+        return [
+            'id', 'nickname', 'game_id', 'alliance', 'troops_power',
+            'legion', 'legion_role',
+            'tundra_slot', 'tundra_role', 'tundra_p1', 'tundra_p2', 'tundra_p3',
+            'tundra_cover', 'tundra_ready'
+        ].join(',');
+    }
+    return [
+        'id', 'nickname', 'game_id', 'alliance', 'troops_power',
+        'foundry_legion', 'foundry_status',
+        'foundry_slot', 'foundry_role', 'foundry_p1', 'foundry_p2', 'foundry_p3',
+        'foundry_cover', 'foundry_ready'
+    ].join(',');
+}
+
+async function foundryQuery(client, build) {
+    // Try projected columns first; if a column is missing (migration not run), fall back to *.
+    let q = build(client.from('troops_power').select(foundrySelectCols()));
+    let res = await q;
+    if (res.error && /column|does not exist|42703/i.test(String(res.error.message || res.error))) {
+        q = build(client.from('troops_power').select('*'));
+        res = await q;
+    }
+    return res;
+}
 
 function closeFoundry() {
     document.getElementById('foundry-page').classList.add('hidden');
@@ -675,26 +708,97 @@ function closeFoundry() {
     showAllianceMenu();
 }
 
+/**
+ * Fast load path:
+ * - Foundry IDN: single query filtered by alliance IDN (unchanged, already small).
+ * - Tundra (TAL): load roster members first (legion set) → render UI immediately,
+ *   then fetch remaining candidates in the background for Bulk Assign.
+ */
 async function foundryLoad() {
     const client = getSupabase();
     if (!client) return;
-    // Foundry mode: IDN only. Tundra mode: all players (roster = those with legion 1/2).
-    let query = client.from('troops_power').select('*').order('troops_power', { ascending: false });
-    if (foundryMode !== 'tundra') query = query.eq('alliance', FOUNDRY_ALLIANCE);
-    const { data, error } = await query;
-    if (error) {
-        showToast(
-            foundryMode === 'tundra'
-                ? foundryL('Gagal memuat roster Tundra', 'Failed to load Tundra roster')
-                : foundryL('Gagal memuat data pemain IDN', 'Failed to load IDN player data'),
-            'error'
+    foundryCandidatesReady = false;
+    foundryCandidatesLoading = null;
+
+    if (foundryMode !== 'tundra') {
+        // IDN: one small query
+        const { data, error } = await foundryQuery(client, q =>
+            q.eq('alliance', FOUNDRY_ALLIANCE).order('troops_power', { ascending: false })
         );
+        if (error) {
+            showToast(foundryL('Gagal memuat data pemain IDN', 'Failed to load IDN player data'), 'error');
+            return;
+        }
+        foundrySetPlayers(data);
+        foundryCandidatesReady = true;
+        foundryLoadedMode = foundryMode;
+        foundryApplyModeChrome();
+        foundryRender();
         return;
     }
-    foundrySetPlayers(data);
+
+    // Tundra: phase 1 — only players already assigned to a legion (roster UI)
+    const { data: rosterData, error: rosterErr } = await foundryQuery(client, q =>
+        q.not('legion', 'is', null).order('troops_power', { ascending: false })
+    );
+    if (rosterErr) {
+        showToast(foundryL('Gagal memuat roster Tundra', 'Failed to load Tundra roster'), 'error');
+        return;
+    }
+    foundrySetPlayers(rosterData || []);
     foundryLoadedMode = foundryMode;
     foundryApplyModeChrome();
     foundryRender();
+
+    // Phase 2 — background: players not yet in any legion (Bulk Assign / slot dropdown candidates)
+    foundryCandidatesLoading = (async () => {
+        const { data: freeData, error: freeErr } = await foundryQuery(client, q =>
+            q.is('legion', null).order('troops_power', { ascending: false })
+        );
+        if (freeErr || !freeData) {
+            foundryCandidatesReady = true;
+            foundryCandidatesLoading = null;
+            return;
+        }
+        // Merge without duplicates (by id)
+        const seen = new Set(foundryPlayers.map(p => String(p.id)));
+        const extra = freeData.filter(p => !seen.has(String(p.id))).map(foundryNormalizePlayer);
+        if (extra.length) {
+            foundryPlayers = foundryPlayers.concat(extra)
+                .sort((a, b) => Number(b.troops_power || 0) - Number(a.troops_power || 0));
+        }
+        foundryCandidatesReady = true;
+        foundryCandidatesLoading = null;
+        // Refresh roster dropdowns so free-player options appear without a full page reload
+        const page = document.getElementById('foundry-page');
+        if (page && !page.classList.contains('hidden') && foundryLoadedMode === 'tundra') {
+            foundryRender();
+        }
+    })();
+}
+
+/** Ensure bulk-assign candidates are loaded (awaits background fetch if still running). */
+async function foundryEnsureCandidates() {
+    if (foundryMode !== 'tundra' || foundryCandidatesReady) return;
+    if (foundryCandidatesLoading) {
+        await foundryCandidatesLoading;
+        return;
+    }
+    // Fallback full reload of free players if background never started
+    const client = getSupabase();
+    if (!client) return;
+    const { data } = await foundryQuery(client, q =>
+        q.is('legion', null).order('troops_power', { ascending: false })
+    );
+    if (data && data.length) {
+        const seen = new Set(foundryPlayers.map(p => String(p.id)));
+        const extra = data.filter(p => !seen.has(String(p.id))).map(foundryNormalizePlayer);
+        if (extra.length) {
+            foundryPlayers = foundryPlayers.concat(extra)
+                .sort((a, b) => Number(b.troops_power || 0) - Number(a.troops_power || 0));
+        }
+    }
+    foundryCandidatesReady = true;
 }
 
 /** Persist a foundry_* shaped patch; remaps columns when mode is tundra. */
@@ -1257,9 +1361,24 @@ function foundryBulkShown() {
     });
 }
 
-function openFoundryBulkAssign() {
+async function openFoundryBulkAssign() {
     if (!foundryCanEdit()) { showToast(foundryDenied(), 'warning'); return; }
-    if (foundryBulkCandidates().length === 0) { showToast(foundryMode === 'tundra' ? foundryL('Semua pemain sudah masuk roster Tundra.', 'All players are already in the Tundra roster.') : foundryL('Semua pemain IDN sudah masuk roster Foundry.', 'All IDN players are already in the Foundry roster.'), 'info'); return; }
+
+    // Tundra progressive load: wait for free-player candidates if still fetching
+    if (foundryMode === 'tundra' && !foundryCandidatesReady) {
+        showToast(foundryL('Memuat daftar pemain…', 'Loading player list…'), 'info');
+        await foundryEnsureCandidates();
+    }
+
+    if (foundryBulkCandidates().length === 0) {
+        showToast(
+            foundryMode === 'tundra'
+                ? foundryL('Semua pemain sudah masuk roster Tundra.', 'All players are already in the Tundra roster.')
+                : foundryL('Semua pemain IDN sudah masuk roster Foundry.', 'All IDN players are already in the Foundry roster.'),
+            'info'
+        );
+        return;
+    }
     foundryBulkSel.clear();
     const defLegion = FOUNDRY_LEGIONS.includes(foundryTab) ? foundryTab : foundryMapLegion;
     const bulkLegs = foundryLockedLegion ? [foundryLockedLegion] : FOUNDRY_LEGIONS;
