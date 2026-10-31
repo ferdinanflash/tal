@@ -2265,3 +2265,10 @@ select.btn-apply option:checked,
   }
   .fy-table-battle .fy-rally-tag { max-width: 100%; display: block; font-size: .7rem; }
 }
+
+/* Tabel ringkasan & Garrison: juga muat tanpa scroll horizontal */
+@media (min-width: 701px) {
+  .fy-sum-table { min-width: 0 !important; width: 100%; table-layout: auto; }
+  .table-container:has(> .fy-sum-table) { overflow-x: visible; }
+  .fy-sum-table th, .fy-sum-table td { padding: 8px 6px; min-width: 0 !important; }
+}
