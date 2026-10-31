@@ -274,6 +274,12 @@ let foundryTaskFilters = new Set(FOUNDRY_ROLES);
 let foundryLiveEdit = false;
 let foundryLiveEditPlayerId = null; // open popover player id
 
+// Teks izin: tanpa kata IDN di mode Tundra.
+function foundryDenied() {
+    return foundryMode === 'tundra'
+        ? foundryL('Anda tidak punya izin mengubah roster Tundra.', 'You do not have permission to edit the Tundra roster.')
+        : foundryL('Anda tidak punya izin mengubah roster IDN.', 'You do not have permission to edit the IDN roster.');
+}
 function foundryCanEdit() {
     if (foundryMode === 'tundra') {
         // Tundra: any staff who can manage Legion 1 or Legion 2
@@ -286,7 +292,7 @@ function foundryLiveEditAllowed() { return foundryCanEdit(); }
 function foundryToggleLiveEdit() {
     if (!foundryLiveEditAllowed()) {
         foundryLiveEdit = false;
-        showToast(foundryL('Anda tidak punya izin mengubah roster IDN.', 'You do not have permission to edit the IDN roster.'), 'warning');
+        showToast(foundryDenied(), 'warning');
         return;
     }
     foundryLiveEdit = !foundryLiveEdit;
@@ -382,7 +388,7 @@ function foundrySetPlayers(data) {
     foundryPlayers = list;
     if (foundryMode === 'tundra') {
         // Tundra uses tundra_p3 (or falls back); treat as extended if column present on any row / after migration
-        foundryExt = !list.length || ('tundra_p3' in (data[0] || {})) || list.some(p => 'foundry_p3' in p);
+        foundryExt = !list.length || ('tundra_p3' in (data[0] || {}));   // normalize selalu menambah foundry_p3, jadi cek kolom DB asli saja
         // Data lama: sudah ada legion + legion_role tapi belum tundra_slot → isi slot otomatis (urut power)
         foundryEnsureTundraSlots();
     } else {
@@ -1016,9 +1022,10 @@ function foundrySummaryHtml(legion) {
         <p class="fy-note">${foundryL('Format sel: jumlah pemain / minimal, lalu total Power pemain di bangunan itu. Merah = kurang dari minimal.', 'Cell format: players / minimum, then total power of players there. Red = below minimum.')}</p></details>`;
 }
 async function foundryRecalcTasks(legion) {
-    if (!foundryCanEdit()) { showToast(foundryL('Anda tidak punya izin mengubah roster IDN.', 'You do not have permission to edit the IDN roster.'), 'warning'); return; }
+    if (!foundryCanEdit()) { showToast(foundryDenied(), 'warning'); return; }
     const ps = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle')
-        .sort((a, b) => (Number(b.troops_power) || 0) - (Number(a.troops_power) || 0) || a.foundry_slot - b.foundry_slot);
+        .sort((a, b) => (Number(b.troops_power) || 0) - (Number(a.troops_power) || 0) || a.foundry_slot - b.foundry_slot)
+        .slice(0, foundryBattleMax());   // sama seperti Isi Otomatis: maksimal 30 Battle, cegah plan[i] undefined
     if (!ps.length) { showToast(foundryL(`${legion} belum punya pemain Battle.`, `${legion} has no battle players.`), 'info'); return; }
     const plan = foundryPlanTasks(ps.length);
     const assign = ps.map((p, i) => ({ p, pos: plan[i], slot: i + 1 }));
@@ -1132,7 +1139,7 @@ async function foundryClear(p) {
 
 async function foundryUpdateTask(playerId, field, value) {
     const allowed = { foundry_role: [...FOUNDRY_ROLES, 'Substitute'], foundry_p1: FOUNDRY_KEYS, foundry_p2: FOUNDRY_KEYS, foundry_p3: FOUNDRY_KEYS };
-    if (!foundryCanEdit()) { showToast(foundryL('Anda tidak punya izin mengubah roster IDN.', 'You do not have permission to edit the IDN roster.'), 'warning'); foundryRender(); return; }
+    if (!foundryCanEdit()) { showToast(foundryDenied(), 'warning'); foundryRender(); return; }
     if ((field === 'foundry_p3' || field === 'foundry_cover') && !foundryExt) { showToast(foundryL('Jalankan supabase_foundry_p3.sql dulu.', 'Run supabase_foundry_p3.sql first.'), 'warning'); foundryRender(); return; }
     let v = value === '' ? null : value;
     if (field === 'foundry_cover') {
@@ -1169,7 +1176,7 @@ async function foundryUpdateTask(playerId, field, value) {
 }
 
 async function foundryAssign(legion, status, slot, idValue) {
-    if (!foundryCanEdit()) { showToast(foundryL('Anda tidak punya izin mengubah roster IDN.', 'You do not have permission to edit the IDN roster.'), 'warning'); return; }
+    if (!foundryCanEdit()) { showToast(foundryDenied(), 'warning'); return; }
     try {
         const old = foundryFind(legion, status, slot);
         if (old) await foundryClear(old);
@@ -1213,8 +1220,8 @@ function foundryBulkShown() {
 }
 
 function openFoundryBulkAssign() {
-    if (!foundryCanEdit()) { showToast(foundryL('Anda tidak punya izin mengubah roster IDN.', 'You do not have permission to edit the IDN roster.'), 'warning'); return; }
-    if (foundryBulkCandidates().length === 0) { showToast(foundryL('Semua pemain IDN sudah masuk roster Foundry.', 'All IDN players are already in the Foundry roster.'), 'info'); return; }
+    if (!foundryCanEdit()) { showToast(foundryDenied(), 'warning'); return; }
+    if (foundryBulkCandidates().length === 0) { showToast(foundryMode === 'tundra' ? foundryL('Semua pemain sudah masuk roster Tundra.', 'All players are already in the Tundra roster.') : foundryL('Semua pemain IDN sudah masuk roster Foundry.', 'All IDN players are already in the Foundry roster.'), 'info'); return; }
     foundryBulkSel.clear();
     const defLegion = FOUNDRY_LEGIONS.includes(foundryTab) ? foundryTab : foundryMapLegion;
     const bulkLegs = foundryLockedLegion ? [foundryLockedLegion] : FOUNDRY_LEGIONS;
@@ -1304,7 +1311,7 @@ function foundryBulkSummary() {
 }
 
 async function foundryBulkSubmit() {
-    if (!foundryCanEdit()) { showToast(foundryL('Anda tidak punya izin mengubah roster IDN.', 'You do not have permission to edit the IDN roster.'), 'warning'); return; }
+    if (!foundryCanEdit()) { showToast(foundryDenied(), 'warning'); return; }
     const { legion, status } = foundryBulkTarget();
     const chosen = foundryBulkCandidates().filter(p => foundryBulkSel.has(String(p.id)))
         .sort((a, b) => Number(b.troops_power || 0) - Number(a.troops_power || 0));
@@ -1370,7 +1377,7 @@ function foundryLegionJobs(l) {
 async function foundryAutoFill() {
     if (!foundryCanEdit()) return;
     if (!foundryPlayers.some(foundryInRoster)) { showToast(foundryL('Belum ada pemain di roster Foundry. Assign pemain ke Legion dulu.', 'No players in the Foundry roster yet. Assign players to a Legion first.'), 'info'); return; }
-    const results = FOUNDRY_LEGIONS.map(l => ({ l, ...foundryLegionJobs(l) }));
+    const results = foundryLegionList().map(l => ({ l, ...foundryLegionJobs(l) }));   // Tundra terkunci ke 1 legion -> hanya legion itu (termasuk Alliance B)
     const gaps = results.filter(r => r.short.length).map(r => `${r.l}: ${r.short.slice(0, 4).join(', ')}${r.short.length > 4 ? ` +${r.short.length - 4}` : ''}`);
     const msg = foundryL(
         'Susun ulang & hitung ulang roster berdasarkan Troops Power? Slot, role, dan target Phase 1, 2, 3 dihitung dari kebutuhan tiap fase, termasuk march penguatan Rally Leader & Joiner ke bangunan (sama dengan tabel Garrison); cadangan diurutkan dan dipasangkan ke slot Battle yang paling kritis bila belum punya pasangan. Legion dan status tiap pemain tetap; tidak ada pemain baru yang ditambahkan.' + (gaps.length ? ` Belum cukup penjaga: ${gaps.join(' | ')}.` : ' Semua bangunan terisi cukup.'),
@@ -1395,7 +1402,7 @@ async function foundryAutoFill() {
 
 async function foundryClearAll() {
     if (!foundryCanEdit()) return;
-    if (!await showCustomConfirmAsync(foundryL('Kosongkan seluruh roster Foundry IDN?', 'Clear the entire IDN Foundry roster?'))) return;
+    if (!await showCustomConfirmAsync(foundryMode === 'tundra' ? foundryL('Kosongkan seluruh roster Tundra?', 'Clear the entire Tundra roster?') : foundryL('Kosongkan seluruh roster Foundry IDN?', 'Clear the entire IDN Foundry roster?'))) return;
     try { for (const p of foundryPlayers.filter(foundryInRoster)) await foundryClear(p); }
     catch (e) { showToast(foundryL('Gagal mengosongkan roster.', 'Failed to clear the roster.'), 'error'); }
     foundryRender();
@@ -1406,7 +1413,7 @@ async function foundryCopyText() {
     const mode = (document.getElementById('foundry-copy-mode') || {}).value || 'all';
     const which = (document.getElementById('foundry-copy-legion') || {}).value || 'all';
     const legions = which === 'all' ? FOUNDRY_LEGIONS : [which];
-    const lines = ['**FOUNDRY BATTLE ROSTER — IDN**' + (mode === 'all' ? '' : ` — Phase ${mode} (${FOUNDRY_PHASE_RANGE[Number(mode) - 1]} ${foundryL('mnt', 'min')})`)];
+    const lines = [`**FOUNDRY BATTLE ROSTER — ${foundryTag()}**` + (mode === 'all' ? '' : ` — Phase ${mode} (${FOUNDRY_PHASE_RANGE[Number(mode) - 1]} ${foundryL('mnt', 'min')})`)];
     legions.forEach(l => {
         lines.push('', `__${l}__`);
         if (mode === 'all') {
@@ -1876,7 +1883,7 @@ async function openFoundrySharedMap(legion, phase) {
     // State marker khusus Live Share (tidak mengubah preferensi halaman utama)
     let shareMarksOn = true, shareCountsOn = true;
     const wrap = document.createElement('div'); wrap.id = 'foundry-shared-map';
-    wrap.innerHTML = `<div class="fdt-shared-bar"><strong>🏭 Foundry Live Map · IDN</strong><span class="fdt-shared-actions"><button id="fy-share-lang">${en()?'<span class="flag flag-id"></span> Bahasa Indonesia':'<span class="flag flag-gb"></span> English'}</button>
+    wrap.innerHTML = `<div class="fdt-shared-bar"><strong>🏭 Foundry Live Map · ${foundryTag()}</strong><span class="fdt-shared-actions"><button id="fy-share-lang">${en()?'<span class="flag flag-id"></span> Bahasa Indonesia':'<span class="flag flag-gb"></span> English'}</button>
       <button id="fy-share-l1">Legion 1</button><button id="fy-share-l2">Legion 2</button>
       <button id="fy-share-p1">Phase 1</button><button id="fy-share-p2">Phase 2</button><button id="fy-share-p3">Phase 3</button><button id="fy-share-pall">🧭 ${foundryPhaseLabel('all')}</button>
       <button id="fy-share-marks" class="fy-share-active">Nama: ON</button>
@@ -2144,7 +2151,7 @@ async function openFoundrySharedChart(legion, phase) {
     if (urlLang === 'en' || urlLang === 'id' || urlLang === 'zh') foundryLanguage = urlLang;
     const en = () => foundryLanguage === 'en';
     const wrap = document.createElement('div'); wrap.id = 'foundry-shared-map';
-    wrap.innerHTML = `<div class="fdt-shared-bar"><strong>📊 Foundry Live Chart · IDN</strong><span class="fdt-shared-actions"><button id="fy-share-lang">${en() ? '<span class="flag flag-id"></span> Bahasa Indonesia' : '<span class="flag flag-gb"></span> English'}</button>
+    wrap.innerHTML = `<div class="fdt-shared-bar"><strong>📊 Foundry Live Chart · ${foundryTag()}</strong><span class="fdt-shared-actions"><button id="fy-share-lang">${en() ? '<span class="flag flag-id"></span> Bahasa Indonesia' : '<span class="flag flag-gb"></span> English'}</button>
       <button id="fy-share-l1">Legion 1</button><button id="fy-share-l2">Legion 2</button>
       <button id="fy-share-p1">Phase 1</button><button id="fy-share-p2">Phase 2</button><button id="fy-share-p3">Phase 3</button>
       <button id="fy-share-png">🖼️ PNG</button>
