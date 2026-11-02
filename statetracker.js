@@ -978,6 +978,33 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         showList();
     }
 
+    // The members endpoint may name the list differently or nest it, so look in
+    // the usual places instead of only `d.members`.
+    function extractMemberList(d) {
+        if (!d) return [];
+        if (Array.isArray(d)) return d;
+        const keys = ['members', 'memberList', 'member_list', 'players', 'roster', 'list', 'items', 'results'];
+        const holders = [d, d.data, d.alliance, d.result];
+        for (const h of holders) {
+            if (!h || typeof h !== 'object') continue;
+            for (const k of keys) {
+                if (Array.isArray(h[k]) && h[k].length) return h[k];
+            }
+        }
+        // Last resort: any array of objects that look like players.
+        for (const h of holders) {
+            if (!h || typeof h !== 'object') continue;
+            for (const k of Object.keys(h)) {
+                const v = h[k];
+                if (Array.isArray(v) && v.length && typeof v[0] === 'object' &&
+                    ('uid' in v[0] || 'playerUid' in v[0] || 'nick_name' in v[0] || 'nickname' in v[0] || 'name' in v[0])) {
+                    return v;
+                }
+            }
+        }
+        return [];
+    }
+
     function renderAllianceDetail() {
         const aid = S.detailAid;
         const cached = S.allianceCache.get(aid);
@@ -1006,7 +1033,10 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             const minPow = Number(d.joinMinPower) || 0;
             const recruit = !!d.publicRecruit;
             const homeKid = Number(d.homeKid) || null;
-            const membersList = Array.isArray(d.members) ? d.members : [];
+            const membersList = extractMemberList(d);
+            if (!membersList.length) {
+                console.warn('State Tracker: no member list found in alliance payload. Top-level keys:', Object.keys(d));
+            }
 
             const leaderHtml = leaderName
                 ? (leaderUid
@@ -1022,8 +1052,8 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             let membersHtml = '';
             if (membersList.length) {
                 const mrows = membersList.map((m, i) => {
-                    const uid = Number(m.uid || m.playerUid) || 0;
-                    const nick = escapeHtml(String(m.nick_name || m.name || uid || ''));
+                    const uid = Number(m.uid || m.playerUid || m.player_uid || m.fid) || 0;
+                    const nick = escapeHtml(String(m.nick_name || m.nickname || m.nickName || m.name || uid || ''));
                     const furnace = Number(m.lv || m.stove_lv || m.furnace_lv) || 0;
                     const x = Number.isFinite(Number(m.x)) ? Number(m.x) : null;
                     const y = Number.isFinite(Number(m.y)) ? Number(m.y) : null;
@@ -1052,6 +1082,9 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                             <tbody>${mrows}</tbody>
                         </table>
                     </div>`;
+            } else if (members > 0) {
+                membersHtml = `<h4 class="st-detail-h">Members</h4>
+                    <div class="st-detail-hint st-detail-hint-warn"><span>Member list unavailable</span></div>`;
             }
 
             const notice = d.notice ? String(d.notice).trim() : '';
