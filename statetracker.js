@@ -436,6 +436,47 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         return data;
     }
 
+    // Extra player endpoints shown on wosatlas.com's player page.
+    const PLAYER_EXTRAS = [
+        { key: 'power', label: 'Power', path: 'power' },
+        { key: 'arena', label: 'Arena', path: 'arena' },
+        { key: 'history', label: 'History', path: 'history?limit=200' }
+    ];
+
+    async function fetchPlayerExtraProxy(uid, kind) {
+        const client = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (!client) throw new Error('unavailable');
+        const { data, error } = await client.functions.invoke(CFG.proxyFunction, {
+            body: { action: 'player-extra', uid, kind }
+        });
+        if (error) throw error;
+        if (!data || (typeof data === 'object' && data.error && !Array.isArray(data))) {
+            throw new Error((data && data.error) || 'proxy-player-extra-failed');
+        }
+        return data;
+    }
+
+    async function fetchPlayerExtras(uid, signal) {
+        const out = {};
+        await Promise.all(PLAYER_EXTRAS.map(async (ex) => {
+            let val = null;
+            try {
+                if (S.mode === 'proxy') {
+                    try { val = await fetchPlayerExtraProxy(uid, ex.key); }
+                    catch (e) { val = await fetchJson(`${CFG.apiBase}/players/${uid}/${ex.path}`, signal); }
+                } else {
+                    try { val = await fetchJson(`${CFG.apiBase}/players/${uid}/${ex.path}`, signal); }
+                    catch (e) { val = await fetchPlayerExtraProxy(uid, ex.key); }
+                }
+            } catch (e) {
+                if (e && e.name === 'AbortError') throw e;
+                val = null;
+            }
+            out[ex.key] = val;
+        }));
+        return out;
+    }
+
     async function loadPlayer(uid) {
         const key = Number(uid);
         if (!Number.isFinite(key)) return;
@@ -473,10 +514,21 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             console.error('State Tracker player:', err);
             errMsg = 'Could not load player detail.';
         }
+        let extras = null;
+        if (data) {
+            // Show the basic card now, then fill in power / arena / history.
+            S.playerCache.set(key, { loading: false, extrasLoading: true, fetchedAt: Date.now(), data: data, error: errMsg });
+            if (S.view === 'detail' && S.detailMode === 'player' && S.detailUid === key) renderPlayerDetail();
+            try { extras = await fetchPlayerExtras(key, signal); }
+            catch (err) { if (err && err.name === 'AbortError') return; }
+            if (signal && signal.aborted) return;
+        }
         S.playerCache.set(key, {
             loading: false,
+            extrasLoading: false,
             fetchedAt: Date.now(),
             data: data,
+            extras: extras,
             error: errMsg
         });
         if (S.view === 'detail' && S.detailMode === 'player' && S.detailUid === key) renderPlayerDetail();
@@ -1035,7 +1087,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             const homeKid = Number(d.homeKid) || null;
             const membersList = extractMemberList(d);
             if (!membersList.length) {
-                console.warn('State Tracker: no member list found in alliance payload. Top-level keys:', Object.keys(d));
+                console.warn('State Tracker: no member list in alliance payload. viewerTier:', d.viewerTier, 'Top-level keys:', Object.keys(d));
             }
 
             const leaderHtml = leaderName
@@ -1083,8 +1135,13 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                         </table>
                     </div>`;
             } else if (members > 0) {
+                const tier = String(d.viewerTier || '').toUpperCase();
+                const limited = tier && tier !== 'PASS';
+                const msg = limited
+                    ? `Member list is restricted by WoS Atlas for this connection (access tier: ${escapeHtml(tier)}). Open it on wosatlas.com to view the members.`
+                    : 'Member list unavailable';
                 membersHtml = `<h4 class="st-detail-h">Members</h4>
-                    <div class="st-detail-hint st-detail-hint-warn"><span>Member list unavailable</span></div>`;
+                    <div class="st-detail-hint st-detail-hint-warn"><span>${msg}</span>${limited ? ` <a class="st-link" href="https://wosatlas.com/" target="_blank" rel="noopener">wosatlas.com</a>` : ''}</div>`;
             }
 
             const notice = d.notice ? String(d.notice).trim() : '';
@@ -1125,6 +1182,68 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         els.detailBody.innerHTML = body;
     }
 
+    // ---- Generic "all fields" renderer for player detail ----
+    // The player payload has more fields than the summary cards show (history,
+    // stats, etc.), and the exact schema can change, so everything not already
+    // shown is listed here instead of being dropped.
+    function humanizeKey(k) {
+        return String(k).replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_\-]+/g, ' ')
+            .replace(/^./, (c) => c.toUpperCase());
+    }
+
+    function fmtAnyValue(key, v) {
+        if (v === null || v === undefined || v === '') return '-';
+        if (typeof v === 'boolean') return v ? 'Yes' : 'No';
+        if (typeof v === 'number') {
+            if (/pct|ratio|rate$/i.test(key) && Math.abs(v) <= 10) return (v * 100).toFixed(2) + '%';
+            return Number.isInteger(v) ? fmtFull(v) : String(Math.round(v * 1000) / 1000);
+        }
+        if (typeof v === 'string') {
+            if (/^\d{4}-\d{2}-\d{2}T/.test(v)) {
+                const t = new Date(v);
+                if (!isNaN(t)) return t.toLocaleString();
+            }
+            return v;
+        }
+        return null; // objects / arrays handled by caller
+    }
+
+    function renderExtraValue(key, v, depth) {
+        const simple = fmtAnyValue(key, v);
+        if (simple !== null) return `<span data-no-i18n>${escapeHtml(simple)}</span>`;
+        if (Array.isArray(v)) {
+            if (!v.length) return '-';
+            if (v.every((x) => x === null || typeof x !== 'object')) {
+                return `<span data-no-i18n>${escapeHtml(v.map((x) => fmtAnyValue(key, x) ?? '').join(', '))}</span>`;
+            }
+            const rows = v.slice(0, 100).filter((x) => x && typeof x === 'object');
+            const cols = [];
+            rows.forEach((r) => Object.keys(r).forEach((c) => { if (!cols.includes(c) && cols.length < 8) cols.push(c); }));
+            const head = cols.map((c) => `<th>${escapeHtml(humanizeKey(c))}</th>`).join('');
+            const bodyRows = rows.map((r) => `<tr>${cols.map((c) => {
+                const cv = r[c];
+                const f = fmtAnyValue(c, cv);
+                return `<td data-no-i18n>${escapeHtml(f !== null ? f : JSON.stringify(cv))}</td>`;
+            }).join('')}</tr>`).join('');
+            const more = v.length > rows.length ? `<p class="st-muted">+${v.length - rows.length} more</p>` : '';
+            return `<div class="st-mini-table-wrap"><table class="st-mini-table"><thead><tr>${head}</tr></thead><tbody>${bodyRows}</tbody></table></div>${more}`;
+        }
+        if (typeof v === 'object') {
+            if (depth >= 2) return `<pre class="st-note" data-no-i18n>${escapeHtml(JSON.stringify(v, null, 1))}</pre>`;
+            return renderExtraFields(v, [], depth + 1);
+        }
+        return '-';
+    }
+
+    function renderExtraFields(obj, skip, depth) {
+        const skipSet = new Set(skip || []);
+        const rows = Object.keys(obj || {}).filter((k) => !skipSet.has(k)).map((k) =>
+            `<tr><th scope="row">${escapeHtml(humanizeKey(k))}</th><td>${renderExtraValue(k, obj[k], depth || 0)}</td></tr>`
+        ).join('');
+        if (!rows) return '';
+        return `<div class="st-mini-table-wrap"><table class="st-mini-table st-kv-table"><tbody>${rows}</tbody></table></div>`;
+    }
+
     function renderPlayerDetail() {
         const uid = S.detailUid;
         const cached = S.playerCache.get(uid);
@@ -1153,6 +1272,33 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             const observed = p.observed_at ? new Date(p.observed_at).toLocaleString() : null;
             const lv = Number(p.lv) || 0;
 
+            const shown = ['nick_name', 'current_power', 'stove_lv', 'furnace_lv', 'kid', 'aid', 'abbr',
+                'last_jump_pct', 'observed_at', 'lv'];
+            const extraHtml = renderExtraFields(p, shown, 0);
+            let extrasHtml = '';
+            if (cached.extrasLoading) {
+                extrasHtml = `<div class="st-detail-hint"><span class="spinner-inline" aria-hidden="true"></span><span>Loading power, arena and history...</span></div>`;
+            } else if (cached.extras) {
+                extrasHtml = PLAYER_EXTRAS.map((ex) => {
+                    const v = cached.extras[ex.key];
+                    if (v === null || v === undefined) {
+                        return `<h4 class="st-detail-h">${ex.label}</h4><div class="st-detail-hint st-detail-hint-warn"><span>${ex.label} data unavailable</span></div>`;
+                    }
+                    const inner = (v && typeof v === 'object' && !Array.isArray(v))
+                        ? renderExtraFields(v, ['viewerTier'], 0)
+                        : renderExtraValue(ex.key, v, 0);
+                    const t = v && v.viewerTier ? String(v.viewerTier).toUpperCase() : '';
+                    const lim = t && t !== 'PASS' ? ` <span class="st-muted">(access tier: ${escapeHtml(t)})</span>` : '';
+                    return `<h4 class="st-detail-h">${ex.label}${lim}</h4>${inner || '<div class="st-muted">-</div>'}`;
+                }).join('');
+                console.info('State Tracker player extras:', cached.extras);
+            }
+            const tier = String((payload && payload.viewerTier) || p.viewerTier || '').toUpperCase();
+            const tierNote = (tier && tier !== 'PASS')
+                ? `<div class="st-detail-hint st-detail-hint-warn"><span>Some player data may be restricted by WoS Atlas for this connection (access tier: ${escapeHtml(tier)}).</span> <a class="st-link" href="https://wosatlas.com/" target="_blank" rel="noopener">wosatlas.com</a></div>`
+                : '';
+            console.info('State Tracker player payload keys:', Object.keys(payload || {}), 'player keys:', Object.keys(p));
+
             const allianceBtn = aid
                 ? `<button type="button" class="st-tag st-tag-btn" data-action="open-alliance" data-aid="${aid}">${abbr || aid}</button>`
                 : (abbr ? `<span class="st-tag">${abbr}</span>` : '-');
@@ -1171,6 +1317,9 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                     <div class="st-stat"><span class="st-stat-label">Player ID</span><strong class="st-stat-value st-stat-value-sm" data-no-i18n>${uid}</strong></div>
                     ${kid ? `<div class="st-stat"><span class="st-stat-label">State</span><strong class="st-stat-value">${kid}</strong></div>` : ''}
                 </div>
+                ${tierNote}
+                ${extraHtml ? `<h4 class="st-detail-h">Full details</h4>${extraHtml}` : ''}
+                ${extrasHtml}
                 ${observed ? `<p class="st-muted st-detail-updated">Observed ${observed}</p>` : ''}`;
         } else {
             body = `

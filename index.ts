@@ -20,6 +20,9 @@
 //   "player" — player record via /players/{uid}
 //     body: { uid }
 //
+//   "player-extra" — /players/{uid}/power | /arena | /history?limit=200
+//     body: { uid, kind: 'power' | 'arena' | 'history' }
+//
 // Not an open proxy: only the endpoints listed below are reachable, inputs are
 // clamped, and responses are cached in memory for a few minutes.
 
@@ -166,6 +169,28 @@ async function handlePlayer(input: Record<string, unknown>) {
   return json(up.body);
 }
 
+const PLAYER_EXTRA_PATHS: Record<string, string> = {
+  power: 'power',
+  arena: 'arena',
+  history: 'history?limit=200',
+};
+
+async function handlePlayerExtra(input: Record<string, unknown>) {
+  const uid = Math.trunc(Number(input.uid));
+  if (!Number.isFinite(uid) || uid < 1) return jsonObj({ error: 'bad-uid' }, 400);
+  const kind = typeof input.kind === 'string' ? input.kind : '';
+  const path = PLAYER_EXTRA_PATHS[kind];
+  if (!path) return jsonObj({ error: 'bad-kind' }, 400);
+  const key = `player-extra:${uid}:${kind}`;
+  const hit = cacheGet(key);
+  if (hit) return json(hit);
+
+  const up = await upstreamGet(`${API}/players/${uid}/${path}`);
+  if (!up.ok) return jsonObj({ error: 'upstream-' + up.status }, 502);
+  cacheSet(key, up.body);
+  return json(up.body);
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return jsonObj({ error: 'method-not-allowed' }, 405);
@@ -183,6 +208,7 @@ Deno.serve(async (req: Request) => {
     if (action === 'detail') return await handleDetail(input);
     if (action === 'alliance') return await handleAlliance(input);
     if (action === 'player') return await handlePlayer(input);
+    if (action === 'player-extra') return await handlePlayerExtra(input);
     // Default and any unknown action: summary (keeps older clients working).
     return await handleSummary(input);
   } catch (_) {
