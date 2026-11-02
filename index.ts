@@ -14,6 +14,12 @@
 //     body: { kid, allianceLimit? }
 //     Client: supabase.functions.invoke('wosatlas-states', { body: { action: 'detail', kid: 3475 } })
 //
+//   "alliance" — alliance record via /alliances/{aid}/members
+//     body: { aid }
+//
+//   "player" — player record via /players/{uid}
+//     body: { uid }
+//
 // Not an open proxy: only the endpoints listed below are reachable, inputs are
 // clamped, and responses are cached in memory for a few minutes.
 
@@ -134,6 +140,32 @@ async function handleDetail(input: Record<string, unknown>) {
   return json(payload);
 }
 
+async function handleAlliance(input: Record<string, unknown>) {
+  const aid = Math.trunc(Number(input.aid));
+  if (!Number.isFinite(aid) || aid < 1) return jsonObj({ error: 'bad-aid' }, 400);
+  const key = `alliance:${aid}`;
+  const hit = cacheGet(key);
+  if (hit) return json(hit);
+
+  const up = await upstreamGet(`${API}/alliances/${aid}/members`);
+  if (!up.ok) return jsonObj({ error: 'upstream-' + up.status }, 502);
+  cacheSet(key, up.body);
+  return json(up.body);
+}
+
+async function handlePlayer(input: Record<string, unknown>) {
+  const uid = Math.trunc(Number(input.uid));
+  if (!Number.isFinite(uid) || uid < 1) return jsonObj({ error: 'bad-uid' }, 400);
+  const key = `player:${uid}`;
+  const hit = cacheGet(key);
+  if (hit) return json(hit);
+
+  const up = await upstreamGet(`${API}/players/${uid}`);
+  if (!up.ok) return jsonObj({ error: 'upstream-' + up.status }, 502);
+  cacheSet(key, up.body);
+  return json(up.body);
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return jsonObj({ error: 'method-not-allowed' }, 405);
@@ -149,6 +181,8 @@ Deno.serve(async (req: Request) => {
 
   try {
     if (action === 'detail') return await handleDetail(input);
+    if (action === 'alliance') return await handleAlliance(input);
+    if (action === 'player') return await handlePlayer(input);
     // Default and any unknown action: summary (keeps older clients working).
     return await handleSummary(input);
   } catch (_) {

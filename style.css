@@ -2489,3 +2489,32 @@ body.state-tracker-modal-open { overflow: hidden; }
     font-size: 0.78rem;
     text-align: center;
 }
+.st-tag-btn {
+    border: none;
+    cursor: pointer;
+    font: inherit;
+}
+.st-tag-btn:hover { background: #2a3548; color: #7dd3fc; }
+.st-link {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    color: #7dd3fc;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+}
+.st-link:hover { text-decoration: underline; color: #bae6fd; }
+.st-link-lg { font-size: inherit; }
+.st-uid-hint {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.72rem;
+    color: #8a8d98;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+.st-click-row { cursor: pointer; }
+.st-click-row:focus-visible { outline: 2px solid #7dd3fc; outline-offset: -2px; }

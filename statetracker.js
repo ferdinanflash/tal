@@ -95,6 +95,22 @@ Furnace || Furnace || 熔炉 || Furnace || Fornace || เตา
 Loading detail... || Memuat detail... || 正在加载详情... || Nilo-load ang detalye... || Caricamento dettaglio... || กำลังโหลดรายละเอียด...
 Could not load extra State detail. Showing summary only. || Gagal memuat detail State tambahan. Menampilkan ringkasan saja. || 无法加载额外州详情，仅显示摘要。 || Hindi ma-load ang karagdagang detalye ng State. Buod lang ang ipinapakita. || Impossibile caricare i dettagli extra. Solo riepilogo. || โหลดรายละเอียดเพิ่มเติมไม่ได้ แสดงเฉพาะสรุป
 Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS Atlas || Apri su WoS Atlas || เปิดใน WoS Atlas
+Back to State || Kembali ke State || 返回州 || Bumalik sa State || Torna allo State || กลับไปที่ State
+Player || Pemain || 玩家 || Manlalaro || Giocatore || ผู้เล่น
+Player ID || ID Pemain || 玩家 ID || Player ID || ID giocatore || รหัสผู้เล่น
+Furnace level || Level Furnace || 熔炉等级 || Antas ng Furnace || Livello fornace || เลเวลเตา
+Last jump || Jump terakhir || 最近跃迁 || Huling jump || Ultimo salto || จัมพ์ล่าสุด
+Observed || Diamati || 观测于 || Naobserbahan || Osservato || สังเกตเมื่อ
+Leader || Pemimpin || 领袖 || Pinuno || Leader || ผู้นำ
+Alliance level || Level aliansi || 联盟等级 || Antas ng alyansa || Livello alleanza || เลเวลพันธมิตร
+Language || Bahasa || 语言 || Wika || Lingua || ภาษา
+Honor || Honor || 荣誉 || Honor || Onore || เกียรติยศ
+Recruitment || Rekrutmen || 招募 || Recruitment || Reclutamento || การรับสมัคร
+Loading alliance... || Memuat aliansi... || 正在加载联盟... || Nilo-load ang alyansa... || Caricamento alleanza... || กำลังโหลดพันธมิตร...
+Loading player... || Memuat pemain... || 正在加载玩家... || Nilo-load ang manlalaro... || Caricamento giocatore... || กำลังโหลดผู้เล่น...
+Could not load alliance detail. || Gagal memuat detail aliansi. || 无法加载联盟详情。 || Hindi ma-load ang detalye ng alyansa. || Impossibile caricare i dettagli dell'alleanza. || โหลดรายละเอียดพันธมิตรไม่ได้
+Could not load player detail. || Gagal memuat detail pemain. || 无法加载玩家详情。 || Hindi ma-load ang detalye ng manlalaro. || Impossibile caricare i dettagli del giocatore. || โหลดรายละเอียดผู้เล่นไม่ได้
+Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可用 || Hindi available ang listahan ng miyembro || Elenco membri non disponibile || รายชื่อสมาชิกไม่พร้อม
 `);
     }
 
@@ -126,10 +142,17 @@ Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS 
         error: null,
         retry: null,
         view: 'list',           // 'list' | 'detail'
+        detailMode: 'state',    // 'state' | 'alliance' | 'player'
         detailKid: null,
+        detailAid: null,
+        detailUid: null,
         listScroll: 0,
         // kid -> { fetchedAt, state, power, alliances, error, loading }
-        detailCache: new Map()
+        detailCache: new Map(),
+        // aid -> { fetchedAt, data, error, loading }
+        allianceCache: new Map(),
+        // uid -> { fetchedAt, data, error, loading }
+        playerCache: new Map()
     };
 
     let trigger = null;
@@ -330,7 +353,135 @@ Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS 
             error: errMsg
         });
 
-        if (S.view === 'detail' && S.detailKid === key) renderDetail();
+        if (S.view === 'detail' && S.detailMode === 'state' && S.detailKid === key) renderDetail();
+    }
+
+    // ---- Alliance detail ----
+    async function fetchAllianceDirect(aid, signal) {
+        return fetchJson(`${CFG.apiBase}/alliances/${aid}/members`, signal);
+    }
+
+    async function fetchAllianceProxy(aid) {
+        const client = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (!client) throw new Error('unavailable');
+        const { data, error } = await client.functions.invoke(CFG.proxyFunction, {
+            body: { action: 'alliance', aid }
+        });
+        if (error) throw error;
+        if (!data || (typeof data === 'object' && data.error && !data.aid)) {
+            throw new Error((data && data.error) || 'proxy-alliance-failed');
+        }
+        return data;
+    }
+
+    async function loadAlliance(aid) {
+        const key = Number(aid);
+        if (!Number.isFinite(key)) return;
+        const cached = S.allianceCache.get(key);
+        if (cached && cached.loading) return;
+        if (cached && cached.fetchedAt && Date.now() - cached.fetchedAt < CFG.detailCacheMs && !cached.error) {
+            return;
+        }
+        S.allianceCache.set(key, Object.assign({}, cached || {}, { loading: true, error: null }));
+        if (S.view === 'detail' && S.detailMode === 'alliance' && S.detailAid === key) renderAllianceDetail();
+
+        const signal = S.ctrl && S.ctrl.signal;
+        let data = null;
+        let errMsg = null;
+        try {
+            if (S.mode === 'proxy') {
+                try { data = await fetchAllianceProxy(key); }
+                catch (err) {
+                    if (err && err.name === 'AbortError') throw err;
+                    data = await fetchAllianceDirect(key, signal);
+                }
+            } else {
+                try {
+                    data = await fetchAllianceDirect(key, signal);
+                    if (S.mode !== 'proxy') S.mode = 'direct';
+                } catch (err) {
+                    if (err && err.name === 'AbortError') throw err;
+                    data = await fetchAllianceProxy(key);
+                    S.mode = 'proxy';
+                }
+            }
+            if (signal && signal.aborted) return;
+        } catch (err) {
+            if (err && err.name === 'AbortError') return;
+            console.error('State Tracker alliance:', err);
+            errMsg = 'Could not load alliance detail.';
+        }
+        S.allianceCache.set(key, {
+            loading: false,
+            fetchedAt: Date.now(),
+            data: data,
+            error: errMsg
+        });
+        if (S.view === 'detail' && S.detailMode === 'alliance' && S.detailAid === key) renderAllianceDetail();
+    }
+
+    // ---- Player detail ----
+    async function fetchPlayerDirect(uid, signal) {
+        return fetchJson(`${CFG.apiBase}/players/${uid}`, signal);
+    }
+
+    async function fetchPlayerProxy(uid) {
+        const client = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (!client) throw new Error('unavailable');
+        const { data, error } = await client.functions.invoke(CFG.proxyFunction, {
+            body: { action: 'player', uid }
+        });
+        if (error) throw error;
+        if (!data || (typeof data === 'object' && data.error && !data.players)) {
+            throw new Error((data && data.error) || 'proxy-player-failed');
+        }
+        return data;
+    }
+
+    async function loadPlayer(uid) {
+        const key = Number(uid);
+        if (!Number.isFinite(key)) return;
+        const cached = S.playerCache.get(key);
+        if (cached && cached.loading) return;
+        if (cached && cached.fetchedAt && Date.now() - cached.fetchedAt < CFG.detailCacheMs && !cached.error) {
+            return;
+        }
+        S.playerCache.set(key, Object.assign({}, cached || {}, { loading: true, error: null }));
+        if (S.view === 'detail' && S.detailMode === 'player' && S.detailUid === key) renderPlayerDetail();
+
+        const signal = S.ctrl && S.ctrl.signal;
+        let data = null;
+        let errMsg = null;
+        try {
+            if (S.mode === 'proxy') {
+                try { data = await fetchPlayerProxy(key); }
+                catch (err) {
+                    if (err && err.name === 'AbortError') throw err;
+                    data = await fetchPlayerDirect(key, signal);
+                }
+            } else {
+                try {
+                    data = await fetchPlayerDirect(key, signal);
+                    if (S.mode !== 'proxy') S.mode = 'direct';
+                } catch (err) {
+                    if (err && err.name === 'AbortError') throw err;
+                    data = await fetchPlayerProxy(key);
+                    S.mode = 'proxy';
+                }
+            }
+            if (signal && signal.aborted) return;
+        } catch (err) {
+            if (err && err.name === 'AbortError') return;
+            console.error('State Tracker player:', err);
+            errMsg = 'Could not load player detail.';
+        }
+        S.playerCache.set(key, {
+            loading: false,
+            fetchedAt: Date.now(),
+            data: data,
+            error: errMsg
+        });
+        if (S.view === 'detail' && S.detailMode === 'player' && S.detailUid === key) renderPlayerDetail();
     }
 
     function nextMissingOffset() {
@@ -414,6 +565,8 @@ Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS 
         S.rows = new Map();
         S.loadedOffsets = new Set();
         S.detailCache = new Map();
+        S.allianceCache = new Map();
+        S.playerCache = new Map();
         S.total = 0;
         S.recordedAt = null;
         S.fetchedAt = 0;
@@ -458,7 +611,18 @@ Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS 
         if (!els) return;
         els.listView.classList.toggle('hidden', S.view !== 'list');
         els.detailView.classList.toggle('hidden', S.view !== 'detail');
-        if (S.view === 'detail') { renderDetail(); return; }
+        if (S.view === 'detail') {
+            if (S.detailMode === 'alliance') renderAllianceDetail();
+            else if (S.detailMode === 'player') renderPlayerDetail();
+            else renderDetail();
+            // Back button label
+            if (els.back) {
+                els.back.textContent = (S.detailMode === 'state')
+                    ? '← Back to list'
+                    : '← Back to State';
+            }
+            return;
+        }
         els.sort.value = S.sort;
         els.headSort.forEach((th) => {
             th.setAttribute('aria-sort', th.dataset.sort === S.sort ? (S.desc ? 'descending' : 'ascending') : 'none');
@@ -576,6 +740,7 @@ Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS 
             : (stateFacts && stateFacts.migrantRead === 'UNAVAILABLE' ? 'Not answered by the server' : null);
 
         const t = row.top;
+        // topAlliance from summary may not include aid; leaderboard entries do.
         const topHtml = t ? `
             <div class="st-topcard">
                 <div class="st-topcard-head"><span class="st-tag">${escapeHtml(t.abbr)}</span><strong data-no-i18n>${escapeHtml(t.name)}</strong></div>
@@ -611,6 +776,7 @@ Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS 
         if (entries && entries.length) {
             const rows = entries.map((a, i) => {
                 const rank = i + 1;
+                const aid = Number(a.aid) || 0;
                 const abbr = escapeHtml(String(a.abbr || ''));
                 const name = escapeHtml(String(a.name || ''));
                 const members = Number.isFinite(Number(a.members)) ? Number(a.members) : 0;
@@ -620,10 +786,17 @@ Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS 
                 const recruit = a.publicRecruit
                     ? '<span class="st-chip-static is-open">Open</span>'
                     : '<span class="st-chip-static is-closed">Closed</span>';
-                return `<tr>
+                const click = aid ? ` class="st-click-row" data-action="open-alliance" data-aid="${aid}" tabindex="0" role="button"` : '';
+                const nameCell = aid
+                    ? `<button type="button" class="st-link" data-action="open-alliance" data-aid="${aid}" data-no-i18n>${name}</button>`
+                    : `<span data-no-i18n>${name}</span>`;
+                const tagCell = aid
+                    ? `<button type="button" class="st-tag st-tag-btn" data-action="open-alliance" data-aid="${aid}">${abbr}</button>`
+                    : `<span class="st-tag">${abbr}</span>`;
+                return `<tr${click}>
                     <td class="st-num">${rank}</td>
-                    <td><span class="st-tag">${abbr}</span></td>
-                    <td data-no-i18n>${name}</td>
+                    <td>${tagCell}</td>
+                    <td>${nameCell}</td>
                     <td class="st-num" title="${fmtFull(tp)}">${fmtCompact(tp)}</td>
                     <td class="st-num">${members}${memberMax ? '/' + memberMax : ''}</td>
                     <td class="st-num" title="${fmtFull(mp)}">${fmtCompact(mp)}</td>
@@ -656,15 +829,21 @@ Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS 
         if (topPlayers && topPlayers.length) {
             const prows = topPlayers.map((p) => {
                 const rank = Number(p.rank) || 0;
+                const uid = Number(p.uid) || 0;
                 const nick = escapeHtml(String(p.nick_name || p.uid || ''));
                 const pw = Number(p.power) || 0;
                 const stove = Number.isFinite(Number(p.stove_lv)) ? Number(p.stove_lv) : '-';
                 const jump = Number.isFinite(Number(p.last_jump_pct))
                     ? (Number(p.last_jump_pct) * 100).toFixed(1) + '%'
                     : '-';
-                return `<tr>
+                const click = uid ? ` class="st-click-row" data-action="open-player" data-uid="${uid}" tabindex="0" role="button"` : '';
+                const nameCell = uid
+                    ? `<button type="button" class="st-link" data-action="open-player" data-uid="${uid}" data-no-i18n>${nick}</button>
+                       <span class="st-uid-hint" title="Player ID">#${uid}</span>`
+                    : `<span data-no-i18n>${nick}</span>`;
+                return `<tr${click}>
                     <td class="st-num">${rank}</td>
-                    <td data-no-i18n>${nick}</td>
+                    <td>${nameCell}</td>
                     <td class="st-num" title="${fmtFull(pw)}">${fmtCompact(pw)}</td>
                     <td class="st-num">${stove}</td>
                     <td class="st-num">${jump}</td>
@@ -686,11 +865,17 @@ Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS 
                 </div>`;
         }
 
+        const kingUid = king && Number(king.uid) ? Number(king.uid) : 0;
+        const kingName = king ? escapeHtml(String(king.name || '')) : '';
         const kingHtml = king
             ? `<div class="st-stat">
                 <span class="st-stat-label">King</span>
-                <strong class="st-stat-value st-stat-value-sm" data-no-i18n>${escapeHtml(String(king.name || ''))}</strong>
-                <span class="st-stat-meta" data-no-i18n>${king.allianceName ? escapeHtml(String(king.allianceName)) : ''}</span>
+                <strong class="st-stat-value st-stat-value-sm">${
+                    kingUid
+                        ? `<button type="button" class="st-link st-link-lg" data-action="open-player" data-uid="${kingUid}" data-no-i18n>${kingName}</button>`
+                        : `<span data-no-i18n>${kingName}</span>`
+                }</strong>
+                <span class="st-stat-meta" data-no-i18n>${king.allianceName ? escapeHtml(String(king.allianceName)) : ''}${kingUid ? ` · #${kingUid}` : ''}</span>
                </div>`
             : '';
 
@@ -739,18 +924,225 @@ Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS 
         if (!S.rows.has(kid)) return;
         S.listScroll = els.wrap.scrollTop;
         S.view = 'detail';
+        S.detailMode = 'state';
         S.detailKid = kid;
+        S.detailAid = null;
+        S.detailUid = null;
         render();
         els.detailView.scrollTop = 0;
         els.back.focus({ preventScroll: true });
         loadDetail(kid);
     }
 
+    function openAllianceDetail(aid) {
+        const id = Number(aid);
+        if (!Number.isFinite(id) || id < 1) return;
+        S.view = 'detail';
+        S.detailMode = 'alliance';
+        S.detailAid = id;
+        S.detailUid = null;
+        render();
+        els.detailView.scrollTop = 0;
+        els.back.focus({ preventScroll: true });
+        loadAlliance(id);
+    }
+
+    function openPlayerDetail(uid) {
+        const id = Number(uid);
+        if (!Number.isFinite(id) || id < 1) return;
+        S.view = 'detail';
+        S.detailMode = 'player';
+        S.detailUid = id;
+        S.detailAid = null;
+        render();
+        els.detailView.scrollTop = 0;
+        els.back.focus({ preventScroll: true });
+        loadPlayer(id);
+    }
+
     function showList() {
         S.view = 'list';
+        S.detailMode = 'state';
         S.detailKid = null;
+        S.detailAid = null;
+        S.detailUid = null;
         render();
         els.wrap.scrollTop = S.listScroll || 0;
+    }
+
+    function goBack() {
+        if (S.detailMode === 'alliance' || S.detailMode === 'player') {
+            S.detailMode = 'state';
+            S.detailAid = null;
+            S.detailUid = null;
+            render();
+            els.detailView.scrollTop = 0;
+            return;
+        }
+        showList();
+    }
+
+    function renderAllianceDetail() {
+        const aid = S.detailAid;
+        const cached = S.allianceCache.get(aid);
+        const loading = !!(cached && cached.loading);
+        const err = cached && cached.error;
+        const d = cached && cached.data;
+
+        const atlasLink = `https://wosatlas.com/alliances/${aid}`;
+        let body = '';
+
+        if (loading && !d) {
+            body = `<div class="st-detail-hint"><span class="spinner-inline" aria-hidden="true"></span><span>Loading alliance...</span></div>`;
+        } else if (err && !d) {
+            body = `<div class="st-detail-hint st-detail-hint-warn"><span>${escapeHtml(err)}</span></div>`;
+        } else if (d) {
+            const abbr = escapeHtml(String(d.abbr || ''));
+            const name = escapeHtml(String(d.name || ''));
+            const members = Number(d.memberCount || d.derivedMemberCount) || 0;
+            const memberMax = Number(d.memberMax) || 0;
+            const power = Number(d.serverPower || d.derivedTotalPower) || 0;
+            const powerRank = Number(d.serverPowerRank || d.powerRank) || null;
+            const rankedAll = Number(d.rankedAlliances) || null;
+            const leaderUid = Number(d.leaderUid) || 0;
+            const leaderName = escapeHtml(String(d.leaderName || ''));
+            const lv = Number(d.lv) || 0;
+            const minLv = Number(d.joinMinLevel) || 0;
+            const minPow = Number(d.joinMinPower) || 0;
+            const recruit = !!d.publicRecruit;
+            const homeKid = Number(d.homeKid) || null;
+            const membersList = Array.isArray(d.members) ? d.members : [];
+
+            const leaderHtml = leaderName
+                ? (leaderUid
+                    ? `<button type="button" class="st-link st-link-lg" data-action="open-player" data-uid="${leaderUid}" data-no-i18n>${leaderName}</button>
+                       <span class="st-uid-hint">#${leaderUid}</span>`
+                    : `<span data-no-i18n>${leaderName}</span>`)
+                : '-';
+
+            const rankLabel = powerRank
+                ? (rankedAll ? `#${fmtFull(powerRank)} of ${fmtFull(rankedAll)}` : `#${fmtFull(powerRank)}`)
+                : '-';
+
+            let membersHtml = '';
+            if (membersList.length) {
+                const mrows = membersList.map((m, i) => {
+                    const uid = Number(m.uid || m.playerUid) || 0;
+                    const nick = escapeHtml(String(m.nick_name || m.name || uid || ''));
+                    const pw = Number(m.power || m.current_power) || 0;
+                    const nameCell = uid
+                        ? `<button type="button" class="st-link" data-action="open-player" data-uid="${uid}" data-no-i18n>${nick}</button>
+                           <span class="st-uid-hint">#${uid}</span>`
+                        : `<span data-no-i18n>${nick}</span>`;
+                    return `<tr${uid ? ` class="st-click-row" data-action="open-player" data-uid="${uid}" tabindex="0" role="button"` : ''}>
+                        <td class="st-num">${i + 1}</td>
+                        <td>${nameCell}</td>
+                        <td class="st-num" title="${fmtFull(pw)}">${fmtCompact(pw)}</td>
+                    </tr>`;
+                }).join('');
+                membersHtml = `
+                    <h4 class="st-detail-h">Members</h4>
+                    <div class="st-mini-table-wrap">
+                        <table class="st-mini-table">
+                            <thead><tr><th class="st-num">#</th><th>Name</th><th class="st-num">Power</th></tr></thead>
+                            <tbody>${mrows}</tbody>
+                        </table>
+                    </div>`;
+            } else {
+                membersHtml = `<p class="st-muted st-detail-updated">Member list unavailable</p>`;
+            }
+
+            body = `
+                <div class="st-detail-title">
+                    <h3><span class="st-tag">${abbr}</span> <span data-no-i18n>${name}</span></h3>
+                    <a class="st-chip st-atlas-link" href="${atlasLink}" target="_blank" rel="noopener noreferrer">Open on WoS Atlas</a>
+                </div>
+                ${homeKid ? `<p class="st-detail-sub">State ${homeKid}</p>` : ''}
+                ${err ? `<div class="st-detail-hint st-detail-hint-warn"><span>${escapeHtml(err)}</span></div>` : ''}
+                <div class="st-stat-grid">
+                    <div class="st-stat"><span class="st-stat-label">Power</span><strong class="st-stat-value" title="${fmtFull(power)}">${fmtCompact(power)}</strong>
+                        <span class="st-stat-meta">${powerRank ? `<span class="st-rankbadge">${rankLabel}</span>` : ''}</span></div>
+                    <div class="st-stat"><span class="st-stat-label">Members</span><strong class="st-stat-value">${members}${memberMax ? '/' + memberMax : ''}</strong></div>
+                    <div class="st-stat"><span class="st-stat-label">Alliance level</span><strong class="st-stat-value">${lv || '-'}</strong></div>
+                    <div class="st-stat"><span class="st-stat-label">Leader</span><strong class="st-stat-value st-stat-value-sm">${leaderHtml}</strong></div>
+                    <div class="st-stat"><span class="st-stat-label">Min. level</span><strong class="st-stat-value">${minLv}</strong></div>
+                    <div class="st-stat"><span class="st-stat-label">Min. power</span><strong class="st-stat-value" title="${fmtFull(minPow)}">${fmtCompact(minPow)}</strong></div>
+                    <div class="st-stat"><span class="st-stat-label">Recruitment</span><strong class="st-stat-value st-stat-value-sm">
+                        <span class="st-chip-static ${recruit ? 'is-open' : 'is-closed'}">${recruit ? 'Open recruitment' : 'Closed recruitment'}</span>
+                    </strong></div>
+                </div>
+                ${membersHtml}
+                ${d.recordReadAt || d.derivedRecordedAt ? `<p class="st-muted st-detail-updated">Updated ${new Date(d.recordReadAt || d.derivedRecordedAt).toLocaleString()}</p>` : ''}`;
+        } else {
+            body = `<div class="st-detail-hint st-detail-hint-warn"><span>Could not load alliance detail.</span></div>`;
+        }
+
+        els.detailBody.innerHTML = body;
+    }
+
+    function renderPlayerDetail() {
+        const uid = S.detailUid;
+        const cached = S.playerCache.get(uid);
+        const loading = !!(cached && cached.loading);
+        const err = cached && cached.error;
+        const payload = cached && cached.data;
+        const players = payload && Array.isArray(payload.players) ? payload.players : [];
+        const p = players[0] || null;
+
+        const atlasLink = `https://wosatlas.com/player/${uid}`;
+        let body = '';
+
+        if (loading && !p) {
+            body = `<div class="st-detail-hint"><span class="spinner-inline" aria-hidden="true"></span><span>Loading player...</span></div>`;
+        } else if (err && !p) {
+            body = `<div class="st-detail-hint st-detail-hint-warn"><span>${escapeHtml(err)}</span></div>`;
+        } else if (p) {
+            const nick = escapeHtml(String(p.nick_name || uid));
+            const power = Number(p.current_power) || 0;
+            const stove = Number(p.stove_lv || p.furnace_lv) || 0;
+            const kid = Number(p.kid) || null;
+            const aid = Number(p.aid) || 0;
+            const abbr = escapeHtml(String(p.abbr || ''));
+            const jump = Number.isFinite(Number(p.last_jump_pct))
+                ? (Number(p.last_jump_pct) * 100).toFixed(2) + '%'
+                : '-';
+            const observed = p.observed_at ? new Date(p.observed_at).toLocaleString() : null;
+            const lv = Number(p.lv) || 0;
+
+            const allianceBtn = aid
+                ? `<button type="button" class="st-tag st-tag-btn" data-action="open-alliance" data-aid="${aid}">${abbr || aid}</button>`
+                : (abbr ? `<span class="st-tag">${abbr}</span>` : '-');
+
+            body = `
+                <div class="st-detail-title">
+                    <h3 data-no-i18n>${nick}</h3>
+                    <a class="st-chip st-atlas-link" href="${atlasLink}" target="_blank" rel="noopener noreferrer">Open on WoS Atlas</a>
+                </div>
+                <p class="st-detail-sub">Player ID <span data-no-i18n>#${uid}</span>${kid ? ` · State ${kid}` : ''}</p>
+                ${err ? `<div class="st-detail-hint st-detail-hint-warn"><span>${escapeHtml(err)}</span></div>` : ''}
+                <div class="st-stat-grid">
+                    <div class="st-stat"><span class="st-stat-label">Power</span><strong class="st-stat-value" title="${fmtFull(power)}">${fmtCompact(power)}</strong></div>
+                    <div class="st-stat"><span class="st-stat-label">Furnace level</span><strong class="st-stat-value">${stove || lv || '-'}</strong></div>
+                    <div class="st-stat"><span class="st-stat-label">Alliance</span><strong class="st-stat-value st-stat-value-sm">${allianceBtn}</strong></div>
+                    <div class="st-stat"><span class="st-stat-label">Last jump</span><strong class="st-stat-value">${jump}</strong></div>
+                    <div class="st-stat"><span class="st-stat-label">Player ID</span><strong class="st-stat-value st-stat-value-sm" data-no-i18n>${uid}</strong></div>
+                    ${kid ? `<div class="st-stat"><span class="st-stat-label">State</span><strong class="st-stat-value">${kid}</strong></div>` : ''}
+                </div>
+                ${observed ? `<p class="st-muted st-detail-updated">Observed ${observed}</p>` : ''}`;
+        } else {
+            // No structured player — still show ID + atlas link (like wosatlas.com title).
+            body = `
+                <div class="st-detail-title">
+                    <h3>Player <span data-no-i18n>${uid}</span></h3>
+                    <a class="st-chip st-atlas-link" href="${atlasLink}" target="_blank" rel="noopener noreferrer">Open on WoS Atlas</a>
+                </div>
+                <div class="st-detail-hint st-detail-hint-warn"><span>${err ? escapeHtml(err) : 'Could not load player detail.'}</span></div>
+                <div class="st-stat-grid">
+                    <div class="st-stat"><span class="st-stat-label">Player ID</span><strong class="st-stat-value st-stat-value-sm" data-no-i18n>${uid}</strong></div>
+                </div>`;
+        }
+
+        els.detailBody.innerHTML = body;
     }
 
     function applySort(key, forceDesc) {
@@ -762,6 +1154,29 @@ Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS 
         // ordering needs every State before the ranking is correct.
         if (S.sort !== 'chiefs' || !S.desc) loadAll();
         else render();
+    }
+
+    function onDetailActivate(event) {
+        if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+        const el = event.target.closest && event.target.closest('[data-action]');
+        if (!el) return;
+        const action = el.getAttribute('data-action');
+        if (action === 'load-all') {
+            event.preventDefault();
+            loadAll();
+            return;
+        }
+        if (action === 'open-alliance') {
+            event.preventDefault();
+            event.stopPropagation();
+            openAllianceDetail(el.getAttribute('data-aid'));
+            return;
+        }
+        if (action === 'open-player') {
+            event.preventDefault();
+            event.stopPropagation();
+            openPlayerDetail(el.getAttribute('data-uid'));
+        }
     }
 
     function onRowActivate(event) {
@@ -914,16 +1329,15 @@ Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS 
         els.retry.addEventListener('click', () => { if (S.retry) S.retry(); });
         els.searchAll.addEventListener('click', loadAll);
         els.more.addEventListener('click', showMore);
-        els.back.addEventListener('click', showList);
+        els.back.addEventListener('click', goBack);
         els.body.addEventListener('click', onRowActivate);
         els.body.addEventListener('keydown', onRowActivate);
         els.headSort.forEach((th) => {
             th.addEventListener('click', onHeaderActivate);
             th.addEventListener('keydown', onHeaderActivate);
         });
-        els.detailBody.addEventListener('click', (event) => {
-            if (event.target.closest('[data-action="load-all"]')) loadAll();
-        });
+        els.detailBody.addEventListener('click', onDetailActivate);
+        els.detailBody.addEventListener('keydown', onDetailActivate);
 
         // Backdrop click closes (only when the press also started on the backdrop).
         let pressStartedOnBackdrop = false;
@@ -933,7 +1347,7 @@ Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS 
         });
         document.addEventListener('keydown', (event) => {
             if (event.key !== 'Escape' || modal.classList.contains('hidden')) return;
-            if (S.view === 'detail') showList();
+            if (S.view === 'detail') goBack();
             else closeStateTrackerModal();
         });
 
