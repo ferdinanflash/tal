@@ -57,6 +57,9 @@ Top Alliance || Aliansi Teratas || 顶级联盟 || Nangungunang Alyansa || Allea
 Loading States... || Memuat State... || 正在加载州数据... || Nilo-load ang mga State... || Caricamento degli State... || กำลังโหลด State...
 Showing {0} of {1} States || Menampilkan {0} dari {1} State || 显示 {0} / {1} 个州 || Ipinapakita ang {0} sa {1} State || Mostrati {0} di {1} State || แสดง {0} จาก {1} State
 Loading all States... {0} / {1} || Memuat semua State... {0} / {1} || 正在加载全部州... {0} / {1} || Nilo-load ang lahat ng State... {0} / {1} || Caricamento di tutti gli State... {0} / {1} || กำลังโหลด State ทั้งหมด... {0} / {1}
+Player ID || Player ID || 玩家 ID || Player ID || ID Giocatore || Player ID
+Open player || Buka Player || 打开玩家 || Buksan ang Player || Apri giocatore || เปิดผู้เล่น
+Enter a valid Player ID || Masukkan Player ID yang valid || 请输入有效的玩家 ID || Maglagay ng valid na Player ID || Inserisci un ID Giocatore valido || กรุณากรอก Player ID ที่ถูกต้อง
 Updated {0} || Diperbarui {0} || 更新于 {0} || Na-update {0} || Aggiornato {0} || อัปเดต {0}
 No State matches your search. || Tidak ada State yang cocok dengan pencarian Anda. || 没有符合搜索的州。 || Walang State na tumutugma sa iyong paghahanap. || Nessuno State corrisponde alla ricerca. || ไม่พบ State ที่ตรงกับการค้นหา
 Search all States || Cari di semua State || 搜索全部州 || Hanapin sa lahat ng State || Cerca in tutti gli State || ค้นหาในทุก State
@@ -1008,6 +1011,21 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         loadPlayer(id);
     }
 
+    function onUidSubmit(event) {
+        event.preventDefault();
+        const raw = (els.uidInput.value || '').trim();
+        const uid = Number(raw);
+        if (!raw || !Number.isFinite(uid) || uid < 1 || !/^\d+$/.test(raw)) {
+            els.uidInput.setCustomValidity('Enter a valid Player ID');
+            els.uidInput.reportValidity();
+            return;
+        }
+        els.uidInput.setCustomValidity('');
+        if (S.view !== 'detail') S.listScroll = els.wrap.scrollTop;
+        openPlayerDetail(uid);
+        els.uidInput.value = '';
+    }
+
     function showList() {
         S.view = 'list';
         S.detailMode = 'state';
@@ -1497,6 +1515,8 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             error: document.getElementById('st-error'),
             errorText: document.getElementById('st-error-text'),
             retry: document.getElementById('st-retry-btn'),
+            uidForm: document.getElementById('st-uid-form'),
+            uidInput: document.getElementById('st-uid-input'),
             searchAll: document.getElementById('st-search-all-btn'),
             more: document.getElementById('st-more-btn'),
             listView: document.getElementById('st-list-view'),
@@ -1510,6 +1530,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             return;
         }
 
+        els.uidForm.addEventListener('submit', onUidSubmit);
         els.search.addEventListener('input', onSearchInput);
         els.search.addEventListener('keydown', onSearchKey);
         els.sort.addEventListener('change', onSortChange);

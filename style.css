@@ -2313,6 +2313,18 @@ body.state-tracker-modal-open { overflow: hidden; }
 }
 .st-search:focus { outline: 2px solid #7dd3fc; outline-offset: 1px; }
 .st-toolbar-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.st-uid-form { display: flex; gap: 6px; align-items: center; }
+.st-uid-input {
+    width: 120px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid #2a3344;
+    background: #0f1420;
+    color: #e5e9f0;
+    font-size: 13px;
+}
+.st-uid-input:focus { outline: 2px solid #7dd3fc; outline-offset: -1px; }
+.st-uid-input:invalid { box-shadow: none; }
 .st-sort { display: inline-flex; align-items: center; gap: 6px; color: #8a8d98; font-size: 0.82rem; }
 .st-sort select {
     padding: 8px 10px;
@@ -2526,3 +2538,6 @@ body.state-tracker-modal-open { overflow: hidden; }
     white-space: pre-wrap;
     word-break: break-word;
 }
+
+.st-kv-table th[scope="row"] { text-align: left; font-weight: 600; color: #94a3b8; white-space: nowrap; vertical-align: top; width: 38%; }
+.st-kv-table td { word-break: break-word; }
