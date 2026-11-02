@@ -77,7 +77,6 @@ Load all States || Muat semua State || 加载全部州 || I-load ang lahat ng St
 Load all States to see rankings and compare with your State. || Muat semua State untuk melihat peringkat dan membandingkan dengan State Anda. || 加载全部州以查看排名并与你的州对比。 || I-load ang lahat ng State para makita ang ranking at maikumpara sa iyong State. || Carica tutti gli State per vedere le classifiche e confrontare con il tuo State. || โหลด State ทั้งหมดเพื่อดูอันดับและเปรียบเทียบกับ State ของคุณ
 Click a State for details. || Klik State untuk melihat detail. || 点击州查看详情。 || I-click ang State para sa detalye. || Clicca su uno State per i dettagli. || คลิก State เพื่อดูรายละเอียด
 Retry || Coba lagi || 重试 || Subukan muli || Riprova || ลองอีกครั้ง
-Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete or out of date. || Data dari WoS Atlas, situs pihak ketiga tidak resmi. Angka bisa tidak lengkap atau usang. || 数据来自非官方第三方网站 WoS Atlas，数字可能不完整或已过时。 || Data mula sa WoS Atlas, isang hindi opisyal na third-party na site. Maaaring hindi kumpleto o luma na ang mga numero. || Dati da WoS Atlas, un sito di terze parti non ufficiale. I numeri potrebbero essere incompleti o non aggiornati. || ข้อมูลจาก WoS Atlas ซึ่งเป็นเว็บไซต์บุคคลที่สามที่ไม่เป็นทางการ ตัวเลขอาจไม่ครบถ้วนหรือล้าสมัย
 Rank among States || Peringkat antar State || 州排名 || Ranggo sa mga State || Classifica tra gli State || อันดับใน State
 Players || Pemain || 玩家 || Mga Manlalaro || Giocatori || ผู้เล่น
 In-game figures || Angka in-game || 游戏内数据 || Mga in-game figure || Dati di gioco || ตัวเลขในเกม
@@ -94,7 +93,6 @@ Power || Kekuatan || 战力 || Power || Potenza || พลัง
 Furnace || Furnace || 熔炉 || Furnace || Fornace || เตา
 Loading detail... || Memuat detail... || 正在加载详情... || Nilo-load ang detalye... || Caricamento dettaglio... || กำลังโหลดรายละเอียด...
 Could not load extra State detail. Showing summary only. || Gagal memuat detail State tambahan. Menampilkan ringkasan saja. || 无法加载额外州详情，仅显示摘要。 || Hindi ma-load ang karagdagang detalye ng State. Buod lang ang ipinapakita. || Impossibile caricare i dettagli extra. Solo riepilogo. || โหลดรายละเอียดเพิ่มเติมไม่ได้ แสดงเฉพาะสรุป
-Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS Atlas || Apri su WoS Atlas || เปิดใน WoS Atlas
 Back to State || Kembali ke State || 返回州 || Bumalik sa State || Torna allo State || กลับไปที่ State
 Player || Pemain || 玩家 || Manlalaro || Giocatore || ผู้เล่น
 Player ID || ID Pemain || 玩家 ID || Player ID || ID giocatore || รหัสผู้เล่น
@@ -1026,7 +1024,10 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                 const mrows = membersList.map((m, i) => {
                     const uid = Number(m.uid || m.playerUid) || 0;
                     const nick = escapeHtml(String(m.nick_name || m.name || uid || ''));
-                    const pw = Number(m.power || m.current_power) || 0;
+                    const furnace = Number(m.lv || m.stove_lv || m.furnace_lv) || 0;
+                    const x = Number.isFinite(Number(m.x)) ? Number(m.x) : null;
+                    const y = Number.isFinite(Number(m.y)) ? Number(m.y) : null;
+                    const coord = (x != null && y != null) ? `(${x}, ${y})` : '-';
                     const nameCell = uid
                         ? `<button type="button" class="st-link" data-action="open-player" data-uid="${uid}" data-no-i18n>${nick}</button>
                            <span class="st-uid-hint">#${uid}</span>`
@@ -1034,20 +1035,33 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                     return `<tr${uid ? ` class="st-click-row" data-action="open-player" data-uid="${uid}" tabindex="0" role="button"` : ''}>
                         <td class="st-num">${i + 1}</td>
                         <td>${nameCell}</td>
-                        <td class="st-num" title="${fmtFull(pw)}">${fmtCompact(pw)}</td>
+                        <td class="st-num">${furnace || '-'}</td>
+                        <td class="st-num" data-no-i18n>${coord}</td>
                     </tr>`;
                 }).join('');
                 membersHtml = `
-                    <h4 class="st-detail-h">Members</h4>
+                    <h4 class="st-detail-h">Members (${fmtFull(membersList.length)})</h4>
                     <div class="st-mini-table-wrap">
                         <table class="st-mini-table">
-                            <thead><tr><th class="st-num">#</th><th>Name</th><th class="st-num">Power</th></tr></thead>
+                            <thead><tr>
+                                <th class="st-num">#</th>
+                                <th>Name</th>
+                                <th class="st-num">Furnace</th>
+                                <th class="st-num">Coords</th>
+                            </tr></thead>
                             <tbody>${mrows}</tbody>
                         </table>
                     </div>`;
-            } else {
-                membersHtml = `<p class="st-muted st-detail-updated">Member list unavailable</p>`;
             }
+
+            const notice = d.notice ? String(d.notice).trim() : '';
+            const manifesto = d.manifesto ? String(d.manifesto).trim() : '';
+            const noticeHtml = notice
+                ? `<h4 class="st-detail-h">Bulletin</h4><pre class="st-note" data-no-i18n>${escapeHtml(notice)}</pre>`
+                : '';
+            const manifestoHtml = manifesto
+                ? `<h4 class="st-detail-h">Manifesto</h4><pre class="st-note" data-no-i18n>${escapeHtml(manifesto)}</pre>`
+                : '';
 
             body = `
                 <div class="st-detail-title">
@@ -1067,6 +1081,8 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                         <span class="st-chip-static ${recruit ? 'is-open' : 'is-closed'}">${recruit ? 'Open recruitment' : 'Closed recruitment'}</span>
                     </strong></div>
                 </div>
+                ${noticeHtml}
+                ${manifestoHtml}
                 ${membersHtml}
                 ${d.recordReadAt || d.derivedRecordedAt ? `<p class="st-muted st-detail-updated">Updated ${new Date(d.recordReadAt || d.derivedRecordedAt).toLocaleString()}</p>` : ''}`;
         } else {

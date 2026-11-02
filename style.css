@@ -2362,8 +2362,6 @@ body.state-tracker-modal-open { overflow: hidden; }
 .st-empty { margin: 14px 0; text-align: center; color: #8a8d98; }
 .st-actions { display: flex; justify-content: center; gap: 8px; margin-top: 10px; }
 .st-actions:empty { display: none; }
-.st-source { margin: 12px 0 0; font-size: 0.72rem; line-height: 1.4; color: #6b7280; text-align: center; }
-.st-source a { color: #7dd3fc; }
 
 @media (max-width: 600px) {
     .modal-content.state-tracker-modal-content { width: 100%; max-height: 96dvh; padding: 14px 12px; border-radius: 12px; }
@@ -2441,9 +2439,6 @@ body.state-tracker-modal-open { overflow: hidden; }
 
 .st-stat-value-sm { font-size: 1rem; word-break: break-word; }
 .st-detail-hint-warn { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.35); color: #fcd34d; }
-.st-atlas-link { margin-left: auto; text-decoration: none; font-size: 0.78rem; }
-.st-atlas-link:hover { border-color: rgba(125, 211, 252, 0.85); }
-
 .st-mini-table-wrap {
     overflow: auto;
     border: 1px solid #2a3042;
@@ -2518,3 +2513,16 @@ body.state-tracker-modal-open { overflow: hidden; }
 }
 .st-click-row { cursor: pointer; }
 .st-click-row:focus-visible { outline: 2px solid #7dd3fc; outline-offset: -2px; }
+.st-note {
+    margin: 0 0 8px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #10131b;
+    border: 1px solid #2a3042;
+    color: #cbd5e1;
+    font: inherit;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
