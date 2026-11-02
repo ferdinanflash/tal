@@ -1,13 +1,12 @@
 // ================= STATE TRACKER (navbar button + own modal) =================
-// Lists every Whiteout Survival State with live numbers from WoS Atlas
-// (https://wosatlas.com/states/): chiefs, alliances, total/median/max power
-// and the top alliance of each State.
+// Lists every Whiteout Survival State with live numbers: chiefs, alliances,
+// total/median/max power and the top alliance of each State.
 //
 // Data flow
-//   1. The browser calls the WoS Atlas JSON endpoints directly.
-//   2. If that is blocked (CORS / network), it falls back to the Supabase edge
-//      function `wosatlas-states` (index.ts → supabase/functions/wosatlas-states/),
-//      which fetches the same endpoints server-side. Deploy it once to enable
+//   1. The browser calls the JSON endpoints directly.
+//   2. If that is blocked (CORS / network), it falls back to a Supabase edge
+//      function (index.ts → supabase/functions/wosatlas-states/), which
+//      fetches the same endpoints server-side. Deploy it once to enable
 //      the fallback; the feature works without it whenever the direct call works.
 //
 // List: GET /v1/states/summary (50 States per request, sorted by chiefs).
@@ -22,7 +21,6 @@
         directUrl: 'https://api.wosatlas.com/v1/states/summary',
         apiBase: 'https://api.wosatlas.com/v1',
         proxyFunction: 'wosatlas-states',
-        sourceUrl: 'https://wosatlas.com/states/',
         pageSize: 50,          // size the endpoint is known to accept
         concurrency: 3,        // parallel page requests when loading all States
         cacheMs: 5 * 60 * 1000,
@@ -39,7 +37,7 @@
         I18N.addText(`
 # State Tracker
 State Tracker || Pelacak State || 州追踪 || State Tracker || Tracker degli State || ตัวติดตาม State
-Compare every State in Whiteout Survival with live data from WoS Atlas. || Bandingkan setiap State di Whiteout Survival dengan data langsung dari WoS Atlas. || 通过 WoS Atlas 的实时数据对比《无尽冬日》中的所有州。 || Ihambing ang bawat State sa Whiteout Survival gamit ang live data mula sa WoS Atlas. || Confronta ogni State di Whiteout Survival con i dati in tempo reale di WoS Atlas. || เปรียบเทียบทุก State ใน Whiteout Survival ด้วยข้อมูลสดจาก WoS Atlas
+Compare every State in Whiteout Survival with live data. || Bandingkan setiap State di Whiteout Survival dengan data langsung. || 用实时数据对比《无尽冬日》中的所有州。 || Ihambing ang bawat State sa Whiteout Survival gamit ang live data. || Confronta ogni State di Whiteout Survival con i dati in tempo reale. || เปรียบเทียบทุก State ใน Whiteout Survival ด้วยข้อมูลสด
 Search State ID, alliance tag or name || Cari ID State, tag atau nama aliansi || 搜索州编号、联盟标签或名称 || Maghanap ng State ID, tag o pangalan ng alyansa || Cerca ID State, tag o nome alleanza || ค้นหา State ID แท็ก หรือชื่อพันธมิตร
 My State || State Saya || 我的州 || Aking State || Il mio State || State ของฉัน
 Sort by || Urutkan berdasarkan || 排序方式 || Ayusin ayon sa || Ordina per || เรียงตาม
@@ -240,9 +238,9 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         S.fetchedAt = S.fetchedAt || Date.now();
     }
 
-    // ---- Detail endpoints (state / power / alliances), like wosatlas.com ----
+    // ---- Detail endpoints (state / power / alliances) ----
     // Direct browser call first; if blocked (CORS / network), fall back to the
-    // Supabase edge function `wosatlas-states` with action "detail".
+    // Supabase edge function (action "detail").
     async function fetchJson(url, signal) {
         const res = await fetch(url, {
             headers: { accept: 'application/json' },
@@ -425,7 +423,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     }
 
     // ---- Player detail ----
-    // The WoS Atlas player page resolves a typed ID through /players/search
+    // Resolve a typed ID through /players/search
     // (query param is named playerName but also matches numeric IDs), then
     // opens the match. /players/{uid} alone does not find every player, so
     // the ID box below goes through search first.
@@ -506,7 +504,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         return data;
     }
 
-    // Extra player endpoints shown on wosatlas.com's player page.
+    // Extra player endpoints: power history, arena standing, change log.
     const PLAYER_EXTRAS = [
         { key: 'power', label: 'Power', path: 'power' },
         { key: 'arena', label: 'Arena', path: 'arena' },
@@ -845,7 +843,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         const loadingExtra = !!(detail && detail.loading);
         const extraError = detail && detail.error;
 
-        // Prefer kingdom power figures when available (matches wosatlas.com State page).
+        // Prefer kingdom power figures when available.
         const players = power && Number.isFinite(Number(power.player_count)) ? Number(power.player_count) : row.chiefs;
         const totalPower = power && Number.isFinite(Number(power.total_power)) ? Number(power.total_power) : row.total;
         const medianPower = power && Number.isFinite(Number(power.median_power)) ? Number(power.median_power) : row.median;
@@ -1285,10 +1283,10 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                 const tier = String(d.viewerTier || '').toUpperCase();
                 const limited = tier && tier !== 'PASS';
                 const msg = limited
-                    ? `Member list is restricted by WoS Atlas for this connection (access tier: ${escapeHtml(tier)}). Open it on wosatlas.com to view the members.`
+                    ? `Member list is restricted for this connection (access tier: ${escapeHtml(tier)}).`
                     : 'Member list unavailable';
                 membersHtml = `<h4 class="st-detail-h">Members</h4>
-                    <div class="st-detail-hint st-detail-hint-warn"><span>${msg}</span>${limited ? ` <a class="st-link" href="https://wosatlas.com/" target="_blank" rel="noopener">wosatlas.com</a>` : ''}</div>`;
+                    <div class="st-detail-hint st-detail-hint-warn"><span>${msg}</span></div>`;
             }
 
             const notice = d.notice ? String(d.notice).trim() : '';
@@ -1442,7 +1440,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             }
             const tier = String((payload && payload.viewerTier) || p.viewerTier || '').toUpperCase();
             const tierNote = (tier && tier !== 'PASS')
-                ? `<div class="st-detail-hint st-detail-hint-warn"><span>Some player data may be restricted by WoS Atlas for this connection (access tier: ${escapeHtml(tier)}).</span> <a class="st-link" href="https://wosatlas.com/" target="_blank" rel="noopener">wosatlas.com</a></div>`
+                ? `<div class="st-detail-hint st-detail-hint-warn"><span>Some player data may be restricted for this connection (access tier: ${escapeHtml(tier)}).</span></div>`
                 : '';
             console.info('State Tracker player payload keys:', Object.keys(payload || {}), 'player keys:', Object.keys(p));
 

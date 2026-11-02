@@ -13,7 +13,7 @@ The application JavaScript is split by responsibility so new features can be add
 - `effects.js` — opening animation and snow effect
 - `president-panel.js` — President dashboard, global Battle Theme switch, `getRoleField()`
 - `redeem.js` — Redeem Code modal
-- `statetracker.js` — State Tracker (navbar button next to Login + own modal): State rankings from WoS Atlas
+- `statetracker.js` — State Tracker (navbar button next to Login + own modal): State rankings
 
 Scripts are loaded in dependency order from `index.html`.
 
@@ -67,10 +67,9 @@ Fitur Foundry: peringatan roster per Legion/Phase (`FOUNDRY_MIN`), target 3 fase
   - `summary` (default) — proxy ke `/v1/states/summary` (limit/offset di-clamp, cache memori 5 menit)
   - `detail` — body `{ action: "detail", kid, allianceLimit? }`; server mengambil paralel `/v1/states/{kid}`, `/v1/kingdoms/{kid}/power`, `/v1/alliances/leaderboard?kid={kid}` dan mengembalikan `{ state, power, alliances, kid }`
 - Terjemahan (6 bahasa) didaftarkan di bagian atas `statetracker.js` lewat `I18N.addText`. State `3475` (`CFG.myState`) disorot di tabel.
-- Klik baris State (atau Enter) membuka tampilan detail di dalam modal yang sama (tombol Back / Esc kembali ke daftar), meniru halaman State di [wosatlas.com](https://wosatlas.com/states/):
+- Klik baris State (atau Enter) membuka tampilan detail di dalam modal yang sama (tombol Back / Esc kembali ke daftar), meniru tampilan halaman detail State:
   - Ringkasan list: chiefs, alliances, total/median/max power, top alliance, bandingkan vs State 3475.
   - Detail ekstra (cache 5 menit): rank antar State, players, total/median/max power, king, ranked population, top alliances table, top players table.
   - Client: direct dulu, lalu proxy `action: "detail"` bila gagal (atau sebaliknya jika mode list sudah `proxy`).
   - Bila keduanya gagal, UI tetap menampilkan data summary + peringatan.
-  - Tautan "Open on WoS Atlas" menuju `https://wosatlas.com/states/{kid}`.
 - Header kolom bisa diklik untuk mengurutkan. Peringkat relatif antar State dan perbandingan penuh butuh semua halaman list dimuat (tombol "Load all States").
