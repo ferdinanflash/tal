@@ -4,16 +4,17 @@
 // and the top alliance of each State.
 //
 // Data flow
-//   1. The browser calls the WoS Atlas JSON endpoint directly.
+//   1. The browser calls the WoS Atlas JSON endpoints directly.
 //   2. If that is blocked (CORS / network), it falls back to the Supabase edge
-//      function `wosatlas-states` (supabase/functions/wosatlas-states/index.ts),
-//      which fetches the same endpoint server-side. Deploy it once to enable
+//      function `wosatlas-states` (index.ts → supabase/functions/wosatlas-states/),
+//      which fetches the same endpoints server-side. Deploy it once to enable
 //      the fallback; the feature works without it whenever the direct call works.
 //
-// The endpoint returns 50 States per request (sorted by chiefs, descending).
-// The modal loads the first page when opened and only pulls the remaining
-// pages when the user asks for them (search by ID/alliance, another sort
-// order), with a few requests at a time, to stay gentle on the third-party API.
+// List: GET /v1/states/summary (50 States per request, sorted by chiefs).
+// Detail (per State click): /v1/states/{kid}, /v1/kingdoms/{kid}/power,
+//   /v1/alliances/leaderboard?kid={kid} — or proxy action "detail" in one call.
+// The modal loads the first summary page when opened and only pulls the rest
+// when needed (search, other sort, Show more), a few requests at a time.
 (function () {
     'use strict';
 
@@ -213,6 +214,8 @@ Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS 
     }
 
     // ---- Detail endpoints (state / power / alliances), like wosatlas.com ----
+    // Direct browser call first; if blocked (CORS / network), fall back to the
+    // Supabase edge function `wosatlas-states` with action "detail".
     async function fetchJson(url, signal) {
         const res = await fetch(url, {
             headers: { accept: 'application/json' },
@@ -222,6 +225,39 @@ Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS 
         });
         if (!res.ok) throw new Error('http-' + res.status);
         return res.json();
+    }
+
+    async function fetchDetailDirect(kid, signal) {
+        const base = CFG.apiBase;
+        const results = await Promise.allSettled([
+            fetchJson(`${base}/states/${kid}`, signal),
+            fetchJson(`${base}/kingdoms/${kid}/power`, signal),
+            fetchJson(`${base}/alliances/leaderboard?limit=${CFG.allianceLimit}&kid=${kid}`, signal)
+        ]);
+        const state = results[0].status === 'fulfilled' ? results[0].value : null;
+        const power = results[1].status === 'fulfilled' ? results[1].value : null;
+        const alliances = results[2].status === 'fulfilled' ? results[2].value : null;
+        if (!state && !power && !alliances) throw new Error('direct-detail-failed');
+        return { state, power, alliances };
+    }
+
+    async function fetchDetailProxy(kid, signal) {
+        const client = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (!client) throw new Error('unavailable');
+        // AbortSignal is not passed through functions.invoke; caller still
+        // checks S.token / signal.aborted after the await.
+        const { data, error } = await client.functions.invoke(CFG.proxyFunction, {
+            body: { action: 'detail', kid, allianceLimit: CFG.allianceLimit }
+        });
+        if (error) throw error;
+        if (!data || (typeof data === 'object' && data.error)) {
+            throw new Error((data && data.error) || 'proxy-detail-failed');
+        }
+        return {
+            state: data.state || null,
+            power: data.power || null,
+            alliances: data.alliances || null
+        };
     }
 
     function getDetail(kid) {
@@ -247,20 +283,43 @@ Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS 
         if (S.view === 'detail' && S.detailKid === key) renderDetail();
 
         const signal = S.ctrl && S.ctrl.signal;
-        const base = CFG.apiBase;
-        const results = await Promise.allSettled([
-            fetchJson(`${base}/states/${key}`, signal),
-            fetchJson(`${base}/kingdoms/${key}/power`, signal),
-            fetchJson(`${base}/alliances/leaderboard?limit=${CFG.allianceLimit}&kid=${key}`, signal)
-        ]);
+        let state = null;
+        let power = null;
+        let alliances = null;
+        let errMsg = null;
 
-        if (signal && signal.aborted) return;
-
-        const state = results[0].status === 'fulfilled' ? results[0].value : null;
-        const power = results[1].status === 'fulfilled' ? results[1].value : null;
-        const alliances = results[2].status === 'fulfilled' ? results[2].value : null;
-        const anyOk = !!(state || power || alliances);
-        const errMsg = anyOk ? null : 'Could not load extra State detail. Showing summary only.';
+        try {
+            let payload = null;
+            // Prefer whatever mode already worked for the summary list.
+            if (S.mode === 'proxy') {
+                try {
+                    payload = await fetchDetailProxy(key, signal);
+                } catch (err) {
+                    if (err && err.name === 'AbortError') throw err;
+                    payload = await fetchDetailDirect(key, signal);
+                }
+            } else {
+                try {
+                    payload = await fetchDetailDirect(key, signal);
+                    if (S.mode !== 'proxy') S.mode = 'direct';
+                } catch (err) {
+                    if (err && err.name === 'AbortError') throw err;
+                    payload = await fetchDetailProxy(key, signal);
+                    S.mode = 'proxy';
+                }
+            }
+            if (signal && signal.aborted) return;
+            state = payload.state;
+            power = payload.power;
+            alliances = payload.alliances;
+            if (!state && !power && !alliances) {
+                errMsg = 'Could not load extra State detail. Showing summary only.';
+            }
+        } catch (err) {
+            if (err && err.name === 'AbortError') return;
+            console.error('State Tracker detail:', err);
+            errMsg = 'Could not load extra State detail. Showing summary only.';
+        }
 
         setDetail(key, {
             loading: false,
