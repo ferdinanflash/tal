@@ -12,6 +12,8 @@ The application JavaScript is split by responsibility so new features can be add
 - `footer.js` — President/Guild footer settings and live clock
 - `effects.js` — opening animation and snow effect
 - `president-panel.js` — President dashboard, global Battle Theme switch, `getRoleField()`
+- `redeem.js` — Redeem Code modal
+- `statetracker.js` — State Tracker (navbar button next to Login + own modal): State rankings from WoS Atlas
 
 Scripts are loaded in dependency order from `index.html`.
 
@@ -56,3 +58,9 @@ Fitur Foundry: peringatan roster per Legion/Phase (`FOUNDRY_MIN`), target 3 fase
 - Kalkulasi Joiner otomatis (`foundryRallyTeams`, `foundryJoinerOf`, `foundryRallyHtml`): Joiner dipasangkan ke Rally Leader dari data roster (tanpa kolom database baru): urut Power, prioritas Rally Leader dengan target Phase 1 sama, lalu diseimbangkan menurut total Power tim. Tampil di panel 🤝, tag di kolom Role, peringatan roster, dan salinan Discord (Phase 2 / semua).
 - Isi Otomatis & Hitung Tugas kini memakai kalkulasi Joiner terbaru: `foundryJoinerCalc` (inti march penguatan, dipakai juga `foundryJoinerPlan`) dan `foundryPlanCover` (stationed + march Rally Leader/Joiner per fase) menggantikan hitungan pemain-yang-ditempatkan saja di `foundryPlanScore` dan `foundryShortages`. Peringatan roster (`foundryWarnings`) ikut menghitung march penguatan agar konsisten dengan tabel Garrison.
 - Perbaikan planner Hitung Tugas/Isi Otomatis (selaras tab Strategi): `FOUNDRY_MIN` Situs Prototipe dan tiap Fasilitas Perbaikan = 2 penjaga di semua fase; `foundryPlanCoverParts` memisahkan penjaga di tempat vs march penguatan, dan `foundryPlanScore` menghitung march hanya `FOUNDRY_MARCH_WEIGHT` (0,5) serta mengurangi nilai bangunan yang tidak punya penjaga sendiri. Roster < 30 kini mempertahankan Holder Prototipe/Perbaikan lebih dulu dan membuang Mobile/Collector terakhir. Tabel Garrison dan peringatan roster tetap menghitung march penuh.
+
+## State Tracker
+
+- `statetracker.js` — tombol **State Tracker** di navbar (di samping Login) membuka `#state-tracker-modal` (`openStateTrackerModal()` / `closeStateTrackerModal()`). Data: `https://api.wosatlas.com/v1/states/summary` (50 State per request, urut `chiefs`). Halaman pertama dimuat saat modal dibuka; sisanya hanya saat dibutuhkan (cari ID/aliansi, urutan selain Chiefs, tombol Show more), 3 request paralel. Data di-cache 5 menit; Refresh memuat ulang.
+- Panggilan langsung dari browser lebih dulu; bila diblokir (CORS/jaringan) otomatis memakai edge function `supabase/functions/wosatlas-states/index.ts` (deploy sekali: `supabase functions deploy wosatlas-states`).
+- Terjemahan (6 bahasa) didaftarkan di bagian atas `statetracker.js` lewat `I18N.addText`. State `3475` (`CFG.myState`) disorot di tabel.

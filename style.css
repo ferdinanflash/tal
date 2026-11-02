@@ -2272,3 +2272,122 @@ select.btn-apply option:checked,
   .table-container:has(> .fy-sum-table) { overflow-x: visible; }
   .fy-sum-table th, .fy-sum-table td { padding: 8px 6px; min-width: 0 !important; }
 }
+
+
+/* ==================== STATE TRACKER (navbar button + modal) ==================== */
+/* The button reuses .btn-redeem so it follows every navbar sizing rule above
+   (one row, wraps its label on narrow phones); only the accent colour differs. */
+.btn-state-tracker {
+    background: linear-gradient(180deg, rgba(14, 28, 40, 0.92) 0%, rgba(6, 12, 20, 0.95) 100%);
+    border-color: rgba(125, 211, 252, 0.55);
+    color: #bae6fd;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.18), inset 0 0 8px rgba(56, 189, 248, 0.06);
+}
+.btn-state-tracker:hover {
+    border-color: rgba(125, 211, 252, 0.9);
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.35), inset 0 0 10px rgba(56, 189, 248, 0.1);
+}
+.btn-state-tracker:focus-visible { outline-color: #7dd3fc; }
+
+body.state-tracker-modal-open { overflow: hidden; }
+
+.modal-content.state-tracker-modal-content {
+    width: 96%;
+    max-width: 980px;
+    max-height: 94dvh;
+    overflow: hidden;
+    padding: 20px;
+}
+.state-tracker-modal-content .modal-subtitle { margin-bottom: 14px; padding-right: 28px; }
+
+.st-toolbar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.st-search {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #2f3547;
+    background: #0e1119;
+    color: #fff;
+    font-size: 0.95rem;
+}
+.st-search:focus { outline: 2px solid #7dd3fc; outline-offset: 1px; }
+.st-toolbar-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.st-sort { display: inline-flex; align-items: center; gap: 6px; color: #8a8d98; font-size: 0.82rem; }
+.st-sort select {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #2f3547;
+    background: #0e1119;
+    color: #fff;
+    font-size: 0.85rem;
+}
+.st-chip {
+    appearance: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(125, 211, 252, 0.4);
+    background: rgba(14, 28, 40, 0.8);
+    color: #bae6fd;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.st-chip:hover:not(:disabled) { border-color: rgba(125, 211, 252, 0.85); }
+.st-chip:disabled { opacity: 0.5; cursor: not-allowed; }
+.st-chip:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+
+.st-statusbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-height: 22px; margin-bottom: 8px; font-size: 0.82rem; color: #cbd5e1; }
+.st-statusbar #st-updated { margin-left: auto; }
+.st-muted { color: #8a8d98; }
+.st-error { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 12px; margin-bottom: 8px; border-radius: 8px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.45); color: #fecaca; font-size: 0.85rem; }
+
+.st-table-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; border: 1px solid #2a3042; border-radius: 10px; background: #10131b; -webkit-overflow-scrolling: touch; }
+.st-table { width: 100%; min-width: 760px; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; }
+.st-table th, .st-table td { padding: 8px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid #1f2535; }
+.st-table thead th { position: sticky; top: 0; z-index: 2; background: #1a2030; color: #8fa3bf; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.st-table .st-col-state { position: sticky; left: 0; z-index: 1; text-align: left; background: #141824; }
+.st-table thead .st-col-state { z-index: 3; background: #1a2030; }
+.st-table .st-col-top { text-align: left; max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
+.st-table tbody tr:hover td { background: #171d2b; }
+.st-table tbody tr:hover .st-col-state { background: #171d2b; }
+.st-row.is-mine td { background: rgba(245, 158, 11, 0.10); }
+.st-row.is-mine .st-col-state { background: #2a2214; box-shadow: inset 3px 0 0 #f59e0b; }
+.st-rank { display: inline-block; min-width: 2.2em; margin-right: 6px; color: #6b7a94; font-size: 0.75rem; }
+.st-num { font-variant-numeric: tabular-nums; }
+.st-tag { display: inline-block; margin-right: 6px; padding: 1px 6px; border-radius: 6px; background: rgba(125, 211, 252, 0.14); color: #7dd3fc; font-size: 0.75rem; font-weight: 700; }
+.st-top-name { display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+.st-col-top small { margin-left: 8px; color: #8a8d98; }
+
+.st-empty { margin: 14px 0; text-align: center; color: #8a8d98; }
+.st-actions { display: flex; justify-content: center; gap: 8px; margin-top: 10px; }
+.st-actions:empty { display: none; }
+.st-source { margin: 12px 0 0; font-size: 0.72rem; line-height: 1.4; color: #6b7280; text-align: center; }
+.st-source a { color: #7dd3fc; }
+
+@media (max-width: 600px) {
+    .modal-content.state-tracker-modal-content { width: 100%; max-height: 96dvh; padding: 14px 12px; border-radius: 12px; }
+    .st-table { font-size: 0.8rem; }
+    .st-statusbar #st-updated { margin-left: 0; width: 100%; }
+}
+
+/* The global phone rules turn every <table> into stacked cards (built for the
+   leaderboard). State Tracker is a side-by-side comparison, so on phones it
+   stays a real table that scrolls sideways inside its own box. */
+@media screen and (max-width: 640px) {
+    .st-table { display: table; width: 100%; min-width: 760px; border-collapse: separate; border-spacing: 0; }
+    .st-table thead { display: table-header-group; position: static; top: auto; left: auto; }
+    .st-table tbody { display: table-row-group; }
+    .st-table tr, .st-table tbody tr { display: table-row; background: none; border: 0; border-radius: 0; padding: 0; margin: 0; }
+    .st-table th, .st-table td {
+        display: table-cell;
+        padding: 8px 10px;
+        text-align: right;
+        white-space: nowrap !important;
+        font-size: 0.8rem;
+        border-bottom: 1px solid #1f2535;
+    }
+    .st-table td::before { content: none; }
+    .st-table .st-col-state { text-align: left; }
+    .st-table .st-col-top { text-align: left; }
+}

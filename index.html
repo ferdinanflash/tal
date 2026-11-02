@@ -52,6 +52,7 @@
 					<script src="effects.js?v=18" defer></script>
 					<script src="president-panel.js?v=12" defer></script>
 					<script src="redeem.js?v=4" defer></script>
+					<script src="statetracker.js?v=1" defer></script>
 				</head>
 	<body>
 		<!-- 2.5s opening animation; intentionally runs on every refresh. -->
@@ -121,6 +122,7 @@
             </div>
 
 				<button id="redeem-code-btn" type="button" class="btn-redeem" onclick="openRedeemModal()" aria-haspopup="dialog" aria-controls="redeem-modal"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"></rect><path d="M12 8v13"></path><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"></path><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"></path></svg><span>Redeem Code</span></button>
+				<button id="state-tracker-btn" type="button" class="btn-redeem btn-state-tracker" onclick="openStateTrackerModal()" aria-haspopup="dialog" aria-controls="state-tracker-modal"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M22 20H2"></path></svg><span>State Tracker</span></button>
 				<button id="admin-toggle-btn" class="btn-admin" onclick="handleAdminLogin()">Login</button>
 				<button id="president-panel-btn" class="btn-admin president-panel-top-btn hidden" onclick="openPresidentPanel()">👑 PRESIDENT<span class="pp-panel-word">&nbsp;PANEL</span></button>
 				</div>
@@ -909,6 +911,70 @@
 					<button id="confirm-cancel-btn" class="btn-back">Cancel</button>
 					<button id="confirm-ok-btn" class="btn-apply danger-action">OK</button>
 				</div>
+			</div>
+		</div>
+
+		<!-- STATE TRACKER MODAL (data from WoS Atlas; see statetracker.js) -->
+		<div id="state-tracker-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="state-tracker-title">
+			<div class="modal-content custom-form-modal state-tracker-modal-content">
+				<button type="button" class="close-modal" onclick="closeStateTrackerModal()" aria-label="Close">&times;</button>
+				<h2 id="state-tracker-title" class="modal-title">State Tracker</h2>
+				<p class="modal-subtitle">Compare every State in Whiteout Survival with live data from WoS Atlas.</p>
+
+				<div class="st-toolbar">
+					<input type="search" id="st-search-input" class="st-search" placeholder="Search State ID, alliance tag or name" aria-label="Search State ID, alliance tag or name" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+					<div class="st-toolbar-row">
+						<button type="button" id="st-mine-btn" class="st-chip" title="3475">My State</button>
+						<label class="st-sort"><span>Sort by</span>
+							<select id="st-sort-select" aria-label="Sort by">
+								<option value="chiefs">Chiefs</option>
+								<option value="total">Total Power</option>
+								<option value="median">Median Power</option>
+								<option value="max">Max Power</option>
+								<option value="alliances">Alliances</option>
+								<option value="kid">State ID</option>
+							</select>
+						</label>
+						<button type="button" id="st-dir-btn" class="st-chip">High to low</button>
+						<button type="button" id="st-refresh-btn" class="st-chip">Refresh</button>
+					</div>
+				</div>
+
+				<div class="st-statusbar">
+					<span id="st-spinner" class="spinner-inline hidden" aria-hidden="true"></span>
+					<span id="st-status" role="status" aria-live="polite"></span>
+					<span id="st-updated" class="st-muted"></span>
+				</div>
+
+				<div id="st-error" class="st-error hidden" role="alert">
+					<span id="st-error-text"></span>
+					<button type="button" id="st-retry-btn" class="st-chip hidden">Retry</button>
+				</div>
+
+				<div id="st-table-wrap" class="st-table-wrap hidden">
+					<table class="st-table">
+						<thead>
+							<tr>
+								<th class="st-col-state" scope="col">State</th>
+								<th scope="col">Chiefs</th>
+								<th scope="col">Alliances</th>
+								<th scope="col">Total Power</th>
+								<th scope="col">Median</th>
+								<th scope="col">Max</th>
+								<th class="st-col-top" scope="col">Top Alliance</th>
+							</tr>
+						</thead>
+						<tbody id="st-table-body" data-no-i18n></tbody>
+					</table>
+				</div>
+
+				<p id="st-empty" class="st-empty hidden">No State matches your search.</p>
+				<div class="st-actions">
+					<button type="button" id="st-search-all-btn" class="st-chip hidden">Search all States</button>
+					<button type="button" id="st-more-btn" class="st-chip hidden">Show more</button>
+				</div>
+
+				<p class="st-source">Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete or out of date. <a href="https://wosatlas.com/states/" target="_blank" rel="noopener noreferrer" data-no-i18n>wosatlas.com</a></p>
 			</div>
 		</div>
 
