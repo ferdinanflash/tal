@@ -23,6 +23,9 @@
 //   "player-extra" — /players/{uid}/power | /arena | /history?limit=200
 //     body: { uid, kind: 'power' | 'arena' | 'history' }
 //
+//   "player-search" — /players/search?playerName={query} (also matches IDs)
+//     body: { query }
+//
 // Not an open proxy: only the endpoints listed below are reachable, inputs are
 // clamped, and responses are cached in memory for a few minutes.
 
@@ -191,6 +194,20 @@ async function handlePlayerExtra(input: Record<string, unknown>) {
   return json(up.body);
 }
 
+async function handlePlayerSearch(input: Record<string, unknown>) {
+  const query = typeof input.query === 'string' ? input.query.trim() : String(input.query ?? '').trim();
+  if (!query || query.length > 64) return jsonObj({ error: 'bad-query' }, 400);
+  const key = `player-search:${query}`;
+  const hit = cacheGet(key);
+  if (hit) return json(hit);
+
+  const qs = new URLSearchParams({ playerName: query });
+  const up = await upstreamGet(`${API}/players/search?${qs}`);
+  if (!up.ok) return jsonObj({ error: 'upstream-' + up.status }, 502);
+  cacheSet(key, up.body);
+  return json(up.body);
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return jsonObj({ error: 'method-not-allowed' }, 405);
@@ -209,6 +226,7 @@ Deno.serve(async (req: Request) => {
     if (action === 'alliance') return await handleAlliance(input);
     if (action === 'player') return await handlePlayer(input);
     if (action === 'player-extra') return await handlePlayerExtra(input);
+    if (action === 'player-search') return await handlePlayerSearch(input);
     // Default and any unknown action: summary (keeps older clients working).
     return await handleSummary(input);
   } catch (_) {

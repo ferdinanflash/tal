@@ -60,6 +60,9 @@ Loading all States... {0} / {1} || Memuat semua State... {0} / {1} || 正在加�
 Player ID || Player ID || 玩家 ID || Player ID || ID Giocatore || Player ID
 Open player || Buka Player || 打开玩家 || Buksan ang Player || Apri giocatore || เปิดผู้เล่น
 Enter a valid Player ID || Masukkan Player ID yang valid || 请输入有效的玩家 ID || Maglagay ng valid na Player ID || Inserisci un ID Giocatore valido || กรุณากรอก Player ID ที่ถูกต้อง
+Searching... || Mencari... || 搜索中... || Naghahanap... || Ricerca in corso... || กำลังค้นหา...
+Player not found || Player tidak ditemukan || 未找到玩家 || Hindi natagpuan ang player || Giocatore non trovato || ไม่พบผู้เล่น
+Search results || Hasil pencarian || 搜索结果 || Resulta ng paghahanap || Risultati della ricerca || ผลการค้นหา
 Updated {0} || Diperbarui {0} || 更新于 {0} || Na-update {0} || Aggiornato {0} || อัปเดต {0}
 No State matches your search. || Tidak ada State yang cocok dengan pencarian Anda. || 没有符合搜索的州。 || Walang State na tumutugma sa iyong paghahanap. || Nessuno State corrisponde alla ricerca. || ไม่พบ State ที่ตรงกับการค้นหา
 Search all States || Cari di semua State || 搜索全部州 || Hanapin sa lahat ng State || Cerca in tutti gli State || ค้นหาในทุก State
@@ -422,6 +425,70 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     }
 
     // ---- Player detail ----
+    // The WoS Atlas player page resolves a typed ID through /players/search
+    // (query param is named playerName but also matches numeric IDs), then
+    // opens the match. /players/{uid} alone does not find every player, so
+    // the ID box below goes through search first.
+    async function fetchPlayerSearchDirect(query, signal) {
+        return fetchJson(`${CFG.apiBase}/players/search?playerName=${encodeURIComponent(query)}`, signal);
+    }
+
+    async function fetchPlayerSearchProxy(query) {
+        const client = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (!client) throw new Error('unavailable');
+        const { data, error } = await client.functions.invoke(CFG.proxyFunction, {
+            body: { action: 'player-search', query }
+        });
+        if (error) throw error;
+        if (!data || (typeof data === 'object' && data.error && !Array.isArray(data))) {
+            throw new Error((data && data.error) || 'proxy-player-search-failed');
+        }
+        return data;
+    }
+
+    function extractSearchResults(d) {
+        if (!d) return [];
+        if (Array.isArray(d)) return d;
+        const keys = ['results', 'players', 'list', 'items', 'data'];
+        for (const k of keys) {
+            if (Array.isArray(d[k])) return d[k];
+        }
+        return [];
+    }
+
+    // Resolves a typed ID to a uid via search, preferring an exact uid match;
+    // falls back to the plain /players/{uid} lookup if search finds nothing.
+    async function resolvePlayerId(query, signal) {
+        let results = [];
+        try {
+            let payload;
+            if (S.mode === 'proxy') {
+                try { payload = await fetchPlayerSearchProxy(query); }
+                catch (err) { if (err && err.name === 'AbortError') throw err; payload = await fetchPlayerSearchDirect(query, signal); }
+            } else {
+                try { payload = await fetchPlayerSearchDirect(query, signal); }
+                catch (err) { if (err && err.name === 'AbortError') throw err; payload = await fetchPlayerSearchProxy(query); }
+            }
+            results = extractSearchResults(payload);
+        } catch (err) {
+            if (err && err.name === 'AbortError') throw err;
+            results = [];
+        }
+        if (signal && signal.aborted) return null;
+        const exact = results.find((r) => String(r.uid || r.fid || r.playerUid || '') === String(query));
+        if (exact) return Number(exact.uid || exact.fid || exact.playerUid);
+        if (results.length === 1) return Number(results[0].uid || results[0].fid || results[0].playerUid) || null;
+        if (results.length > 1) return { multiple: results };
+        // Nothing from search: the ID itself may still resolve directly.
+        try {
+            const direct = await fetchPlayerDirect(query, signal);
+            if (direct && Array.isArray(direct.players) && direct.players.length) return Number(query);
+        } catch (err) {
+            if (err && err.name === 'AbortError') throw err;
+        }
+        return null;
+    }
+
     async function fetchPlayerDirect(uid, signal) {
         return fetchJson(`${CFG.apiBase}/players/${uid}`, signal);
     }
@@ -667,6 +734,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         if (S.view === 'detail') {
             if (S.detailMode === 'alliance') renderAllianceDetail();
             else if (S.detailMode === 'player') renderPlayerDetail();
+            else if (S.detailMode === 'search') renderSearchDetail();
             else renderDetail();
             // Back button label
             if (els.back) {
@@ -1011,19 +1079,80 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         loadPlayer(id);
     }
 
-    function onUidSubmit(event) {
+    let uidSearchToken = 0;
+    async function onUidSubmit(event) {
         event.preventDefault();
         const raw = (els.uidInput.value || '').trim();
-        const uid = Number(raw);
-        if (!raw || !Number.isFinite(uid) || uid < 1 || !/^\d+$/.test(raw)) {
+        if (!raw || !/^\d+$/.test(raw)) {
             els.uidInput.setCustomValidity('Enter a valid Player ID');
             els.uidInput.reportValidity();
             return;
         }
         els.uidInput.setCustomValidity('');
-        if (S.view !== 'detail') S.listScroll = els.wrap.scrollTop;
-        openPlayerDetail(uid);
-        els.uidInput.value = '';
+        const token = ++uidSearchToken;
+        els.uidBtn.disabled = true;
+        els.uidBtn.textContent = (window.I18N && I18N.t) ? I18N.t('Searching...') : 'Searching...';
+        try {
+            const result = await resolvePlayerId(raw, S.ctrl && S.ctrl.signal);
+            if (token !== uidSearchToken) return; // a newer search started
+            if (result && typeof result === 'object' && result.multiple) {
+                // Several matches: show them instead of guessing which one.
+                showUidMatches(raw, result.multiple);
+                return;
+            }
+            if (result) {
+                if (S.view !== 'detail') S.listScroll = els.wrap.scrollTop;
+                openPlayerDetail(result);
+                els.uidInput.value = '';
+            } else {
+                els.uidInput.setCustomValidity('Player not found');
+                els.uidInput.reportValidity();
+            }
+        } finally {
+            if (token === uidSearchToken) {
+                els.uidBtn.disabled = false;
+                els.uidBtn.textContent = (window.I18N && I18N.t) ? I18N.t('Open player') : 'Open player';
+            }
+        }
+    }
+
+    // Several players can share an ID-like search term; let the user pick.
+    function showUidMatches(query, results) {
+        S.view = 'detail';
+        S.detailMode = 'search';
+        S.detailKid = null;
+        S.detailAid = null;
+        S.detailUid = null;
+        S.searchResults = results;
+        S.searchQuery = query;
+        render();
+        els.detailView.scrollTop = 0;
+        els.back.focus({ preventScroll: true });
+    }
+
+    function renderSearchDetail() {
+        const results = S.searchResults || [];
+        const rows = results.slice(0, 50).map((m) => {
+            const uid = Number(m.uid || m.fid || m.playerUid) || 0;
+            const nick = escapeHtml(String(m.nick_name || m.nickname || m.nickName || m.name || uid || ''));
+            const kid = Number(m.kid) || null;
+            const abbr = escapeHtml(String(m.abbr || ''));
+            return `<tr${uid ? ` class="st-click-row" data-action="open-player" data-uid="${uid}" tabindex="0" role="button"` : ''}>
+                <td><span data-no-i18n>${nick}</span> <span class="st-uid-hint">#${uid}</span></td>
+                <td class="st-num" data-no-i18n>${kid || '-'}</td>
+                <td data-no-i18n>${abbr || '-'}</td>
+            </tr>`;
+        }).join('');
+        const body = `
+            <div class="st-detail-title"><h3>Search results</h3></div>
+            <p class="st-detail-sub">"<span data-no-i18n>${escapeHtml(S.searchQuery || '')}</span>"</p>
+            ${rows
+                ? `<div class="st-mini-table-wrap"><table class="st-mini-table">
+                    <thead><tr><th>Name</th><th class="st-num">State</th><th>Alliance</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                   </table></div>`
+                : `<div class="st-detail-hint st-detail-hint-warn"><span>Player not found</span></div>`}`;
+        els.detailBody.innerHTML = body;
     }
 
     function showList() {
@@ -1037,7 +1166,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     }
 
     function goBack() {
-        if (S.detailMode === 'alliance' || S.detailMode === 'player') {
+        if (S.detailMode === 'alliance' || S.detailMode === 'player' || S.detailMode === 'search') {
             S.detailMode = 'state';
             S.detailAid = null;
             S.detailUid = null;
@@ -1517,6 +1646,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             retry: document.getElementById('st-retry-btn'),
             uidForm: document.getElementById('st-uid-form'),
             uidInput: document.getElementById('st-uid-input'),
+            uidBtn: document.getElementById('st-uid-btn'),
             searchAll: document.getElementById('st-search-all-btn'),
             more: document.getElementById('st-more-btn'),
             listView: document.getElementById('st-list-view'),
