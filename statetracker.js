@@ -888,7 +888,6 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                </div>`
             : '';
 
-        const atlasLink = `https://wosatlas.com/states/${row.kid}`;
         const updatedAt = (power && power.recorded_at) || (allianceLb && allianceLb.recordedAt) ||
             (stateFacts && stateFacts.factsReadAt) || row.at;
 
@@ -896,7 +895,6 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             <div class="st-detail-title">
                 <h3>State ${row.kid}</h3>
                 ${row.kid === CFG.myState ? '<span class="st-chip-static is-mine">My State</span>' : ''}
-                <a class="st-chip st-atlas-link" href="${atlasLink}" target="_blank" rel="noopener noreferrer">Open on WoS Atlas</a>
             </div>
             ${cmp ? `<p class="st-detail-sub">Compared with State ${cmp.kid}</p>` : ''}
             ${hint}
@@ -989,7 +987,6 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         const err = cached && cached.error;
         const d = cached && cached.data;
 
-        const atlasLink = `https://wosatlas.com/alliances/${aid}`;
         let body = '';
 
         if (loading && !d) {
@@ -1055,7 +1052,6 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             body = `
                 <div class="st-detail-title">
                     <h3><span class="st-tag">${abbr}</span> <span data-no-i18n>${name}</span></h3>
-                    <a class="st-chip st-atlas-link" href="${atlasLink}" target="_blank" rel="noopener noreferrer">Open on WoS Atlas</a>
                 </div>
                 ${homeKid ? `<p class="st-detail-sub">State ${homeKid}</p>` : ''}
                 ${err ? `<div class="st-detail-hint st-detail-hint-warn"><span>${escapeHtml(err)}</span></div>` : ''}
@@ -1089,7 +1085,6 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         const players = payload && Array.isArray(payload.players) ? payload.players : [];
         const p = players[0] || null;
 
-        const atlasLink = `https://wosatlas.com/player/${uid}`;
         let body = '';
 
         if (loading && !p) {
@@ -1116,7 +1111,6 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             body = `
                 <div class="st-detail-title">
                     <h3 data-no-i18n>${nick}</h3>
-                    <a class="st-chip st-atlas-link" href="${atlasLink}" target="_blank" rel="noopener noreferrer">Open on WoS Atlas</a>
                 </div>
                 <p class="st-detail-sub">Player ID <span data-no-i18n>#${uid}</span>${kid ? ` · State ${kid}` : ''}</p>
                 ${err ? `<div class="st-detail-hint st-detail-hint-warn"><span>${escapeHtml(err)}</span></div>` : ''}
@@ -1130,11 +1124,9 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                 </div>
                 ${observed ? `<p class="st-muted st-detail-updated">Observed ${observed}</p>` : ''}`;
         } else {
-            // No structured player — still show ID + atlas link (like wosatlas.com title).
             body = `
                 <div class="st-detail-title">
                     <h3>Player <span data-no-i18n>${uid}</span></h3>
-                    <a class="st-chip st-atlas-link" href="${atlasLink}" target="_blank" rel="noopener noreferrer">Open on WoS Atlas</a>
                 </div>
                 <div class="st-detail-hint st-detail-hint-warn"><span>${err ? escapeHtml(err) : 'Could not load player detail.'}</span></div>
                 <div class="st-stat-grid">
