@@ -2438,3 +2438,54 @@ body.state-tracker-modal-open { overflow: hidden; }
     .st-stat-grid, .st-topcard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .st-stat-value { font-size: 1.1rem; }
 }
+
+.st-stat-value-sm { font-size: 1rem; word-break: break-word; }
+.st-detail-hint-warn { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.35); color: #fcd34d; }
+.st-atlas-link { margin-left: auto; text-decoration: none; font-size: 0.78rem; }
+.st-atlas-link:hover { border-color: rgba(125, 211, 252, 0.85); }
+
+.st-mini-table-wrap {
+    overflow: auto;
+    border: 1px solid #2a3042;
+    border-radius: 10px;
+    background: #10131b;
+    margin-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+}
+.st-mini-table {
+    width: 100%;
+    min-width: 520px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.82rem;
+}
+.st-mini-table th,
+.st-mini-table td {
+    padding: 7px 10px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid #1f2535;
+}
+.st-mini-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #1a2030;
+    color: #8fa3bf;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.st-mini-table .st-num { text-align: right; font-variant-numeric: tabular-nums; }
+.st-mini-table tbody tr:hover td { background: #171d2b; }
+.st-mini-table .st-tag {
+    display: inline-block;
+    min-width: 2.6em;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #1f2535;
+    color: #e2e8f0;
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-align: center;
+}

@@ -61,7 +61,15 @@ Fitur Foundry: peringatan roster per Legion/Phase (`FOUNDRY_MIN`), target 3 fase
 
 ## State Tracker
 
-- `statetracker.js` — tombol **State Tracker** di navbar (di samping Login) membuka `#state-tracker-modal` (`openStateTrackerModal()` / `closeStateTrackerModal()`). Data: `https://api.wosatlas.com/v1/states/summary` (50 State per request, urut `chiefs`). Halaman pertama dimuat saat modal dibuka; sisanya hanya saat dibutuhkan (cari ID/aliansi, urutan selain Chiefs, tombol Show more), 3 request paralel. Data di-cache 5 menit; Refresh memuat ulang.
+- `statetracker.js` — tombol **State Tracker** di navbar (di samping Login) membuka `#state-tracker-modal` (`openStateTrackerModal()` / `closeStateTrackerModal()`). Data list: `https://api.wosatlas.com/v1/states/summary` (50 State per request, urut `chiefs`). Halaman pertama dimuat saat modal dibuka; sisanya hanya saat dibutuhkan (cari ID/aliansi, urutan selain Chiefs, tombol Show more), 3 request paralel. Data di-cache 5 menit; Refresh memuat ulang.
 - Panggilan langsung dari browser lebih dulu; bila diblokir (CORS/jaringan) otomatis memakai edge function `supabase/functions/wosatlas-states/index.ts` (deploy sekali: `supabase functions deploy wosatlas-states`).
 - Terjemahan (6 bahasa) didaftarkan di bagian atas `statetracker.js` lewat `I18N.addText`. State `3475` (`CFG.myState`) disorot di tabel.
-- Klik baris State (atau Enter) membuka tampilan detail di dalam modal yang sama (tombol Back / Esc kembali ke daftar): statistik lengkap, peringkat, selisih terhadap State 3475, dan kartu Top Alliance. Header kolom bisa diklik untuk mengurutkan. Peringkat dan perbandingan butuh semua halaman dimuat (tombol "Load all States").
+- Klik baris State (atau Enter) membuka tampilan detail di dalam modal yang sama (tombol Back / Esc kembali ke daftar), meniru halaman State di [wosatlas.com](https://wosatlas.com/states/):
+  - Ringkasan list: chiefs, alliances, total/median/max power, top alliance, bandingkan vs State 3475.
+  - Detail ekstra (fetch paralel, cache 5 menit):
+    - `GET /v1/states/{kid}` — king, ranked population, transfer gate
+    - `GET /v1/kingdoms/{kid}/power` — rank antar State, player count, total/median/max power, top players
+    - `GET /v1/alliances/leaderboard?kid={kid}` — tabel top alliances (power, members, recruitment)
+  - Bila detail ekstra gagal (CORS / rate limit / human-pass), UI tetap menampilkan data summary dan menampilkan peringatan.
+  - Tautan "Open on WoS Atlas" menuju `https://wosatlas.com/states/{kid}`.
+- Header kolom bisa diklik untuk mengurutkan. Peringkat relatif antar State dan perbandingan penuh butuh semua halaman list dimuat (tombol "Load all States").

@@ -19,14 +19,18 @@
 
     const CFG = {
         directUrl: 'https://api.wosatlas.com/v1/states/summary',
+        apiBase: 'https://api.wosatlas.com/v1',
         proxyFunction: 'wosatlas-states',
         sourceUrl: 'https://wosatlas.com/states/',
         pageSize: 50,          // size the endpoint is known to accept
         concurrency: 3,        // parallel page requests when loading all States
         cacheMs: 5 * 60 * 1000,
+        detailCacheMs: 5 * 60 * 1000,
         myState: 3475,
         firstVisible: 50,
-        visibleStep: 50
+        visibleStep: 50,
+        allianceLimit: 15,
+        topPlayersLimit: 10
     };
 
     // ---- Translations (English || Indonesia || 中文 || Filipino || Italiano || ไทย) ----
@@ -73,6 +77,23 @@ Load all States to see rankings and compare with your State. || Muat semua State
 Click a State for details. || Klik State untuk melihat detail. || 点击州查看详情。 || I-click ang State para sa detalye. || Clicca su uno State per i dettagli. || คลิก State เพื่อดูรายละเอียด
 Retry || Coba lagi || 重试 || Subukan muli || Riprova || ลองอีกครั้ง
 Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete or out of date. || Data dari WoS Atlas, situs pihak ketiga tidak resmi. Angka bisa tidak lengkap atau usang. || 数据来自非官方第三方网站 WoS Atlas，数字可能不完整或已过时。 || Data mula sa WoS Atlas, isang hindi opisyal na third-party na site. Maaaring hindi kumpleto o luma na ang mga numero. || Dati da WoS Atlas, un sito di terze parti non ufficiale. I numeri potrebbero essere incompleti o non aggiornati. || ข้อมูลจาก WoS Atlas ซึ่งเป็นเว็บไซต์บุคคลที่สามที่ไม่เป็นทางการ ตัวเลขอาจไม่ครบถ้วนหรือล้าสมัย
+Rank among States || Peringkat antar State || 州排名 || Ranggo sa mga State || Classifica tra gli State || อันดับใน State
+Players || Pemain || 玩家 || Mga Manlalaro || Giocatori || ผู้เล่น
+In-game figures || Angka in-game || 游戏内数据 || Mga in-game figure || Dati di gioco || ตัวเลขในเกม
+Ranked players || Pemain ter-rank || 上榜玩家 || Mga ranked player || Giocatori in classifica || ผู้เล่นในอันดับ
+King || Raja || 国王 || Hari || Re || กษัตริย์
+Transfer gate || Gerbang transfer || 迁移门槛 || Transfer gate || Cancello trasferimento || ประตูโยกย้าย
+Top Alliances || Aliansi Teratas || 顶级联盟 || Nangungunang Alyansa || Alleanze top || พันธมิตรอันดับต้น
+Top Players || Pemain Teratas || 顶级玩家 || Nangungunang Manlalaro || Giocatori top || ผู้เล่นอันดับต้น
+Rank || Peringkat || 排名 || Ranggo || Posizione || อันดับ
+Alliance || Aliansi || 联盟 || Alyansa || Alleanza || พันธมิตร
+Tag || Tag || 标签 || Tag || Tag || แท็ก
+Name || Nama || 名称 || Pangalan || Nome || ชื่อ
+Power || Kekuatan || 战力 || Power || Potenza || พลัง
+Furnace || Furnace || 熔炉 || Furnace || Fornace || เตา
+Loading detail... || Memuat detail... || 正在加载详情... || Nilo-load ang detalye... || Caricamento dettaglio... || กำลังโหลดรายละเอียด...
+Could not load extra State detail. Showing summary only. || Gagal memuat detail State tambahan. Menampilkan ringkasan saja. || 无法加载额外州详情，仅显示摘要。 || Hindi ma-load ang karagdagang detalye ng State. Buod lang ang ipinapakita. || Impossibile caricare i dettagli extra. Solo riepilogo. || โหลดรายละเอียดเพิ่มเติมไม่ได้ แสดงเฉพาะสรุป
+Open on WoS Atlas || Buka di WoS Atlas || 在 WoS Atlas 打开 || Buksan sa WoS Atlas || Apri su WoS Atlas || เปิดใน WoS Atlas
 `);
     }
 
@@ -105,7 +126,9 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
         retry: null,
         view: 'list',           // 'list' | 'detail'
         detailKid: null,
-        listScroll: 0
+        listScroll: 0,
+        // kid -> { fetchedAt, state, power, alliances, error, loading }
+        detailCache: new Map()
     };
 
     let trigger = null;
@@ -189,6 +212,68 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
         S.fetchedAt = S.fetchedAt || Date.now();
     }
 
+    // ---- Detail endpoints (state / power / alliances), like wosatlas.com ----
+    async function fetchJson(url, signal) {
+        const res = await fetch(url, {
+            headers: { accept: 'application/json' },
+            signal,
+            credentials: 'omit',
+            mode: 'cors'
+        });
+        if (!res.ok) throw new Error('http-' + res.status);
+        return res.json();
+    }
+
+    function getDetail(kid) {
+        return S.detailCache.get(Number(kid)) || null;
+    }
+
+    function setDetail(kid, patch) {
+        const key = Number(kid);
+        const prev = S.detailCache.get(key) || {};
+        S.detailCache.set(key, Object.assign({}, prev, patch));
+    }
+
+    async function loadDetail(kid) {
+        const key = Number(kid);
+        if (!Number.isFinite(key)) return;
+        const cached = getDetail(key);
+        if (cached && cached.loading) return;
+        if (cached && cached.fetchedAt && Date.now() - cached.fetchedAt < CFG.detailCacheMs && !cached.error) {
+            return;
+        }
+
+        setDetail(key, { loading: true, error: null });
+        if (S.view === 'detail' && S.detailKid === key) renderDetail();
+
+        const signal = S.ctrl && S.ctrl.signal;
+        const base = CFG.apiBase;
+        const results = await Promise.allSettled([
+            fetchJson(`${base}/states/${key}`, signal),
+            fetchJson(`${base}/kingdoms/${key}/power`, signal),
+            fetchJson(`${base}/alliances/leaderboard?limit=${CFG.allianceLimit}&kid=${key}`, signal)
+        ]);
+
+        if (signal && signal.aborted) return;
+
+        const state = results[0].status === 'fulfilled' ? results[0].value : null;
+        const power = results[1].status === 'fulfilled' ? results[1].value : null;
+        const alliances = results[2].status === 'fulfilled' ? results[2].value : null;
+        const anyOk = !!(state || power || alliances);
+        const errMsg = anyOk ? null : 'Could not load extra State detail. Showing summary only.';
+
+        setDetail(key, {
+            loading: false,
+            fetchedAt: Date.now(),
+            state: state,
+            power: power,
+            alliances: alliances,
+            error: errMsg
+        });
+
+        if (S.view === 'detail' && S.detailKid === key) renderDetail();
+    }
+
     function nextMissingOffset() {
         const limit = S.total || CFG.pageSize;
         for (let o = 0; o < limit; o += CFG.pageSize) {
@@ -269,6 +354,7 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
         S.ctrl = new AbortController();
         S.rows = new Map();
         S.loadedOffsets = new Set();
+        S.detailCache = new Map();
         S.total = 0;
         S.recordedAt = null;
         S.fetchedAt = 0;
@@ -408,6 +494,28 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
         const perChief = row.chiefs ? Math.round(row.total / row.chiefs) : 0;
         const perChiefBase = cmp && cmp.chiefs ? Math.round(cmp.total / cmp.chiefs) : null;
 
+        const detail = getDetail(row.kid);
+        const power = detail && detail.power;
+        const stateFacts = detail && detail.state;
+        const allianceLb = detail && detail.alliances;
+        const loadingExtra = !!(detail && detail.loading);
+        const extraError = detail && detail.error;
+
+        // Prefer kingdom power figures when available (matches wosatlas.com State page).
+        const players = power && Number.isFinite(Number(power.player_count)) ? Number(power.player_count) : row.chiefs;
+        const totalPower = power && Number.isFinite(Number(power.total_power)) ? Number(power.total_power) : row.total;
+        const medianPower = power && Number.isFinite(Number(power.median_power)) ? Number(power.median_power) : row.median;
+        const maxPower = power && Number.isFinite(Number(power.max_power)) ? Number(power.max_power) : row.max;
+        const powerRank = power && Number.isFinite(Number(power.power_rank)) ? Number(power.power_rank) : rankFor('total', row);
+        const rankedStates = power && Number.isFinite(Number(power.ranked_states)) ? Number(power.ranked_states) : (S.total || null);
+
+        const king = stateFacts && stateFacts.king ? stateFacts.king : null;
+        const rankedPop = stateFacts && Number.isFinite(Number(stateFacts.rankedPopulation))
+            ? Number(stateFacts.rankedPopulation) : null;
+        const transferNote = stateFacts && stateFacts.transferPowerTier != null
+            ? String(stateFacts.transferPowerTier)
+            : (stateFacts && stateFacts.migrantRead === 'UNAVAILABLE' ? 'Not answered by the server' : null);
+
         const t = row.top;
         const topHtml = t ? `
             <div class="st-topcard">
@@ -423,29 +531,149 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
 
         const needAll = !allLoaded();
         const progress = S.progress ? `Loading all States... ${S.progress.done} / ${S.progress.total}` : '';
-        const hint = needAll && !S.busy
-            ? `<div class="st-detail-hint"><span>Load all States to see rankings and compare with your State.</span><button type="button" class="st-chip" data-action="load-all">Load all States</button></div>`
-            : (progress ? `<div class="st-detail-hint"><span class="spinner-inline" aria-hidden="true"></span><span>${progress}</span></div>` : '');
+        let hint = '';
+        if (loadingExtra) {
+            hint = `<div class="st-detail-hint"><span class="spinner-inline" aria-hidden="true"></span><span>Loading detail...</span></div>`;
+        } else if (extraError) {
+            hint = `<div class="st-detail-hint st-detail-hint-warn"><span>${escapeHtml(extraError)}</span></div>`;
+        } else if (needAll && !S.busy) {
+            hint = `<div class="st-detail-hint"><span>Load all States to see rankings and compare with your State.</span><button type="button" class="st-chip" data-action="load-all">Load all States</button></div>`;
+        } else if (progress) {
+            hint = `<div class="st-detail-hint"><span class="spinner-inline" aria-hidden="true"></span><span>${progress}</span></div>`;
+        }
+
+        const rankLabel = powerRank
+            ? (rankedStates ? `#${fmtFull(powerRank)} of ${fmtFull(rankedStates)}` : `#${fmtFull(powerRank)}`)
+            : '-';
+
+        // Alliance leaderboard table
+        let alliancesHtml = '';
+        const entries = allianceLb && Array.isArray(allianceLb.entries) ? allianceLb.entries : null;
+        if (entries && entries.length) {
+            const rows = entries.map((a, i) => {
+                const rank = i + 1;
+                const abbr = escapeHtml(String(a.abbr || ''));
+                const name = escapeHtml(String(a.name || ''));
+                const members = Number.isFinite(Number(a.members)) ? Number(a.members) : 0;
+                const memberMax = Number.isFinite(Number(a.memberMax)) ? Number(a.memberMax) : 0;
+                const tp = Number(a.totalPower) || 0;
+                const mp = Number(a.maxPower) || 0;
+                const recruit = a.publicRecruit
+                    ? '<span class="st-chip-static is-open">Open</span>'
+                    : '<span class="st-chip-static is-closed">Closed</span>';
+                return `<tr>
+                    <td class="st-num">${rank}</td>
+                    <td><span class="st-tag">${abbr}</span></td>
+                    <td data-no-i18n>${name}</td>
+                    <td class="st-num" title="${fmtFull(tp)}">${fmtCompact(tp)}</td>
+                    <td class="st-num">${members}${memberMax ? '/' + memberMax : ''}</td>
+                    <td class="st-num" title="${fmtFull(mp)}">${fmtCompact(mp)}</td>
+                    <td>${recruit}</td>
+                </tr>`;
+            }).join('');
+            alliancesHtml = `
+                <h4 class="st-detail-h">Top Alliances</h4>
+                <div class="st-mini-table-wrap">
+                    <table class="st-mini-table">
+                        <thead><tr>
+                            <th class="st-num">#</th>
+                            <th>Tag</th>
+                            <th>Name</th>
+                            <th class="st-num">Power</th>
+                            <th class="st-num">Members</th>
+                            <th class="st-num">Max</th>
+                            <th></th>
+                        </tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>`;
+        } else if (t) {
+            alliancesHtml = '<h4 class="st-detail-h">Top Alliance</h4>' + topHtml;
+        }
+
+        // Top players from kingdom power
+        let playersHtml = '';
+        const topPlayers = power && Array.isArray(power.top) ? power.top.slice(0, CFG.topPlayersLimit) : null;
+        if (topPlayers && topPlayers.length) {
+            const prows = topPlayers.map((p) => {
+                const rank = Number(p.rank) || 0;
+                const nick = escapeHtml(String(p.nick_name || p.uid || ''));
+                const pw = Number(p.power) || 0;
+                const stove = Number.isFinite(Number(p.stove_lv)) ? Number(p.stove_lv) : '-';
+                const jump = Number.isFinite(Number(p.last_jump_pct))
+                    ? (Number(p.last_jump_pct) * 100).toFixed(1) + '%'
+                    : '-';
+                return `<tr>
+                    <td class="st-num">${rank}</td>
+                    <td data-no-i18n>${nick}</td>
+                    <td class="st-num" title="${fmtFull(pw)}">${fmtCompact(pw)}</td>
+                    <td class="st-num">${stove}</td>
+                    <td class="st-num">${jump}</td>
+                </tr>`;
+            }).join('');
+            playersHtml = `
+                <h4 class="st-detail-h">Top Players</h4>
+                <div class="st-mini-table-wrap">
+                    <table class="st-mini-table">
+                        <thead><tr>
+                            <th class="st-num">#</th>
+                            <th>Name</th>
+                            <th class="st-num">Power</th>
+                            <th class="st-num">Furnace</th>
+                            <th class="st-num">Jump</th>
+                        </tr></thead>
+                        <tbody>${prows}</tbody>
+                    </table>
+                </div>`;
+        }
+
+        const kingHtml = king
+            ? `<div class="st-stat">
+                <span class="st-stat-label">King</span>
+                <strong class="st-stat-value st-stat-value-sm" data-no-i18n>${escapeHtml(String(king.name || ''))}</strong>
+                <span class="st-stat-meta" data-no-i18n>${king.allianceName ? escapeHtml(String(king.allianceName)) : ''}</span>
+               </div>`
+            : '';
+
+        const inGameHtml = (rankedPop != null || king || transferNote)
+            ? `<h4 class="st-detail-h">In-game figures</h4>
+               <div class="st-stat-grid">
+                 ${rankedPop != null ? `<div class="st-stat"><span class="st-stat-label">Ranked players</span><strong class="st-stat-value">${fmtFull(rankedPop)}</strong></div>` : ''}
+                 ${kingHtml}
+                 ${transferNote ? `<div class="st-stat"><span class="st-stat-label">Transfer gate</span><strong class="st-stat-value st-stat-value-sm">${escapeHtml(transferNote)}</strong></div>` : ''}
+               </div>`
+            : '';
+
+        const atlasLink = `https://wosatlas.com/states/${row.kid}`;
+        const updatedAt = (power && power.recorded_at) || (allianceLb && allianceLb.recordedAt) ||
+            (stateFacts && stateFacts.factsReadAt) || row.at;
 
         els.detailBody.innerHTML = `
             <div class="st-detail-title">
                 <h3>State ${row.kid}</h3>
                 ${row.kid === CFG.myState ? '<span class="st-chip-static is-mine">My State</span>' : ''}
+                <a class="st-chip st-atlas-link" href="${atlasLink}" target="_blank" rel="noopener noreferrer">Open on WoS Atlas</a>
             </div>
             ${cmp ? `<p class="st-detail-sub">Compared with State ${cmp.kid}</p>` : ''}
             ${hint}
             <div class="st-stat-grid">
-                ${statCard('Chiefs', row, 'chiefs', { base: base('chiefs') })}
+                <div class="st-stat">
+                    <span class="st-stat-label">Rank among States</span>
+                    <strong class="st-stat-value">${rankLabel}</strong>
+                </div>
+                ${statCard('Players', row, 'chiefs', { value: players, base: base('chiefs') })}
+                ${statCard('Total Power', row, 'total', { value: totalPower, compact: true, base: base('total'), rank: false })}
+                ${statCard('Median Power', row, 'median', { value: medianPower, compact: true, base: base('median'), rank: false })}
+                ${statCard('Max Power', row, 'max', { value: maxPower, compact: true, base: base('max'), rank: false })}
                 ${statCard('Alliances', row, 'alliances', { base: base('alliances') })}
-                ${statCard('Total Power', row, 'total', { compact: true, base: base('total') })}
-                ${statCard('Median Power', row, 'median', { compact: true, base: base('median') })}
-                ${statCard('Max Power', row, 'max', { compact: true, base: base('max') })}
-                ${statCard('Power per Chief', row, 'total', { value: perChief, compact: true, rank: false, base: perChiefBase })}
+                ${statCard('Power per Chief', row, 'total', { value: players ? Math.round(totalPower / players) : perChief, compact: true, rank: false, base: perChiefBase })}
                 ${statCard('Shielded', row, 'shielded', { rank: false, base: base('shielded') })}
                 ${statCard('Recruiting Alliances', row, 'recruiting', { rank: false, base: base('recruiting') })}
             </div>
-            ${t ? '<h4 class="st-detail-h">Top Alliance</h4>' + topHtml : ''}
-            ${row.at ? `<p class="st-muted st-detail-updated">Updated ${new Date(row.at).toLocaleString()}</p>` : ''}`;
+            ${inGameHtml}
+            ${alliancesHtml}
+            ${playersHtml}
+            ${updatedAt ? `<p class="st-muted st-detail-updated">Updated ${new Date(updatedAt).toLocaleString()}</p>` : ''}`;
     }
 
     function openDetail(kid) {
@@ -456,6 +684,7 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
         render();
         els.detailView.scrollTop = 0;
         els.back.focus({ preventScroll: true });
+        loadDetail(kid);
     }
 
     function showList() {
