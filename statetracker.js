@@ -57,6 +57,20 @@ No State matches your search. || Tidak ada State yang cocok dengan pencarian And
 Search all States || Cari di semua State || 搜索全部州 || Hanapin sa lahat ng State || Cerca in tutti gli State || ค้นหาในทุก State
 Show more || Tampilkan lebih banyak || 显示更多 || Magpakita pa || Mostra altri || แสดงเพิ่มเติม
 Could not load State data. Check your connection and try again. || Gagal memuat data State. Periksa koneksi Anda lalu coba lagi. || 无法加载州数据。请检查网络后重试。 || Hindi ma-load ang data ng State. Suriin ang koneksyon at subukan muli. || Impossibile caricare i dati degli State. Controlla la connessione e riprova. || โหลดข้อมูล State ไม่ได้ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง
+Back to list || Kembali ke daftar || 返回列表 || Bumalik sa listahan || Torna all'elenco || กลับไปที่รายการ
+State {0} || State {0} || 第{0}州 || State {0} || State {0} || State {0}
+Power per Chief || Kekuatan per Chief || 每位首领战力 || Lakas bawat Chief || Potenza per Chief || พลังต่อ Chief
+Shielded || Berperisai || 护盾中 || May Shield || Con scudo || มีโล่
+Recruiting Alliances || Aliansi yang Merekrut || 招募中的联盟 || Mga Alyansang Nagre-recruit || Alleanze che reclutano || พันธมิตรที่เปิดรับสมัคร
+Members || Anggota || 成员 || Mga Miyembro || Membri || สมาชิก
+Open recruitment || Rekrutmen terbuka || 公开招募 || Bukas na recruitment || Reclutamento aperto || เปิดรับสมัคร
+Closed recruitment || Rekrutmen tertutup || 非公开招募 || Sarado ang recruitment || Reclutamento chiuso || ปิดรับสมัคร
+Min. level || Level min. || 最低等级 || Min. na level || Livello min. || เลเวลขั้นต่ำ
+Min. power || Kekuatan min. || 最低战力 || Min. na lakas || Potenza min. || พลังขั้นต่ำ
+Compared with State {0} || Dibandingkan dengan State {0} || 与第{0}州对比 || Kumpara sa State {0} || Confronto con lo State {0} || เทียบกับ State {0}
+Load all States || Muat semua State || 加载全部州 || I-load ang lahat ng State || Carica tutti gli State || โหลด State ทั้งหมด
+Load all States to see rankings and compare with your State. || Muat semua State untuk melihat peringkat dan membandingkan dengan State Anda. || 加载全部州以查看排名并与你的州对比。 || I-load ang lahat ng State para makita ang ranking at maikumpara sa iyong State. || Carica tutti gli State per vedere le classifiche e confrontare con il tuo State. || โหลด State ทั้งหมดเพื่อดูอันดับและเปรียบเทียบกับ State ของคุณ
+Click a State for details. || Klik State untuk melihat detail. || 点击州查看详情。 || I-click ang State para sa detalye. || Clicca su uno State per i dettagli. || คลิก State เพื่อดูรายละเอียด
 Retry || Coba lagi || 重试 || Subukan muli || Riprova || ลองอีกครั้ง
 Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete or out of date. || Data dari WoS Atlas, situs pihak ketiga tidak resmi. Angka bisa tidak lengkap atau usang. || 数据来自非官方第三方网站 WoS Atlas，数字可能不完整或已过时。 || Data mula sa WoS Atlas, isang hindi opisyal na third-party na site. Maaaring hindi kumpleto o luma na ang mga numero. || Dati da WoS Atlas, un sito di terze parti non ufficiale. I numeri potrebbero essere incompleti o non aggiornati. || ข้อมูลจาก WoS Atlas ซึ่งเป็นเว็บไซต์บุคคลที่สามที่ไม่เป็นทางการ ตัวเลขอาจไม่ครบถ้วนหรือล้าสมัย
 `);
@@ -88,7 +102,10 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
         loadingAll: null,
         progress: null,         // { done, total } while loading all
         error: null,
-        retry: null
+        retry: null,
+        view: 'list',           // 'list' | 'detail'
+        detailKid: null,
+        listScroll: 0
     };
 
     let trigger = null;
@@ -106,6 +123,9 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
             chiefs: Number(e.chiefs) || 0,
             alliances: Number(e.alliances) || 0,
             recruiting: Number(e.recruitingAlliances) || 0,
+            shielded: Number(e.shielded) || 0,
+            gen: e.generation_ceiling == null ? null : Number(e.generation_ceiling),
+            at: e.recorded_at || null,
             total: Number(e.total_power) || 0,
             median: Number(e.median_power) || 0,
             max: Number(e.max_power) || 0,
@@ -114,7 +134,10 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
                 name: String(t.name || ''),
                 power: Number(t.totalPower) || 0,
                 members: Number(t.members) || 0,
-                memberMax: Number(t.memberMax) || 0
+                memberMax: Number(t.memberMax) || 0,
+                publicRecruit: !!t.publicRecruit,
+                minLevel: Number(t.joinMinLevel) || 0,
+                minPower: Number(t.joinMinPower) || 0
             } : null
         };
     }
@@ -174,8 +197,10 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
         return null;
     }
 
+    // "Everything is loaded" = every page of the listing was fetched. (Counting
+    // rows instead would never finish if the API repeats or skips a State.)
     function allLoaded() {
-        return S.total > 0 && S.rows.size >= S.total;
+        return S.total > 0 && S.loadedOffsets.size >= Math.ceil(S.total / CFG.pageSize);
     }
 
     // Runs an async loader with shared busy/error handling.
@@ -214,7 +239,7 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
 
     function loadAll() {
         if (S.loadingAll) return S.loadingAll;
-        if (allLoaded()) return Promise.resolve();
+        if (allLoaded()) { render(); return Promise.resolve(); }
         S.loadingAll = run(async (token) => {
             if (S.loadedOffsets.size === 0) await loadPage(0, token);
             const offsets = [];
@@ -273,7 +298,7 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
             ? `<span class="st-tag">${escapeHtml(row.top.abbr)}</span><span class="st-top-name">${escapeHtml(row.top.name)}</span>` +
               `<small>${fmtCompact(row.top.power)} &middot; ${row.top.members}/${row.top.memberMax}</small>`
             : '<span class="st-muted">-</span>';
-        return `<tr class="st-row${mine}">` +
+        return `<tr class="st-row${mine}" data-kid="${row.kid}" tabindex="0" title="${escapeHtml(row.kid)}">` +
             `<td class="st-col-state"><span class="st-rank">${rank}</span><strong>${row.kid}</strong></td>` +
             `<td class="st-num" title="${fmtFull(row.chiefs)}">${fmtFull(row.chiefs)}</td>` +
             `<td class="st-num">${fmtFull(row.alliances)}</td>` +
@@ -286,6 +311,13 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
 
     function render() {
         if (!els) return;
+        els.listView.classList.toggle('hidden', S.view !== 'list');
+        els.detailView.classList.toggle('hidden', S.view !== 'detail');
+        if (S.view === 'detail') { renderDetail(); return; }
+        els.sort.value = S.sort;
+        els.headSort.forEach((th) => {
+            th.setAttribute('aria-sort', th.dataset.sort === S.sort ? (S.desc ? 'descending' : 'ascending') : 'none');
+        });
         const all = sortedRows();
         const rankOf = new Map(all.map((row, i) => [row.kid, i + 1]));
         const q = S.query.trim().toLowerCase();
@@ -328,6 +360,138 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
         els.dir.textContent = S.desc ? 'High to low' : 'Low to high';
     }
 
+
+    // ---- Detail view ----
+    function prefixLoaded() {
+        let max = -1;
+        S.loadedOffsets.forEach((o) => { if (o > max) max = o; });
+        for (let o = 0; o <= max; o += CFG.pageSize) if (!S.loadedOffsets.has(o)) return false;
+        return max >= 0;
+    }
+
+    // Exact rank (1 = highest) or null when the data loaded so far can't tell.
+    function rankFor(key, row) {
+        if (!allLoaded() && !(key === 'chiefs' && prefixLoaded())) return null;
+        let rank = 1;
+        S.rows.forEach((other) => { if (other[key] > row[key]) rank += 1; });
+        return rank;
+    }
+
+    function deltaHtml(value, base, compact) {
+        if (base == null) return '';
+        const diff = value - base;
+        if (diff === 0) return '<small class="st-delta">=</small>';
+        const sign = diff > 0 ? '+' : '-';
+        const text = compact ? fmtCompact(Math.abs(diff)) : fmtFull(Math.abs(diff));
+        return `<small class="st-delta ${diff > 0 ? 'is-up' : 'is-down'}">${sign}${text}</small>`;
+    }
+
+    function statCard(label, row, key, opts) {
+        const o = opts || {};
+        const value = o.value != null ? o.value : row[key];
+        const compact = !!o.compact;
+        const rank = o.rank === false ? null : rankFor(key, row);
+        const base = o.base != null ? o.base : null;
+        return `<div class="st-stat">` +
+            `<span class="st-stat-label">${label}</span>` +
+            `<strong class="st-stat-value" title="${fmtFull(value)}">${compact ? fmtCompact(value) : fmtFull(value)}</strong>` +
+            `<span class="st-stat-meta">${rank ? `<span class="st-rankbadge">#${fmtFull(rank)}</span>` : ''}${deltaHtml(value, base, compact)}</span>` +
+            `</div>`;
+    }
+
+    function renderDetail() {
+        const row = S.rows.get(S.detailKid);
+        if (!row) { showList(); return; }
+        const mineRow = S.rows.get(CFG.myState);
+        const cmp = mineRow && mineRow.kid !== row.kid ? mineRow : null;
+        const base = (key) => (cmp ? cmp[key] : null);
+        const perChief = row.chiefs ? Math.round(row.total / row.chiefs) : 0;
+        const perChiefBase = cmp && cmp.chiefs ? Math.round(cmp.total / cmp.chiefs) : null;
+
+        const t = row.top;
+        const topHtml = t ? `
+            <div class="st-topcard">
+                <div class="st-topcard-head"><span class="st-tag">${escapeHtml(t.abbr)}</span><strong data-no-i18n>${escapeHtml(t.name)}</strong></div>
+                <div class="st-topcard-grid">
+                    <div><span class="st-stat-label">Total Power</span><strong title="${fmtFull(t.power)}">${fmtCompact(t.power)}</strong></div>
+                    <div><span class="st-stat-label">Members</span><strong>${t.members}/${t.memberMax}</strong></div>
+                    <div><span class="st-stat-label">Min. level</span><strong>${t.minLevel}</strong></div>
+                    <div><span class="st-stat-label">Min. power</span><strong title="${fmtFull(t.minPower)}">${fmtCompact(t.minPower)}</strong></div>
+                </div>
+                <span class="st-chip-static ${t.publicRecruit ? 'is-open' : 'is-closed'}">${t.publicRecruit ? 'Open recruitment' : 'Closed recruitment'}</span>
+            </div>` : '';
+
+        const needAll = !allLoaded();
+        const progress = S.progress ? `Loading all States... ${S.progress.done} / ${S.progress.total}` : '';
+        const hint = needAll && !S.busy
+            ? `<div class="st-detail-hint"><span>Load all States to see rankings and compare with your State.</span><button type="button" class="st-chip" data-action="load-all">Load all States</button></div>`
+            : (progress ? `<div class="st-detail-hint"><span class="spinner-inline" aria-hidden="true"></span><span>${progress}</span></div>` : '');
+
+        els.detailBody.innerHTML = `
+            <div class="st-detail-title">
+                <h3>State ${row.kid}</h3>
+                ${row.kid === CFG.myState ? '<span class="st-chip-static is-mine">My State</span>' : ''}
+            </div>
+            ${cmp ? `<p class="st-detail-sub">Compared with State ${cmp.kid}</p>` : ''}
+            ${hint}
+            <div class="st-stat-grid">
+                ${statCard('Chiefs', row, 'chiefs', { base: base('chiefs') })}
+                ${statCard('Alliances', row, 'alliances', { base: base('alliances') })}
+                ${statCard('Total Power', row, 'total', { compact: true, base: base('total') })}
+                ${statCard('Median Power', row, 'median', { compact: true, base: base('median') })}
+                ${statCard('Max Power', row, 'max', { compact: true, base: base('max') })}
+                ${statCard('Power per Chief', row, 'total', { value: perChief, compact: true, rank: false, base: perChiefBase })}
+                ${statCard('Shielded', row, 'shielded', { rank: false, base: base('shielded') })}
+                ${statCard('Recruiting Alliances', row, 'recruiting', { rank: false, base: base('recruiting') })}
+            </div>
+            ${t ? '<h4 class="st-detail-h">Top Alliance</h4>' + topHtml : ''}
+            ${row.at ? `<p class="st-muted st-detail-updated">Updated ${new Date(row.at).toLocaleString()}</p>` : ''}`;
+    }
+
+    function openDetail(kid) {
+        if (!S.rows.has(kid)) return;
+        S.listScroll = els.wrap.scrollTop;
+        S.view = 'detail';
+        S.detailKid = kid;
+        render();
+        els.detailView.scrollTop = 0;
+        els.back.focus({ preventScroll: true });
+    }
+
+    function showList() {
+        S.view = 'list';
+        S.detailKid = null;
+        render();
+        els.wrap.scrollTop = S.listScroll || 0;
+    }
+
+    function applySort(key, forceDesc) {
+        if (!(key in SORT_KEYS)) return;
+        if (key === S.sort && forceDesc == null) S.desc = !S.desc;
+        else { S.sort = key; S.desc = forceDesc != null ? forceDesc : SORT_KEYS[key].defaultDesc; }
+        S.visible = CFG.firstVisible;
+        // Only "Chiefs, high to low" matches the server order, so any other
+        // ordering needs every State before the ranking is correct.
+        if (S.sort !== 'chiefs' || !S.desc) loadAll();
+        else render();
+    }
+
+    function onRowActivate(event) {
+        if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+        const tr = event.target.closest && event.target.closest('tr[data-kid]');
+        if (!tr) return;
+        event.preventDefault();
+        openDetail(Number(tr.dataset.kid));
+    }
+
+    function onHeaderActivate(event) {
+        if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+        const th = event.target.closest && event.target.closest('th[data-sort]');
+        if (!th) return;
+        event.preventDefault();
+        applySort(th.dataset.sort);
+    }
+
     function showMore() {
         S.visible += CFG.visibleStep;
         const q = S.query.trim();
@@ -339,13 +503,8 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
     }
 
     function onSortChange() {
-        S.sort = els.sort.value in SORT_KEYS ? els.sort.value : 'chiefs';
-        S.desc = SORT_KEYS[S.sort].defaultDesc;
-        S.visible = CFG.firstVisible;
-        // Only "Chiefs, high to low" matches the server order, so any other
-        // ordering needs every State before the ranking is correct.
-        if (S.sort !== 'chiefs' || !S.desc) loadAll();
-        else render();
+        const key = els.sort.value in SORT_KEYS ? els.sort.value : 'chiefs';
+        applySort(key, SORT_KEYS[key].defaultDesc);
     }
 
     function onDirToggle() {
@@ -402,6 +561,8 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
         if (!S.ctrl || S.ctrl.signal.aborted) S.ctrl = new AbortController();
         const stale = S.fetchedAt && Date.now() - S.fetchedAt > CFG.cacheMs;
         if (stale) resetData();
+        S.view = 'list';
+        S.detailKid = null;
         modal.classList.remove('hidden');
         document.body.classList.add('state-tracker-modal-open');
         render();
@@ -444,9 +605,14 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
             errorText: document.getElementById('st-error-text'),
             retry: document.getElementById('st-retry-btn'),
             searchAll: document.getElementById('st-search-all-btn'),
-            more: document.getElementById('st-more-btn')
+            more: document.getElementById('st-more-btn'),
+            listView: document.getElementById('st-list-view'),
+            detailView: document.getElementById('st-detail-view'),
+            detailBody: document.getElementById('st-detail-body'),
+            back: document.getElementById('st-back-btn')
         };
-        if (Object.values(els).some((el) => !el)) {
+        els.headSort = Array.from(modal.querySelectorAll('th[data-sort]'));
+        if (Object.values(els).some((el) => !el) || els.headSort.length === 0) {
             console.warn('State Tracker: markup incomplete, feature disabled.');
             return;
         }
@@ -460,6 +626,16 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
         els.retry.addEventListener('click', () => { if (S.retry) S.retry(); });
         els.searchAll.addEventListener('click', loadAll);
         els.more.addEventListener('click', showMore);
+        els.back.addEventListener('click', showList);
+        els.body.addEventListener('click', onRowActivate);
+        els.body.addEventListener('keydown', onRowActivate);
+        els.headSort.forEach((th) => {
+            th.addEventListener('click', onHeaderActivate);
+            th.addEventListener('keydown', onHeaderActivate);
+        });
+        els.detailBody.addEventListener('click', (event) => {
+            if (event.target.closest('[data-action="load-all"]')) loadAll();
+        });
 
         // Backdrop click closes (only when the press also started on the backdrop).
         let pressStartedOnBackdrop = false;
@@ -468,7 +644,9 @@ Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete o
             if (event.target === modal && pressStartedOnBackdrop) closeStateTrackerModal();
         });
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && !modal.classList.contains('hidden')) closeStateTrackerModal();
+            if (event.key !== 'Escape' || modal.classList.contains('hidden')) return;
+            if (S.view === 'detail') showList();
+            else closeStateTrackerModal();
         });
 
         // The modal text is re-rendered in another language on switch.

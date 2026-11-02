@@ -52,7 +52,7 @@
 					<script src="effects.js?v=18" defer></script>
 					<script src="president-panel.js?v=12" defer></script>
 					<script src="redeem.js?v=4" defer></script>
-					<script src="statetracker.js?v=1" defer></script>
+					<script src="statetracker.js?v=2" defer></script>
 				</head>
 	<body>
 		<!-- 2.5s opening animation; intentionally runs on every refresh. -->
@@ -921,57 +921,67 @@
 				<h2 id="state-tracker-title" class="modal-title">State Tracker</h2>
 				<p class="modal-subtitle">Compare every State in Whiteout Survival with live data from WoS Atlas.</p>
 
-				<div class="st-toolbar">
-					<input type="search" id="st-search-input" class="st-search" placeholder="Search State ID, alliance tag or name" aria-label="Search State ID, alliance tag or name" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
-					<div class="st-toolbar-row">
-						<button type="button" id="st-mine-btn" class="st-chip" title="3475">My State</button>
-						<label class="st-sort"><span>Sort by</span>
-							<select id="st-sort-select" aria-label="Sort by">
-								<option value="chiefs">Chiefs</option>
-								<option value="total">Total Power</option>
-								<option value="median">Median Power</option>
-								<option value="max">Max Power</option>
-								<option value="alliances">Alliances</option>
-								<option value="kid">State ID</option>
-							</select>
-						</label>
-						<button type="button" id="st-dir-btn" class="st-chip">High to low</button>
-						<button type="button" id="st-refresh-btn" class="st-chip">Refresh</button>
+				<!-- LIST VIEW -->
+				<div id="st-list-view" class="st-view">
+					<div class="st-toolbar">
+						<input type="search" id="st-search-input" class="st-search" placeholder="Search State ID, alliance tag or name" aria-label="Search State ID, alliance tag or name" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+						<div class="st-toolbar-row">
+							<button type="button" id="st-mine-btn" class="st-chip" title="3475">My State</button>
+							<label class="st-sort"><span>Sort by</span>
+								<select id="st-sort-select" aria-label="Sort by">
+									<option value="chiefs">Chiefs</option>
+									<option value="total">Total Power</option>
+									<option value="median">Median Power</option>
+									<option value="max">Max Power</option>
+									<option value="alliances">Alliances</option>
+									<option value="kid">State ID</option>
+								</select>
+							</label>
+							<button type="button" id="st-dir-btn" class="st-chip">High to low</button>
+							<button type="button" id="st-refresh-btn" class="st-chip">Refresh</button>
+						</div>
 					</div>
+
+					<div class="st-statusbar">
+						<span id="st-spinner" class="spinner-inline hidden" aria-hidden="true"></span>
+						<span id="st-status" role="status" aria-live="polite"></span>
+						<span id="st-updated" class="st-muted"></span>
+					</div>
+
+					<div id="st-error" class="st-error hidden" role="alert">
+						<span id="st-error-text"></span>
+						<button type="button" id="st-retry-btn" class="st-chip hidden">Retry</button>
+					</div>
+
+					<div id="st-table-wrap" class="st-table-wrap hidden">
+						<table class="st-table">
+							<thead>
+								<tr>
+									<th class="st-col-state st-sortable" data-sort="kid" scope="col" tabindex="0" aria-sort="none">State</th>
+									<th class="st-sortable" data-sort="chiefs" scope="col" tabindex="0" aria-sort="none">Chiefs</th>
+									<th class="st-sortable" data-sort="alliances" scope="col" tabindex="0" aria-sort="none">Alliances</th>
+									<th class="st-sortable" data-sort="total" scope="col" tabindex="0" aria-sort="none">Total Power</th>
+									<th class="st-sortable" data-sort="median" scope="col" tabindex="0" aria-sort="none">Median</th>
+									<th class="st-sortable" data-sort="max" scope="col" tabindex="0" aria-sort="none">Max</th>
+									<th class="st-col-top" scope="col">Top Alliance</th>
+								</tr>
+							</thead>
+							<tbody id="st-table-body" data-no-i18n></tbody>
+						</table>
+					</div>
+
+					<p id="st-empty" class="st-empty hidden">No State matches your search.</p>
+					<div class="st-actions">
+						<button type="button" id="st-search-all-btn" class="st-chip hidden">Search all States</button>
+						<button type="button" id="st-more-btn" class="st-chip hidden">Show more</button>
+					</div>
+					<p class="st-hint">Click a State for details.</p>
 				</div>
 
-				<div class="st-statusbar">
-					<span id="st-spinner" class="spinner-inline hidden" aria-hidden="true"></span>
-					<span id="st-status" role="status" aria-live="polite"></span>
-					<span id="st-updated" class="st-muted"></span>
-				</div>
-
-				<div id="st-error" class="st-error hidden" role="alert">
-					<span id="st-error-text"></span>
-					<button type="button" id="st-retry-btn" class="st-chip hidden">Retry</button>
-				</div>
-
-				<div id="st-table-wrap" class="st-table-wrap hidden">
-					<table class="st-table">
-						<thead>
-							<tr>
-								<th class="st-col-state" scope="col">State</th>
-								<th scope="col">Chiefs</th>
-								<th scope="col">Alliances</th>
-								<th scope="col">Total Power</th>
-								<th scope="col">Median</th>
-								<th scope="col">Max</th>
-								<th class="st-col-top" scope="col">Top Alliance</th>
-							</tr>
-						</thead>
-						<tbody id="st-table-body" data-no-i18n></tbody>
-					</table>
-				</div>
-
-				<p id="st-empty" class="st-empty hidden">No State matches your search.</p>
-				<div class="st-actions">
-					<button type="button" id="st-search-all-btn" class="st-chip hidden">Search all States</button>
-					<button type="button" id="st-more-btn" class="st-chip hidden">Show more</button>
+				<!-- DETAIL VIEW -->
+				<div id="st-detail-view" class="st-view st-detail hidden">
+					<button type="button" id="st-back-btn" class="st-chip st-back">&larr; Back to list</button>
+					<div id="st-detail-body"></div>
 				</div>
 
 				<p class="st-source">Data from WoS Atlas, an unofficial third-party site. Figures may be incomplete or out of date. <a href="https://wosatlas.com/states/" target="_blank" rel="noopener noreferrer" data-no-i18n>wosatlas.com</a></p>
