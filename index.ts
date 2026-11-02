@@ -1,38 +1,24 @@
 // Supabase Edge Function: wosatlas-states
-// Optional fallback for the State Tracker (statetracker.js). The browser tries
-// the WoS Atlas endpoint directly first; if that is blocked (CORS/network) it
-// calls this function, which fetches the same public endpoints server-side.
+// Optional fallback for State Tracker / SvS Enemies. Browser tries WoS Atlas
+// directly first; if blocked (CORS/network) it calls this function.
 //
 // Deploy:  supabase functions deploy wosatlas-states
 //
 // Actions (body.action):
 //   "summary" (default) — list States
-//     body: { limit?, offset?, desc? }
-//     Client: supabase.functions.invoke('wosatlas-states', { body: { limit: 50, offset: 0 } })
-//
-//   "detail" — one State dossier (state + kingdom power + alliance leaderboard)
-//     body: { kid, allianceLimit? }
-//     Client: supabase.functions.invoke('wosatlas-states', { body: { action: 'detail', kid: 3475 } })
-//
-//   "alliance" — alliance record via /alliances/{aid}/members
-//     body: { aid }
-//
-//   "player" — player record via /players/{uid}
-//     body: { uid }
-//
-//   "player-extra" — /players/{uid}/power | /arena | /history?limit=200
-//     body: { uid, kind: 'power' | 'arena' | 'history' }
-//
-//   "player-search" — /players/search?playerName={query} (also matches IDs)
-//     body: { query }
-//
-// Not an open proxy: only the endpoints listed below are reachable, inputs are
-// clamped, and responses are cached in memory for a few minutes.
+//   "detail" — state + kingdom power + alliance leaderboard + player leaderboard
+//     body: { kid, allianceLimit?, playerLimit? }
+//   "power-leaderboard" — /power/leaderboard?kid=&limit=
+//     body: { kid, limit? }
+//   "alliance" — /alliances/{aid}/members
+//   "player" — /players/{uid}
+//   "player-extra" — /players/{uid}/power|arena|history
+//   "player-search" — /players/search?playerName=
 
 const API = 'https://api.wosatlas.com/v1';
 const CACHE_MS = 5 * 60 * 1000;
 const MAX_CACHE_ENTRIES = 400;
-const UA = 'tal.3475.web.id State Tracker';
+const UA = '3475.web.id SvS Enemies / State Tracker';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -70,7 +56,6 @@ async function upstreamGet(url: string): Promise<{ ok: true; body: string } | { 
   });
   if (!res.ok) return { ok: false, status: res.status };
   const body = await res.text();
-  // Reject non-JSON (e.g. HTML block page) so we never cache garbage.
   JSON.parse(body);
   return { ok: true, body };
 }
@@ -80,10 +65,8 @@ async function handleSummary(input: Record<string, unknown>) {
   const offset = Math.min(Math.max(Math.trunc(Number(input.offset)) || 0, 0), 100000);
   const desc = input.desc === false ? 'false' : 'true';
   const key = `summary:${limit}:${offset}:${desc}`;
-
   const hit = cacheGet(key);
   if (hit) return json(hit);
-
   const qs = new URLSearchParams({
     sort: 'chiefs',
     desc,
@@ -92,7 +75,6 @@ async function handleSummary(input: Record<string, unknown>) {
   });
   const up = await upstreamGet(`${API}/states/summary?${qs}`);
   if (!up.ok) return jsonObj({ error: 'upstream-' + up.status }, 502);
-
   cacheSet(key, up.body);
   return json(up.body);
 }
@@ -103,8 +85,9 @@ async function handleDetail(input: Record<string, unknown>) {
     return jsonObj({ error: 'bad-kid' }, 400);
   }
   const allianceLimit = Math.min(Math.max(Math.trunc(Number(input.allianceLimit)) || 15, 1), 50);
-  const key = `detail:${kid}:${allianceLimit}`;
-
+  // Up to 100 players for SvS Enemies leaderboard
+  const playerLimit = Math.min(Math.max(Math.trunc(Number(input.playerLimit)) || 100, 1), 100);
+  const key = `detail:${kid}:${allianceLimit}:${playerLimit}`;
   const hit = cacheGet(key);
   if (hit) return json(hit);
 
@@ -112,8 +95,8 @@ async function handleDetail(input: Record<string, unknown>) {
     `${API}/states/${kid}`,
     `${API}/kingdoms/${kid}/power`,
     `${API}/alliances/leaderboard?limit=${allianceLimit}&kid=${kid}`,
+    `${API}/power/leaderboard?kid=${kid}&limit=${playerLimit}`,
   ];
-
   const results = await Promise.all(
     urls.map(async (url) => {
       try {
@@ -136,14 +119,50 @@ async function handleDetail(input: Record<string, unknown>) {
   const state = parse(results[0]);
   const power = parse(results[1]);
   const alliances = parse(results[2]);
+  const leaderboard = parse(results[3]);
 
-  if (!state && !power && !alliances) {
+  // Prefer full power/leaderboard entries; fall back to short power.top
+  let players: unknown[] = [];
+  if (leaderboard && Array.isArray(leaderboard.entries) && leaderboard.entries.length) {
+    players = leaderboard.entries;
+  } else if (power && Array.isArray(power.top) && power.top.length) {
+    players = power.top;
+  }
+
+  // Enrich power.top so older clients also see more players when possible
+  let powerOut = power;
+  if (power && players.length) {
+    powerOut = { ...power, top: players };
+  }
+
+  if (!state && !power && !alliances && !players.length) {
     return jsonObj({ error: 'upstream-failed' }, 502);
   }
 
-  const payload = JSON.stringify({ state, power, alliances, kid });
+  const payload = JSON.stringify({
+    state,
+    power: powerOut,
+    alliances,
+    players,
+    kid,
+  });
   cacheSet(key, payload);
   return json(payload);
+}
+
+async function handlePowerLeaderboard(input: Record<string, unknown>) {
+  const kid = Math.trunc(Number(input.kid));
+  if (!Number.isFinite(kid) || kid < 1 || kid > 99999) {
+    return jsonObj({ error: 'bad-kid' }, 400);
+  }
+  const limit = Math.min(Math.max(Math.trunc(Number(input.limit)) || 100, 1), 100);
+  const key = `power-lb:${kid}:${limit}`;
+  const hit = cacheGet(key);
+  if (hit) return json(hit);
+  const up = await upstreamGet(`${API}/power/leaderboard?kid=${kid}&limit=${limit}`);
+  if (!up.ok) return jsonObj({ error: 'upstream-' + up.status }, 502);
+  cacheSet(key, up.body);
+  return json(up.body);
 }
 
 async function handleAlliance(input: Record<string, unknown>) {
@@ -152,7 +171,6 @@ async function handleAlliance(input: Record<string, unknown>) {
   const key = `alliance:${aid}`;
   const hit = cacheGet(key);
   if (hit) return json(hit);
-
   const up = await upstreamGet(`${API}/alliances/${aid}/members`);
   if (!up.ok) return jsonObj({ error: 'upstream-' + up.status }, 502);
   cacheSet(key, up.body);
@@ -165,7 +183,6 @@ async function handlePlayer(input: Record<string, unknown>) {
   const key = `player:${uid}`;
   const hit = cacheGet(key);
   if (hit) return json(hit);
-
   const up = await upstreamGet(`${API}/players/${uid}`);
   if (!up.ok) return jsonObj({ error: 'upstream-' + up.status }, 502);
   cacheSet(key, up.body);
@@ -187,7 +204,6 @@ async function handlePlayerExtra(input: Record<string, unknown>) {
   const key = `player-extra:${uid}:${kind}`;
   const hit = cacheGet(key);
   if (hit) return json(hit);
-
   const up = await upstreamGet(`${API}/players/${uid}/${path}`);
   if (!up.ok) return jsonObj({ error: 'upstream-' + up.status }, 502);
   cacheSet(key, up.body);
@@ -200,7 +216,6 @@ async function handlePlayerSearch(input: Record<string, unknown>) {
   const key = `player-search:${query}`;
   const hit = cacheGet(key);
   if (hit) return json(hit);
-
   const qs = new URLSearchParams({ playerName: query });
   const up = await upstreamGet(`${API}/players/search?${qs}`);
   if (!up.ok) return jsonObj({ error: 'upstream-' + up.status }, 502);
@@ -211,23 +226,20 @@ async function handlePlayerSearch(input: Record<string, unknown>) {
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return jsonObj({ error: 'method-not-allowed' }, 405);
-
   let input: Record<string, unknown> = {};
   try {
     input = await req.json();
   } catch (_) {
     // empty body -> defaults
   }
-
   const action = typeof input.action === 'string' ? input.action : 'summary';
-
   try {
     if (action === 'detail') return await handleDetail(input);
+    if (action === 'power-leaderboard') return await handlePowerLeaderboard(input);
     if (action === 'alliance') return await handleAlliance(input);
     if (action === 'player') return await handlePlayer(input);
     if (action === 'player-extra') return await handlePlayerExtra(input);
     if (action === 'player-search') return await handlePlayerSearch(input);
-    // Default and any unknown action: summary (keeps older clients working).
     return await handleSummary(input);
   } catch (_) {
     return jsonObj({ error: 'upstream-failed' }, 502);
