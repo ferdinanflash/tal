@@ -203,7 +203,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     // the browser asks directly first and the edge function is the fallback.
     const SITE = { list: null, listAt: 0 };
 
-    async function siteFetchAll(path, idOf, maxItems, signal, maxPages, synthCursor) {
+    async function siteFetchAll(path, idOf, maxItems, signal, maxPages) {
         const sep = path.indexOf('?') >= 0 ? '&' : '?';
         const seen = new Set();
         const out = [];
@@ -215,9 +215,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                 data = await fetchJson(url, signal);
             } catch (err) {
                 if (err && err.name === 'AbortError') throw err;
-                if (page === 0 || !out.length) throw err;
-                console.warn('[StateTracker] page ' + (page + 1) + ' failed, using ' + out.length + ' items so far:', err);
-                break;
+                throw err; // A partial page sequence is not a complete State list.
             }
             const items = data && Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
             let added = 0;
@@ -226,10 +224,9 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                 if (!seen.has(id)) { seen.add(id); out.push(it); added++; }
             }
             if (!added || !data) break;
-            // /servers sometimes omits `next`; the cursor is base64("k|<last server_id>"),
-            // so build it from the last item (same as the edge function does).
+            // `next` is an opaque cursor: use it exactly as returned by the API.
             const next = typeof data.next === 'string' && data.next ? data.next : null;
-            cursor = next || (synthCursor ? synthCursor(items[items.length - 1]) : null);
+            cursor = next;
             if (!cursor) break;
         }
         return out.slice(0, maxItems);
@@ -289,8 +286,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             (x) => String(x.server_id),
             100000,
             signal,
-            400,
-            (last) => (last && last.server_id != null ? btoa('k|' + last.server_id) : null)
+            400
         );
         const rows = items
             .filter((x) => x && x.rollup && Number.isFinite(Number(x.server_id)))

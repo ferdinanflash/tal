@@ -1,9 +1,6 @@
 // Supabase Edge Function: wosatlas-states
 // Proxy for State Tracker / SvS Enemies.
-// api.wosatlas.com requires an API key (401 without it), so "detail",
-// "power-leaderboard" and "alliance" now use the PUBLIC site endpoints
-// https://wosatlas.com/api/v1/servers/{kid}[/alliances|/players] (no key).
-// WOSATLAS_API_KEY is no longer needed.
+// Uses only the public WoS Atlas site API: https://wosatlas.com/api/v1
 //
 // Deploy:
 //   supabase functions deploy wosatlas-states
@@ -19,14 +16,12 @@
 //   "player-extra" — /players/{uid}/power|arena|history
 //   "player-search" — /players/search?playerName=
 
-const API = 'https://api.wosatlas.com/v1';
 const CACHE_MS = 5 * 60 * 1000;
 const MAX_CACHE_ENTRIES = 400;
 const UA = '3475.web.id SvS Enemies / State Tracker';
-const FN_VERSION = '2026-11-03-paging-v2';
+const FN_VERSION = '2026-11-03-paging-v3';
 // Filled by fetchAllServers so the client/console can see what wosatlas returned.
 let lastPaging: Record<string, unknown> = {};
-const API_KEY = (Deno.env.get('WOSATLAS_API_KEY') || '').trim();
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -58,29 +53,6 @@ function cacheSet(key: string, body: string) {
   cache.set(key, { at: Date.now(), body });
 }
 
-function upstreamHeaders(): Record<string, string> {
-  const h: Record<string, string> = {
-    accept: 'application/json',
-    'user-agent': UA,
-  };
-  if (API_KEY) {
-    // WoS Atlas accepts several common forms; send both to be safe.
-    h['X-Api-Key'] = API_KEY;
-    h['Authorization'] = `Bearer ${API_KEY}`;
-  }
-  return h;
-}
-
-async function upstreamGet(url: string): Promise<{ ok: true; body: string } | { ok: false; status: number }> {
-  const res = await fetch(url, {
-    headers: upstreamHeaders(),
-  });
-  if (!res.ok) return { ok: false, status: res.status };
-  const body = await res.text();
-  JSON.parse(body);
-  return { ok: true, body };
-}
-
 // ---------- Public site endpoints (no API key) ----------
 const SITE = 'https://wosatlas.com/api/v1';
 
@@ -103,14 +75,12 @@ async function siteGet(path: string): Promise<any | null> {
   return null;
 }
 
-// Cursor pagination: responses carry `next` (opaque cursor) when there is more.
-// For /servers the cursor is base64("k|<last server_id>"), so when `next` is
-// missing we build it ourselves from the last item (stops when nothing new).
+// Cursor pagination: always use the exact opaque cursor returned in `next`.
+// Never derive a cursor from server_id or any other item field.
 async function siteGetPaged(
   path: string,
   idOf: (it: any) => string,
   maxItems: number,
-  synthCursor?: (last: any) => string | null,
   maxPages = 400,
   onPage?: () => void,
 ): Promise<any[] | null> {
@@ -122,7 +92,7 @@ async function siteGetPaged(
     const url = cursor ? `${path}${sep}cursor=${encodeURIComponent(cursor)}` : path;
     const data = await siteGet(url);
     onPage?.();
-    if (!data) return page === 0 ? null : out;
+    if (!data) return null; // Do not silently treat a failed page as a complete list.
     const items: any[] = Array.isArray(data.items) ? data.items : Array.isArray(data) ? data : [];
     let added = 0;
     for (const it of items) {
@@ -131,7 +101,7 @@ async function siteGetPaged(
     }
     if (!added) break;
     const next = data && typeof data.next === 'string' && data.next ? data.next : null;
-    cursor = next || (synthCursor ? synthCursor(items[items.length - 1]) : null);
+    cursor = next;
     if (!cursor) break;
   }
   return out.slice(0, maxItems);
@@ -154,7 +124,6 @@ async function fetchServerAlliances(kid: number, limit: number): Promise<any[] |
     `/servers/${kid}/alliances?sort=power&limit=${Math.min(Math.max(limit, 1), 200)}`,
     (a) => String(a.alliance_id),
     limit,
-    undefined,
     20,
   );
   if (items) cacheSet(key, JSON.stringify(items));
@@ -183,7 +152,6 @@ async function fetchAllianceMembers(aid: number): Promise<any[]> {
     `/alliances/${aid}/members?limit=200`,
     (m) => String(m.uid),
     200,
-    undefined,
     10,
   )) || [];
   cacheSet(key, JSON.stringify(items));
@@ -340,7 +308,6 @@ async function fetchAllServers(): Promise<any[]> {
     '/servers?limit=200',
     (x) => String(x.server_id),
     100000,
-    (last) => (last && last.server_id != null ? btoa(`k|${last.server_id}`) : null),
     400,
     () => { pages++; },
   )) || [];
@@ -355,20 +322,6 @@ async function fetchAllServers(): Promise<any[]> {
 async function handleSummary(input: Record<string, unknown>) {
   const limit = Math.min(Math.max(Math.trunc(Number(input.limit)) || 50, 1), 50);
   const offset = Math.min(Math.max(Math.trunc(Number(input.offset)) || 0, 0), 100000);
-  // Official route: with a WOSATLAS_API_KEY secret, use api.wosatlas.com directly
-  // (50 States per request). Falls through to the public site list if it fails.
-  if (API_KEY) {
-    const qs = new URLSearchParams({ sort: 'chiefs', desc: 'true', limit: String(limit), offset: String(offset) });
-    const r = await upstreamGet(`${API}/states/summary?${qs}`);
-    if (r.ok) {
-      const j = JSON.parse(r.body);
-      if (j && Array.isArray(j.entries)) {
-        j.meta = { fn: FN_VERSION, source: 'api-key' };
-        return jsonObj(j);
-      }
-    }
-    lastPaging = { ...lastPaging, apiKeyStatus: r.ok ? 'bad-shape' : r.status };
-  }
   const all = await fetchAllServers();
   if (!all.length) return jsonObj({ error: 'upstream-failed', message: 'wosatlas.com/api/v1/servers could not be loaded.' }, 502);
   const rows = all
