@@ -30,8 +30,10 @@
         // all=1 → proxy berjalan cursor sampai selesai (mahal; 1 kredit/page).
         zenrowsProxyUrl: 'https://tal-vercel-proxy.vercel.app/api/tracker',
         zenrowsEnabled: true,
-        zenrowsPrimary: true,   // true = ZenRows dulu, Supabase hanya fallback
-        zenrowsAllStates: true, // true = minta full list (?all=1)
+        // false = Supabase+Turnstile dulu (list lengkap ~4000).
+        // ZenRows/public API hanya ~20 state (next:null) — tidak cukup untuk search.
+        zenrowsPrimary: false,
+        zenrowsAllStates: true,
         pageSize: 50,          // size the endpoint is known to accept
         concurrency: 3,        // parallel page requests when loading all States
         cacheMs: 5 * 60 * 1000,
@@ -523,6 +525,56 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
 
     // ZenRows + Vercel serverless proxy (api/tracker.js). Third-line fallback
     // when Turnstile / Supabase session proxy is blocked (hostname restriction).
+
+    // Fetch one State by ID via Vercel tracker (works even when list is partial ~20).
+    async function fetchOneStateByKid(kid, signal) {
+        const id = Number(kid);
+        if (!Number.isFinite(id)) throw new Error('bad-kid');
+        const target = `${CFG.apiBase}/servers/${id}`;
+        let raw;
+        if (CFG.zenrowsEnabled && CFG.zenrowsProxyUrl) {
+            raw = await fetchViaZenRows(target, signal);
+        } else {
+            raw = await fetchJson(target, signal);
+        }
+        const server = raw && (raw.server || raw.data || raw);
+        if (!server || typeof server !== 'object') throw new Error('state-not-found');
+        const rollup = server.rollup || {};
+        const sid = Number(server.server_id != null ? server.server_id : id);
+        if (!Number.isFinite(sid)) throw new Error('state-not-found');
+        return {
+            kid: sid,
+            chiefs: numOrNull(rollup.players) || 0,
+            alliances: numOrNull(rollup.alliances) || 0,
+            recruitingAlliances: 0,
+            shielded: 0,
+            generation_ceiling: server.generation_ceiling,
+            recorded_at: rollup.refreshed_at || server.last_seen_at || null,
+            total_power: numOrNull(rollup.player_power) || 0,
+            median_power: 0,
+            max_power: 0,
+            topAlliance: null
+        };
+    }
+
+    // If user searches a numeric State ID missing from the partial list, pull it in.
+    async function ensureKidInList(kid) {
+        const id = Number(kid);
+        if (!Number.isFinite(id)) return null;
+        if (S.rows.has(id)) return S.rows.get(id);
+        try {
+            const row = normalize(await fetchOneStateByKid(id, S.ctrl && S.ctrl.signal));
+            if (Number.isFinite(row.kid)) {
+                S.rows.set(row.kid, row);
+                return row;
+            }
+        } catch (err) {
+            if (err && err.name === 'AbortError') throw err;
+            console.warn('[StateTracker] ensureKidInList failed', id, err && err.message);
+        }
+        return null;
+    }
+
     async function fetchViaZenRows(targetUrl, signal) {
         if (!CFG.zenrowsEnabled || !CFG.zenrowsProxyUrl) {
             throw new Error('zenrows-disabled');
@@ -2064,6 +2116,11 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         searchTimer = setTimeout(() => {
             S.query = els.search.value;
             S.visible = CFG.firstVisible;
+            const q = S.query.trim();
+            const kid = Number(q);
+            if (q && Number.isFinite(kid) && String(kid) === q && !S.rows.has(kid)) {
+                ensureKidInList(kid).then(() => render());
+            }
             render();
         }, 180);
     }
@@ -2073,7 +2130,20 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         clearTimeout(searchTimer);
         S.query = els.search.value;
         S.visible = CFG.firstVisible;
-        if (S.query.trim() && !allLoaded()) loadAll();
+        const q = S.query.trim();
+        const kid = Number(q);
+        if (q && Number.isFinite(kid) && String(kid) === q) {
+            // Numeric State ID: fetch that one even if list is partial (~20).
+            S.busy = true;
+            render();
+            ensureKidInList(kid).finally(() => {
+                S.busy = false;
+                if (!allLoaded()) loadAll();
+                else render();
+            });
+            return;
+        }
+        if (q && !allLoaded()) loadAll();
         else render();
     }
 
@@ -2081,8 +2151,13 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         els.search.value = String(CFG.myState);
         S.query = els.search.value;
         S.visible = CFG.firstVisible;
-        if (!allLoaded()) loadAll();
-        else render();
+        S.busy = true;
+        render();
+        ensureKidInList(CFG.myState).finally(() => {
+            S.busy = false;
+            if (!allLoaded()) loadAll();
+            else render();
+        });
     }
 
     // After the first page: a search or sort order that needs every State
