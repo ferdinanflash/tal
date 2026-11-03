@@ -25,10 +25,10 @@
         // Public Cloudflare Turnstile site key from the WoS Atlas app pack.
         // Public site key extracted from the WoS Atlas app JavaScript.
         turnstileSiteKey: '0x4AAAAAAFW8LSGKEAA0tRT3',
-        // ZenRows + Vercel fallback (api/tracker.js). Used only when Turnstile
-        // / Supabase session proxy fails (e.g. site key hostname restriction).
-        // Relative path works when the site is hosted on the same Vercel project.
-        zenrowsProxyUrl: '/api/tracker',
+        // ZenRows + Vercel fallback. Deployed on repo tal-vercel-proxy
+        // (https://tal-vercel-proxy.vercel.app/api/tracker). Used only when
+        // Turnstile / Supabase session proxy fails (e.g. hostname restriction).
+        zenrowsProxyUrl: 'https://tal-vercel-proxy.vercel.app/api/tracker',
         zenrowsEnabled: true,
         pageSize: 50,          // size the endpoint is known to accept
         concurrency: 3,        // parallel page requests when loading all States
