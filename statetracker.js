@@ -131,7 +131,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         total: 0,
         recordedAt: null,
         fetchedAt: 0,
-        mode: null,             // 'direct' | 'proxy' once one of them worked
+        mode: 'proxy',          // api.wosatlas.com needs a key now: always try the edge function first
         sort: 'chiefs',
         desc: true,
         query: '',
