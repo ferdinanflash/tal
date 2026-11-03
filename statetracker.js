@@ -30,10 +30,11 @@
         // all=1 → proxy berjalan cursor sampai selesai (mahal; 1 kredit/page).
         zenrowsProxyUrl: 'https://tal-vercel-proxy.vercel.app/api/tracker',
         zenrowsEnabled: true,
-        // false = Supabase+Turnstile dulu (list lengkap ~4000).
-        // ZenRows/public API hanya ~20 state (next:null) — tidak cukup untuk search.
-        zenrowsPrimary: false,
-        zenrowsAllStates: true,
+        // Mode: cari 1 State ID saja (tanpa list all / tanpa Turnstile).
+        // Turnstile 110200 = domain TAL tidak diizinkan site key WoS Atlas.
+        singleStateMode: true,
+        zenrowsPrimary: true,
+        zenrowsAllStates: false,
         pageSize: 50,          // size the endpoint is known to accept
         concurrency: 3,        // parallel page requests when loading all States
         cacheMs: 5 * 60 * 1000,
@@ -1197,6 +1198,11 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     }
 
     function loadAll() {
+        if (CFG.singleStateMode) {
+            // Tidak load full list (Turnstile 110200 di domain TAL).
+            render();
+            return Promise.resolve();
+        }
         if (S.loadingAll) return S.loadingAll;
         if (allLoaded()) { render(); return Promise.resolve(); }
         S.loadingAll = run(async (token) => {
@@ -1310,10 +1316,12 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         } else if (S.progress) {
             status = `Loading all States... ${S.progress.done} / ${S.progress.total}`;
         } else if (S.busy && all.length === 0) {
-            status = 'Loading States...';
+            status = CFG.singleStateMode ? 'Loading State...' : 'Loading States...';
         } else if (all.length > 0) {
             status = `Showing ${fmtFull(shown.length)} of ${fmtFull(q ? list.length : (S.total || all.length))} States`;
-            if (S.partial) status += ' (partial: wosatlas blocked the full list)';
+            if (S.partial) status += ' (partial)';
+        } else if (CFG.singleStateMode && !S.error) {
+            status = 'Enter a State ID and press Enter (e.g. 3475).';
         }
         els.status.textContent = status;
         els.updated.textContent = S.recordedAt ? `Updated ${new Date(S.recordedAt).toLocaleString()}` : '';
@@ -2110,17 +2118,45 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         else render();
     }
 
+    async function lookupStateId(kid) {
+        const id = Number(kid);
+        if (!Number.isFinite(id) || id <= 0) {
+            S.error = 'Enter a valid State ID (number).';
+            render();
+            return;
+        }
+        S.error = null;
+        S.busy = true;
+        S.query = String(id);
+        if (els && els.search) els.search.value = String(id);
+        render();
+        try {
+            if (!S.ctrl || S.ctrl.signal.aborted) S.ctrl = new AbortController();
+            const row = await ensureKidInList(id);
+            if (!row) {
+                S.error = 'State ' + id + ' not found.';
+                S.busy = false;
+                render();
+                return;
+            }
+            S.busy = false;
+            S.fetchedAt = Date.now();
+            // Langsung buka detail state yang dicari
+            openDetail(id);
+        } catch (err) {
+            if (err && err.name === 'AbortError') return;
+            S.busy = false;
+            S.error = (err && err.message) || 'Failed to load State.';
+            render();
+        }
+    }
+
     let searchTimer = null;
     function onSearchInput() {
         clearTimeout(searchTimer);
         searchTimer = setTimeout(() => {
             S.query = els.search.value;
             S.visible = CFG.firstVisible;
-            const q = S.query.trim();
-            const kid = Number(q);
-            if (q && Number.isFinite(kid) && String(kid) === q && !S.rows.has(kid)) {
-                ensureKidInList(kid).then(() => render());
-            }
             render();
         }, 180);
     }
@@ -2133,14 +2169,12 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         const q = S.query.trim();
         const kid = Number(q);
         if (q && Number.isFinite(kid) && String(kid) === q) {
-            // Numeric State ID: fetch that one even if list is partial (~20).
-            S.busy = true;
+            lookupStateId(kid);
+            return;
+        }
+        if (CFG.singleStateMode) {
+            S.error = 'Enter a State ID number, then press Enter.';
             render();
-            ensureKidInList(kid).finally(() => {
-                S.busy = false;
-                if (!allLoaded()) loadAll();
-                else render();
-            });
             return;
         }
         if (q && !allLoaded()) loadAll();
@@ -2151,13 +2185,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         els.search.value = String(CFG.myState);
         S.query = els.search.value;
         S.visible = CFG.firstVisible;
-        S.busy = true;
-        render();
-        ensureKidInList(CFG.myState).finally(() => {
-            S.busy = false;
-            if (!allLoaded()) loadAll();
-            else render();
-        });
+        lookupStateId(CFG.myState);
     }
 
     // After the first page: a search or sort order that needs every State
@@ -2167,8 +2195,18 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     }
 
     function onRefresh() {
+        const q = (els && els.search ? els.search.value : S.query || '').trim();
         resetData();
+        S.query = q;
+        if (els && els.search) els.search.value = q;
         render();
+        if (CFG.singleStateMode) {
+            const kid = Number(q);
+            if (q && Number.isFinite(kid) && String(kid) === q) {
+                lookupStateId(kid);
+            }
+            return;
+        }
         loadFirstPage().then(loadRestIfNeeded);
     }
 
@@ -2185,7 +2223,10 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         modal.classList.remove('hidden');
         document.body.classList.add('state-tracker-modal-open');
         render();
-        if (S.rows.size === 0) loadFirstPage().then(loadRestIfNeeded);
+        // singleStateMode: jangan load list / Turnstile. User ketik State ID.
+        if (!CFG.singleStateMode && S.rows.size === 0) {
+            loadFirstPage().then(loadRestIfNeeded);
+        }
         if (els && els.search) els.search.focus({ preventScroll: true });
     }
 
