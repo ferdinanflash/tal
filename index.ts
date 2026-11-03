@@ -414,14 +414,27 @@ async function handlePlayerExtra(input: Record<string, unknown>) {
   return json(body);
 }
 
-// The public site has no name search endpoint we know of: numeric IDs are
-// looked up directly, text queries return no results.
+// Public search: /search?q= returns players and alliances.
 async function handlePlayerSearch(input: Record<string, unknown>) {
   const query = typeof input.query === 'string' ? input.query.trim() : String(input.query ?? '').trim();
   if (!query || query.length > 64) return jsonObj({ error: 'bad-query' }, 400);
-  if (!/^\d+$/.test(query)) return jsonObj({ players: [] });
-  const p = await siteGet(`/players/${query}`);
-  return jsonObj({ players: p ? [mapPlayer(p)] : [] });
+  const data = await siteGet(`/search?q=${encodeURIComponent(query)}`);
+  const items: any[] = data && Array.isArray(data.items) ? data.items : [];
+  const players: any[] = [];
+  for (const it of items) {
+    const kind = String(it.kind || '').toLowerCase();
+    const name = it.name || it.matched_name || '';
+    if (kind === 'player') {
+      players.push({ kind: 'player', uid: it.id, nick_name: name, kid: it.server_id, aid: it.alliance_id, abbr: it.alliance_tag || '' });
+    } else if (kind === 'alliance') {
+      players.push({ kind: 'alliance', aid: it.id || it.alliance_id, name, abbr: it.tag || it.alliance_tag || it.abbr || '', kid: it.server_id || it.home_server_id });
+    }
+  }
+  if (!players.length && /^\d+$/.test(query)) {
+    const p = await siteGet(`/players/${query}`);
+    if (p) return jsonObj({ players: [mapPlayer(p)] });
+  }
+  return jsonObj({ players });
 }
 
 Deno.serve(async (req: Request) => {

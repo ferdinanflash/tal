@@ -584,16 +584,48 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     // (query param is named playerName but also matches numeric IDs), then
     // opens the match. /players/{uid} alone does not find every player, so
     // the ID box below goes through search first.
-    async function fetchPlayerSearchDirect(query, signal) {
-        // No name-search endpoint is known on the public site: numeric IDs only.
-        if (!/^\d+$/.test(String(query).trim())) return { players: [] };
-        try {
-            const p = await fetchJson(`${CFG.apiBase}/players/${String(query).trim()}`, signal);
-            return { players: p ? [mapPlayerRow(p)] : [] };
-        } catch (err) {
-            if (err && err.name === 'AbortError') throw err;
-            return { players: [] };
+    // /search?q= returns players and alliances: { items: [{ kind, id, name, matched_name,
+    // server_id, alliance_id, alliance_tag, ... }] }.
+    function mapSearchItem(it) {
+        const kind = String(it.kind || '').toLowerCase();
+        const name = it.name || it.matched_name || '';
+        if (kind === 'player') {
+            return {
+                kind: 'player',
+                uid: it.id,
+                nick_name: name,
+                kid: it.server_id,
+                aid: it.alliance_id,
+                abbr: it.alliance_tag || ''
+            };
         }
+        if (kind === 'alliance') {
+            return {
+                kind: 'alliance',
+                aid: it.id || it.alliance_id,
+                name: name,
+                abbr: it.tag || it.alliance_tag || it.abbr || '',
+                kid: it.server_id || it.home_server_id
+            };
+        }
+        return null;
+    }
+
+    async function fetchPlayerSearchDirect(query, signal) {
+        const q = String(query).trim();
+        const data = await fetchJson(`${CFG.apiBase}/search?q=${encodeURIComponent(q)}`, signal);
+        const items = data && Array.isArray(data.items) ? data.items : [];
+        const results = items.map(mapSearchItem).filter(Boolean);
+        // A numeric ID that search does not list may still be a valid player.
+        if (!results.length && /^\d+$/.test(q)) {
+            try {
+                const p = await fetchJson(`${CFG.apiBase}/players/${q}`, signal);
+                if (p) return { players: [mapPlayerRow(p)] };
+            } catch (err) {
+                if (err && err.name === 'AbortError') throw err;
+            }
+        }
+        return { players: results };
     }
 
     async function fetchPlayerSearchProxy(query) {
@@ -638,10 +670,12 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             results = [];
         }
         if (signal && signal.aborted) return null;
-        const exact = results.find((r) => String(r.uid || r.fid || r.playerUid || '') === String(query));
+        const exact = results.find((r) => r.kind !== 'alliance' && String(r.uid || r.fid || r.playerUid || '') === String(query));
         if (exact) return Number(exact.uid || exact.fid || exact.playerUid);
-        if (results.length === 1) return Number(results[0].uid || results[0].fid || results[0].playerUid) || null;
-        if (results.length > 1) return { multiple: results };
+        if (results.length === 1 && results[0].kind !== 'alliance') {
+            return Number(results[0].uid || results[0].fid || results[0].playerUid) || null;
+        }
+        if (results.length >= 1) return { multiple: results };
         // Nothing from search: the ID itself may still resolve directly.
         try {
             const direct = await fetchPlayerDirect(query, signal);
@@ -1248,8 +1282,8 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     async function onUidSubmit(event) {
         event.preventDefault();
         const raw = (els.uidInput.value || '').trim();
-        if (!raw || !/^\d+$/.test(raw)) {
-            els.uidInput.setCustomValidity('Enter a valid Player ID');
+        if (raw.length < 2 && !/^\d+$/.test(raw)) {
+            els.uidInput.setCustomValidity('Enter a Player ID, player name or alliance');
             els.uidInput.reportValidity();
             return;
         }
@@ -1298,10 +1332,19 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     function renderSearchDetail() {
         const results = S.searchResults || [];
         const rows = results.slice(0, 50).map((m) => {
-            const uid = Number(m.uid || m.fid || m.playerUid) || 0;
-            const nick = escapeHtml(String(m.nick_name || m.nickname || m.nickName || m.name || uid || ''));
             const kid = Number(m.kid) || null;
             const abbr = escapeHtml(String(m.abbr || ''));
+            if (m.kind === 'alliance') {
+                const aid = Number(m.aid) || 0;
+                const name = escapeHtml(String(m.name || aid || ''));
+                return `<tr${aid ? ` class="st-click-row" data-action="open-alliance" data-aid="${aid}" tabindex="0" role="button"` : ''}>
+                <td><span data-no-i18n>${name}</span> <span class="st-uid-hint">Alliance</span></td>
+                <td class="st-num" data-no-i18n>${kid || '-'}</td>
+                <td data-no-i18n>${abbr || '-'}</td>
+            </tr>`;
+            }
+            const uid = Number(m.uid || m.fid || m.playerUid) || 0;
+            const nick = escapeHtml(String(m.nick_name || m.nickname || m.nickName || m.name || uid || ''));
             return `<tr${uid ? ` class="st-click-row" data-action="open-player" data-uid="${uid}" tabindex="0" role="button"` : ''}>
                 <td><span data-no-i18n>${nick}</span> <span class="st-uid-hint">#${uid}</span></td>
                 <td class="st-num" data-no-i18n>${kid || '-'}</td>
