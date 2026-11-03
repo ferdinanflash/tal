@@ -546,18 +546,64 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         return data;
     }
 
-    // Map a single page of /servers (or similar) into the internal list shape.
-    // ZenRows cannot easily walk the full opaque cursor chain, so this path is
-    // always treated as partial.
+    // Map ZenRows /servers payload into the shape expected by normalize():
+    // { kid, chiefs, alliances, total_power, ... }. Upstream uses server_id + rollup.
     function normalizeZenRowsListPayload(data) {
         const items = (data && (data.items || data.entries || data.servers || data.data)) || [];
-        const entries = Array.isArray(items) ? items : [];
+        const raw = Array.isArray(items) ? items : [];
+        const entries = raw
+            .map((x) => {
+                if (!x || typeof x !== 'object') return null;
+                // Already in summary shape (has kid)
+                if (x.kid != null || x.chiefs != null) {
+                    return {
+                        kid: Number(x.kid != null ? x.kid : x.server_id),
+                        chiefs: Number(x.chiefs) || 0,
+                        alliances: Number(x.alliances) || 0,
+                        recruitingAlliances: Number(x.recruitingAlliances) || 0,
+                        shielded: Number(x.shielded) || 0,
+                        generation_ceiling: x.generation_ceiling,
+                        recorded_at: x.recorded_at || null,
+                        total_power: Number(x.total_power) || 0,
+                        median_power: Number(x.median_power) || 0,
+                        max_power: Number(x.max_power) || 0,
+                        topAlliance: x.topAlliance || null
+                    };
+                }
+                // Public /servers shape
+                const rollup = x.rollup || {};
+                const kid = Number(x.server_id);
+                if (!Number.isFinite(kid)) return null;
+                return {
+                    kid: kid,
+                    chiefs: numOrNull(rollup.players) || 0,
+                    alliances: numOrNull(rollup.alliances) || 0,
+                    recruitingAlliances: 0,
+                    shielded: 0,
+                    generation_ceiling: x.generation_ceiling,
+                    recorded_at: rollup.refreshed_at || x.last_seen_at || null,
+                    total_power: numOrNull(rollup.player_power) || 0,
+                    median_power: 0,
+                    max_power: 0,
+                    topAlliance: null
+                };
+            })
+            .filter((r) => r && Number.isFinite(r.kid))
+            .sort((a, b) => b.chiefs - a.chiefs);
+
+        const partial = data && data.partial != null
+            ? !!data.partial
+            : !(data && data.meta && data.meta.stoppedBecause === 'done');
+
         return {
-            entries,
+            entries: entries,
             total: entries.length,
-            recorded_at: (data && (data.recorded_at || data.refreshed_at)) || null,
-            partial: true,
-            meta: { source: 'zenrows', note: 'partial-list-no-session-cursor' }
+            recorded_at: (entries[0] && entries[0].recorded_at) || (data && (data.recorded_at || data.refreshed_at)) || null,
+            partial: partial,
+            meta: Object.assign(
+                { source: 'zenrows' },
+                (data && data.meta) || {}
+            )
         };
     }
 
