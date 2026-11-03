@@ -21,6 +21,7 @@
         directUrl: 'https://wosatlas.com/api/v1/servers',
         apiBase: 'https://wosatlas.com/api/v1',
         proxyFunction: 'wosatlas-states',
+        preferProxy: true,     // wosatlas.com sends no CORS header -> browser calls are blocked; go straight to the edge function
         pageSize: 50,          // size the endpoint is known to accept
         concurrency: 3,        // parallel page requests when loading all States
         cacheMs: 5 * 60 * 1000,
@@ -131,7 +132,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         total: 0,
         recordedAt: null,
         fetchedAt: 0,
-        mode: null,             // 'direct' | 'proxy' once one of them worked
+        mode: CFG.preferProxy ? 'proxy' : null,   // 'direct' | 'proxy' once one of them worked
         sort: 'chiefs',
         desc: true,
         query: '',
@@ -209,7 +210,15 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         let cursor = null;
         for (let page = 0; page < maxPages && out.length < maxItems; page++) {
             const url = CFG.apiBase + path + (cursor ? sep + 'cursor=' + encodeURIComponent(cursor) : '');
-            const data = await fetchJson(url, signal);
+            let data;
+            try {
+                data = await fetchJson(url, signal);
+            } catch (err) {
+                if (err && err.name === 'AbortError') throw err;
+                if (page === 0 || !out.length) throw err;
+                console.warn('[StateTracker] page ' + (page + 1) + ' failed, using ' + out.length + ' items so far:', err);
+                break;
+            }
             const items = data && Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
             let added = 0;
             for (const it of items) {
@@ -318,9 +327,11 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                     recorded_at: rows[0] ? rows[0].recorded_at : null
                 });
                 S.mode = 'direct';
+                console.info('[StateTracker] source=direct, states=' + rows.length);
                 return json;
             } catch (err) {
                 if (err && err.name === 'AbortError') throw err;
+                console.warn('[StateTracker] direct wosatlas failed, falling back to proxy:', err);
                 if (S.mode === 'direct') throw err;   // direct worked before: a transient failure, don't switch
                 directError = err;
             }
@@ -332,6 +343,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         if (error) throw directError || error;
         const json = validate(data);
         S.mode = 'proxy';
+        console.info('[StateTracker] source=proxy, total=' + json.total + ' (offset ' + offset + ')');
         return json;
     }
 
