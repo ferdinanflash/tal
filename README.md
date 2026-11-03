@@ -153,3 +153,12 @@ To keep Alliance A/B and remove only role tasks, rebuild the value keeping just 
 ## License
 
 Internal project for the state 3475 community. Whiteout Survival is owned by Century Games; this project is not affiliated with them.
+
+
+## State Tracker — WoS Atlas session pagination (experimental)
+
+The State Tracker now has a session-backed full-list path. It requests a Cloudflare Turnstile token in the browser, sends that short-lived token to the `wosatlas-states` Supabase Edge Function, and the Edge Function mints the WoS Atlas `ah_session` cookie server-side. The cookie is kept only inside that Edge Function invocation and is never returned to the browser. The function then follows the exact opaque `next` cursor until `next: null`, reading the response array from `items`. Partial pagination is treated as an error rather than being displayed as a complete list.
+
+**Required configuration:** set `CFG.turnstileSiteKey` near the top of `statetracker.js` to the public `turnstileSiteKey` exposed by the WoS Atlas app pack. The key may be domain-restricted to `wosatlas.com`; if Cloudflare rejects the State Tracker domain, this integration will report a Turnstile error and WoS Atlas must authorize the State Tracker hostname or provide an official server-to-server integration. No `ah_session` cookie or API secret should be added to the repository.
+
+Deploy the updated root `index.ts` as the Supabase Edge Function `wosatlas-states` before testing. The all-State request is one Edge Function invocation and returns the full normalized list to the browser; subsequent list paging is local.

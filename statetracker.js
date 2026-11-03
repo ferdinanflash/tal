@@ -21,7 +21,10 @@
         directUrl: 'https://wosatlas.com/api/v1/servers',
         apiBase: 'https://wosatlas.com/api/v1',
         proxyFunction: 'wosatlas-states',
-        preferProxy: true,     // wosatlas.com sends no CORS header -> browser calls are blocked; go straight to the edge function
+        preferProxy: true,     // State list requires WoS Atlas session; use the Edge Function proxy
+        // Public Cloudflare Turnstile site key from the WoS Atlas app pack.
+        // Leave blank until configured; the app will show a clear setup error.
+        turnstileSiteKey: '',
         pageSize: 50,          // size the endpoint is known to accept
         concurrency: 3,        // parallel page requests when loading all States
         cacheMs: 5 * 60 * 1000,
@@ -201,9 +204,73 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     // The site paginates with an opaque cursor: every page has `next` until the
     // last one. Server-side (edge function) requests may get a trimmed list, so
     // the browser asks directly first and the edge function is the fallback.
-    const SITE = { list: null, listAt: 0 };
+    const SITE = { list: null, listAt: 0, allStatesPayload: null };
 
-    async function siteFetchAll(path, idOf, maxItems, signal, maxPages) {
+    // WoS Atlas mints its HttpOnly ah_session cookie only after a Turnstile
+    // token is submitted to /api/v1/session. The token is passed to Supabase;
+    // the cookie itself never leaves the Edge Function.
+    let turnstileApiPromise = null;
+    async function loadTurnstileApi() {
+        if (window.turnstile) return window.turnstile;
+        if (!turnstileApiPromise) {
+            turnstileApiPromise = new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+                script.async = true;
+                script.onload = () => window.turnstile ? resolve(window.turnstile) : reject(new Error('turnstile-script-empty'));
+                script.onerror = () => reject(new Error('turnstile-script-blocked'));
+                document.head.appendChild(script);
+            }).catch((error) => { turnstileApiPromise = null; throw error; });
+        }
+        return turnstileApiPromise;
+    }
+
+    async function getWoSAtlasTurnstileToken() {
+        const siteKey = String(CFG.turnstileSiteKey || window.WOSATLAS_TURNSTILE_SITE_KEY || '').trim();
+        if (!siteKey) {
+            throw new Error('Turnstile site key belum dikonfigurasi. Isi CFG.turnstileSiteKey dengan public site key WoS Atlas terlebih dahulu.');
+        }
+        const api = await loadTurnstileApi();
+        let host = document.getElementById('st-turnstile-host');
+        if (!host) {
+            host = document.createElement('div');
+            host.id = 'st-turnstile-host';
+            host.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:2147483000;padding:12px;background:#fff;border:1px solid #ccc;border-radius:10px;box-shadow:0 4px 24px #0003;';
+            document.body.appendChild(host);
+        }
+        host.replaceChildren();
+        const mount = document.createElement('div');
+        host.appendChild(mount);
+        return await new Promise((resolve, reject) => {
+            let settled = false;
+            let widgetId;
+            const finish = (fn, value) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timer);
+                try { if (widgetId !== undefined) api.remove(widgetId); } catch (_) {}
+                host.remove();
+                fn(value);
+            };
+            const timer = setTimeout(() => finish(reject, new Error('Turnstile verification timed out.')), 120000);
+            try {
+                widgetId = api.render(mount, {
+                    sitekey: siteKey,
+                    execution: 'execute',
+                    appearance: 'interaction-only',
+                    'refresh-expired': 'manual',
+                    callback: (token) => finish(resolve, token),
+                    'error-callback': (code) => finish(reject, new Error('Turnstile error: ' + (code || 'unknown'))),
+                    'timeout-callback': () => finish(reject, new Error('Turnstile challenge timed out.'))
+                });
+                api.execute(widgetId);
+            } catch (error) {
+                finish(reject, error);
+            }
+        });
+    }
+
+    async function siteFetchAll(path, idOf, maxItems, signal, maxPages, synthCursor) {
         const sep = path.indexOf('?') >= 0 ? '&' : '?';
         const seen = new Set();
         const out = [];
@@ -215,7 +282,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                 data = await fetchJson(url, signal);
             } catch (err) {
                 if (err && err.name === 'AbortError') throw err;
-                throw err; // A partial page sequence is not a complete State list.
+                throw new Error('Pagination stopped at page ' + (page + 1) + '; refusing to use an incomplete State list. ' + (err && err.message || err));
             }
             const items = data && Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
             let added = 0;
@@ -224,7 +291,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                 if (!seen.has(id)) { seen.add(id); out.push(it); added++; }
             }
             if (!added || !data) break;
-            // `next` is an opaque cursor: use it exactly as returned by the API.
+            // Cursors are opaque. Follow only the exact `next` value returned by WoS Atlas.
             const next = typeof data.next === 'string' && data.next ? data.next : null;
             cursor = next;
             if (!cursor) break;
@@ -286,7 +353,8 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             (x) => String(x.server_id),
             100000,
             signal,
-            400
+            400,
+            null
         );
         const rows = items
             .filter((x) => x && x.rollup && Number.isFinite(Number(x.server_id)))
@@ -311,36 +379,44 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     }
 
     async function fetchPage(offset, signal) {
-        const params = { sort: 'chiefs', desc: true, limit: CFG.pageSize, offset };
-        let directError = null;
-
-        if (S.mode !== 'proxy') {
-            try {
-                const rows = await loadServerListDirect(signal);
-                const json = validate({
-                    entries: rows.slice(offset, offset + CFG.pageSize),
-                    total: rows.length,
-                    recorded_at: rows[0] ? rows[0].recorded_at : null
-                });
-                S.mode = 'direct';
-                console.info('[StateTracker] source=direct, states=' + rows.length);
-                return json;
-            } catch (err) {
-                if (err && err.name === 'AbortError') throw err;
-                console.warn('[StateTracker] direct wosatlas failed, falling back to proxy:', err);
-                if (S.mode === 'direct') throw err;   // direct worked before: a transient failure, don't switch
-                directError = err;
-            }
+        if (SITE.list && Date.now() - SITE.listAt < CFG.cacheMs) {
+            return validate({
+                entries: SITE.list.slice(offset, offset + CFG.pageSize),
+                total: SITE.list.length,
+                recorded_at: SITE.list[0] ? SITE.list[0].recorded_at : null,
+                partial: false
+            });
         }
 
         const client = typeof getSupabase === 'function' ? getSupabase() : null;
-        if (!client) throw directError || new Error('unavailable');
-        const { data, error } = await client.functions.invoke(CFG.proxyFunction, { body: params });
-        if (error) throw directError || error;
-        const json = validate(data);
+        if (!client) throw new Error('Supabase client unavailable');
+        if (signal && signal.aborted) throw new DOMException('Aborted', 'AbortError');
+
+        // One Turnstile token mints a server-side session. The Edge Function
+        // follows every opaque cursor and returns the complete list in one call.
+        const turnstileToken = await getWoSAtlasTurnstileToken();
+        if (signal && signal.aborted) throw new DOMException('Aborted', 'AbortError');
+        const { data, error } = await client.functions.invoke(CFG.proxyFunction, {
+            body: { action: 'all-states', turnstileToken }
+        });
+        if (error) throw error;
+        if (data && data.error) throw new Error(data.message || data.error);
+        const payload = validate(data);
+        if (payload.partial || !Number.isFinite(Number(payload.total)) || Number(payload.total) !== payload.entries.length) {
+            throw new Error('WoS Atlas returned an incomplete State list; refusing to display partial results.');
+        }
+        SITE.list = payload.entries;
+        SITE.listAt = Date.now();
+        SITE.allStatesPayload = payload;
         S.mode = 'proxy';
-        console.info('[StateTracker] source=proxy, total=' + json.total + ' (offset ' + offset + ')', json.meta || '(no meta => OLD edge function still deployed)');
-        return json;
+        console.info('[StateTracker] source=session-proxy, total=' + payload.total, payload.meta || {});
+        return validate({
+            entries: SITE.list.slice(offset, offset + CFG.pageSize),
+            total: SITE.list.length,
+            recorded_at: payload.recorded_at,
+            partial: false,
+            meta: payload.meta
+        });
     }
 
     async function loadPage(offset, token) {
@@ -848,7 +924,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         } catch (err) {
             if (!(err && err.name === 'AbortError') && token === S.token) {
                 console.error('State Tracker:', err);
-                S.error = 'Could not load State data. Check your connection and try again.';
+                S.error = (err && err.message) ? String(err.message) : 'Could not load State data. Check your connection and try again.';
             }
         } finally {
             if (token === S.token) {

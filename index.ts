@@ -1,6 +1,9 @@
 // Supabase Edge Function: wosatlas-states
 // Proxy for State Tracker / SvS Enemies.
-// Uses only the public WoS Atlas site API: https://wosatlas.com/api/v1
+// api.wosatlas.com requires an API key (401 without it), so "detail",
+// "power-leaderboard" and "alliance" now use the PUBLIC site endpoints
+// https://wosatlas.com/api/v1/servers/{kid}[/alliances|/players] (no key).
+// WOSATLAS_API_KEY is no longer needed.
 //
 // Deploy:
 //   supabase functions deploy wosatlas-states
@@ -16,12 +19,14 @@
 //   "player-extra" — /players/{uid}/power|arena|history
 //   "player-search" — /players/search?playerName=
 
+const API = 'https://api.wosatlas.com/v1';
 const CACHE_MS = 5 * 60 * 1000;
 const MAX_CACHE_ENTRIES = 400;
 const UA = '3475.web.id SvS Enemies / State Tracker';
-const FN_VERSION = '2026-11-03-paging-v3';
+const FN_VERSION = '2026-11-03-session-pagination-v3';
 // Filled by fetchAllServers so the client/console can see what wosatlas returned.
 let lastPaging: Record<string, unknown> = {};
+const API_KEY = (Deno.env.get('WOSATLAS_API_KEY') || '').trim();
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -53,6 +58,29 @@ function cacheSet(key: string, body: string) {
   cache.set(key, { at: Date.now(), body });
 }
 
+function upstreamHeaders(): Record<string, string> {
+  const h: Record<string, string> = {
+    accept: 'application/json',
+    'user-agent': UA,
+  };
+  if (API_KEY) {
+    // WoS Atlas accepts several common forms; send both to be safe.
+    h['X-Api-Key'] = API_KEY;
+    h['Authorization'] = `Bearer ${API_KEY}`;
+  }
+  return h;
+}
+
+async function upstreamGet(url: string): Promise<{ ok: true; body: string } | { ok: false; status: number }> {
+  const res = await fetch(url, {
+    headers: upstreamHeaders(),
+  });
+  if (!res.ok) return { ok: false, status: res.status };
+  const body = await res.text();
+  JSON.parse(body);
+  return { ok: true, body };
+}
+
 // ---------- Public site endpoints (no API key) ----------
 const SITE = 'https://wosatlas.com/api/v1';
 
@@ -75,12 +103,13 @@ async function siteGet(path: string): Promise<any | null> {
   return null;
 }
 
-// Cursor pagination: always use the exact opaque cursor returned in `next`.
-// Never derive a cursor from server_id or any other item field.
+// Cursor pagination: responses carry `next` (opaque cursor) when there is more.
+// Cursors are opaque. Only the exact `next` value returned by WoS Atlas is used.
 async function siteGetPaged(
   path: string,
   idOf: (it: any) => string,
   maxItems: number,
+  _legacySynthCursor?: (last: any) => string | null,
   maxPages = 400,
   onPage?: () => void,
 ): Promise<any[] | null> {
@@ -92,7 +121,7 @@ async function siteGetPaged(
     const url = cursor ? `${path}${sep}cursor=${encodeURIComponent(cursor)}` : path;
     const data = await siteGet(url);
     onPage?.();
-    if (!data) return null; // Do not silently treat a failed page as a complete list.
+    if (!data) return null; // Never report a partial page sequence as a complete list.
     const items: any[] = Array.isArray(data.items) ? data.items : Array.isArray(data) ? data : [];
     let added = 0;
     for (const it of items) {
@@ -101,7 +130,7 @@ async function siteGetPaged(
     }
     if (!added) break;
     const next = data && typeof data.next === 'string' && data.next ? data.next : null;
-    cursor = next;
+    cursor = next; // Cursor is opaque: only follow the exact server-provided value.
     if (!cursor) break;
   }
   return out.slice(0, maxItems);
@@ -124,6 +153,7 @@ async function fetchServerAlliances(kid: number, limit: number): Promise<any[] |
     `/servers/${kid}/alliances?sort=power&limit=${Math.min(Math.max(limit, 1), 200)}`,
     (a) => String(a.alliance_id),
     limit,
+    undefined,
     20,
   );
   if (items) cacheSet(key, JSON.stringify(items));
@@ -152,6 +182,7 @@ async function fetchAllianceMembers(aid: number): Promise<any[]> {
     `/alliances/${aid}/members?limit=200`,
     (m) => String(m.uid),
     200,
+    undefined,
     10,
   )) || [];
   cacheSet(key, JSON.stringify(items));
@@ -308,6 +339,7 @@ async function fetchAllServers(): Promise<any[]> {
     '/servers?limit=200',
     (x) => String(x.server_id),
     100000,
+    undefined,
     400,
     () => { pages++; },
   )) || [];
@@ -319,9 +351,158 @@ async function fetchAllServers(): Promise<any[]> {
   return all;
 }
 
+// ---------- Session-backed full State list ----------
+// WoS Atlas requires a Cloudflare Turnstile token to mint ah_session.
+// The token is supplied by the browser; the HttpOnly cookie is kept only
+// inside this Edge Function invocation and is never returned to the client.
+async function fetchAllServersWithSession(turnstileToken: string): Promise<any[]> {
+  const cacheKey = 'servers:all-session';
+  const hit = cacheGet(cacheKey);
+  if (hit) return JSON.parse(hit);
+
+  const sessionRes = await fetch(`${SITE}/session`, {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/json',
+      origin: 'https://wosatlas.com',
+      referer: 'https://wosatlas.com/',
+      'user-agent': UA,
+    },
+    body: JSON.stringify({ token: turnstileToken }),
+  });
+  if (!sessionRes.ok) {
+    throw new Error(`session-mint-http-${sessionRes.status}`);
+  }
+  const sessionBody = await sessionRes.json();
+  const setCookie = sessionRes.headers.get('set-cookie') || '';
+  const cookie = setCookie.split(';', 1)[0];
+  if (!cookie.startsWith('ah_session=')) {
+    throw new Error('session-cookie-missing');
+  }
+  if (!sessionBody || !sessionBody.expires_at) {
+    throw new Error('session-expiry-missing');
+  }
+
+  const all: any[] = [];
+  const seenIds = new Set<string>();
+  const seenCursors = new Set<string>();
+  let cursor: string | null = null;
+  let pages = 0;
+  let lastStatus = 0;
+  const started = Date.now();
+
+  for (; pages < 100; pages++) {
+    const url = new URL(`${SITE}/servers`);
+    url.searchParams.set('limit', '200');
+    if (cursor) url.searchParams.set('cursor', cursor);
+
+    const res = await fetch(url.toString(), {
+      headers: { accept: 'application/json', cookie, 'user-agent': UA },
+    });
+    lastStatus = res.status;
+    if (!res.ok) throw new Error(`servers-page-${pages + 1}-http-${res.status}`);
+    const data = await res.json();
+    if (!data || !Array.isArray(data.items)) {
+      throw new Error(`servers-page-${pages + 1}-bad-items`);
+    }
+
+    for (const item of data.items) {
+      const id = String(item?.server_id ?? '');
+      if (!id || seenIds.has(id)) continue;
+      seenIds.add(id);
+      all.push(item);
+    }
+
+    const next = typeof data.next === 'string' && data.next ? data.next : null;
+    if (!next) break;
+    if (seenCursors.has(next)) throw new Error('servers-cursor-loop');
+    seenCursors.add(next);
+    cursor = next;
+  }
+
+  if (pages >= 100) throw new Error('servers-page-limit-exceeded');
+  if (!all.length) throw new Error('servers-list-empty');
+  lastPaging = {
+    fn: FN_VERSION,
+    items: all.length,
+    pages: pages + 1,
+    lastStatus,
+    blocked: false,
+    source: 'turnstile-session',
+    ms: Date.now() - started,
+    expiresAt: sessionBody.expires_at,
+  };
+  console.log('[wosatlas-states] full session list', JSON.stringify(lastPaging));
+  cacheSet(cacheKey, JSON.stringify(all));
+  return all;
+}
+
+async function handleAllStates(input: Record<string, unknown>) {
+  const token = typeof input.turnstileToken === 'string' ? input.turnstileToken.trim() : '';
+  const cached = cacheGet('servers:all-session');
+  let all: any[];
+  try {
+    if (cached) all = JSON.parse(cached);
+    else {
+      if (token.length < 20 || token.length > 12000) {
+        return jsonObj({ error: 'turnstile-token-required', message: 'Complete the WoS Atlas verification first.' }, 400);
+      }
+      all = await fetchAllServersWithSession(token);
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'session-fetch-failed';
+    console.error('[wosatlas-states] full list failed:', message);
+    return jsonObj({
+      error: 'session-fetch-failed',
+      message,
+      meta: { fn: FN_VERSION, ...lastPaging },
+    }, 502);
+  }
+
+  const entries = all
+    .filter((x: any) => x && x.rollup && Number.isFinite(Number(x.server_id)))
+    .map((x: any) => ({
+      kid: Number(x.server_id),
+      chiefs: num(x.rollup.players) ?? 0,
+      alliances: num(x.rollup.alliances) ?? 0,
+      recruitingAlliances: 0,
+      shielded: 0,
+      generation_ceiling: x.generation_ceiling ?? null,
+      recorded_at: x.rollup.refreshed_at ?? null,
+      total_power: num(x.rollup.player_power) ?? 0,
+      median_power: 0,
+      max_power: 0,
+      topAlliance: null,
+    }))
+    .sort((a: any, b: any) => b.chiefs - a.chiefs);
+
+  return jsonObj({
+    entries,
+    total: entries.length,
+    recorded_at: entries[0]?.recorded_at ?? null,
+    partial: false,
+    meta: { fn: FN_VERSION, ...lastPaging },
+  });
+}
+
 async function handleSummary(input: Record<string, unknown>) {
   const limit = Math.min(Math.max(Math.trunc(Number(input.limit)) || 50, 1), 50);
   const offset = Math.min(Math.max(Math.trunc(Number(input.offset)) || 0, 0), 100000);
+  // Official route: with a WOSATLAS_API_KEY secret, use api.wosatlas.com directly
+  // (50 States per request). Falls through to the public site list if it fails.
+  if (API_KEY) {
+    const qs = new URLSearchParams({ sort: 'chiefs', desc: 'true', limit: String(limit), offset: String(offset) });
+    const r = await upstreamGet(`${API}/states/summary?${qs}`);
+    if (r.ok) {
+      const j = JSON.parse(r.body);
+      if (j && Array.isArray(j.entries)) {
+        j.meta = { fn: FN_VERSION, source: 'api-key' };
+        return jsonObj(j);
+      }
+    }
+    lastPaging = { ...lastPaging, apiKeyStatus: r.ok === true ? 'bad-shape' : r.status };
+  }
   const all = await fetchAllServers();
   if (!all.length) return jsonObj({ error: 'upstream-failed', message: 'wosatlas.com/api/v1/servers could not be loaded.' }, 502);
   const rows = all
@@ -436,6 +617,7 @@ Deno.serve(async (req: Request) => {
   }
   const action = typeof input.action === 'string' ? input.action : 'summary';
   try {
+    if (action === 'all-states') return await handleAllStates(input);
     if (action === 'detail') return await handleDetail(input);
     if (action === 'power-leaderboard') return await handlePowerLeaderboard(input);
     if (action === 'alliance') return await handleAlliance(input);
