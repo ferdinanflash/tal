@@ -25,6 +25,11 @@
         // Public Cloudflare Turnstile site key from the WoS Atlas app pack.
         // Public site key extracted from the WoS Atlas app JavaScript.
         turnstileSiteKey: '0x4AAAAAAFW8LSGKEAA0tRT3',
+        // ZenRows + Vercel fallback (api/tracker.js). Used only when Turnstile
+        // / Supabase session proxy fails (e.g. site key hostname restriction).
+        // Relative path works when the site is hosted on the same Vercel project.
+        zenrowsProxyUrl: '/api/tracker',
+        zenrowsEnabled: true,
         pageSize: 50,          // size the endpoint is known to accept
         concurrency: 3,        // parallel page requests when loading all States
         cacheMs: 5 * 60 * 1000,
@@ -384,39 +389,81 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                 entries: SITE.list.slice(offset, offset + CFG.pageSize),
                 total: SITE.list.length,
                 recorded_at: SITE.list[0] ? SITE.list[0].recorded_at : null,
-                partial: false
+                partial: !!SITE.allStatesPayload && SITE.allStatesPayload.partial
             });
         }
 
-        const client = typeof getSupabase === 'function' ? getSupabase() : null;
-        if (!client) throw new Error('Supabase client unavailable');
         if (signal && signal.aborted) throw new DOMException('Aborted', 'AbortError');
 
-        // One Turnstile token mints a server-side session. The Edge Function
-        // follows every opaque cursor and returns the complete list in one call.
-        const turnstileToken = await getWoSAtlasTurnstileToken();
-        if (signal && signal.aborted) throw new DOMException('Aborted', 'AbortError');
-        const { data, error } = await client.functions.invoke(CFG.proxyFunction, {
-            body: { action: 'all-states', turnstileToken }
-        });
-        if (error) throw error;
-        if (data && data.error) throw new Error(data.message || data.error);
-        const payload = validate(data);
-        if (payload.partial || !Number.isFinite(Number(payload.total)) || Number(payload.total) !== payload.entries.length) {
-            throw new Error('WoS Atlas returned an incomplete State list; refusing to display partial results.');
+        // ---- Primary: Supabase Edge Function + Turnstile session ----
+        let sessionError = null;
+        try {
+            const client = typeof getSupabase === 'function' ? getSupabase() : null;
+            if (!client) throw new Error('Supabase client unavailable');
+
+            // One Turnstile token mints a server-side session. The Edge Function
+            // follows every opaque cursor and returns the complete list in one call.
+            const turnstileToken = await getWoSAtlasTurnstileToken();
+            if (signal && signal.aborted) throw new DOMException('Aborted', 'AbortError');
+            const { data, error } = await client.functions.invoke(CFG.proxyFunction, {
+                body: { action: 'all-states', turnstileToken }
+            });
+            if (error) throw error;
+            if (data && data.error) throw new Error(data.message || data.error);
+            const payload = validate(data);
+            if (payload.partial || !Number.isFinite(Number(payload.total)) || Number(payload.total) !== payload.entries.length) {
+                throw new Error('WoS Atlas returned an incomplete State list; refusing to display partial results.');
+            }
+            SITE.list = payload.entries;
+            SITE.listAt = Date.now();
+            SITE.allStatesPayload = payload;
+            S.mode = 'proxy';
+            console.info('[StateTracker] source=session-proxy, total=' + payload.total, payload.meta || {});
+            return validate({
+                entries: SITE.list.slice(offset, offset + CFG.pageSize),
+                total: SITE.list.length,
+                recorded_at: payload.recorded_at,
+                partial: false,
+                meta: payload.meta
+            });
+        } catch (err) {
+            if (err && err.name === 'AbortError') throw err;
+            sessionError = err;
+            console.warn('[StateTracker] session-proxy failed, trying ZenRows fallback:', err && err.message);
         }
-        SITE.list = payload.entries;
-        SITE.listAt = Date.now();
-        SITE.allStatesPayload = payload;
-        S.mode = 'proxy';
-        console.info('[StateTracker] source=session-proxy, total=' + payload.total, payload.meta || {});
-        return validate({
-            entries: SITE.list.slice(offset, offset + CFG.pageSize),
-            total: SITE.list.length,
-            recorded_at: payload.recorded_at,
-            partial: false,
-            meta: payload.meta
-        });
+
+        // ---- Fallback: ZenRows + Vercel /api/tracker (partial list only) ----
+        if (CFG.zenrowsEnabled && CFG.zenrowsProxyUrl) {
+            try {
+                if (signal && signal.aborted) throw new DOMException('Aborted', 'AbortError');
+                const target = `${CFG.apiBase}/servers?limit=${CFG.pageSize}`;
+                const raw = await fetchViaZenRows(target, signal);
+                const payload = normalizeZenRowsListPayload(raw);
+                if (!payload.entries.length) {
+                    throw new Error('zenrows-empty-list');
+                }
+                SITE.list = payload.entries;
+                SITE.listAt = Date.now();
+                SITE.allStatesPayload = payload;
+                S.mode = 'zenrows';
+                console.info('[StateTracker] source=zenrows-fallback, total=' + payload.total, payload.meta || {});
+                return validate({
+                    entries: SITE.list.slice(offset, offset + CFG.pageSize),
+                    total: SITE.list.length,
+                    recorded_at: payload.recorded_at,
+                    partial: true,
+                    meta: Object.assign({}, payload.meta, {
+                        sessionError: sessionError && sessionError.message
+                    })
+                });
+            } catch (zrErr) {
+                if (zrErr && zrErr.name === 'AbortError') throw zrErr;
+                console.error('[StateTracker] zenrows-fallback also failed:', zrErr && zrErr.message);
+                throw sessionError || zrErr;
+            }
+        }
+
+        throw sessionError || new Error('State list unavailable');
     }
 
     async function loadPage(offset, token) {
@@ -446,6 +493,46 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         });
         if (!res.ok) throw new Error('http-' + res.status);
         return res.json();
+    }
+
+    // ZenRows + Vercel serverless proxy (api/tracker.js). Third-line fallback
+    // when Turnstile / Supabase session proxy is blocked (hostname restriction).
+    async function fetchViaZenRows(targetUrl, signal) {
+        if (!CFG.zenrowsEnabled || !CFG.zenrowsProxyUrl) {
+            throw new Error('zenrows-disabled');
+        }
+        const proxy = `${CFG.zenrowsProxyUrl}?url=${encodeURIComponent(targetUrl)}`;
+        const res = await fetch(proxy, {
+            headers: { accept: 'application/json' },
+            signal,
+            credentials: 'omit',
+            mode: 'cors'
+        });
+        if (!res.ok) {
+            let detail = '';
+            try { detail = (await res.json()).error || ''; } catch (_) { /* ignore */ }
+            throw new Error(`zenrows-http-${res.status}${detail ? ': ' + detail : ''}`);
+        }
+        const data = await res.json();
+        if (data && data.error && !data.items && !data.entries) {
+            throw new Error(data.details || data.error || 'zenrows-proxy-error');
+        }
+        return data;
+    }
+
+    // Map a single page of /servers (or similar) into the internal list shape.
+    // ZenRows cannot easily walk the full opaque cursor chain, so this path is
+    // always treated as partial.
+    function normalizeZenRowsListPayload(data) {
+        const items = (data && (data.items || data.entries || data.servers || data.data)) || [];
+        const entries = Array.isArray(items) ? items : [];
+        return {
+            entries,
+            total: entries.length,
+            recorded_at: (data && (data.recorded_at || data.refreshed_at)) || null,
+            partial: true,
+            meta: { source: 'zenrows', note: 'partial-list-no-session-cursor' }
+        };
     }
 
     async function fetchDetailDirect(kid, signal) {
@@ -511,6 +598,35 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         };
     }
 
+    // Detail via ZenRows: fetch the public server endpoint only (no full
+    // alliance/player merge). Good enough when session + direct both fail.
+    async function fetchDetailZenRows(kid, signal) {
+        const raw = await fetchViaZenRows(`${CFG.apiBase}/servers/${kid}`, signal);
+        const server = raw && (raw.server || raw.data || raw);
+        if (!server || typeof server !== 'object') {
+            throw new Error('zenrows-detail-empty');
+        }
+        const rollup = server.rollup || {};
+        const king = Array.isArray(server.roles)
+            ? server.roles.find((r) => r && r.role === 'king')
+            : null;
+        return {
+            state: {
+                server_id: server.server_id || kid,
+                chiefs: numOrNull(rollup.players),
+                total_power: numOrNull(rollup.player_power),
+                king: king ? { uid: king.uid, nick_name: null } : null
+            },
+            power: {
+                player_count: numOrNull(rollup.players),
+                total_power: numOrNull(rollup.player_power),
+                recorded_at: rollup.refreshed_at || null,
+                top: []
+            },
+            alliances: null
+        };
+    }
+
     function getDetail(kid) {
         return S.detailCache.get(Number(kid)) || null;
     }
@@ -542,23 +658,33 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         try {
             let payload = null;
             // Prefer whatever mode already worked for the summary list.
-            if (S.mode === 'proxy') {
+            // Order: proxy → direct → zenrows (or zenrows first if that is the active mode).
+            const tryOrder = S.mode === 'zenrows'
+                ? ['zenrows', 'direct', 'proxy']
+                : S.mode === 'proxy'
+                    ? ['proxy', 'direct', 'zenrows']
+                    : ['direct', 'proxy', 'zenrows'];
+
+            let lastErr = null;
+            for (const method of tryOrder) {
                 try {
-                    payload = await fetchDetailProxy(key, signal);
+                    if (method === 'proxy') payload = await fetchDetailProxy(key, signal);
+                    else if (method === 'direct') payload = await fetchDetailDirect(key, signal);
+                    else if (method === 'zenrows' && CFG.zenrowsEnabled) payload = await fetchDetailZenRows(key, signal);
+                    else continue;
+                    if (method === 'proxy' || method === 'direct' || method === 'zenrows') {
+                        if (S.mode !== method && method !== 'zenrows') S.mode = method;
+                    }
+                    lastErr = null;
+                    break;
                 } catch (err) {
                     if (err && err.name === 'AbortError') throw err;
-                    payload = await fetchDetailDirect(key, signal);
-                }
-            } else {
-                try {
-                    payload = await fetchDetailDirect(key, signal);
-                    if (S.mode !== 'proxy') S.mode = 'direct';
-                } catch (err) {
-                    if (err && err.name === 'AbortError') throw err;
-                    payload = await fetchDetailProxy(key, signal);
-                    S.mode = 'proxy';
+                    lastErr = err;
+                    payload = null;
                 }
             }
+            if (!payload) throw lastErr || new Error('detail-all-methods-failed');
+
             if (signal && signal.aborted) return;
             state = payload.state;
             power = payload.power;

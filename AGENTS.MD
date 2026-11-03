@@ -3,133 +3,89 @@
 ## Overview
 Aplikasi web ini (`tal.3475.web.id`) adalah dashboard manajemen aliansi & state *Whiteout Survival* yang berjalan secara client-side dengan integrasi Supabase Backend dan Vercel Hosting.
 
-## State Tracker & Anti-Bot Bypass Architecture
-Menu State Tracker (`statetracker.js`) memerlukan data dari API publik target yang dilindungi oleh Cloudflare WAF dan Turnstile Challenge.
+## State Tracker — Dua jalur data
 
-### Flow Architecture:
-1. **Frontend (`statetracker.js`)** -> Memanggil endpoint internal `/api/tracker`.
-2. **Vercel Serverless Proxy (`/api/tracker.js`)** -> Meneruskan request ke API ZenRows menggunakan `ZENROWS_API_KEY` dari Environment Variable.
-3. **ZenRows API** -> Menjalankan Headless Browser (`js_render=true`, `antibot=true`), menyelesaikan Turnstile challenge, dan mengambil JSON data lengkap.
-4. **Respon Client** -> Respon diteruskan kembali ke browser pengguna tanpa terhalang CORS maupun Cloudflare Block.
+Menu State Tracker (`statetracker.js`) membutuhkan data dari API publik WoS Atlas yang dilindungi Cloudflare WAF + Turnstile.
 
-## Folder Structure (Proxy Component):
+### Jalur utama (saat ini dipakai)
+1. Browser meminta token Cloudflare Turnstile (public site key).
+2. Token dikirim ke **Supabase Edge Function** `wosatlas-states` (`index.ts`).
+3. Edge Function melakukan `POST /api/v1/session` → mendapatkan cookie `ah_session` (hanya hidup di server).
+4. Edge Function memanggil endpoint list/detail dan mengembalikan JSON ke client.
+
+Dokumentasi setup: lihat `WOSATLAS_SESSION_SETUP_ID.md`.
+
+### Jalur cadangan (ZenRows + Vercel Serverless)
+Digunakan jika Turnstile site key **ditolak karena hostname** (site key WoS Atlas hanya mengizinkan `wosatlas.com`).
+
+#### Flow Architecture
+1. **Frontend (`statetracker.js`)** → memanggil endpoint `/api/tracker?url=...`
+2. **Vercel Serverless Proxy (`api/tracker.js`)** → meneruskan request ke ZenRows memakai `ZENROWS_API_KEY`
+3. **ZenRows** → headless browser (`js_render=true`, `antibot=true`, `premium_proxy=true`) menyelesaikan challenge dan mengambil data
+4. Respon JSON dikembalikan ke browser (tanpa CORS / Turnstile block)
+
+#### Folder structure (komponen proxy)
 ```text
 ├── api/
 │   └── tracker.js       # Vercel Serverless Proxy Handler
 ├── statetracker.js      # Frontend Logic State Tracker
-├── AGENTS.md            # Dokumentasi Teknis Agent
+├── index.ts             # Supabase Edge Function (jalur utama)
+├── AGENTS.md            # Dokumentasi teknis ini
 └── index.html           # Main Entry Point
-Berikut adalah struktur file AGENTS.md dan panduan lengkap langkah demi langkah untuk menyelesaikan setup proxy ZenRows melalui Vercel Serverless Function.
-1. File AGENTS.md
-Buat file baru bernama AGENTS.md di root folder proyek kamu (sejajar dengan index.html dan statetracker.js). File ini berfungsi sebagai dokumentasi teknis dan instruksi untuk AI agent/pengembang lain yang mengelola repositori ini.
-# AGENTS.md — System Architecture & External Proxy Workflow
-
-## Overview
-Aplikasi web ini (`jtal.3475.web.id`) adalah dashboard manajemen aliansi & state *Whiteout Survival* yang berjalan secara client-side dengan integrasi Supabase Backend dan Vercel Hosting.
-
-## State Tracker & Anti-Bot Bypass Architecture
-Menu State Tracker (`statetracker.js`) memerlukan data dari API publik target yang dilindungi oleh Cloudflare WAF dan Turnstile Challenge.
-
-### Flow Architecture:
-1. **Frontend (`statetracker.js`)** -> Memanggil endpoint internal `/api/tracker`.
-2. **Vercel Serverless Proxy (`/api/tracker.js`)** -> Meneruskan request ke API ZenRows menggunakan `ZENROWS_API_KEY` dari Environment Variable.
-3. **ZenRows API** -> Menjalankan Headless Browser (`js_render=true`, `antibot=true`), menyelesaikan Turnstile challenge, dan mengambil JSON data lengkap.
-4. **Respon Client** -> Respon diteruskan kembali ke browser pengguna tanpa terhalang CORS maupun Cloudflare Block.
-
-## Folder Structure (Proxy Component):
-```text
-├── api/
-│   └── tracker.js       # Vercel Serverless Proxy Handler
-├── statetracker.js      # Frontend Logic State Tracker
-├── AGENTS.md            # Dokumentasi Teknis Agent
-└── index.html           # Main Entry Point
-
-Environment Variables Required
- * ZENROWS_API_KEY: API Key dari ZenRows Dashboard (Dikonfigurasi di Vercel Dashboard).
-Active Proxy Endpoint
- * Production Proxy Base: https://tal-vercel-proxy.vercel.app/api/tracker
+```
 
 ---
 
-## 2. Panduan Eksekusi (Lanjutan dari Setup Vercel Env)
+## Setup Jalur Cadangan (ZenRows + Vercel)
 
-Karena kamu sudah selesai memasukkan `ZENROWS_API_KEY` di Environment Variables Vercel, berikut langkah penyelesaian hingga menu State Tracker berjalan lancar:
+### 1. Environment Variable di Vercel
+Di project Vercel (yang deploy domain `tal.3475.web.id` atau project proxy terpisah):
 
-### Langkah A: Buat File Serverless Function (`api/tracker.js`)
+| Key | Value |
+|-----|-------|
+| `ZENROWS_API_KEY` | API key dari [zenrows.com](https://www.zenrows.com) |
 
-Di repositori proyek lokal kamu, buat folder `api` (jika belum ada) dan isi dengan file `tracker.js`:
+### 2. File `api/tracker.js`
+Sudah dibuat di repo. Handler menerima query `?url=` dan hanya mengizinkan host `wosatlas.com` / `api.wosatlas.com`.
 
-```javascript
-// api/tracker.js
-export default async function handler(req, res) {
-  // Set Header CORS agar domain jtal.3475.web.id dapat mengaksesnya
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+### 3. Contoh pemanggilan dari frontend
+```js
+const PROXY_API_URL = '/api/tracker'; // relative → same origin Vercel
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  const apiKey = process.env.ZENROWS_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'ZENROWS_API_KEY belum dikonfigurasi di Environment Variables Vercel.' });
-  }
-
-  // Masukkan URL API target State Tracker di sini (atau teruskan via query parameter)
-  const targetUrl = req.query.url || 'https://api-target-statetracker.com/states';
-
-  try {
-    const zenrowsUrl = new URL('https://api.zenrows.com/v1/');
-    zenrowsUrl.searchParams.append('apikey', apiKey);
-    zenrowsUrl.searchParams.append('url', targetUrl);
-    zenrowsUrl.searchParams.append('js_render', 'true');
-    zenrowsUrl.searchParams.append('antibot', 'true');
-    zenrowsUrl.searchParams.append('premium_proxy', 'true');
-
-    const response = await fetch(zenrowsUrl.toString());
-
-    if (!response.ok) {
-      throw new Error(`ZenRows HTTP Status Error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return res.status(200).json(data);
-  } catch (error) {
-    return res.status(500).json({ 
-      error: 'Gagal mengambil data via ZenRows Proxy', 
-      details: error.message 
-    });
-  }
+async function fetchViaZenRows(targetUrl) {
+  const url = `${PROXY_API_URL}?url=${encodeURIComponent(targetUrl)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Proxy error: ${res.status}`);
+  return res.json();
 }
 
-Langkah B: Hubungkan Pemanggilan di statetracker.js
-Buka file statetracker.js dan perbarui fungsi pemanggilan API ke proxy Vercel kamu ([https://tal-vercel-proxy.vercel.app/api/tracker](https://tal-vercel-proxy.vercel.app/api/tracker)):
-// Di dalam statetracker.js
+// Contoh: list states
+const data = await fetchViaZenRows('https://wosatlas.com/api/v1/servers?limit=50');
+```
 
-const PROXY_API_URL = 'https://tal-vercel-proxy.vercel.app/api/tracker';
+> **Catatan integrasi:** Saat ini `statetracker.js` masih memakai jalur Supabase Edge Function sebagai default (`preferProxy: true`). ZenRows proxy siap dipakai sebagai fallback manual atau dapat di-wire kemudian jika Turnstile domain restriction tetap menghalangi.
 
-async function fetchStateTrackerData() {
-  try {
-    // Panggil proxy Vercel milikmu sendiri
-    const response = await fetch(PROXY_API_URL);
+### 4. Deploy
+1. Commit & push `api/tracker.js` + `AGENTS.md`.
+2. Vercel auto-deploy.
+3. Uji endpoint:
+   ```
+   https://<your-vercel-domain>/api/tracker?url=https%3A%2F%2Fwosatlas.com%2Fapi%2Fv1%2Fservers%3Flimit%3D10
+   ```
+   Harus mengembalikan JSON (bukan HTML challenge).
 
-    if (!response.ok) {
-      throw new Error(`Proxy error: ${response.status}`);
-    }
+---
 
-    const data = await response.json();
-    
-    // Render data ke UI/Tabel State Tracker
-    console.log('Data State berhasil dimuat:', data);
-    renderStateTrackerTable(data);
+## Catatan penting
 
-  } catch (err) {
-    console.error('Gagal memuat State Tracker:', err);
-  }
-}
+- **Biaya ZenRows**: setiap request memakai kredit (js_render + antibot + premium_proxy relatif mahal). Gunakan hanya sebagai fallback, bukan jalur utama.
+- **Host whitelist**: `api/tracker.js` menolak host selain `wosatlas.com` / `api.wosatlas.com` untuk mencegah abuse.
+- **Session cookie**: ZenRows menangani challenge di sisi mereka; cookie tidak perlu dikelola manual di client.
+- **Supabase tetap jalur utama**: Edge Function + Turnstile browser token lebih murah dan lebih terkontrol selama site key mengizinkan hostname TAL.
 
-Langkah C: Push ke GitHub & Redeploy Vercel
- * Commit & Push file AGENTS.md, api/tracker.js, dan statetracker.js ke repositori GitHub kamu.
- * Vercel akan secara otomatis melakukan Build & Deploy.
- * Setelah deploy selesai, buka endpoint [https://tal-vercel-proxy.vercel.app/api/tracker](https://tal-vercel-proxy.vercel.app/api/tracker) di browser untuk memastikan JSON data berhasil ditarik melalui ZenRows tanpa error Turnstile.
+## Status implementasi (2026-11-03)
+- [x] Dokumentasi arsitektur (file ini)
+- [x] `api/tracker.js` (Vercel Serverless + ZenRows)
+- [x] Wire opsional di `statetracker.js` sebagai fallback ketiga (setelah direct & Supabase)
+- [ ] Set `ZENROWS_API_KEY` di Vercel Environment Variables
+- [ ] Uji live endpoint setelah deploy
