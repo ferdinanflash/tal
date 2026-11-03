@@ -23,6 +23,9 @@ const API = 'https://api.wosatlas.com/v1';
 const CACHE_MS = 5 * 60 * 1000;
 const MAX_CACHE_ENTRIES = 400;
 const UA = '3475.web.id SvS Enemies / State Tracker';
+const FN_VERSION = '2026-11-03-paging-v2';
+// Filled by fetchAllServers so the client/console can see what wosatlas returned.
+let lastPaging: Record<string, unknown> = {};
 const API_KEY = (Deno.env.get('WOSATLAS_API_KEY') || '').trim();
 
 const corsHeaders = {
@@ -81,16 +84,23 @@ async function upstreamGet(url: string): Promise<{ ok: true; body: string } | { 
 // ---------- Public site endpoints (no API key) ----------
 const SITE = 'https://wosatlas.com/api/v1';
 
+let lastSiteStatus: number | string | null = null;
+
 async function siteGet(path: string): Promise<any | null> {
-  try {
-    const res = await fetch(`${SITE}${path}`, {
-      headers: { accept: 'application/json', 'user-agent': UA },
-    });
-    if (!res.ok) return null;
-    return JSON.parse(await res.text());
-  } catch (_) {
-    return null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(`${SITE}${path}`, {
+        headers: { accept: 'application/json', 'user-agent': UA },
+      });
+      lastSiteStatus = res.status;
+      if (res.ok) return JSON.parse(await res.text());
+      if (res.status !== 429 && res.status < 500) return null;
+    } catch (e) {
+      lastSiteStatus = `fetch-error: ${(e as Error).message}`;
+    }
+    await new Promise((r) => setTimeout(r, 400));
   }
+  return null;
 }
 
 // Cursor pagination: responses carry `next` (opaque cursor) when there is more.
@@ -102,6 +112,7 @@ async function siteGetPaged(
   maxItems: number,
   synthCursor?: (last: any) => string | null,
   maxPages = 400,
+  onPage?: () => void,
 ): Promise<any[] | null> {
   const sep = path.includes('?') ? '&' : '?';
   const seen = new Set<string>();
@@ -110,6 +121,7 @@ async function siteGetPaged(
   for (let page = 0; page < maxPages && out.length < maxItems; page++) {
     const url = cursor ? `${path}${sep}cursor=${encodeURIComponent(cursor)}` : path;
     const data = await siteGet(url);
+    onPage?.();
     if (!data) return page === 0 ? null : out;
     const items: any[] = Array.isArray(data.items) ? data.items : Array.isArray(data) ? data : [];
     let added = 0;
@@ -322,14 +334,20 @@ async function fetchAllServers(): Promise<any[]> {
   const key = 'servers:all';
   const hit = cacheGet(key);
   if (hit) return JSON.parse(hit);
+  const t0 = Date.now();
+  let pages = 0;
   const all = (await siteGetPaged(
     '/servers?limit=200',
     (x) => String(x.server_id),
     100000,
     (last) => (last && last.server_id != null ? btoa(`k|${last.server_id}`) : null),
     400,
+    () => { pages++; },
   )) || [];
-  if (all.length) cacheSet(key, JSON.stringify(all));
+  lastPaging = { fn: FN_VERSION, items: all.length, pages, lastStatus: lastSiteStatus, ms: Date.now() - t0 };
+  console.log('[wosatlas-states] servers', JSON.stringify(lastPaging));
+  // A list this short is almost certainly a failed/trimmed paging run: don't pin it in cache.
+  if (all.length > 25) cacheSet(key, JSON.stringify(all));
   return all;
 }
 
@@ -358,6 +376,7 @@ async function handleSummary(input: Record<string, unknown>) {
     entries: rows.slice(offset, offset + limit),
     total: rows.length,
     recorded_at: rows[0] ? rows[0].recorded_at : null,
+    meta: { fn: FN_VERSION, ...lastPaging },
   });
 }
 

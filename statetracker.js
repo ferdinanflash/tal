@@ -343,7 +343,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         if (error) throw directError || error;
         const json = validate(data);
         S.mode = 'proxy';
-        console.info('[StateTracker] source=proxy, total=' + json.total + ' (offset ' + offset + ')');
+        console.info('[StateTracker] source=proxy, total=' + json.total + ' (offset ' + offset + ')', json.meta || '(no meta => OLD edge function still deployed)');
         return json;
     }
 
