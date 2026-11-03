@@ -18,8 +18,8 @@
     'use strict';
 
     const CFG = {
-        directUrl: 'https://api.wosatlas.com/v1/states/summary',
-        apiBase: 'https://api.wosatlas.com/v1',
+        directUrl: 'https://wosatlas.com/api/v1/servers',
+        apiBase: 'https://wosatlas.com/api/v1',
         proxyFunction: 'wosatlas-states',
         pageSize: 50,          // size the endpoint is known to accept
         concurrency: 3,        // parallel page requests when loading all States
@@ -131,7 +131,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         total: 0,
         recordedAt: null,
         fetchedAt: 0,
-        mode: 'proxy',          // api.wosatlas.com needs a key now: always try the edge function first
+        mode: null,             // 'direct' | 'proxy' once one of them worked
         sort: 'chiefs',
         desc: true,
         query: '',
@@ -196,16 +196,116 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         return json;
     }
 
+    // ---- Public wosatlas.com endpoints (called from the browser) ----
+    // The site paginates with an opaque cursor: every page has `next` until the
+    // last one. Server-side (edge function) requests may get a trimmed list, so
+    // the browser asks directly first and the edge function is the fallback.
+    const SITE = { list: null, listAt: 0 };
+
+    async function siteFetchAll(path, idOf, maxItems, signal, maxPages) {
+        const sep = path.indexOf('?') >= 0 ? '&' : '?';
+        const seen = new Set();
+        const out = [];
+        let cursor = null;
+        for (let page = 0; page < maxPages && out.length < maxItems; page++) {
+            const url = CFG.apiBase + path + (cursor ? sep + 'cursor=' + encodeURIComponent(cursor) : '');
+            const data = await fetchJson(url, signal);
+            const items = data && Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
+            let added = 0;
+            for (const it of items) {
+                const id = idOf(it);
+                if (!seen.has(id)) { seen.add(id); out.push(it); added++; }
+            }
+            if (!added || !data || !data.next) break;
+            cursor = data.next;
+        }
+        return out.slice(0, maxItems);
+    }
+
+    function numOrNull(v) {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+    }
+
+    function mapAllianceRow(a) {
+        const held = a.held_members || {};
+        return {
+            aid: Number(a.alliance_id),
+            abbr: a.tag,
+            name: a.name,
+            members: numOrNull(a.member_count) || 0,
+            memberMax: numOrNull(a.max_members) || 0,
+            totalPower: numOrNull(a.power) || 0,
+            maxPower: numOrNull(held.power_max) || 0,
+            publicRecruit: !!a.public_recruit
+        };
+    }
+
+    function mapMemberRow(m, i) {
+        return {
+            rank: i + 1,
+            uid: m.uid,
+            nick_name: m.name,
+            power: numOrNull(m.power) || 0,
+            stove_lv: m.hq_level,
+            lv: m.hq_level,
+            x: m.x,
+            y: m.y
+        };
+    }
+
+    function mapPlayerRow(p) {
+        const pct = numOrNull(p.last_power_step && p.last_power_step.pct);
+        return {
+            uid: p.uid,
+            nick_name: p.name,
+            current_power: numOrNull(p.power) || 0,
+            stove_lv: p.hq_level,
+            kid: p.current_server_id || p.home_server_id,
+            aid: p.alliance_id,
+            abbr: p.alliance_tag || '',
+            last_jump_pct: pct == null ? null : pct / 100,
+            observed_at: p.last_seen_at
+        };
+    }
+
+    async function loadServerListDirect(signal) {
+        if (SITE.list && Date.now() - SITE.listAt < CFG.cacheMs) return SITE.list;
+        const items = await siteFetchAll('/servers', (x) => String(x.server_id), 100000, signal, 400);
+        const rows = items
+            .filter((x) => x && x.rollup && Number.isFinite(Number(x.server_id)))
+            .map((x) => ({
+                kid: Number(x.server_id),
+                chiefs: numOrNull(x.rollup.players) || 0,
+                alliances: numOrNull(x.rollup.alliances) || 0,
+                recruitingAlliances: 0,
+                shielded: 0,
+                generation_ceiling: x.generation_ceiling,
+                recorded_at: x.rollup.refreshed_at || null,
+                total_power: numOrNull(x.rollup.player_power) || 0,
+                median_power: 0,
+                max_power: 0,
+                topAlliance: null
+            }))
+            .sort((a, b) => b.chiefs - a.chiefs);
+        if (!rows.length) throw new Error('empty-list');
+        SITE.list = rows;
+        SITE.listAt = Date.now();
+        return rows;
+    }
+
     async function fetchPage(offset, signal) {
         const params = { sort: 'chiefs', desc: true, limit: CFG.pageSize, offset };
         let directError = null;
 
         if (S.mode !== 'proxy') {
             try {
-                const qs = new URLSearchParams({ sort: 'chiefs', desc: 'true', limit: String(CFG.pageSize), offset: String(offset) });
-                const res = await fetch(`${CFG.directUrl}?${qs}`, { headers: { accept: 'application/json' }, signal });
-                if (!res.ok) throw new Error('http-' + res.status);
-                const json = validate(await res.json());
+                const rows = await loadServerListDirect(signal);
+                const json = validate({
+                    entries: rows.slice(offset, offset + CFG.pageSize),
+                    total: rows.length,
+                    recorded_at: rows[0] ? rows[0].recorded_at : null
+                });
                 S.mode = 'direct';
                 return json;
             } catch (err) {
@@ -253,16 +353,46 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     }
 
     async function fetchDetailDirect(kid, signal) {
-        const base = CFG.apiBase;
         const results = await Promise.allSettled([
-            fetchJson(`${base}/states/${kid}`, signal),
-            fetchJson(`${base}/kingdoms/${kid}/power`, signal),
-            fetchJson(`${base}/alliances/leaderboard?limit=${CFG.allianceLimit}&kid=${kid}`, signal)
+            fetchJson(`${CFG.apiBase}/servers/${kid}`, signal),
+            siteFetchAll(`/servers/${kid}/alliances?sort=power`, (a) => String(a.alliance_id), 50, signal, 5)
         ]);
-        const state = results[0].status === 'fulfilled' ? results[0].value : null;
-        const power = results[1].status === 'fulfilled' ? results[1].value : null;
-        const alliances = results[2].status === 'fulfilled' ? results[2].value : null;
-        if (!state && !power && !alliances) throw new Error('direct-detail-failed');
+        const server = results[0].status === 'fulfilled' ? results[0].value : null;
+        const allianceItems = results[1].status === 'fulfilled' ? results[1].value : null;
+        if (!server && !allianceItems) throw new Error('direct-detail-failed');
+
+        // Top players: merge the members of the strongest alliances.
+        let top = [];
+        if (allianceItems && allianceItems.length) {
+            const lists = await Promise.allSettled(allianceItems.slice(0, 8).map((a) =>
+                siteFetchAll(`/alliances/${a.alliance_id}/members`, (m) => String(m.uid), 200, signal, 10)));
+            const seen = new Set();
+            const merged = [];
+            for (const l of lists) {
+                if (l.status !== 'fulfilled') continue;
+                for (const m of l.value) {
+                    if (!seen.has(String(m.uid))) { seen.add(String(m.uid)); merged.push(m); }
+                }
+            }
+            merged.sort((a, b) => (Number(b.power) || 0) - (Number(a.power) || 0));
+            top = merged.slice(0, CFG.topPlayersLimit).map(mapMemberRow);
+        }
+
+        const rollup = (server && server.rollup) || {};
+        const king = server && Array.isArray(server.roles) ? server.roles.find((r) => r && r.role === 'king') : null;
+        const state = server ? {
+            server_id: server.server_id,
+            chiefs: numOrNull(rollup.players),
+            total_power: numOrNull(rollup.player_power),
+            king: king ? { uid: king.uid, nick_name: null } : null
+        } : null;
+        const power = server ? {
+            player_count: numOrNull(rollup.players),
+            total_power: numOrNull(rollup.player_power),
+            recorded_at: rollup.refreshed_at || null,
+            top: top
+        } : null;
+        const alliances = allianceItems ? { entries: allianceItems.slice(0, CFG.allianceLimit).map(mapAllianceRow) } : null;
         return { state, power, alliances };
     }
 
@@ -360,7 +490,34 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
 
     // ---- Alliance detail ----
     async function fetchAllianceDirect(aid, signal) {
-        return fetchJson(`${CFG.apiBase}/alliances/${aid}/members`, signal);
+        // alliance_id = <server id><6-digit sequence>, e.g. 3369000011
+        const kid = Math.floor(Number(aid) / 1000000);
+        const [listRes, memRes] = await Promise.allSettled([
+            siteFetchAll(`/servers/${kid}/alliances?sort=power`, (a) => String(a.alliance_id), 400, signal, 25),
+            siteFetchAll(`/alliances/${aid}/members`, (m) => String(m.uid), 200, signal, 10)
+        ]);
+        const list = listRes.status === 'fulfilled' ? listRes.value : [];
+        const a = list.find((x) => Number(x.alliance_id) === Number(aid));
+        const members = memRes.status === 'fulfilled' ? memRes.value : [];
+        if (!a && !members.length) throw new Error('direct-alliance-failed');
+        const src = a || {};
+        return {
+            aid: Number(aid),
+            abbr: src.tag || (members[0] && members[0].alliance_tag) || '',
+            name: src.name || '',
+            memberCount: src.member_count,
+            memberMax: src.max_members,
+            serverPower: src.power,
+            leaderUid: src.leader_uid,
+            leaderName: src.leader_name,
+            lv: src.alliance_level,
+            joinMinLevel: src.join_min_level,
+            joinMinPower: src.join_min_power,
+            publicRecruit: !!src.public_recruit,
+            homeKid: Number(src.home_server_id) || kid,
+            honorLevel: src.honor_level,
+            members: members.map(mapMemberRow)
+        };
     }
 
     async function fetchAllianceProxy(aid) {
@@ -428,7 +585,15 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     // opens the match. /players/{uid} alone does not find every player, so
     // the ID box below goes through search first.
     async function fetchPlayerSearchDirect(query, signal) {
-        return fetchJson(`${CFG.apiBase}/players/search?playerName=${encodeURIComponent(query)}`, signal);
+        // No name-search endpoint is known on the public site: numeric IDs only.
+        if (!/^\d+$/.test(String(query).trim())) return { players: [] };
+        try {
+            const p = await fetchJson(`${CFG.apiBase}/players/${String(query).trim()}`, signal);
+            return { players: p ? [mapPlayerRow(p)] : [] };
+        } catch (err) {
+            if (err && err.name === 'AbortError') throw err;
+            return { players: [] };
+        }
     }
 
     async function fetchPlayerSearchProxy(query) {
@@ -488,7 +653,8 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     }
 
     async function fetchPlayerDirect(uid, signal) {
-        return fetchJson(`${CFG.apiBase}/players/${uid}`, signal);
+        const p = await fetchJson(`${CFG.apiBase}/players/${uid}`, signal);
+        return { players: [mapPlayerRow(p)] };
     }
 
     async function fetchPlayerProxy(uid) {
@@ -677,6 +843,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     }
 
     function resetData() {
+        SITE.list = null;
         S.token += 1;
         if (S.ctrl) S.ctrl.abort();
         S.ctrl = new AbortController();

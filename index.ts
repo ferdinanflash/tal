@@ -156,6 +156,9 @@ function mapMember(m: any, i: number) {
     nick_name: m.name ?? null,
     power: num(m.power) ?? 0,
     stove_lv: m.hq_level ?? null,
+    lv: m.hq_level ?? null,
+    x: m.x ?? null,
+    y: m.y ?? null,
     alliance_tag: m.alliance_tag ?? null,
   };
 }
@@ -249,7 +252,18 @@ async function handleDetail(input: Record<string, unknown>) {
     : null;
 
   const alliances = allianceItems
-    ? { entries: allianceItems.slice(0, allianceLimit) }
+    ? {
+        entries: allianceItems.slice(0, allianceLimit).map((a: any) => ({
+          ...a,
+          aid: Number(a.alliance_id),
+          abbr: a.tag,
+          members: a.member_count,
+          memberMax: a.max_members,
+          totalPower: a.power,
+          maxPower: a.held_members ? a.held_members.power_max : 0,
+          publicRecruit: !!a.public_recruit,
+        })),
+      }
     : null;
 
   const payload = JSON.stringify({ state, power, alliances, players, kid });
