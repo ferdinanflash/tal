@@ -202,7 +202,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     // the browser asks directly first and the edge function is the fallback.
     const SITE = { list: null, listAt: 0 };
 
-    async function siteFetchAll(path, idOf, maxItems, signal, maxPages) {
+    async function siteFetchAll(path, idOf, maxItems, signal, maxPages, synthCursor) {
         const sep = path.indexOf('?') >= 0 ? '&' : '?';
         const seen = new Set();
         const out = [];
@@ -216,8 +216,12 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                 const id = idOf(it);
                 if (!seen.has(id)) { seen.add(id); out.push(it); added++; }
             }
-            if (!added || !data || !data.next) break;
-            cursor = data.next;
+            if (!added || !data) break;
+            // /servers sometimes omits `next`; the cursor is base64("k|<last server_id>"),
+            // so build it from the last item (same as the edge function does).
+            const next = typeof data.next === 'string' && data.next ? data.next : null;
+            cursor = next || (synthCursor ? synthCursor(items[items.length - 1]) : null);
+            if (!cursor) break;
         }
         return out.slice(0, maxItems);
     }
@@ -271,7 +275,14 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
 
     async function loadServerListDirect(signal) {
         if (SITE.list && Date.now() - SITE.listAt < CFG.cacheMs) return SITE.list;
-        const items = await siteFetchAll('/servers', (x) => String(x.server_id), 100000, signal, 400);
+        const items = await siteFetchAll(
+            '/servers?limit=200',
+            (x) => String(x.server_id),
+            100000,
+            signal,
+            400,
+            (last) => (last && last.server_id != null ? btoa('k|' + last.server_id) : null)
+        );
         const rows = items
             .filter((x) => x && x.rollup && Number.isFinite(Number(x.server_id)))
             .map((x) => ({

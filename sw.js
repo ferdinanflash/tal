@@ -6,7 +6,7 @@
  */
 'use strict';
 
-const SW_VERSION = 'tal-foundry-sw-v23';
+const SW_VERSION = 'tal-foundry-sw-v24';
 const STATIC_CACHE = `${SW_VERSION}-static`;
 const PAGE_CACHE = `${SW_VERSION}-pages`;
 const CORE_ASSETS = [
