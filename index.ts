@@ -93,6 +93,38 @@ async function siteGet(path: string): Promise<any | null> {
   }
 }
 
+// Cursor pagination: responses carry `next` (opaque cursor) when there is more.
+// For /servers the cursor is base64("k|<last server_id>"), so when `next` is
+// missing we build it ourselves from the last item (stops when nothing new).
+async function siteGetPaged(
+  path: string,
+  idOf: (it: any) => string,
+  maxItems: number,
+  synthCursor?: (last: any) => string | null,
+  maxPages = 400,
+): Promise<any[] | null> {
+  const sep = path.includes('?') ? '&' : '?';
+  const seen = new Set<string>();
+  const out: any[] = [];
+  let cursor: string | null = null;
+  for (let page = 0; page < maxPages && out.length < maxItems; page++) {
+    const url = cursor ? `${path}${sep}cursor=${encodeURIComponent(cursor)}` : path;
+    const data = await siteGet(url);
+    if (!data) return page === 0 ? null : out;
+    const items: any[] = Array.isArray(data.items) ? data.items : Array.isArray(data) ? data : [];
+    let added = 0;
+    for (const it of items) {
+      const id = idOf(it);
+      if (!seen.has(id)) { seen.add(id); out.push(it); added++; }
+    }
+    if (!added) break;
+    const next = data && typeof data.next === 'string' && data.next ? data.next : null;
+    cursor = next || (synthCursor ? synthCursor(items[items.length - 1]) : null);
+    if (!cursor) break;
+  }
+  return out.slice(0, maxItems);
+}
+
 function num(v: unknown): number | null {
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
@@ -106,9 +138,13 @@ async function fetchServerAlliances(kid: number, limit: number): Promise<any[] |
   const key = `alliances:${kid}:${limit}`;
   const hit = cacheGet(key);
   if (hit) return JSON.parse(hit);
-  const data = await siteGet(`/servers/${kid}/alliances?sort=power&limit=${Math.max(limit, 1)}`);
-  if (!data) return null;
-  const items = Array.isArray(data.items) ? data.items : Array.isArray(data) ? data : null;
+  const items = await siteGetPaged(
+    `/servers/${kid}/alliances?sort=power&limit=${Math.min(Math.max(limit, 1), 200)}`,
+    (a) => String(a.alliance_id),
+    limit,
+    undefined,
+    20,
+  );
   if (items) cacheSet(key, JSON.stringify(items));
   return items;
 }
@@ -128,8 +164,13 @@ async function fetchAllianceMembers(aid: number): Promise<any[]> {
   const key = `members:${aid}`;
   const hit = cacheGet(key);
   if (hit) return JSON.parse(hit);
-  const data = await siteGet(`/alliances/${aid}/members?limit=200`);
-  const items = data && Array.isArray(data.items) ? data.items : Array.isArray(data) ? data : [];
+  const items = (await siteGetPaged(
+    `/alliances/${aid}/members?limit=200`,
+    (m) => String(m.uid),
+    200,
+    undefined,
+    10,
+  )) || [];
   cacheSet(key, JSON.stringify(items));
   return items;
 }
@@ -262,32 +303,18 @@ async function handleAlliance(input: Record<string, unknown>) {
 }
 
 // ---------- State list (State Tracker) ----------
-// /servers returns one page at a time. Follow `next` when present, otherwise
-// walk with offset until a page brings no new server.
+// /servers returns one page at a time (cursor pagination, see siteGetPaged).
 async function fetchAllServers(): Promise<any[]> {
   const key = 'servers:all';
   const hit = cacheGet(key);
   if (hit) return JSON.parse(hit);
-  const byId = new Map<string, any>();
-  let offset = 0;
-  let cursor: string | null = null;
-  for (let page = 0; page < 80; page++) {
-    const qs = new URLSearchParams({ limit: '200' });
-    if (cursor) qs.set('cursor', cursor);
-    else if (offset) qs.set('offset', String(offset));
-    const data = await siteGet(`/servers?${qs}`);
-    const items: any[] = data && Array.isArray(data.items) ? data.items : [];
-    let added = 0;
-    for (const it of items) {
-      const id = String(it.server_id);
-      if (!byId.has(id)) { byId.set(id, it); added++; }
-    }
-    if (!added) break;
-    offset += items.length;
-    const next = data && data.next;
-    cursor = typeof next === 'string' && next ? next : null;
-  }
-  const all = [...byId.values()];
+  const all = (await siteGetPaged(
+    '/servers?limit=200',
+    (x) => String(x.server_id),
+    100000,
+    (last) => (last && last.server_id != null ? btoa(`k|${last.server_id}`) : null),
+    400,
+  )) || [];
   if (all.length) cacheSet(key, JSON.stringify(all));
   return all;
 }
