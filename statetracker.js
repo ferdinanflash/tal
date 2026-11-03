@@ -355,6 +355,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             const row = normalize(entry);
             if (Number.isFinite(row.kid)) S.rows.set(row.kid, row);
         }
+        if (json.partial) S.partial = true;
         S.loadedOffsets.add(offset);
         if (Number.isFinite(Number(json.total))) S.total = Number(json.total);
         S.recordedAt = json.recorded_at || S.recordedAt;
@@ -910,6 +911,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         S.allianceCache = new Map();
         S.playerCache = new Map();
         S.total = 0;
+        S.partial = false;
         S.recordedAt = null;
         S.fetchedAt = 0;
         S.error = null;
@@ -989,6 +991,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             status = 'Loading States...';
         } else if (all.length > 0) {
             status = `Showing ${fmtFull(shown.length)} of ${fmtFull(q ? list.length : (S.total || all.length))} States`;
+            if (S.partial) status += ' (partial: wosatlas blocked the full list)';
         }
         els.status.textContent = status;
         els.updated.textContent = S.recordedAt ? `Updated ${new Date(S.recordedAt).toLocaleString()}` : '';

@@ -344,7 +344,8 @@ async function fetchAllServers(): Promise<any[]> {
     400,
     () => { pages++; },
   )) || [];
-  lastPaging = { fn: FN_VERSION, items: all.length, pages, lastStatus: lastSiteStatus, ms: Date.now() - t0 };
+  const blocked = typeof lastSiteStatus === 'number' ? lastSiteStatus >= 400 : lastSiteStatus !== null;
+  lastPaging = { fn: FN_VERSION, items: all.length, pages, lastStatus: lastSiteStatus, blocked, ms: Date.now() - t0 };
   console.log('[wosatlas-states] servers', JSON.stringify(lastPaging));
   // A list this short is almost certainly a failed/trimmed paging run: don't pin it in cache.
   if (all.length > 25) cacheSet(key, JSON.stringify(all));
@@ -354,6 +355,20 @@ async function fetchAllServers(): Promise<any[]> {
 async function handleSummary(input: Record<string, unknown>) {
   const limit = Math.min(Math.max(Math.trunc(Number(input.limit)) || 50, 1), 50);
   const offset = Math.min(Math.max(Math.trunc(Number(input.offset)) || 0, 0), 100000);
+  // Official route: with a WOSATLAS_API_KEY secret, use api.wosatlas.com directly
+  // (50 States per request). Falls through to the public site list if it fails.
+  if (API_KEY) {
+    const qs = new URLSearchParams({ sort: 'chiefs', desc: 'true', limit: String(limit), offset: String(offset) });
+    const r = await upstreamGet(`${API}/states/summary?${qs}`);
+    if (r.ok) {
+      const j = JSON.parse(r.body);
+      if (j && Array.isArray(j.entries)) {
+        j.meta = { fn: FN_VERSION, source: 'api-key' };
+        return jsonObj(j);
+      }
+    }
+    lastPaging = { ...lastPaging, apiKeyStatus: r.ok ? 'bad-shape' : r.status };
+  }
   const all = await fetchAllServers();
   if (!all.length) return jsonObj({ error: 'upstream-failed', message: 'wosatlas.com/api/v1/servers could not be loaded.' }, 502);
   const rows = all
@@ -376,6 +391,7 @@ async function handleSummary(input: Record<string, unknown>) {
     entries: rows.slice(offset, offset + limit),
     total: rows.length,
     recorded_at: rows[0] ? rows[0].recorded_at : null,
+    partial: lastPaging.blocked === true,
     meta: { fn: FN_VERSION, ...lastPaging },
   });
 }
