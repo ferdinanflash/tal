@@ -13,10 +13,10 @@
 Buka `statetracker.js`, cari bagian `const CFG`, lalu isi:
 
 ```js
-turnstileSiteKey: 'PUBLIC_TURNSTILE_SITE_KEY_DARI_WOSATLAS',
+turnstileSiteKey: '0x4AAAAAAFW8LSGKEAA0tRT3',
 ```
 
-Nilai ini adalah public site key (bukan token atau cookie). Ambil dari konfigurasi `turnstileSiteKey` pada app pack WoS Atlas.
+Nilai ini adalah public site key (bukan token atau cookie). Site key WoS Atlas yang ditemukan pada `https://wosatlas.com/assets/index-BZmj00uS.js` adalah `0x4AAAAAAFW8LSGKEAA0tRT3`.
 
 **Catatan domain:** Cloudflare Turnstile dapat membatasi site key berdasarkan hostname. Jika site key WoS Atlas hanya mengizinkan `wosatlas.com`, challenge dari domain TAL akan ditolak. Dalam kasus itu, WoS Atlas perlu mengizinkan hostname TAL atau menyediakan mekanisme integrasi server-to-server resmi. Kode akan menampilkan error; tidak akan membuat cursor palsu atau menganggap 20 State sebagai data lengkap.
 

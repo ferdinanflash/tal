@@ -23,8 +23,8 @@
         proxyFunction: 'wosatlas-states',
         preferProxy: true,     // State list requires WoS Atlas session; use the Edge Function proxy
         // Public Cloudflare Turnstile site key from the WoS Atlas app pack.
-        // Leave blank until configured; the app will show a clear setup error.
-        turnstileSiteKey: '',
+        // Public site key extracted from the WoS Atlas app JavaScript.
+        turnstileSiteKey: '0x4AAAAAAFW8LSGKEAA0tRT3',
         pageSize: 50,          // size the endpoint is known to accept
         concurrency: 3,        // parallel page requests when loading all States
         cacheMs: 5 * 60 * 1000,
