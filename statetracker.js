@@ -99,7 +99,7 @@ Rank among States || Peringkat antar State || 州排名 || Ranggo sa mga State |
 Players || Pemain || 玩家 || Mga Manlalaro || Giocatori || ผู้เล่น
 In-game figures || Angka in-game || 游戏内数据 || Mga in-game figure || Dati di gioco || ตัวเลขในเกม
 Ranked players || Pemain ter-rank || 上榜玩家 || Mga ranked player || Giocatori in classifica || ผู้เล่นในอันดับ
-King || Raja || 国王 || Hari || Re || กษัตริย์
+President || Presiden || 总统 || Pangulo || Presidente || ประธานาธิบดี
 Transfer gate || Gerbang transfer || 迁移门槛 || Transfer gate || Cancello trasferimento || ประตูโยกย้าย
 Top Alliances || Aliansi Teratas || 顶级联盟 || Nangungunang Alyansa || Alleanze top || พันธมิตรอันดับต้น
 Top Players || Pemain Teratas || 顶级玩家 || Nangungunang Manlalaro || Giocatori top || ผู้เล่นอันดับต้น
@@ -238,7 +238,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     async function getWoSAtlasTurnstileToken() {
         const siteKey = String(CFG.turnstileSiteKey || window.WOSATLAS_TURNSTILE_SITE_KEY || '').trim();
         if (!siteKey) {
-            throw new Error('Turnstile site key belum dikonfigurasi. Isi CFG.turnstileSiteKey dengan public site key WoS Atlas terlebih dahulu.');
+            throw new Error('Turnstile site key is not configured.');
         }
         const api = await loadTurnstileApi();
         let host = document.getElementById('st-turnstile-host');
@@ -472,7 +472,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             if (data && data.error) throw new Error(data.message || data.error);
             const payload = validate(data);
             if (payload.partial || !Number.isFinite(Number(payload.total)) || Number(payload.total) !== payload.entries.length) {
-                throw new Error('WoS Atlas returned an incomplete State list; refusing to display partial results.');
+                throw new Error('Incomplete State list; refusing to display partial results.');
             }
             SITE.list = payload.entries;
             SITE.listAt = Date.now();
@@ -688,11 +688,16 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
 
         const rollup = (server && server.rollup) || {};
         const king = server && Array.isArray(server.roles) ? server.roles.find((r) => r && r.role === 'king') : null;
+        let kingObj = null;
+        if (king && king.uid) {
+            const nm = await resolvePlayerName(king.uid, signal);
+            kingObj = { uid: king.uid, name: nm || null, nick_name: nm || null };
+        }
         const state = server ? {
             server_id: server.server_id,
             chiefs: numOrNull(rollup.players),
             total_power: numOrNull(rollup.player_power),
-            king: king ? { uid: king.uid, nick_name: null } : null
+            king: kingObj
         } : null;
         const power = server ? {
             player_count: numOrNull(rollup.players),
@@ -724,6 +729,21 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     }
 
     // Public API via Vercel tracker (or direct). Used in singleStateMode.
+
+    async function resolvePlayerName(uid, signal) {
+        const id = Number(uid);
+        if (!Number.isFinite(id)) return null;
+        try {
+            const p = await proxyGetJson(`/players/${id}`, signal);
+            if (!p || typeof p !== 'object') return null;
+            const name = p.name || p.nick_name || p.nickname || null;
+            return name ? String(name) : null;
+        } catch (err) {
+            if (err && err.name === 'AbortError') throw err;
+            return null;
+        }
+    }
+
     async function proxyGetJson(pathOrUrl, signal) {
         const url = pathOrUrl.startsWith('http') ? pathOrUrl : (CFG.apiBase + pathOrUrl);
         // Prefer direct first (CORS often works for public JSON); else ZenRows proxy.
@@ -803,12 +823,17 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
 
         const rollup = (srv && srv.rollup) || {};
         const king = srv && Array.isArray(srv.roles) ? srv.roles.find((r) => r && r.role === 'king') : null;
+        let kingObj = null;
+        if (king && king.uid) {
+            const nm = await resolvePlayerName(king.uid, signal);
+            kingObj = { uid: king.uid, name: nm || null, nick_name: nm || null };
+        }
         const maxFromTop = top.length ? (Number(top[0].power) || 0) : 0;
         const state = srv ? {
             server_id: srv.server_id || id,
             chiefs: numOrNull(rollup.players),
             total_power: numOrNull(rollup.player_power),
-            king: king ? { uid: king.uid, nick_name: null } : null
+            king: kingObj
         } : null;
         const power = srv ? {
             player_count: numOrNull(rollup.players),
@@ -1088,51 +1113,144 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         return [];
     }
 
-    // Resolves a typed ID to a uid via search, preferring an exact uid match;
-    // falls back to the plain /players/{uid} lookup if search finds nothing.
+    // Resolve player / alliance without relying on /search (needs session).
+    // Numeric UID → public /players/{uid}. Nickname → match local caches, then /search if possible.
+    function localPlayerMatches(query) {
+        const q = String(query || '').trim().toLowerCase();
+        if (!q) return [];
+        const out = [];
+        const seen = new Set();
+        const push = (uid, name, kid, aid, abbr, kind) => {
+            const id = String(uid || '');
+            if (!id || seen.has(id + (kind || 'p'))) return;
+            seen.add(id + (kind || 'p'));
+            out.push({
+                kind: kind || 'player',
+                uid: id,
+                name: name || '',
+                nick_name: name || '',
+                kid: kid != null ? Number(kid) : null,
+                aid: aid != null ? Number(aid) : null,
+                abbr: abbr || ''
+            });
+        };
+        // Player detail cache
+        S.playerCache.forEach((c, uid) => {
+            const p = c && c.data && Array.isArray(c.data.players) ? c.data.players[0] : null;
+            if (!p) return;
+            const name = String(p.nick_name || p.name || '').toLowerCase();
+            if (String(uid) === q || (name && name.includes(q))) {
+                push(uid, p.nick_name || p.name, p.kid, p.aid, p.abbr);
+            }
+        });
+        // State detail top players + alliances
+        S.detailCache.forEach((c) => {
+            const top = c && c.power && Array.isArray(c.power.top) ? c.power.top : [];
+            top.forEach((p) => {
+                const name = String(p.nick_name || p.name || '').toLowerCase();
+                if (String(p.uid) === q || (name && name.includes(q))) {
+                    push(p.uid, p.nick_name || p.name, null, null, '');
+                }
+            });
+            const entries = c && c.alliances && Array.isArray(c.alliances.entries) ? c.alliances.entries : [];
+            entries.forEach((a) => {
+                const tag = String(a.abbr || a.tag || '').toLowerCase();
+                const name = String(a.name || '').toLowerCase();
+                if (tag === q || (name && name.includes(q))) {
+                    push(a.aid, a.name, null, a.aid, a.abbr || a.tag, 'alliance');
+                }
+            });
+        });
+        // Alliance member caches
+        S.allianceCache.forEach((c) => {
+            const members = c && c.data && Array.isArray(c.data.members) ? c.data.members : [];
+            members.forEach((m) => {
+                const name = String(m.nick_name || m.name || '').toLowerCase();
+                if (String(m.uid) === q || (name && name.includes(q))) {
+                    push(m.uid, m.nick_name || m.name, null, null, '');
+                }
+            });
+        });
+        return out;
+    }
+
     async function resolvePlayerId(query, signal) {
-        let results = [];
-        try {
-            let payload;
-            // singleStateMode / public: go through proxyGetJson (direct or ZenRows)
+        const raw = String(query || '').trim();
+        if (!raw) return null;
+        // Fresh signal if previous controller was aborted (modal reopen edge case)
+        let sig = signal;
+        if (!sig || sig.aborted) {
+            if (!S.ctrl || S.ctrl.signal.aborted) S.ctrl = new AbortController();
+            sig = S.ctrl.signal;
+        }
+
+        // 1) Pure numeric → public player endpoint (works without session)
+        if (/^\d+$/.test(raw)) {
             try {
-                payload = await proxyGetJson(`/search?q=${encodeURIComponent(query)}`, signal);
+                const p = await proxyGetJson(`/players/${encodeURIComponent(raw)}`, sig);
+                if (p && !p.error && (p.uid || p.name || p.power != null)) {
+                    return Number(raw);
+                }
             } catch (err) {
                 if (err && err.name === 'AbortError') throw err;
-                try { payload = await fetchPlayerSearchDirect(query, signal); }
-                catch (e2) {
-                    if (e2 && e2.name === 'AbortError') throw e2;
-                    try { payload = await fetchPlayerSearchProxy(query); }
-                    catch (e3) { if (e3 && e3.name === 'AbortError') throw e3; payload = null; }
+            }
+            // Alliance id is long numeric too (e.g. 3475000005)
+            if (raw.length >= 8) {
+                try {
+                    const members = await proxyFetchPage(
+                        `/alliances/${encodeURIComponent(raw)}/members`,
+                        (m) => String(m.uid),
+                        5,
+                        sig,
+                        1
+                    );
+                    if (members && members.length) return { alliance: Number(raw) };
+                } catch (err) {
+                    if (err && err.name === 'AbortError') throw err;
                 }
             }
-            results = extractSearchResults(payload || {});
+            return null;
+        }
+
+        // 2) Local matches from already-loaded state / alliance / player data
+        const local = localPlayerMatches(raw);
+        if (local.length === 1) {
+            if (local[0].kind === 'alliance') return { alliance: Number(local[0].aid || local[0].uid) };
+            return Number(local[0].uid);
+        }
+        if (local.length > 1) return { multiple: local };
+
+        // 3) Optional /search (needs session — usually fails on public domain)
+        let results = [];
+        try {
+            const payload = await proxyGetJson(`/search?q=${encodeURIComponent(raw)}`, sig);
+            if (payload && !payload.error) results = extractSearchResults(payload);
         } catch (err) {
             if (err && err.name === 'AbortError') throw err;
-            results = [];
         }
-        if (signal && signal.aborted) return null;
-        const exact = results.find((r) => r.kind !== 'alliance' && String(r.uid || r.fid || r.playerUid || '') === String(query));
+        try {
+            if (!results.length) {
+                const payload = await fetchPlayerSearchDirect(raw, sig);
+                results = extractSearchResults(payload || {});
+            }
+        } catch (err) {
+            if (err && err.name === 'AbortError') throw err;
+        }
+        if (sig.aborted) return null;
+
+        const exact = results.find((r) => r.kind !== 'alliance' && String(r.uid || r.fid || r.playerUid || '') === raw);
         if (exact) return Number(exact.uid || exact.fid || exact.playerUid);
-        // Exact alliance tag match → open alliance
-        const exactAl = results.find((r) => r.kind === 'alliance' && String(r.abbr || r.tag || '').toLowerCase() === String(query).toLowerCase());
-        if (exactAl && exactAl.aid) return { alliance: Number(exactAl.aid) };
+        const exactAl = results.find((r) => r.kind === 'alliance' && String(r.abbr || r.tag || '').toLowerCase() === raw.toLowerCase());
+        if (exactAl && (exactAl.aid || exactAl.alliance_id)) {
+            return { alliance: Number(exactAl.aid || exactAl.alliance_id) };
+        }
         if (results.length === 1 && results[0].kind !== 'alliance') {
             return Number(results[0].uid || results[0].fid || results[0].playerUid) || null;
         }
-        if (results.length === 1 && results[0].kind === 'alliance' && results[0].aid) {
-            return { alliance: Number(results[0].aid) };
+        if (results.length === 1 && results[0].kind === 'alliance') {
+            return { alliance: Number(results[0].aid || results[0].alliance_id) };
         }
         if (results.length >= 1) return { multiple: results };
-        // Numeric ID may be a player uid
-        if (/^\d+$/.test(String(query))) {
-            try {
-                const p = await proxyGetJson(`/players/${encodeURIComponent(query)}`, signal);
-                if (p && (p.uid || p.name || p.power != null)) return Number(query);
-            } catch (err) {
-                if (err && err.name === 'AbortError') throw err;
-            }
-        }
         return null;
     }
 
@@ -1665,16 +1783,17 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         }
 
         const kingUid = king && Number(king.uid) ? Number(king.uid) : 0;
-        const kingName = king ? escapeHtml(String(king.name || '')) : '';
+        const rawKingName = king ? String(king.name || king.nick_name || '').trim() : '';
+        const kingName = escapeHtml(rawKingName || (kingUid ? '#' + kingUid : ''));
         const kingHtml = king
             ? `<div class="st-stat">
-                <span class="st-stat-label">King</span>
+                <span class="st-stat-label">President</span>
                 <strong class="st-stat-value st-stat-value-sm">${
                     kingUid
                         ? `<button type="button" class="st-link st-link-lg" data-action="open-player" data-uid="${kingUid}" data-no-i18n>${kingName}</button>`
                         : `<span data-no-i18n>${kingName}</span>`
                 }</strong>
-                <span class="st-stat-meta" data-no-i18n>${king.allianceName ? escapeHtml(String(king.allianceName)) : ''}${kingUid ? ` · #${kingUid}` : ''}</span>
+                <span class="st-stat-meta" data-no-i18n>${king.allianceName ? escapeHtml(String(king.allianceName)) + (kingUid || rawKingName ? ' · ' : '') : ''}${rawKingName && kingUid ? '#' + kingUid : ''}</span>
                </div>`
             : '';
 
@@ -1783,7 +1902,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                 openPlayerDetail(result);
                 els.uidInput.value = '';
             } else {
-                els.uidInput.setCustomValidity('No player or alliance found');
+                els.uidInput.setCustomValidity('Not found. For players use numeric ID (UID). Nickname search only works for data already loaded on this page.');
                 els.uidInput.reportValidity();
             }
         } finally {
