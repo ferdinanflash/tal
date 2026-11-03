@@ -723,33 +723,104 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         };
     }
 
-    // Detail via ZenRows: fetch the public server endpoint only (no full
-    // alliance/player merge). Good enough when session + direct both fail.
-    async function fetchDetailZenRows(kid, signal) {
-        const raw = await fetchViaZenRows(`${CFG.apiBase}/servers/${kid}`, signal);
-        const server = raw && (raw.server || raw.data || raw);
-        if (!server || typeof server !== 'object') {
-            throw new Error('zenrows-detail-empty');
+    // Public API via Vercel tracker (or direct). Used in singleStateMode.
+    async function proxyGetJson(pathOrUrl, signal) {
+        const url = pathOrUrl.startsWith('http') ? pathOrUrl : (CFG.apiBase + pathOrUrl);
+        // Prefer direct first (CORS often works for public JSON); else ZenRows proxy.
+        try {
+            return await fetchJson(url, signal);
+        } catch (err) {
+            if (err && err.name === 'AbortError') throw err;
+            if (CFG.zenrowsEnabled && CFG.zenrowsProxyUrl) {
+                return await fetchViaZenRows(url, signal);
+            }
+            throw err;
         }
-        const rollup = server.rollup || {};
-        const king = Array.isArray(server.roles)
-            ? server.roles.find((r) => r && r.role === 'king')
+    }
+
+    async function proxyFetchPage(path, idOf, maxItems, signal, maxPages) {
+        const sep = path.indexOf('?') >= 0 ? '&' : '?';
+        const seen = new Set();
+        const out = [];
+        let cursor = null;
+        for (let page = 0; page < maxPages && out.length < maxItems; page++) {
+            const full = path + (cursor ? sep + 'cursor=' + encodeURIComponent(cursor) : '');
+            let data;
+            try {
+                data = await proxyGetJson(full, signal);
+            } catch (err) {
+                if (err && err.name === 'AbortError') throw err;
+                break;
+            }
+            const items = data && Array.isArray(data.items) ? data.items
+                : (Array.isArray(data) ? data : []);
+            let added = 0;
+            for (const it of items) {
+                const id = idOf(it);
+                if (!seen.has(id)) { seen.add(id); out.push(it); added++; }
+            }
+            const next = data && typeof data.next === 'string' && data.next ? data.next : null;
+            cursor = next;
+            if (!added || !cursor) break;
+        }
+        return out.slice(0, maxItems);
+    }
+
+    // Full-ish detail without Turnstile: server + alliances + sample top players.
+    async function fetchDetailZenRows(kid, signal) {
+        const id = Number(kid);
+        const results = await Promise.allSettled([
+            proxyGetJson(`/servers/${id}`, signal),
+            proxyFetchPage(`/servers/${id}/alliances?sort=power`, (a) => String(a.alliance_id), 40, signal, 3)
+        ]);
+        const server = results[0].status === 'fulfilled' ? results[0].value : null;
+        let allianceItems = results[1].status === 'fulfilled' ? results[1].value : null;
+        // proxyGetJson may return the server object or {items:...}
+        const srv = server && server.server_id != null ? server
+            : (server && server.data && server.data.server_id != null ? server.data : server);
+        if (!srv && !(allianceItems && allianceItems.length)) {
+            throw new Error('detail-empty');
+        }
+
+        let top = [];
+        if (allianceItems && allianceItems.length) {
+            const lists = await Promise.allSettled(
+                allianceItems.slice(0, 6).map((a) =>
+                    proxyFetchPage(`/alliances/${a.alliance_id}/members`, (m) => String(m.uid), 80, signal, 2))
+            );
+            const seen = new Set();
+            const merged = [];
+            for (const l of lists) {
+                if (l.status !== 'fulfilled') continue;
+                for (const m of l.value) {
+                    if (!seen.has(String(m.uid))) { seen.add(String(m.uid)); merged.push(m); }
+                }
+            }
+            merged.sort((a, b) => (Number(b.power) || 0) - (Number(a.power) || 0));
+            top = merged.slice(0, CFG.topPlayersLimit).map(mapMemberRow);
+            // Derive max power from top player if missing on rollup
+        }
+
+        const rollup = (srv && srv.rollup) || {};
+        const king = srv && Array.isArray(srv.roles) ? srv.roles.find((r) => r && r.role === 'king') : null;
+        const maxFromTop = top.length ? (Number(top[0].power) || 0) : 0;
+        const state = srv ? {
+            server_id: srv.server_id || id,
+            chiefs: numOrNull(rollup.players),
+            total_power: numOrNull(rollup.player_power),
+            king: king ? { uid: king.uid, nick_name: null } : null
+        } : null;
+        const power = srv ? {
+            player_count: numOrNull(rollup.players),
+            total_power: numOrNull(rollup.player_power),
+            recorded_at: rollup.refreshed_at || null,
+            top: top,
+            max_power: maxFromTop || null
+        } : { top: top, max_power: maxFromTop || null };
+        const alliances = allianceItems && allianceItems.length
+            ? { entries: allianceItems.slice(0, CFG.allianceLimit).map(mapAllianceRow) }
             : null;
-        return {
-            state: {
-                server_id: server.server_id || kid,
-                chiefs: numOrNull(rollup.players),
-                total_power: numOrNull(rollup.player_power),
-                king: king ? { uid: king.uid, nick_name: null } : null
-            },
-            power: {
-                player_count: numOrNull(rollup.players),
-                total_power: numOrNull(rollup.player_power),
-                recorded_at: rollup.refreshed_at || null,
-                top: []
-            },
-            alliances: null
-        };
+        return { state, power, alliances };
     }
 
     function getDetail(kid) {
@@ -784,11 +855,13 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             let payload = null;
             // Prefer whatever mode already worked for the summary list.
             // Order: proxy → direct → zenrows (or zenrows first if that is the active mode).
-            const tryOrder = (CFG.zenrowsPrimary !== false && CFG.zenrowsEnabled) || S.mode === 'zenrows'
+            const tryOrder = CFG.singleStateMode
                 ? ['zenrows', 'direct', 'proxy']
-                : S.mode === 'proxy'
-                    ? ['proxy', 'direct', 'zenrows']
-                    : ['direct', 'proxy', 'zenrows'];
+                : ((CFG.zenrowsPrimary !== false && CFG.zenrowsEnabled) || S.mode === 'zenrows')
+                    ? ['zenrows', 'direct', 'proxy']
+                    : S.mode === 'proxy'
+                        ? ['proxy', 'direct', 'zenrows']
+                        : ['direct', 'proxy', 'zenrows'];
 
             let lastErr = null;
             for (const method of tryOrder) {
@@ -823,6 +896,16 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             errMsg = 'Could not load extra State detail. Showing summary only.';
         }
 
+        // Enrich list summary row (max power from top chiefs)
+        if (power && Array.isArray(power.top) && power.top.length && S.rows.has(key)) {
+            const prev = S.rows.get(key);
+            const maxP = Number(power.top[0].power) || Number(power.max_power) || prev.max || 0;
+            S.rows.set(key, Object.assign({}, prev, {
+                max: maxP || prev.max,
+                total: Number(power.total_power) || prev.total,
+                chiefs: Number(power.player_count) || prev.chiefs
+            }));
+        }
         setDetail(key, {
             loading: false,
             fetchedAt: Date.now(),
@@ -895,20 +978,27 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         let data = null;
         let errMsg = null;
         try {
-            if (S.mode === 'proxy') {
-                try { data = await fetchAllianceProxy(key); }
-                catch (err) {
-                    if (err && err.name === 'AbortError') throw err;
-                    data = await fetchAllianceDirect(key, signal);
-                }
-            } else {
+            try {
+                data = await fetchAllianceDirect(key, signal);
+            } catch (err) {
+                if (err && err.name === 'AbortError') throw err;
+                // Retry member list via proxy if direct CORS failed
                 try {
-                    data = await fetchAllianceDirect(key, signal);
-                    if (S.mode !== 'proxy') S.mode = 'direct';
-                } catch (err) {
-                    if (err && err.name === 'AbortError') throw err;
-                    data = await fetchAllianceProxy(key);
-                    S.mode = 'proxy';
+                    const members = await proxyFetchPage(`/alliances/${key}/members`, (m) => String(m.uid), 200, signal, 5);
+                    if (!members.length) throw err;
+                    data = {
+                        aid: key,
+                        abbr: (members[0] && members[0].alliance_tag) || '',
+                        name: '',
+                        members: members.map(mapMemberRow)
+                    };
+                } catch (e2) {
+                    if (e2 && e2.name === 'AbortError') throw e2;
+                    try { data = await fetchAllianceProxy(key); }
+                    catch (e3) {
+                        if (e3 && e3.name === 'AbortError') throw e3;
+                        throw err;
+                    }
                 }
             }
             if (signal && signal.aborted) return;
@@ -1004,14 +1094,19 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         let results = [];
         try {
             let payload;
-            if (S.mode === 'proxy') {
-                try { payload = await fetchPlayerSearchProxy(query); }
-                catch (err) { if (err && err.name === 'AbortError') throw err; payload = await fetchPlayerSearchDirect(query, signal); }
-            } else {
+            // singleStateMode / public: go through proxyGetJson (direct or ZenRows)
+            try {
+                payload = await proxyGetJson(`/search?q=${encodeURIComponent(query)}`, signal);
+            } catch (err) {
+                if (err && err.name === 'AbortError') throw err;
                 try { payload = await fetchPlayerSearchDirect(query, signal); }
-                catch (err) { if (err && err.name === 'AbortError') throw err; payload = await fetchPlayerSearchProxy(query); }
+                catch (e2) {
+                    if (e2 && e2.name === 'AbortError') throw e2;
+                    try { payload = await fetchPlayerSearchProxy(query); }
+                    catch (e3) { if (e3 && e3.name === 'AbortError') throw e3; payload = null; }
+                }
             }
-            results = extractSearchResults(payload);
+            results = extractSearchResults(payload || {});
         } catch (err) {
             if (err && err.name === 'AbortError') throw err;
             results = [];
@@ -1019,16 +1114,24 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         if (signal && signal.aborted) return null;
         const exact = results.find((r) => r.kind !== 'alliance' && String(r.uid || r.fid || r.playerUid || '') === String(query));
         if (exact) return Number(exact.uid || exact.fid || exact.playerUid);
+        // Exact alliance tag match → open alliance
+        const exactAl = results.find((r) => r.kind === 'alliance' && String(r.abbr || r.tag || '').toLowerCase() === String(query).toLowerCase());
+        if (exactAl && exactAl.aid) return { alliance: Number(exactAl.aid) };
         if (results.length === 1 && results[0].kind !== 'alliance') {
             return Number(results[0].uid || results[0].fid || results[0].playerUid) || null;
         }
+        if (results.length === 1 && results[0].kind === 'alliance' && results[0].aid) {
+            return { alliance: Number(results[0].aid) };
+        }
         if (results.length >= 1) return { multiple: results };
-        // Nothing from search: the ID itself may still resolve directly.
-        try {
-            const direct = await fetchPlayerDirect(query, signal);
-            if (direct && Array.isArray(direct.players) && direct.players.length) return Number(query);
-        } catch (err) {
-            if (err && err.name === 'AbortError') throw err;
+        // Numeric ID may be a player uid
+        if (/^\d+$/.test(String(query))) {
+            try {
+                const p = await proxyGetJson(`/players/${encodeURIComponent(query)}`, signal);
+                if (p && (p.uid || p.name || p.power != null)) return Number(query);
+            } catch (err) {
+                if (err && err.name === 'AbortError') throw err;
+            }
         }
         return null;
     }
@@ -1107,20 +1210,24 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         let data = null;
         let errMsg = null;
         try {
-            if (S.mode === 'proxy') {
-                try { data = await fetchPlayerProxy(key); }
-                catch (err) {
-                    if (err && err.name === 'AbortError') throw err;
-                    data = await fetchPlayerDirect(key, signal);
-                }
-            } else {
-                try {
-                    data = await fetchPlayerDirect(key, signal);
-                    if (S.mode !== 'proxy') S.mode = 'direct';
-                } catch (err) {
-                    if (err && err.name === 'AbortError') throw err;
-                    data = await fetchPlayerProxy(key);
-                    S.mode = 'proxy';
+            try {
+                const p = await proxyGetJson(`/players/${key}`, signal);
+                data = { players: [mapPlayerRow(p)] };
+            } catch (err) {
+                if (err && err.name === 'AbortError') throw err;
+                if (S.mode === 'proxy') {
+                    try { data = await fetchPlayerProxy(key); }
+                    catch (e2) {
+                        if (e2 && e2.name === 'AbortError') throw e2;
+                        data = await fetchPlayerDirect(key, signal);
+                    }
+                } else {
+                    try {
+                        data = await fetchPlayerDirect(key, signal);
+                    } catch (e2) {
+                        if (e2 && e2.name === 'AbortError') throw e2;
+                        data = await fetchPlayerProxy(key);
+                    }
                 }
             }
             if (signal && signal.aborted) return;
@@ -1342,7 +1449,19 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
 
         els.spinner.classList.toggle('hidden', !S.busy);
         els.refresh.disabled = S.busy;
-        els.dir.textContent = S.desc ? 'High to low' : 'Low to high';
+        if (els.dir) els.dir.textContent = S.desc ? 'High to low' : 'Low to high';
+
+        if (CFG.singleStateMode) {
+            const sortWrap = document.getElementById('st-sort-wrap');
+            if (sortWrap) sortWrap.classList.add('hidden');
+            if (els.sort) els.sort.classList.add('hidden');
+            if (els.dir) els.dir.classList.add('hidden');
+            if (els.more) els.more.classList.add('hidden');
+            if (els.searchAll) els.searchAll.classList.add('hidden');
+            // Table of many states is unused in this mode
+            if (els.wrap) els.wrap.classList.add('hidden');
+            if (els.empty) els.empty.classList.add('hidden');
+        }
     }
 
 
@@ -1437,7 +1556,11 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         } else if (extraError) {
             hint = `<div class="st-detail-hint st-detail-hint-warn"><span>${escapeHtml(extraError)}</span></div>`;
         } else if (needAll && !S.busy) {
-            hint = `<div class="st-detail-hint"><span>Load all States to see rankings and compare with your State.</span><button type="button" class="st-chip" data-action="load-all">Load all States</button></div>`;
+            if (CFG.singleStateMode) {
+                hint = `<div class="st-detail-hint"><span>Rankings need the full State list (blocked on this domain). Use alliance tag or player ID search below.</span></div>`;
+            } else {
+                hint = `<div class="st-detail-hint"><span>Load all States to see rankings and compare with your State.</span><button type="button" class="st-chip" data-action="load-all">Load all States</button></div>`;
+            }
         } else if (progress) {
             hint = `<div class="st-detail-hint"><span class="spinner-inline" aria-hidden="true"></span><span>${progress}</span></div>`;
         }
@@ -1575,18 +1698,13 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             ${cmp ? `<p class="st-detail-sub">Compared with State ${cmp.kid}</p>` : ''}
             ${hint}
             <div class="st-stat-grid">
-                <div class="st-stat">
-                    <span class="st-stat-label">Rank among States</span>
-                    <strong class="st-stat-value">${rankLabel}</strong>
-                </div>
-                ${statCard('Players', row, 'chiefs', { value: players, base: base('chiefs') })}
-                ${statCard('Total Power', row, 'total', { value: totalPower, compact: true, base: base('total'), rank: false })}
-                ${statCard('Median Power', row, 'median', { value: medianPower, compact: true, base: base('median'), rank: false })}
-                ${statCard('Max Power', row, 'max', { value: maxPower, compact: true, base: base('max'), rank: false })}
-                ${statCard('Alliances', row, 'alliances', { base: base('alliances') })}
-                ${statCard('Power per Chief', row, 'total', { value: players ? Math.round(totalPower / players) : perChief, compact: true, rank: false, base: perChiefBase })}
-                ${statCard('Shielded', row, 'shielded', { rank: false, base: base('shielded') })}
-                ${statCard('Recruiting Alliances', row, 'recruiting', { rank: false, base: base('recruiting') })}
+                ${powerRank ? `<div class="st-stat"><span class="st-stat-label">Rank among States</span><strong class="st-stat-value">${rankLabel}</strong></div>` : ''}
+                ${players ? statCard('Players', row, 'chiefs', { value: players, base: base('chiefs') }) : ''}
+                ${totalPower ? statCard('Total Power', row, 'total', { value: totalPower, compact: true, base: base('total'), rank: false }) : ''}
+                ${maxPower ? statCard('Max Power', row, 'max', { value: maxPower, compact: true, base: base('max'), rank: false }) : ''}
+                ${medianPower ? statCard('Median Power', row, 'median', { value: medianPower, compact: true, base: base('median'), rank: false }) : ''}
+                ${Number(row.alliances) ? statCard('Alliances', row, 'alliances', { base: base('alliances') }) : ''}
+                ${(players && totalPower) ? statCard('Power per Chief', row, 'total', { value: Math.round(totalPower / players), compact: true, rank: false, base: perChiefBase }) : ''}
             </div>
             ${inGameHtml}
             ${alliancesHtml}
@@ -1639,7 +1757,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         event.preventDefault();
         const raw = (els.uidInput.value || '').trim();
         if (raw.length < 2 && !/^\d+$/.test(raw)) {
-            els.uidInput.setCustomValidity('Enter a Player ID, player name or alliance');
+            els.uidInput.setCustomValidity('Enter a Player ID, nickname, or alliance tag');
             els.uidInput.reportValidity();
             return;
         }
@@ -1651,8 +1769,13 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             const result = await resolvePlayerId(raw, S.ctrl && S.ctrl.signal);
             if (token !== uidSearchToken) return; // a newer search started
             if (result && typeof result === 'object' && result.multiple) {
-                // Several matches: show them instead of guessing which one.
                 showUidMatches(raw, result.multiple);
+                return;
+            }
+            if (result && typeof result === 'object' && result.alliance) {
+                if (S.view !== 'detail') S.listScroll = els.wrap.scrollTop;
+                openAllianceDetail(result.alliance);
+                els.uidInput.value = '';
                 return;
             }
             if (result) {
@@ -1660,13 +1783,13 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                 openPlayerDetail(result);
                 els.uidInput.value = '';
             } else {
-                els.uidInput.setCustomValidity('Player not found');
+                els.uidInput.setCustomValidity('No player or alliance found');
                 els.uidInput.reportValidity();
             }
         } finally {
             if (token === uidSearchToken) {
                 els.uidBtn.disabled = false;
-                els.uidBtn.textContent = (window.I18N && I18N.t) ? I18N.t('Open player') : 'Open player';
+                els.uidBtn.textContent = (window.I18N && I18N.t) ? I18N.t('Search') : 'Search';
             }
         }
     }

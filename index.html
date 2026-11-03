@@ -52,7 +52,7 @@
 					<script src="effects.js?v=18" defer></script>
 					<script src="president-panel.js?v=12" defer></script>
 					<script src="redeem.js?v=4" defer></script>
-					<script src="statetracker.js?v=28" defer></script>
+					<script src="statetracker.js?v=30" defer></script>
 				</head>
 	<body>
 		<!-- 2.5s opening animation; intentionally runs on every refresh. -->
@@ -919,19 +919,19 @@
 			<div class="modal-content custom-form-modal state-tracker-modal-content">
 				<button type="button" class="close-modal" onclick="closeStateTrackerModal()" aria-label="Close">&times;</button>
 				<h2 id="state-tracker-title" class="modal-title">State Tracker</h2>
-				<p class="modal-subtitle">Compare every State in Whiteout Survival with live data.</p>
+				<p class="modal-subtitle">Look up a State ID, player, or alliance tag with live WoS Atlas data.</p>
 
 				<!-- LIST VIEW -->
 				<div id="st-list-view" class="st-view">
 					<div class="st-toolbar">
-						<input type="search" id="st-search-input" class="st-search" placeholder="Search State ID, alliance tag or name" aria-label="Search State ID, alliance tag or name" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+						<input type="search" id="st-search-input" class="st-search" placeholder="State ID (e.g. 3475) — press Enter" aria-label="State ID" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
 						<div class="st-toolbar-row">
 							<form id="st-uid-form" class="st-uid-form" autocomplete="off">
-								<input type="text" id="st-uid-input" class="st-uid-input" placeholder="Player ID, name or alliance" aria-label="Search player or alliance" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
-								<button type="submit" id="st-uid-btn" class="st-chip">Open player</button>
+								<input type="text" id="st-uid-input" class="st-uid-input" placeholder="Player ID, nickname, or alliance tag" aria-label="Player or alliance search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
+								<button type="submit" id="st-uid-btn" class="st-chip">Search</button>
 							</form>
 							<button type="button" id="st-mine-btn" class="st-chip" title="3475">My State</button>
-							<label class="st-sort"><span>Sort by</span>
+							<label class="st-sort" id="st-sort-wrap"><span>Sort by</span>
 								<select id="st-sort-select" aria-label="Sort by">
 									<option value="chiefs">Chiefs</option>
 									<option value="total">Total Power</option>
