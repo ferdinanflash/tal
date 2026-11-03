@@ -744,17 +744,32 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
     // Public API via Vercel tracker (or direct). Used in singleStateMode.
 
     async function resolvePlayerName(uid, signal) {
-        const id = Number(uid);
-        if (!Number.isFinite(id)) return null;
-        try {
-            const p = await proxyGetJson(`/players/${id}`, signal);
-            if (!p || typeof p !== 'object') return null;
+        const id = String(uid == null ? '' : uid).trim();
+        if (!id) return null;
+        const tryParse = (p) => {
+            if (!p || typeof p !== 'object' || p.error) return null;
             const name = p.name || p.nick_name || p.nickname || null;
             return name ? String(name) : null;
+        };
+        // 1) public /players/{uid}
+        try {
+            const p = await proxyGetJson(`/players/${encodeURIComponent(id)}`, signal);
+            const n = tryParse(p);
+            if (n) return n;
         } catch (err) {
             if (err && err.name === 'AbortError') throw err;
-            return null;
         }
+        // 2) force ZenRows tracker (in case direct CORS fails silently with empty)
+        if (CFG.zenrowsEnabled && CFG.zenrowsProxyUrl) {
+            try {
+                const p = await fetchViaZenRows(`${CFG.apiBase}/players/${encodeURIComponent(id)}`, signal);
+                const n = tryParse(p);
+                if (n) return n;
+            } catch (err) {
+                if (err && err.name === 'AbortError') throw err;
+            }
+        }
+        return null;
     }
 
     async function proxyGetJson(pathOrUrl, signal) {
@@ -947,6 +962,27 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                 chiefs: Number(power.player_count) || prev.chiefs
             }));
         }
+        // Fill President nickname if API only returned uid
+        if (state && state.king && state.king.uid && !(state.king.name || state.king.nick_name)) {
+            try {
+                // Match from top players first (fast, no extra request)
+                const top = power && Array.isArray(power.top) ? power.top : [];
+                const hit = top.find((p) => String(p.uid) === String(state.king.uid));
+                if (hit && (hit.nick_name || hit.name)) {
+                    state.king.name = hit.nick_name || hit.name;
+                    state.king.nick_name = state.king.name;
+                } else {
+                    const nm = await resolvePlayerName(state.king.uid, signal);
+                    if (nm) {
+                        state.king.name = nm;
+                        state.king.nick_name = nm;
+                    }
+                }
+            } catch (e) {
+                if (e && e.name === 'AbortError') return;
+            }
+        }
+
         setDetail(key, {
             loading: false,
             fetchedAt: Date.now(),
@@ -2042,9 +2078,14 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         } else if (d) {
             const abbr = escapeHtml(String(d.abbr || ''));
             const name = escapeHtml(String(d.name || ''));
-            const members = Number(d.memberCount || d.derivedMemberCount) || 0;
+            const membersListEarly = extractMemberList(d);
+            let members = Number(d.memberCount || d.derivedMemberCount) || 0;
             const memberMax = Number(d.memberMax) || 0;
-            const power = Number(d.serverPower || d.derivedTotalPower) || 0;
+            let power = Number(d.serverPower || d.derivedTotalPower) || 0;
+            if (!power && membersListEarly.length) {
+                power = membersListEarly.reduce((s, m) => s + (Number(m.power || m.current_power) || 0), 0);
+            }
+            if (!members && membersListEarly.length) members = membersListEarly.length;
             const powerRank = Number(d.serverPowerRank || d.powerRank) || null;
             const rankedAll = Number(d.rankedAlliances) || null;
             const leaderUid = Number(d.leaderUid) || 0;
@@ -2054,7 +2095,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             const minPow = Number(d.joinMinPower) || 0;
             const recruit = !!d.publicRecruit;
             const homeKid = Number(d.homeKid) || null;
-            const membersList = extractMemberList(d);
+            const membersList = membersListEarly;
             if (!membersList.length) {
                 console.warn('State Tracker: no member list in alliance payload. viewerTier:', d.viewerTier, 'Top-level keys:', Object.keys(d));
             }
@@ -2072,10 +2113,16 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
 
             let membersHtml = '';
             if (membersList.length) {
-                const mrows = membersList.map((m, i) => {
+                const sortedMembers = membersList.slice().sort((a, b) => {
+                    const pa = Number(a.power || a.current_power || a.total_power) || 0;
+                    const pb = Number(b.power || b.current_power || b.total_power) || 0;
+                    return pb - pa;
+                });
+                const mrows = sortedMembers.map((m, i) => {
                     const uid = Number(m.uid || m.playerUid || m.player_uid || m.fid) || 0;
                     const nick = escapeHtml(String(m.nick_name || m.nickname || m.nickName || m.name || uid || ''));
-                    const furnace = Number(m.lv || m.stove_lv || m.furnace_lv) || 0;
+                    const pw = Number(m.power || m.current_power || m.total_power) || 0;
+                    const furnace = Number(m.lv || m.stove_lv || m.furnace_lv || m.hq_level) || 0;
                     const x = Number.isFinite(Number(m.x)) ? Number(m.x) : null;
                     const y = Number.isFinite(Number(m.y)) ? Number(m.y) : null;
                     const coord = (x != null && y != null) ? `(${x}, ${y})` : '-';
@@ -2086,17 +2133,19 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                     return `<tr${uid ? ` class="st-click-row" data-action="open-player" data-uid="${uid}" tabindex="0" role="button"` : ''}>
                         <td class="st-num">${i + 1}</td>
                         <td>${nameCell}</td>
+                        <td class="st-num" title="${fmtFull(pw)}">${pw ? fmtCompact(pw) : '-'}</td>
                         <td class="st-num">${furnace || '-'}</td>
                         <td class="st-num" data-no-i18n>${coord}</td>
                     </tr>`;
                 }).join('');
                 membersHtml = `
-                    <h4 class="st-detail-h">Members (${fmtFull(membersList.length)})</h4>
+                    <h4 class="st-detail-h">Members (${fmtFull(sortedMembers.length)})</h4>
                     <div class="st-mini-table-wrap">
                         <table class="st-mini-table">
                             <thead><tr>
                                 <th class="st-num">#</th>
                                 <th>Name</th>
+                                <th class="st-num">Power</th>
                                 <th class="st-num">Furnace</th>
                                 <th class="st-num">Coords</th>
                             </tr></thead>
