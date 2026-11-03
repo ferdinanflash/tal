@@ -42,8 +42,8 @@
         myState: 3475,
         firstVisible: 50,
         visibleStep: 50,
-        allianceLimit: 15,
-        topPlayersLimit: 10
+        allianceLimit: 20,
+        topPlayersLimit: 100
     };
 
     // ---- Translations (English || Indonesia || 中文 || Filipino || Italiano || ไทย) ----
@@ -715,15 +715,28 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         // AbortSignal is not passed through functions.invoke; caller still
         // checks S.token / signal.aborted after the await.
         const { data, error } = await client.functions.invoke(CFG.proxyFunction, {
-            body: { action: 'detail', kid, allianceLimit: CFG.allianceLimit }
+            body: {
+                action: 'detail',
+                kid,
+                allianceLimit: CFG.allianceLimit,
+                playerLimit: CFG.topPlayersLimit
+            }
         });
         if (error) throw error;
         if (!data || (typeof data === 'object' && data.error)) {
             throw new Error((data && data.error) || 'proxy-detail-failed');
         }
+        const power = data.power || null;
+        // Ensure top list is filled from dedicated players array when present
+        if (power && (!Array.isArray(power.top) || !power.top.length) && Array.isArray(data.players)) {
+            power.top = data.players;
+        }
+        if (power && Array.isArray(power.top) && power.top.length > CFG.topPlayersLimit) {
+            power.top = power.top.slice(0, CFG.topPlayersLimit);
+        }
         return {
             state: data.state || null,
-            power: data.power || null,
+            power: power,
             alliances: data.alliances || null
         };
     }
@@ -791,7 +804,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
         const id = Number(kid);
         const results = await Promise.allSettled([
             proxyGetJson(`/servers/${id}`, signal),
-            proxyFetchPage(`/servers/${id}/alliances?sort=power`, (a) => String(a.alliance_id), 40, signal, 3)
+            proxyFetchPage(`/servers/${id}/alliances?sort=power`, (a) => String(a.alliance_id), 80, signal, 5)
         ]);
         const server = results[0].status === 'fulfilled' ? results[0].value : null;
         let allianceItems = results[1].status === 'fulfilled' ? results[1].value : null;
@@ -804,9 +817,17 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
 
         let top = [];
         if (allianceItems && allianceItems.length) {
+            // Merge members from strongest alliances (public API has no power/leaderboard).
+            // Reservation gets a full leaderboard via API key + edge function; this is the public fallback.
             const lists = await Promise.allSettled(
-                allianceItems.slice(0, 6).map((a) =>
-                    proxyFetchPage(`/alliances/${a.alliance_id}/members`, (m) => String(m.uid), 80, signal, 2))
+                allianceItems.slice(0, 20).map((a) =>
+                    proxyFetchPage(
+                        `/alliances/${a.alliance_id}/members`,
+                        (m) => String(m.uid),
+                        200,
+                        signal,
+                        5
+                    ))
             );
             const seen = new Set();
             const merged = [];
@@ -818,7 +839,6 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             }
             merged.sort((a, b) => (Number(b.power) || 0) - (Number(a.power) || 0));
             top = merged.slice(0, CFG.topPlayersLimit).map(mapMemberRow);
-            // Derive max power from top player if missing on rollup
         }
 
         const rollup = (srv && srv.rollup) || {};
@@ -880,13 +900,9 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
             let payload = null;
             // Prefer whatever mode already worked for the summary list.
             // Order: proxy → direct → zenrows (or zenrows first if that is the active mode).
-            const tryOrder = CFG.singleStateMode
-                ? ['zenrows', 'direct', 'proxy']
-                : ((CFG.zenrowsPrimary !== false && CFG.zenrowsEnabled) || S.mode === 'zenrows')
-                    ? ['zenrows', 'direct', 'proxy']
-                    : S.mode === 'proxy'
-                        ? ['proxy', 'direct', 'zenrows']
-                        : ['direct', 'proxy', 'zenrows'];
+            // Prefer edge proxy first: returns power/leaderboard (up to 100) like reservation.
+            // ZenRows/public path can only approximate by merging alliance members.
+            const tryOrder = ['proxy', 'zenrows', 'direct'];
 
             let lastErr = null;
             for (const method of tryOrder) {
@@ -1009,7 +1025,7 @@ Member list unavailable || Daftar anggota tidak tersedia || 成员列表不可�
                 if (err && err.name === 'AbortError') throw err;
                 // Retry member list via proxy if direct CORS failed
                 try {
-                    const members = await proxyFetchPage(`/alliances/${key}/members`, (m) => String(m.uid), 200, signal, 5);
+                    const members = await proxyFetchPage(`/alliances/${key}/members`, (m) => String(m.uid), 300, signal, 8);
                     if (!members.length) throw err;
                     data = {
                         aid: key,

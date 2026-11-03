@@ -181,9 +181,9 @@ async function fetchAllianceMembers(aid: number): Promise<any[]> {
   const items = (await siteGetPaged(
     `/alliances/${aid}/members?limit=200`,
     (m) => String(m.uid),
-    200,
+    300,
     undefined,
-    10,
+    15,
   )) || [];
   cacheSet(key, JSON.stringify(items));
   return items;
@@ -191,7 +191,7 @@ async function fetchAllianceMembers(aid: number): Promise<any[]> {
 
 // There is no per-server player list endpoint, so build the leaderboard from
 // the members of the strongest alliances (players without an alliance are missed).
-const PLAYER_SOURCE_ALLIANCES = 10;
+const PLAYER_SOURCE_ALLIANCES = 30;
 
 async function fetchServerPlayers(kid: number, limit: number): Promise<any[]> {
   const key = `players:${kid}:${limit}`;
@@ -221,7 +221,7 @@ async function handleDetail(input: Record<string, unknown>) {
     return jsonObj({ error: 'bad-kid' }, 400);
   }
   const allianceLimit = Math.min(Math.max(Math.trunc(Number(input.allianceLimit)) || 15, 1), 50);
-  const playerLimit = Math.min(Math.max(Math.trunc(Number(input.playerLimit)) || 100, 1), 100);
+  const playerLimit = Math.min(Math.max(Math.trunc(Number(input.playerLimit)) || 100, 1), 200);
   const key = `detail:${kid}:${allianceLimit}:${playerLimit}`;
   const hit = cacheGet(key);
   if (hit) return json(hit);
@@ -247,13 +247,27 @@ async function handleDetail(input: Record<string, unknown>) {
   const totalPower = num(rollup.player_power);
   const playerCount = num(rollup.players);
 
+  let kingObj: { uid: any; nick_name: string | null } | null = null;
+  if (king && king.uid) {
+    let nick: string | null = null;
+    const fromPlayers = players.find((p: any) => String(p.uid) === String(king.uid));
+    if (fromPlayers && fromPlayers.nick_name) nick = String(fromPlayers.nick_name);
+    if (!nick) {
+      try {
+        const p = await siteGet(`/players/${king.uid}`);
+        if (p && p.name) nick = String(p.name);
+      } catch (_) { /* ignore */ }
+    }
+    kingObj = { uid: king.uid, nick_name: nick };
+  }
+
   const state = server
     ? {
         server_id: server.server_id ?? String(kid),
         chiefs: playerCount,
         total_power: totalPower,
         alliance_count: num(rollup.alliances),
-        king: king ? { uid: king.uid, nick_name: null } : null,
+        king: kingObj,
         refreshed_at: rollup.refreshed_at ?? null,
       }
     : null;
