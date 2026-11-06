@@ -1834,13 +1834,19 @@ async function foundryBulkSubmit() {
 // sama; cadangan yang belum punya cover diberi slot Battle paling kritis (urutan FOUNDRY_PRIORITY) yang belum dicover.
 function foundryLegionJobs(l) {
     const byPower = (a, b) => (Number(b.troops_power) || 0) - (Number(a.troops_power) || 0) || (Number(a.foundry_slot) || 0) - (Number(b.foundry_slot) || 0);
-    const battle = foundryPlayers.filter(p => p.foundry_legion === l && p.foundry_status === 'Battle' && !foundryIsOver(p)).sort(byPower).slice(0, foundryBattleMax());
-    const subs = foundryPlayers.filter(p => p.foundry_legion === l && p.foundry_status === 'Substitute' && !foundryIsOver(p)).sort(byPower).slice(0, foundrySubMax());
+    // Battle + Substitute satu Legion digabung lalu diurutkan by Power: Power tertinggi (maks. 30) jadi Battle, sisanya
+    // Cadangan. Cadangan yang Power-nya lebih tinggi menggantikan Battle yang lebih rendah (dan mengisi slot Battle kosong);
+    // Battle yang tergeser turun jadi Cadangan. Pemain Undeploy tidak ikut. Tidak ada pemain dari Legion lain.
+    const pool = foundryPlayers.filter(p => p.foundry_legion === l && (p.foundry_status === 'Battle' || p.foundry_status === 'Substitute') && !foundryIsOver(p)).sort(byPower);
+    const battle = pool.slice(0, foundryBattleMax());
+    const subs = pool.slice(foundryBattleMax(), foundryBattleMax() + foundrySubMax());
     const plan = foundryPlanTasks(battle.length);
     const jobs = [], newSlotOf = new Map();
+    let promoted = 0, demoted = 0;
     battle.forEach((p, i) => {
-        newSlotOf.set(Number(p.foundry_slot), i + 1);
+        if (p.foundry_status === 'Battle') newSlotOf.set(Number(p.foundry_slot), i + 1);
         const patch = { foundry_slot: i + 1, foundry_role: plan[i].role, foundry_p1: plan[i].p1, foundry_p2: plan[i].p2 };
+        if (p.foundry_status !== 'Battle') { patch.foundry_status = 'Battle'; promoted++; }
         if (foundryExt) { patch.foundry_p3 = plan[i].p3; patch.foundry_cover = null; }
         jobs.push({ p, patch });
     });
@@ -1853,23 +1859,29 @@ function foundryLegionJobs(l) {
     }
     subs.forEach((p, j) => {
         const patch = { foundry_slot: j + 1 };
+        if (p.foundry_status !== 'Substitute') {   // Battle yang tergeser: turun jadi Cadangan, tanpa role/target Battle
+            Object.assign(patch, { foundry_status: 'Substitute', foundry_role: 'Substitute', foundry_p1: null, foundry_p2: null });
+            if (foundryExt) patch.foundry_p3 = null;
+            demoted++;
+        }
         if (foundryExt) patch.foundry_cover = covers[j];
         jobs.push({ p, patch });
     });
     const short = foundryShortages(plan);
-    return { jobs: jobs.filter(j => Object.keys(j.patch).some(k => (j.p[k] ?? null) !== (j.patch[k] ?? null))), short, nBattle: battle.length };
+    return { jobs: jobs.filter(j => Object.keys(j.patch).some(k => (j.p[k] ?? null) !== (j.patch[k] ?? null))), short, nBattle: battle.length, promoted, demoted };
 }
 
-// Isi otomatis: menyusun ulang pemain yang SUDAH ada di tiap Legion. Legion dan status (Battle / Cadangan)
-// setiap pemain dipertahankan; tidak ada pemain baru yang ditambahkan.
+// Isi otomatis: menyusun ulang pemain yang SUDAH ada di tiap Legion (tidak ada pemain baru dari luar Legion).
+// Cadangan yang Troops Power-nya lebih tinggi dari pemain Battle diangkat jadi Battle, Battle yang tergeser turun jadi Cadangan.
 async function foundryAutoFill() {
     if (!foundryCanEdit()) return;
     if (!foundryPlayers.some(foundryInRoster)) { showToast(foundryL('Belum ada pemain di roster Foundry. Assign pemain ke Legion dulu.', 'No players in the Foundry roster yet. Assign players to a Legion first.'), 'info'); return; }
     const results = foundryLegionList().map(l => ({ l, ...foundryLegionJobs(l) }));   // Tundra terkunci ke 1 legion -> hanya legion itu (termasuk Alliance B)
+    const nUp = results.reduce((n, r) => n + r.promoted, 0), nDown = results.reduce((n, r) => n + r.demoted, 0);
     const gaps = results.filter(r => r.short.length).map(r => `${r.l}: ${r.short.slice(0, 4).join(', ')}${r.short.length > 4 ? ` +${r.short.length - 4}` : ''}`);
     const msg = foundryL(
-        'Susun ulang & hitung ulang roster berdasarkan Troops Power? Slot, role, dan target Phase 1, 2, 3 dihitung dari kebutuhan tiap fase, termasuk march penguatan Rally Leader & Joiner ke bangunan (sama dengan tabel Garrison); cadangan diurutkan dan dipasangkan ke slot Battle yang paling kritis bila belum punya pasangan. Legion dan status tiap pemain tetap; tidak ada pemain baru yang ditambahkan.' + (gaps.length ? ` Belum cukup penjaga: ${gaps.join(' | ')}.` : ' Semua bangunan terisi cukup.'),
-        'Re-arrange and recalculate the roster by Troops Power? Slots, roles and Phase 1, 2, 3 targets are calculated from each phase\'s needs, including the reinforcement marches of Rally Leaders & Joiners (same as the Garrison table); substitutes are ranked and paired with the most critical Battle slots if unpaired. Each player keeps their Legion and status; no new players are added.' + (gaps.length ? ` Not enough players: ${gaps.join(' | ')}.` : ' Every building has enough players.'));
+        'Susun ulang & hitung ulang roster berdasarkan Troops Power? Slot, role, dan target Phase 1, 2, 3 dihitung dari kebutuhan tiap fase, termasuk march penguatan Rally Leader & Joiner ke bangunan (sama dengan tabel Garrison); cadangan diurutkan dan dipasangkan ke slot Battle yang paling kritis bila belum punya pasangan. Cadangan yang Power-nya lebih tinggi menggantikan Battle yang lebih rendah (dan mengisi slot Battle kosong) dalam Legion yang sama; Battle yang tergeser turun jadi Cadangan (Undeploy tidak ikut). Tidak ada pemain baru dari luar Legion.' + (nUp ? ` Perubahan status: ${nUp} naik ke Battle, ${nDown} turun ke Cadangan.` : ' Tidak ada perubahan status Battle/Cadangan.') + (gaps.length ? ` Belum cukup penjaga: ${gaps.join(' | ')}.` : ' Semua bangunan terisi cukup.'),
+        'Re-arrange and recalculate the roster by Troops Power? Slots, roles and Phase 1, 2, 3 targets are calculated from each phase\'s needs, including the reinforcement marches of Rally Leaders & Joiners (same as the Garrison table); substitutes are ranked and paired with the most critical Battle slots if unpaired. Substitutes with higher Power replace lower-Power Battle players (and fill empty Battle slots) within the same Legion; displaced Battle players drop to Substitute (Undeploy players are left out). No players are added from outside the Legion.' + (nUp ? ` Status changes: ${nUp} promoted to Battle, ${nDown} moved to Substitute.` : ' No Battle/Substitute status changes.') + (gaps.length ? ` Not enough players: ${gaps.join(' | ')}.` : ' Every building has enough players.'));
     if (!await showCustomConfirmAsync(msg, '#f59e0b')) return;
     const jobs = results.flatMap(r => r.jobs);
     try {
@@ -1880,7 +1892,7 @@ async function foundryAutoFill() {
             if (bad) throw bad.error;
         }
         jobs.forEach(j => { Object.assign(j.p, j.patch); if (foundryMode === 'tundra') Object.assign(j.p, foundryDbPatch(j.patch)); });
-        showToast(foundryL(`Roster Foundry dihitung ulang (${jobs.length} pemain diperbarui; Legion & status tetap).`, `Foundry roster recalculated (${jobs.length} players updated; Legion & status unchanged).`), gaps.length ? 'warning' : 'success');
+        showToast(foundryL(`Roster Foundry dihitung ulang (${jobs.length} pemain diperbarui; ${nUp} naik ke Battle, ${nDown} turun ke Cadangan).`, `Foundry roster recalculated (${jobs.length} players updated; ${nUp} promoted to Battle, ${nDown} moved to Substitute).`), gaps.length ? 'warning' : 'success');
     } catch (e) {
         console.warn('foundryAutoFill failed', e);
         showToast(foundryL('Gagal mengisi otomatis.', 'Auto-fill failed.') + ' ' + foundrySaveHint() + foundryErrMsg(e), 'error');
