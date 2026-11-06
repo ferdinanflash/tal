@@ -677,14 +677,14 @@ let foundryCandidatesLoading = null; // Promise in-flight, if any
 function foundrySelectCols() {
     if (foundryMode === 'tundra') {
         return [
-            'id', 'nickname', 'game_id', 'alliance', 'troops_power',
+            'id', 'nickname', 'game_id', 'alliance', 'troops_power', 'can_join',
             'legion', 'legion_role',
             'tundra_slot', 'tundra_role', 'tundra_p1', 'tundra_p2', 'tundra_p3',
             'tundra_cover', 'tundra_ready'
         ].join(',');
     }
     return [
-        'id', 'nickname', 'game_id', 'alliance', 'troops_power',
+        'id', 'nickname', 'game_id', 'alliance', 'troops_power', 'can_join',
         'foundry_legion', 'foundry_status',
         'foundry_slot', 'foundry_role', 'foundry_p1', 'foundry_p2', 'foundry_p3',
         'foundry_cover', 'foundry_ready'
