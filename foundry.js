@@ -9,6 +9,28 @@ const TUNDRA_ALLIANCE_B_LEGIONS = ['Legion 1 - Alliance B', 'Legion 2 - Alliance
 function isFoundryLegionName(name) {
     return FOUNDRY_LEGIONS.includes(name) || (foundryMode === 'tundra' && TUNDRA_ALLIANCE_B_LEGIONS.includes(name));
 }
+
+/** Accept main Legion 1/2 and Tundra Alliance B legion names for Live Share. */
+function foundryNormalizeShareLegion(legion) {
+    let name = String(legion == null ? '' : legion);
+    try { name = decodeURIComponent(name); } catch (_) {}
+    if (FOUNDRY_LEGIONS.includes(name) || TUNDRA_ALLIANCE_B_LEGIONS.includes(name)) return name;
+    // isFoundryLegionName depends on foundryMode — still allow B names in tundra share links
+    if (typeof isFoundryLegionName === 'function' && isFoundryLegionName(name)) return name;
+    return 'Legion 1';
+}
+/** Pair of legions for Live Share switcher (main vs Alliance B). */
+function foundryShareLegionPair(legion) {
+    const name = foundryNormalizeShareLegion(legion);
+    if (TUNDRA_ALLIANCE_B_LEGIONS.includes(name)) return TUNDRA_ALLIANCE_B_LEGIONS.slice();
+    return FOUNDRY_LEGIONS.slice();
+}
+function foundryShareLegionShortLabel(legion) {
+    if (legion === 'Legion 1 - Alliance B') return 'L1 · Alliance B';
+    if (legion === 'Legion 2 - Alliance B') return 'L2 · Alliance B';
+    return legion;
+}
+
 function foundryLegionList() {
     if (foundryMode === 'tundra') {
         const extra = (typeof isAllianceBEnabled === 'function' && isAllianceBEnabled()) ? TUNDRA_ALLIANCE_B_LEGIONS : [];
@@ -2075,7 +2097,7 @@ function buildFoundryShareUrl(legion = foundryMapLegion, phase = foundryPhase) {
     const u = new URL(location.href); u.search = ''; u.hash = '';
     u.searchParams.set('foundry', 'map');
     u.searchParams.set('mode', foundryMode === 'tundra' ? 'tundra' : 'foundry');
-    u.searchParams.set('legion', FOUNDRY_LEGIONS.includes(legion) ? legion : 'Legion 1');
+    u.searchParams.set('legion', foundryNormalizeShareLegion(legion));
     u.searchParams.set('phase', String(foundryNormPhase(phase)));
     u.searchParams.set('lang', foundryLanguage);
     return u.toString();
@@ -2092,7 +2114,7 @@ async function shareFoundryMapLink() {
 }
 async function openFoundrySharedMap(legion, phase) {
     const old = document.getElementById('foundry-shared-map'); if (old) old.remove();
-    legion = FOUNDRY_LEGIONS.includes(legion) ? legion : 'Legion 1';
+    legion = foundryNormalizeShareLegion(legion);
     phase = foundryNormPhase(phase);
     const urlLang = new URLSearchParams(location.search).get('lang');
     if (urlLang === 'en' || urlLang === 'id' || urlLang === 'zh') foundryLanguage = urlLang;
@@ -2100,8 +2122,9 @@ async function openFoundrySharedMap(legion, phase) {
     // State marker khusus Live Share (tidak mengubah preferensi halaman utama)
     let shareMarksOn = true, shareCountsOn = true;
     const wrap = document.createElement('div'); wrap.id = 'foundry-shared-map';
+    const sharePair = foundryShareLegionPair(legion);
     wrap.innerHTML = `<div class="fdt-shared-bar"><strong>${foundryLiveTitle('Map')}</strong><span class="fdt-shared-actions"><button id="fy-share-lang">${en()?'<span class="flag flag-id"></span> Bahasa Indonesia':'<span class="flag flag-gb"></span> English'}</button>
-      <button id="fy-share-l1">Legion 1</button><button id="fy-share-l2">Legion 2</button>
+      <button id="fy-share-l1">${escapeHtml(foundryShareLegionShortLabel(sharePair[0]))}</button><button id="fy-share-l2">${escapeHtml(foundryShareLegionShortLabel(sharePair[1]))}</button>
       <button id="fy-share-p1">Phase 1</button><button id="fy-share-p2">Phase 2</button><button id="fy-share-p3">Phase 3</button><button id="fy-share-pall">🧭 ${foundryPhaseLabel('all')}</button>
       <button id="fy-share-marks" class="fy-share-active">Nama: ON</button>
       <button id="fy-share-counts" class="fy-share-active">Angka: ON</button>
@@ -2147,12 +2170,12 @@ async function openFoundrySharedMap(legion, phase) {
         const strategyGuide = `<details class="fy-share-strategy"><summary>📖 ${foundryLanguage==='en'?'Strategy Guide':'Panduan Strategi'}</summary><div class="fy-share-strategy-content">${foundryLanguage==='en' ? `<section><h4>Battle overview</h4><ul><li>Foundry Battle is a 60-minute alliance-versus-alliance event. Each legion has up to 30 fighters and 10 substitutes.</li><li>The alliance with the most Alliance Arsenal Points wins. Personal points are for individual rewards.</li><li>Troops are not permanently killed; wounded troops recover after the battle.</li><li>Requires Furnace Lv 16+ and a top-20 power alliance; up to 2 legions, alliance ranking rewards mainly follow Legion 1. Substitutes can enter after minute 3; leaving the battlefield means a 12-minute wait to re-enter.</li></ul></section><section><h4>Phase plan</h4><ul><li><b>Before start:</b> confirm assignments, recall marches, prepare formations and be ready to teleport as buildings unlock.</li><li><b>Phase 1 (0–15 min):</b> prioritize Boiler Room and Central Transit Station; secure Prototype Sites and Repair Facilities with dedicated holders.</li><li><b>Phase 2 (15+ min):</b> Imperial Foundry, Munitions Warehouse and Mercenary Camp unlock. Send rally leaders and joiners to high-value objectives while holders defend their posts.</li><li><b>Phase 3 (30–60 min):</b> watch for Weapon Workshop spawns and assign mobile players or collectors to respond quickly.</li></ul></section><section><h4>Roles</h4><ul><li><b>Commander:</b> monitor score and issue concise calls: defend, reinforce, rally, collect or rotate.</li><li><b>Rally Leader / Joiner:</b> coordinate attacks on priority objectives.</li><li><b>Holder:</b> capture and defend assigned buildings; avoid unnecessary rotations.</li><li><b>Mobile:</b> reinforce weak points and rotate to high-value targets.</li><li><b>Collector:</b> collect Arsenal Supplies and respond to Workshop opportunities.</li><li><b>Substitutes:</b> stay available and replace absent fighters early.</li></ul></section><section><h4>Core tactics</h4><ul><li>Keep point-generating buildings secured; a failed attack can cost both time and sustained points.</li><li>Reinforce holders before a building is lost, rather than reacting after defeat.</li><li>When behind, target valuable enemy buildings and prepare collectors for dropped Arsenal Supplies.</li><li>Avoid leaving the battlefield near phase unlocks or the end because re-entry requires a 12-minute wait.</li></ul></section><section><h4>Pre-battle checklist</h4><ul><li>Verify legion, slot, task and phase targets.</li><li>Recall marches, heal troops and prepare saved formations.</li><li>Bring at least 10 Advanced Teleporters and activate pet buffs.</li><li>Confirm battle time and keep communication concise.</li></ul></section>` : `<section><h4>Gambaran Pertempuran</h4><ul><li>Foundry Battle adalah pertempuran antaraliansi selama 60 menit. Setiap legion memiliki hingga 30 petarung dan 10 pemain cadangan.</li><li>Syarat Furnace Lv 16+ dan alliance top 20 power; maksimal 2 legion, hadiah ranking alliance terutama dari Legion 1. Cadangan bisa masuk setelah menit 3; keluar dari battlefield = tunggu 12 menit untuk masuk lagi.</li><li>Aliansi dengan Alliance Arsenal Points terbanyak menang. Poin pribadi digunakan untuk hadiah individu.</li><li>Pasukan tidak mati permanen; pasukan yang terluka pulih setelah pertempuran.</li></ul></section><section><h4>Rencana per fase</h4><ul><li><b>Sebelum mulai:</b> pastikan penugasan, tarik kembali march, siapkan formasi, dan bersiap teleport saat bangunan terbuka.</li><li><b>Fase 1 (menit 0–15):</b> prioritaskan Ruang Ketel dan Pos Transit Pusat; amankan Situs Prototipe dan Fasilitas Perbaikan dengan penjaga khusus.</li><li><b>Fase 2 (menit 15+):</b> Tanur Imperial, Gudang Amunisi, dan Kamp Tentara Bayaran terbuka. Arahkan pemimpin rally dan joiner ke sasaran bernilai tinggi, sementara holder menjaga pos.</li><li><b>Fase 3 (menit 30–60):</b> pantau kemunculan Bengkel Senjata dan tugaskan pemain mobile atau pengumpul untuk merespons cepat.</li></ul></section><section><h4>Peran</h4><ul><li><b>Commander:</b> pantau skor dan berikan perintah singkat: bertahan, perkuat, rally, kumpulkan, atau rotasi.</li><li><b>Rally Leader / Joiner:</b> koordinasikan serangan ke sasaran prioritas.</li><li><b>Holder:</b> rebut dan pertahankan bangunan yang ditugaskan; hindari rotasi yang tidak perlu.</li><li><b>Mobile:</b> perkuat titik lemah dan berpindah ke sasaran bernilai tinggi.</li><li><b>Collector:</b> kumpulkan Arsenal Supplies dan manfaatkan peluang di Workshop.</li><li><b>Cadangan:</b> tetap siap dan gantikan petarung yang absen sejak awal.</li></ul></section><section><h4>Taktik utama</h4><ul><li>Pertahankan bangunan penghasil poin; serangan yang gagal dapat membuang waktu dan poin berkelanjutan.</li><li>Perkuat holder sebelum bangunan jatuh, bukan setelah kalah.</li><li>Jika tertinggal, incar bangunan musuh bernilai tinggi dan siapkan collector untuk mengambil Arsenal Supplies yang jatuh.</li><li>Hindari keluar dari battlefield menjelang pembukaan fase atau akhir pertempuran karena masuk kembali harus menunggu 12 menit.</li></ul></section><section><h4>Checklist sebelum pertempuran</h4><ul><li>Periksa legion, slot, tugas, dan target tiap fase.</li><li>Tarik kembali march, pulihkan pasukan, dan siapkan formasi tersimpan.</li><li>Siapkan minimal 10 Advanced Teleporter dan aktifkan pet buff.</li><li>Pastikan waktu pertempuran dan jaga komunikasi tetap singkat.</li></ul></section>`}</div></details>`;
         body.innerHTML = `${phase === 'all' ? foundryMapAllHtml(legion, mapOpts()) : `<svg viewBox="0 0 ${FOUNDRY_MAP.w} ${FOUNDRY_MAP.h}" class="fy-map" role="img" aria-label="${foundryBrandStr('Foundry Live Map')}">${foundryMapSvgInner(legion, phase, mapOpts())}</svg>`}<p class="fy-note">${legion} · ${foundryPhaseLabel(phase)} · ${new Date().toLocaleTimeString()} · ${en()?'Small markers show player names.':'Angka kecil adalah nama pemain.'}</p>${foundryMapLegendHtml(true)}${taskRows}${subRows}${strategyGuide}`;
       } catch(e) { console.warn('Foundry live share failed',e); body.innerHTML=`<div class="fdt-shared-msg">${en()?'Unable to load map. Check your connection or Supabase read permissions, then refresh.':'Tidak dapat memuat peta. Periksa koneksi atau izin baca Supabase, lalu refresh.'}</div>`; }
-      ['l1','l2'].forEach((x,i)=>wrap.querySelector('#fy-share-'+x).classList.toggle('fy-share-active',legion===FOUNDRY_LEGIONS[i]));
+      ['l1','l2'].forEach((x,i)=>{const btn=wrap.querySelector('#fy-share-'+x); if(btn) btn.classList.toggle('fy-share-active', legion===sharePair[i]);});
       [1,2,3].forEach(n=>wrap.querySelector('#fy-share-p'+n).classList.toggle('fy-share-active',phase===n));wrap.querySelector('#fy-share-pall').classList.toggle('fy-share-active',phase==='all');
       syncMarkerButtons();
     };
     wrap.querySelector('#fy-share-lang').onclick=()=>{foundryLanguage=foundryLanguage==='en'?'id':'en';localStorage.setItem('foundry-language',foundryLanguage);const u=new URL(location.href);u.searchParams.set('lang',foundryLanguage);history.replaceState({},'',u);openFoundrySharedMap(legion,phase);};
-    wrap.querySelector('#fy-share-l1').onclick=()=>{legion='Legion 1';load();}; wrap.querySelector('#fy-share-l2').onclick=()=>{legion='Legion 2';load();};
+    wrap.querySelector('#fy-share-l1').onclick=()=>{legion=sharePair[0];load();}; wrap.querySelector('#fy-share-l2').onclick=()=>{legion=sharePair[1];load();};
     [1,2,3].forEach(n=>wrap.querySelector('#fy-share-p'+n).onclick=()=>{phase=n;load();});wrap.querySelector('#fy-share-pall').onclick=()=>{phase='all';load();};
     wrap.querySelector('#fy-share-marks').onclick=()=>{shareMarksOn=!shareMarksOn;syncMarkerButtons();load(true);};
     wrap.querySelector('#fy-share-counts').onclick=()=>{shareCountsOn=!shareCountsOn;syncMarkerButtons();load(true);};
@@ -2343,7 +2366,7 @@ function buildFoundryChartShareUrl(legion = foundryChartLegion, phase = foundryC
     const u = new URL(location.href); u.search = ''; u.hash = '';
     u.searchParams.set('foundry', 'chart');
     u.searchParams.set('mode', foundryMode === 'tundra' ? 'tundra' : 'foundry');
-    u.searchParams.set('legion', FOUNDRY_LEGIONS.includes(legion) ? legion : 'Legion 1');
+    u.searchParams.set('legion', foundryNormalizeShareLegion(legion));
     u.searchParams.set('phase', String([1, 2, 3].includes(Number(phase)) ? Number(phase) : 1));
     u.searchParams.set('lang', foundryLanguage);
     return u.toString();
@@ -2362,14 +2385,15 @@ async function shareFoundryChartLink() {
 async function openFoundrySharedChart(legion, phase) {
     const old = document.getElementById('foundry-shared-map'); if (old) old.remove();
     if (foundryChartShareTimer) { clearInterval(foundryChartShareTimer); foundryChartShareTimer = null; }
-    legion = FOUNDRY_LEGIONS.includes(legion) ? legion : 'Legion 1';
+    legion = foundryNormalizeShareLegion(legion);
     phase = [1, 2, 3].includes(Number(phase)) ? Number(phase) : 1;
     const urlLang = new URLSearchParams(location.search).get('lang');
     if (urlLang === 'en' || urlLang === 'id' || urlLang === 'zh') foundryLanguage = urlLang;
     const en = () => foundryLanguage === 'en';
+    const sharePair = foundryShareLegionPair(legion);
     const wrap = document.createElement('div'); wrap.id = 'foundry-shared-map';
     wrap.innerHTML = `<div class="fdt-shared-bar"><strong>${foundryLiveTitle('Chart')}</strong><span class="fdt-shared-actions"><button id="fy-share-lang">${en() ? '<span class="flag flag-id"></span> Bahasa Indonesia' : '<span class="flag flag-gb"></span> English'}</button>
-      <button id="fy-share-l1">Legion 1</button><button id="fy-share-l2">Legion 2</button>
+      <button id="fy-share-l1">${escapeHtml(foundryShareLegionShortLabel(sharePair[0]))}</button><button id="fy-share-l2">${escapeHtml(foundryShareLegionShortLabel(sharePair[1]))}</button>
       <button id="fy-share-p1">Phase 1</button><button id="fy-share-p2">Phase 2</button><button id="fy-share-p3">Phase 3</button>
       <button id="fy-share-png">🖼️ PNG</button>
       <button id="fy-share-refresh">⟳ ${en() ? 'Refresh' : 'Segarkan'}</button><button id="fy-share-site">${en() ? 'Open site' : 'Buka situs'}</button></span></div>
@@ -2379,7 +2403,7 @@ async function openFoundrySharedChart(legion, phase) {
     const body = wrap.querySelector('#fy-share-body');
     let first = true;
     const markActive = () => {
-        ['l1', 'l2'].forEach((x, i) => wrap.querySelector('#fy-share-' + x).classList.toggle('fy-share-active', legion === FOUNDRY_LEGIONS[i]));
+        ['l1', 'l2'].forEach((x, i) => { const btn = wrap.querySelector('#fy-share-' + x); if (btn) btn.classList.toggle('fy-share-active', legion === sharePair[i]); });
         [1, 2, 3].forEach(n => wrap.querySelector('#fy-share-p' + n).classList.toggle('fy-share-active', phase === n));
     };
     const load = async () => {
@@ -2408,8 +2432,8 @@ async function openFoundrySharedChart(legion, phase) {
         const u = new URL(location.href); u.searchParams.set('lang', foundryLanguage); history.replaceState({}, '', u);
         openFoundrySharedChart(legion, phase);
     };
-    wrap.querySelector('#fy-share-l1').onclick = () => { legion = 'Legion 1'; load(); };
-    wrap.querySelector('#fy-share-l2').onclick = () => { legion = 'Legion 2'; load(); };
+    wrap.querySelector('#fy-share-l1').onclick = () => { legion = sharePair[0]; load(); };
+    wrap.querySelector('#fy-share-l2').onclick = () => { legion = sharePair[1]; load(); };
     [1, 2, 3].forEach(n => wrap.querySelector('#fy-share-p' + n).onclick = () => { phase = n; load(); });
     wrap.querySelector('#fy-share-refresh').onclick = load;
     wrap.querySelector('#fy-share-png').onclick = () => foundryChartExportPng(legion, phase);
