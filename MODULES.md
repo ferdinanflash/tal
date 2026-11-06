@@ -73,3 +73,10 @@ Fitur Foundry: peringatan roster per Legion/Phase (`FOUNDRY_MIN`), target 3 fase
   - Client: direct dulu, lalu proxy `action: "detail"` bila gagal (atau sebaliknya jika mode list sudah `proxy`).
   - Bila keduanya gagal, UI tetap menampilkan data summary + peringatan.
 - Header kolom bisa diklik untuk mengurutkan. Peringkat relatif antar State dan perbandingan penuh butuh semua halaman list dimuat (tombol "Load all States").
+
+## Roster Foundry/TAL: hapus, pindah, dan loading (v42)
+
+- Sistem "Replaces slot" (`foundry_cover` / `tundra_cover`) dihapus dari UI: kolom di tabel Cadangan, peringatan, Hitung Tugas / Isi Otomatis, salinan Discord, chart, dan Live Share. Kolom DB dibiarkan (nilai lama hanya di-null saat pemain dipindah/dihapus).
+- Tiap pemain di roster punya dua tombol: `⇄` (`foundryOpenMove`, pindah ke legion mana pun termasuk Legion 1/2 - Alliance B, sebagai Battle atau Cadangan) dan `✕` (`foundryRemovePlayer`, hapus dari roster dengan konfirmasi). Hapus banyak sekaligus tetap lewat Bulk Remove.
+- Slot kosong tidak lagi berisi dropdown semua pemain bebas; pemain baru dimasukkan lewat Bulk Assign.
+- Loading: `foundryLoad` hanya memuat pemain yang sudah di roster. Daftar pemain bebas diambil saat Bulk Assign dibuka (`foundryEnsureCandidates`). Pindah antar legion memakai data cache selama < 20 detik (`FOUNDRY_FRESH_MS`). `foundryRallyTeams` dan `foundryJoinerPlan` di-memo per legion (`foundrySig`).

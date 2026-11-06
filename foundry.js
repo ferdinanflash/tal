@@ -514,15 +514,17 @@ function foundryEnsureTundraSlots() {
         const client = getSupabase();
         if (client) {
             (async () => {
-                for (const { p, slot, status, legion } of pending) {
-                    const patch = {
-                        foundry_slot: slot,
-                        foundry_role: p.foundry_role || null,
-                        foundry_p1: p.foundry_p1 || null,
-                        foundry_p2: p.foundry_p2 || null
-                    };
-                    if (foundryExt) patch.foundry_p3 = p.foundry_p3 || null;
-                    try { await foundryDbUpdate(p.id, patch); } catch (e) { /* ignore per-row */ }
+                for (let i = 0; i < pending.length; i += 20) {
+                    await Promise.all(pending.slice(i, i + 20).map(({ p, slot }) => {
+                        const patch = {
+                            foundry_slot: slot,
+                            foundry_role: p.foundry_role || null,
+                            foundry_p1: p.foundry_p1 || null,
+                            foundry_p2: p.foundry_p2 || null
+                        };
+                        if (foundryExt) patch.foundry_p3 = p.foundry_p3 || null;
+                        return foundryDbUpdate(p.id, patch).catch(() => { /* ignore per-row */ });
+                    }));
                 }
             })();
         }
@@ -712,6 +714,9 @@ async function foundryOpenPage() {
     else if (body) body.innerHTML = `<p class="fy-note">${foundryL('Memuat data roster…', 'Loading roster…')}</p>`;
     foundryApplyLanguage();
     document.getElementById('foundry-page').classList.remove('hidden');
+    // Data roster sama untuk Legion 1/2/B (satu query), jadi pindah legion cukup memakai cache yang masih segar.
+    const fresh = foundryLoadedMode === foundryMode && foundryPlayers.length && (Date.now() - foundryLoadedAt) < FOUNDRY_FRESH_MS;
+    if (fresh) return;
     await foundryLoad();
 }
 let foundryLoadedMode = null;
@@ -766,12 +771,14 @@ async function foundryLoad() {
     if (!client) return;
     foundryCandidatesReady = false;
     foundryCandidatesLoading = null;
+    const token = ++foundryLoadSeq;
 
     if (foundryMode !== 'tundra') {
         // IDN: one small query
         const { data, error } = await foundryQuery(client, q =>
             q.eq('alliance', FOUNDRY_ALLIANCE).order('troops_power', { ascending: false })
         );
+        if (token !== foundryLoadSeq) return;
         if (error) {
             showToast(foundryL('Gagal memuat data pemain IDN', 'Failed to load IDN player data'), 'error');
             return;
@@ -779,73 +786,54 @@ async function foundryLoad() {
         foundrySetPlayers(data);
         foundryCandidatesReady = true;
         foundryLoadedMode = foundryMode;
+        foundryLoadedAt = Date.now();
         foundryApplyModeChrome();
         foundryRender();
         return;
     }
 
-    // Tundra: phase 1 — only players already assigned to a legion (roster UI)
+    // Tundra: hanya pemain yang sudah ada di roster (legion terisi), biasanya ~100 baris.
+    // Daftar pemain bebas (untuk Bulk Assign) TIDAK dimuat di sini; baru diambil saat Bulk Assign dibuka.
     const { data: rosterData, error: rosterErr } = await foundryQuery(client, q =>
         q.not('legion', 'is', null).order('troops_power', { ascending: false })
     );
+    if (token !== foundryLoadSeq) return;
     if (rosterErr) {
         showToast(foundryL('Gagal memuat roster Tundra', 'Failed to load Tundra roster'), 'error');
         return;
     }
     foundrySetPlayers(rosterData || []);
     foundryLoadedMode = foundryMode;
+    foundryLoadedAt = Date.now();
     foundryApplyModeChrome();
     foundryRender();
+}
+let foundryLoadSeq = 0;      // abaikan respons lama bila pengguna membuka legion lain sebelum load selesai
+let foundryLoadedAt = 0;     // waktu data roster terakhir dimuat (ms)
+const FOUNDRY_FRESH_MS = 20000;   // data lebih muda dari ini tidak dimuat ulang saat pindah legion
 
-    // Phase 2 — background: players not yet in any legion (Bulk Assign / slot dropdown candidates)
+/** Ensure bulk-assign candidates (players not in any legion) are loaded. Fetched on demand, once. */
+async function foundryEnsureCandidates() {
+    if (foundryMode !== 'tundra' || foundryCandidatesReady) return;
+    if (foundryCandidatesLoading) { await foundryCandidatesLoading; return; }
+    const client = getSupabase();
+    if (!client) return;
     foundryCandidatesLoading = (async () => {
-        const { data: freeData, error: freeErr } = await foundryQuery(client, q =>
+        const { data } = await foundryQuery(client, q =>
             q.is('legion', null).order('troops_power', { ascending: false })
         );
-        if (freeErr || !freeData) {
-            foundryCandidatesReady = true;
-            foundryCandidatesLoading = null;
-            return;
-        }
-        // Merge without duplicates (by id)
-        const seen = new Set(foundryPlayers.map(p => String(p.id)));
-        const extra = freeData.filter(p => !seen.has(String(p.id))).map(foundryNormalizePlayer);
-        if (extra.length) {
-            foundryPlayers = foundryPlayers.concat(extra)
-                .sort((a, b) => Number(b.troops_power || 0) - Number(a.troops_power || 0));
+        if (data && data.length) {
+            const seen = new Set(foundryPlayers.map(p => String(p.id)));
+            const extra = data.filter(p => !seen.has(String(p.id))).map(foundryNormalizePlayer);
+            if (extra.length) {
+                foundryPlayers = foundryPlayers.concat(extra)
+                    .sort((a, b) => Number(b.troops_power || 0) - Number(a.troops_power || 0));
+            }
         }
         foundryCandidatesReady = true;
         foundryCandidatesLoading = null;
-        // Refresh roster dropdowns so free-player options appear without a full page reload
-        const page = document.getElementById('foundry-page');
-        if (page && !page.classList.contains('hidden') && foundryLoadedMode === 'tundra') {
-            foundryRender();
-        }
     })();
-}
-
-/** Ensure bulk-assign candidates are loaded (awaits background fetch if still running). */
-async function foundryEnsureCandidates() {
-    if (foundryMode !== 'tundra' || foundryCandidatesReady) return;
-    if (foundryCandidatesLoading) {
-        await foundryCandidatesLoading;
-        return;
-    }
-    // Fallback full reload of free players if background never started
-    const client = getSupabase();
-    if (!client) return;
-    const { data } = await foundryQuery(client, q =>
-        q.is('legion', null).order('troops_power', { ascending: false })
-    );
-    if (data && data.length) {
-        const seen = new Set(foundryPlayers.map(p => String(p.id)));
-        const extra = data.filter(p => !seen.has(String(p.id))).map(foundryNormalizePlayer);
-        if (extra.length) {
-            foundryPlayers = foundryPlayers.concat(extra)
-                .sort((a, b) => Number(b.troops_power || 0) - Number(a.troops_power || 0));
-        }
-    }
-    foundryCandidatesReady = true;
+    await foundryCandidatesLoading;
 }
 
 /** Persist a foundry_* shaped patch; remaps columns when mode is tundra. */
@@ -1051,10 +1039,6 @@ function foundryWarnings(legion, phase) {
         if (low.length) out.push({ lvl: 'warn', msg: foundryL(`Phase ${ph}: ${low.length} bangunan di bawah minimum pemain — ${low.join(', ')}.`, `Phase ${ph}: ${low.length} building(s) below minimum players — ${low.join(', ')}.`) });
     });
     if (subs.length < foundrySubMax()) out.push({ lvl: 'info', msg: foundryL(`Cadangan baru terisi ${subs.length} dari ${foundrySubMax()}.`, `Only ${subs.length} of ${foundrySubMax()} substitutes are filled.`) });
-    if (foundryExt) {
-        const open = subs.filter(p => !p.foundry_cover).length;
-        if (open) out.push({ lvl: 'info', msg: foundryL(`${open} cadangan belum punya slot yang digantikan.`, `${open} substitutes have no slot to replace.`) });
-    }
     return out;
 }
 function foundryWarningsHtml(legion, phase) {
@@ -1106,7 +1090,25 @@ function foundryExtNotice() {
 // 1) Joiner diurutkan dari Power tertinggi. 2) Joiner lebih dulu diarahkan ke Rally Leader dengan target Phase 1
 // yang sama (satu lokasi, tidak perlu teleport). 3) Di antara kandidat, pilih tim dengan total Power terendah
 // (Power Rally Leader ikut dihitung) agar kekuatan rally seimbang; seri -> jumlah Joiner lebih sedikit -> slot lebih kecil.
+// Hasil Rally/Joiner dipakai berulang (tiap baris tabel, peringatan, garrison). Di-cache per legion dan
+// dibatalkan otomatis bila data pemain yang relevan berubah (tanda tangan data berbeda).
+const foundryMemo = { rally: new Map(), joiner: new Map() };
+function foundrySig(legion, withMarches) {
+    let sig = withMarches ? 'm' + foundryJoinerMarches + '|' : '|';
+    for (const p of foundryPlayers) {
+        if (p.foundry_legion !== legion || p.foundry_status !== 'Battle') continue;
+        sig += p.id + ',' + p.foundry_slot + ',' + p.foundry_role + ',' + p.foundry_p1 + ',' + p.foundry_p2 + ',' + p.foundry_p3 + ',' + p.troops_power + ';';
+    }
+    return sig;
+}
 function foundryRallyTeams(legion) {
+    const sig = foundrySig(legion, false), hit = foundryMemo.rally.get(legion);
+    if (hit && hit.sig === sig) return hit.val;
+    const val = foundryRallyTeamsCalc(legion);
+    foundryMemo.rally.set(legion, { sig, val });
+    return val;
+}
+function foundryRallyTeamsCalc(legion) {
     const battle = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle' && !foundryIsOver(p));
     const pw = p => Number(p.troops_power) || 0;
     const teams = battle.filter(p => p.foundry_role === 'Rally Leader')
@@ -1176,6 +1178,13 @@ function foundryJoinerCalc(members, assignedCount) {
     return { joiners, phases };
 }
 function foundryJoinerPlan(legion) {
+    const sig = foundrySig(legion, true), hit = foundryMemo.joiner.get(legion);
+    if (hit && hit.sig === sig) return hit.val;
+    const val = foundryJoinerPlanCalc(legion);
+    foundryMemo.joiner.set(legion, { sig, val });
+    return val;
+}
+function foundryJoinerPlanCalc(legion) {
     const members = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle' && !foundryIsOver(p) && FOUNDRY_REINFORCE_ROLES.includes(p.foundry_role));
     return foundryJoinerCalc(members, (k, ph) => foundryAssigned(legion, k, ph).length);
 }
@@ -1278,15 +1287,10 @@ async function foundryRecalcTasks(legion) {
         `Hitung ulang tugas ${legion}? ${ps.length} pemain Battle diurutkan berdasarkan Power; nomor slot, role, dan target Phase 1–3 akan ditimpa (cadangan tidak berubah). ` + (short.length ? `Belum cukup penjaga: ${short.slice(0, 6).join(', ')}${short.length > 6 ? ` +${short.length - 6} lagi` : ''}.` : 'Semua bangunan terisi cukup.'),
         `Recalculate ${legion} tasks? ${ps.length} battle players are ranked by power; slot numbers, roles and Phase 1–3 targets will be overwritten (substitutes unchanged). ` + (short.length ? `Not enough players: ${short.slice(0, 6).join(', ')}${short.length > 6 ? ` +${short.length - 6} more` : ''}.` : 'Every building has enough players.'));
     if (!await showCustomConfirmAsync(msg, '#f59e0b')) return;
-    const newSlotOf = new Map(assign.map(a => [Number(a.p.foundry_slot), a.slot]));
     const jobs = assign.map(a => {
         const patch = { foundry_slot: a.slot, foundry_role: a.pos.role, foundry_p1: a.pos.p1, foundry_p2: a.pos.p2 };
         if (foundryExt) patch.foundry_p3 = a.pos.p3;
         return { p: a.p, patch };
-    });
-    if (foundryExt) foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Substitute' && !foundryIsOver(p) && p.foundry_cover).forEach(p => {
-        const nc = newSlotOf.get(Number(p.foundry_cover)) || null;
-        if (nc !== p.foundry_cover) jobs.push({ p, patch: { foundry_cover: nc } });
     });
     try {
         const client = getSupabase();
@@ -1307,22 +1311,19 @@ async function foundryRecalcTasks(legion) {
 // ---------- ROSTER ----------
 function foundryRosterHtml(legion) {
     const edit = foundryCanEdit();
-    const free = foundryPlayers.filter(p => !foundryInRoster(p));
-    const opts = (cur) => '<option value="">— kosong —</option>' +
-        (cur ? `<option value="${cur.id}" selected>${escapeHtml(foundryNick(cur))}</option>` : '') +
-        free.map(p => `<option value="${p.id}">${escapeHtml(foundryNick(p))}</option>`).join('');
     const buildingOptions = (current) => '<option value="">— kosong —</option>' + FOUNDRY_KEYS.map(k => `<option value="${k}" ${current === k ? 'selected' : ''}>${escapeHtml(FOUNDRY_B[k].n)}</option>`).join('');
     const targetCell = (p, field, cur, label) => edit && p
         ? `<select class="fy-manual-task" aria-label="${label} ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','${field}',this.value)">${buildingOptions(cur)}</select>`
         : escapeHtml(foundryName(cur));
-    // Pemain terisi: nama LENGKAP sebagai teks (boleh turun baris) + dropdown kecil ▾ untuk mengganti + tombol ⇄.
-    // Slot kosong: dropdown biasa untuk memilih pemain.
+    // Pemain terisi: nama + tombol ⇄ (pindah ke legion/aliansi lain) + tombol ✕ (hapus dari roster).
+    // Slot kosong hanya teks; pemain baru dimasukkan lewat Bulk Assign (daftar pemain dimuat saat dibuka,
+    // bukan lagi dipasang sebagai ribuan <option> di tiap slot, ini yang membuat halaman legion lambat).
     const who = (p, status, slot) => {
-        if (!edit) return p ? escapeHtml(foundryNick(p)) : '<span class="fy-empty">kosong</span>';
-        const sel = cls => `<select class="${cls}" aria-label="Player slot ${slot}" title="${p ? escapeHtml(foundryNick(p)) : ''}" onchange="foundryAssign('${legion}','${status}',${slot},this.value)">${opts(p)}</select>`;
-        if (!p) return `<div class="fy-who">${sel('')}</div>`;
-        const mv = foundryL('Pindahkan ke roster lain', 'Move to another roster');
-        return `<div class="fy-who fy-who-filled"><span class="fy-who-name">${escapeHtml(foundryNick(p))}</span>${sel('fy-who-sel')}<button type="button" class="fy-move-btn" title="${mv}" aria-label="${mv}" onclick="foundryOpenMove('${p.id}')">⇄</button></div>`;
+        if (!p) return '<span class="fy-empty">kosong</span>';
+        if (!edit) return escapeHtml(foundryNick(p));
+        const mv = foundryL('Pindahkan ke legion / aliansi lain', 'Move to another legion / alliance');
+        const rm = foundryL('Hapus dari roster', 'Remove from roster');
+        return `<div class="fy-who fy-who-filled"><span class="fy-who-name">${escapeHtml(foundryNick(p))}</span><button type="button" class="fy-move-btn" title="${mv}" aria-label="${mv}" onclick="foundryOpenMove('${p.id}')">⇄</button><button type="button" class="fy-move-btn fy-remove-btn" title="${rm}" aria-label="${rm}" onclick="foundryRemovePlayer('${p.id}')">✕</button></div>`;
     };
     const idCell = p => p && canViewSensitive() ? escapeHtml(p.game_id) : (p ? MASKED_TEXT : '');
 
@@ -1341,25 +1342,10 @@ function foundryRosterHtml(legion) {
     };
     const subRow = (slot) => {
         const p = foundryFind(legion, 'Substitute', slot);
-        let cover = '';
-        if (p && foundryExt) {
-            const c = Number(p.foundry_cover) || 0;
-            if (edit) {
-                let o = `<option value="">— ${foundryL('belum ditentukan', 'not set')} —</option>`;
-                for (let i = 1; i <= foundryBattleMax(); i++) {
-                    const b = foundryFind(legion, 'Battle', i);
-                    o += `<option value="${i}" ${c === i ? 'selected' : ''}>#${i} ${b ? escapeHtml(foundryNick(b)) + ' (' + escapeHtml(b.foundry_role || '-') + ')' : foundryL('(kosong)', '(empty)')}</option>`;
-                }
-                cover = `<select class="fy-manual-task" aria-label="Cover for ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_cover',this.value)">${o}</select>`;
-            } else {
-                const b = c ? foundryFind(legion, 'Battle', c) : null;
-                cover = c ? `#${c}${b ? ' ' + escapeHtml(foundryNick(b)) + ' (' + escapeHtml(b.foundry_role || '-') + ')' : ''}` : '-';
-            }
-        }
-        return `<tr class="${p ? '' : 'fy-row-empty'}"><td>${slot}</td><td>${who(p, 'Substitute', slot)}</td><td>${idCell(p)}</td><td>${p ? foundryPower(p) : ''}</td>${foundryExt ? `<td>${cover}</td>` : ''}</tr>`;
+        return `<tr class="${p ? '' : 'fy-row-empty'}"><td>${slot}</td><td>${who(p, 'Substitute', slot)}</td><td>${idCell(p)}</td><td>${p ? foundryPower(p) : ''}</td></tr>`;
     };
     const battleHead = `<thead><tr><th>#</th><th>Pemain</th><th>Game ID</th><th>Power</th><th>Role</th><th>Phase 1</th><th>${foundryExt ? 'Phase 2' : 'Phase 2/3'}</th>${foundryExt ? '<th>Phase 3</th>' : ''}</tr></thead>`;
-    const subHead = `<thead><tr><th>#</th><th>Pemain</th><th>Game ID</th><th>Power</th>${foundryExt ? `<th>${foundryL('Menggantikan slot', 'Replaces slot')}</th>` : ''}</tr></thead>`;
+    const subHead = `<thead><tr><th>#</th><th>Pemain</th><th>Game ID</th><th>Power</th></tr></thead>`;
     const nb = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle' && !foundryIsOver(p)).length;
     const ns = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Substitute' && !foundryIsOver(p)).length;
     const overB = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle' && foundryIsOver(p)).length;
@@ -1372,7 +1358,7 @@ function foundryRosterHtml(legion) {
         const list = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === status && foundryIsOver(p))
             .sort((a, b) => Number(a.foundry_slot) - Number(b.foundry_slot));
         if (!list.length) return '';
-        const cols = status === 'Battle' ? (foundryExt ? 8 : 7) : (foundryExt ? 5 : 4);
+        const cols = status === 'Battle' ? (foundryExt ? 8 : 7) : 4;
         const head = `<tr class="fy-over-head"><td colspan="${cols}">⏸ Undeploy · ${list.length} ${foundryL('pemain di luar batas', 'player(s) over the limit')} (${status === 'Battle' ? foundryBattleMax() : foundrySubMax()}) — ${foundryL('belum dihitung di chart, peta & Hitung Tugas. Pindahkan ke slot kosong lewat ⇄ bila sudah siap.', 'not counted in chart, map & task calculation. Move into a free slot with ⇄ when ready.')}</td></tr>`;
         return head + list.map(p => rowFn(Number(p.foundry_slot)).replace('<tr class="', '<tr class="fy-row-over ')).join('');
     };
@@ -1382,7 +1368,7 @@ function foundryRosterHtml(legion) {
         <div class="fy-counter"><span class="fy-badge fy-b-battle">Battle ${nb} / ${foundryBattleMax()}</span><span class="fy-badge fy-b-sub">${foundryL('Cadangan', 'Substitutes')} ${ns} / ${foundrySubMax()}</span>${overB + overS ? `<span class="fy-badge fy-b-undeploy">⏸ Undeploy ${overB + overS}</span>` : ''}<span class="fy-badge fy-b-top20">TOP 20 Power: ${canViewSensitive() ? foundryFmtPower(foundryTopBattlePower(legion, 20).total) : (typeof MASKED_TEXT !== 'undefined' ? MASKED_TEXT : '••••')}</span></div>
         <div class="table-container"><table class="fy-table fy-table-battle">${battleHead}<tbody>${battle}</tbody></table></div>
         <h3 class="fy-h">Pemain Cadangan</h3>
-        <p class="fy-note">${foundryL('Cadangan baru bisa masuk battlefield setelah menit 3. Tentukan slot yang akan digantikan sebelum battle.', 'Substitutes can only enter the battlefield after minute 3. Decide which slot each one replaces before the battle.')}</p>
+        <p class="fy-note">${foundryL('Cadangan baru bisa masuk battlefield setelah menit 3.', 'Substitutes can only enter the battlefield after minute 3.')}</p>
         <div class="table-container"><table class="fy-table fy-table-sub">${subHead}<tbody>${subs}</tbody></table></div>`;
 }
 
@@ -1400,16 +1386,37 @@ async function foundryClear(p) {
     }
 }
 
+/** Hapus satu pemain dari roster (slot jadi kosong; data pemain di tabel tetap ada). */
+async function foundryRemovePlayer(playerId) {
+    if (!foundryCanEdit()) { showToast(foundryDenied(), 'warning'); return; }
+    const p = foundryPlayers.find(x => String(x.id) === String(playerId));
+    if (!p || !foundryInRoster(p)) return;
+    if (foundryMode === 'tundra' && typeof canManageLegion === 'function' && !canManageLegion(p.foundry_legion)) {
+        showToast(foundryL(`Anda tidak punya izin untuk ${p.foundry_legion}.`, `You do not have permission for ${p.foundry_legion}.`), 'warning');
+        return;
+    }
+    const ok = await showCustomConfirmAsync(
+        foundryL(`Hapus ${foundryNick(p)} dari ${p.foundry_legion} (${p.foundry_status === 'Battle' ? 'Battle' : 'Cadangan'})?`,
+                 `Remove ${foundryNick(p)} from ${p.foundry_legion} (${p.foundry_status === 'Battle' ? 'Battle' : 'Substitute'})?`),
+        '#ef4444');
+    if (!ok) return;
+    try {
+        await foundryClear(p);
+        showToast(foundryL(`${foundryNick(p)} dihapus dari roster.`, `${foundryNick(p)} removed from the roster.`), 'success');
+    } catch (e) {
+        console.warn('foundryRemovePlayer failed', e);
+        showToast(foundryL('Gagal menghapus pemain.', 'Failed to remove player.') + ' ' + foundrySaveHint() + foundryErrMsg(e), 'error');
+    }
+    foundryCloseLiveEditor();
+    foundryRender();
+}
+
 async function foundryUpdateTask(playerId, field, value) {
     const allowed = { foundry_role: [...FOUNDRY_ROLES, 'Substitute'], foundry_p1: FOUNDRY_KEYS, foundry_p2: FOUNDRY_KEYS, foundry_p3: FOUNDRY_KEYS };
     if (!foundryCanEdit()) { showToast(foundryDenied(), 'warning'); foundryRender(); return; }
-    if ((field === 'foundry_p3' || field === 'foundry_cover') && !foundryExt) { showToast(foundryL('Jalankan supabase_foundry_p3.sql dulu.', 'Run supabase_foundry_p3.sql first.'), 'warning'); foundryRender(); return; }
+    if (field === 'foundry_p3' && !foundryExt) { showToast(foundryL('Jalankan supabase_foundry_p3.sql dulu.', 'Run supabase_foundry_p3.sql first.'), 'warning'); foundryRender(); return; }
     let v = value === '' ? null : value;
-    if (field === 'foundry_cover') {
-        if (v !== null) { v = Number(v); if (!Number.isInteger(v) || v < 1 || v > foundryBattleMax()) return; }
-    } else {
-        if (!Object.prototype.hasOwnProperty.call(allowed, field) || (v && !allowed[field].includes(v))) return;
-    }
+    if (!Object.prototype.hasOwnProperty.call(allowed, field) || (v && !allowed[field].includes(v))) return;
     const player = foundryPlayers.find(p => String(p.id) === String(playerId));
     if (!player) return;
     const patch = { [field]: v };
@@ -1467,7 +1474,9 @@ async function foundryAssign(legion, status, slot, idValue) {
 // dihitung di chart, peta, peringatan dan Hitung Tugas / Isi Otomatis sampai dipindah ke slot kosong lewat tombol ⇄.
 
 function foundryMoveTargets() {
-    const extra = (foundryMode === 'tundra' && typeof isAllianceBEnabled === 'function' && isAllianceBEnabled()) ? TUNDRA_ALLIANCE_B_LEGIONS : [];
+    // Tundra: pemain bisa dipindah dari/ke legion mana pun, termasuk Legion 1/2 - Alliance B,
+    // tanpa tergantung saklar Alliance B di President Panel.
+    const extra = foundryMode === 'tundra' ? TUNDRA_ALLIANCE_B_LEGIONS : [];
     return [...FOUNDRY_LEGIONS, ...extra];
 }
 function foundryMoveCount(legion, status) {
@@ -1841,22 +1850,14 @@ function foundryLegionJobs(l) {
     const battle = pool.slice(0, foundryBattleMax());
     const subs = pool.slice(foundryBattleMax(), foundryBattleMax() + foundrySubMax());
     const plan = foundryPlanTasks(battle.length);
-    const jobs = [], newSlotOf = new Map();
+    const jobs = [];
     let promoted = 0, demoted = 0;
     battle.forEach((p, i) => {
-        if (p.foundry_status === 'Battle') newSlotOf.set(Number(p.foundry_slot), i + 1);
         const patch = { foundry_slot: i + 1, foundry_role: plan[i].role, foundry_p1: plan[i].p1, foundry_p2: plan[i].p2 };
         if (p.foundry_status !== 'Battle') { patch.foundry_status = 'Battle'; promoted++; }
-        if (foundryExt) { patch.foundry_p3 = plan[i].p3; patch.foundry_cover = null; }
+        if (foundryExt) patch.foundry_p3 = plan[i].p3;
         jobs.push({ p, patch });
     });
-    const covers = subs.map(p => foundryExt ? (newSlotOf.get(Number(p.foundry_cover)) || null) : null);
-    if (foundryExt) {
-        const taken = new Set(covers.filter(Boolean));
-        const critical = battle.map((p, i) => ({ slot: i + 1, rank: FOUNDRY_PRIORITY.indexOf(plan[i].slot) }))
-            .sort((a, b) => a.rank - b.rank).map(x => x.slot).filter(s => !taken.has(s));
-        covers.forEach((c, j) => { if (!c && critical.length) covers[j] = critical.shift(); });
-    }
     subs.forEach((p, j) => {
         const patch = { foundry_slot: j + 1 };
         if (p.foundry_status !== 'Substitute') {   // Battle yang tergeser: turun jadi Cadangan, tanpa role/target Battle
@@ -1864,7 +1865,6 @@ function foundryLegionJobs(l) {
             if (foundryExt) patch.foundry_p3 = null;
             demoted++;
         }
-        if (foundryExt) patch.foundry_cover = covers[j];
         jobs.push({ p, patch });
     });
     const short = foundryShortages(plan);
@@ -2161,7 +2161,7 @@ async function foundryCopyText() {
         const subs = [];
         for (let i = 1; i <= foundrySubMax(); i++) {
             const p = foundryFind(l, 'Substitute', i);
-            if (p) subs.push(foundryNick(p) + (p.foundry_cover ? ` (→#${p.foundry_cover})` : ''));
+            if (p) subs.push(foundryNick(p));
         }
         if (subs.length) lines.push(`${foundryL('Cadangan (masuk setelah menit 3)', 'Substitutes (enter after minute 3)')}: ${subs.join(', ')}`);
     });
@@ -2642,7 +2642,7 @@ async function openFoundrySharedMap(legion, phase) {
         const taskRowsAll = allBattle.length ? `<div class="fy-share-roster-wrap"><h3>${taskTitle}</h3><div class="fy-share-roster-scroll"><table class="fy-share-roster"><thead><tr><th>Slot</th><th>${en()?'Player':'Pemain'}</th><th>${en()?'Task / Role':'Tugas / Peran'}</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th></tr></thead><tbody>${allBattle.map(p => `<tr><td>#${escapeHtml(p.foundry_slot)}</td><td>${escapeHtml(foundryPlainNick(p))}</td><td>${escapeHtml(p.foundry_role || (en()?'Unassigned':'Belum ditentukan'))}</td><td>${escapeHtml(tgtName(p, 1))}</td><td>${escapeHtml(tgtName(p, 2))}</td><td>${escapeHtml(tgtName(p, 3))}</td></tr>`).join('')}</tbody></table></div></div>` : `<p class="fy-note">${noPlayers}</p>`;
         const taskRows = phase === 'all' ? taskRowsAll : taskRowsSingle;
         const subs = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Substitute' && !foundryIsOver(p)).sort((a,b) => a.foundry_slot - b.foundry_slot);
-        const subRows = subs.length ? `<div class="fy-share-roster-wrap"><h3>${en()?'Substitutes (enter after minute 3)':'Cadangan (masuk setelah menit 3)'}</h3><div class="fy-share-roster-scroll"><table class="fy-share-roster"><thead><tr><th>#</th><th>${en()?'Player':'Pemain'}</th><th>${en()?'Replaces slot':'Menggantikan slot'}</th></tr></thead><tbody>${subs.map(p => { const c = Number(p.foundry_cover) || 0, b = c ? foundryFind(legion, 'Battle', c) : null; return `<tr><td>C${escapeHtml(p.foundry_slot)}</td><td>${escapeHtml(p.nickname || '-')}</td><td>${c ? '#' + c + (b ? ' ' + escapeHtml(foundryPlainNick(b)) + ' (' + escapeHtml(b.foundry_role || '-') + ')' : '') : '-'}</td></tr>`; }).join('')}</tbody></table></div></div>` : '';
+        const subRows = subs.length ? `<div class="fy-share-roster-wrap"><h3>${en()?'Substitutes (enter after minute 3)':'Cadangan (masuk setelah menit 3)'}</h3><div class="fy-share-roster-scroll"><table class="fy-share-roster"><thead><tr><th>#</th><th>${en()?'Player':'Pemain'}</th></tr></thead><tbody>${subs.map(p => `<tr><td>C${escapeHtml(p.foundry_slot)}</td><td>${escapeHtml(p.nickname || '-')}</td></tr>`).join('')}</tbody></table></div></div>` : '';
         // strategyGuide remains defined below in the original load flow — kept inside load after fetch
         return { taskRows, subRows };
     };
@@ -2894,7 +2894,7 @@ function foundryChartSvg(legion, phase) {
             const half = Math.ceil(subs.length / 2);
             subs.forEach((p, i) => {
                 const col = i < half ? 0 : 1, row = i < half ? i : i - half;
-                out.push(T(PAD + col * 370, y + 13 + row * 18, `S${p.foundry_slot} ${foundryNick(p, 14)}` + (p.foundry_cover ? ` (→ #${p.foundry_cover})` : ''), { size: 12 }));
+                out.push(T(PAD + col * 370, y + 13 + row * 18, `S${p.foundry_slot} ${foundryNick(p, 14)}`, { size: 12 }));
             });
             y += half * 18;
         }
