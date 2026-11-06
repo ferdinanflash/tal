@@ -1505,10 +1505,41 @@ body.fdt-shared-open { overflow:hidden; }
 @media (max-width: 600px) { .fy-admin .btn-apply { flex: 1; } .fy-table td select { max-width: none; min-width: 120px; } }
 
 #fy-bulk-modal { z-index: 2500; }
-#fy-bulk-modal .modal-content { max-height: 92vh; overflow-y: auto; }
+#fy-bulk-modal .modal-content {
+  max-width: min(720px, 96vw);
+  width: min(720px, 96vw);
+  max-height: 92vh;
+  overflow-y: auto;
+}
+#fy-bulk-modal .bulk-remove-list { max-height: min(420px, 50vh); }
+#fy-bulk-modal .bulk-remove-item {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px 12px;
+  padding: 10px 14px;
+}
+#fy-bulk-modal .bulk-remove-name {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: break-word;
+}
+#fy-bulk-modal .bulk-remove-meta {
+  margin-left: 0;
+  white-space: normal;
+  text-align: right;
+  line-height: 1.35;
+  max-width: 280px;
+}
 #fy-bulk-modal .bulk-remove-item input[type="checkbox"], #fy-bulk-modal .bulk-remove-all input[type="checkbox"] { accent-color: #f59e0b; }
 .fy-bulk-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-@media (max-width: 480px) { .fy-bulk-row { grid-template-columns: 1fr; } }
+@media (max-width: 480px) {
+  .fy-bulk-row { grid-template-columns: 1fr; }
+  #fy-bulk-modal .modal-content { max-width: 100%; width: 100%; }
+  #fy-bulk-modal .bulk-remove-item { grid-template-columns: 18px 1fr; }
+  #fy-bulk-modal .bulk-remove-meta { grid-column: 2; text-align: left; max-width: none; }
+}
 
 /* Foundry task markers and role filters */
 .fy-task-filter { border: 1px solid #3b3d48; background: #191b22; border-radius: 12px; padding: 10px 12px; margin: 8px 0 12px; }
