@@ -277,10 +277,10 @@ const FOUNDRY_TEMPLATE = [
     // 22-24 Boiler holders → sebagian pindah ke Muni/Merc di P2, sisanya tahan Boiler
     ['Holder', 'boiler', 'boiler', 'boiler'],
     ['Holder', 'boiler', 'muni', 'muni'],
-    ['Holder', 'boiler', 'merc', 'merc'],
+    ['Holder', 'boiler', 'transit', 'merc'],   // P2: Pos Transit ke-2 (teleport lebih sering), P3 kembali ke Kamp Bayaran
     // 25-26 Transit holders
     ['Holder', 'transit', 'transit', 'transit'],
-    ['Holder', 'transit', 'transit', 'transit'],
+    ['Holder', 'transit', 'boiler', 'boiler'],   // Transit tetap punya 1 holder di P2/P3 (min 1); satu lagi menjaga Ruang Ketel (bonus kontrol cepat)
     // 27-30 Collector: roam P1-P2 (Arsenal Supplies), Workshop P3
     ['Collector', 'roam', 'roam', 'workshop'],
     ['Collector', 'roam', 'roam', 'workshop'],
@@ -298,8 +298,8 @@ function foundryTpl(slot) {
 // (poin besar, harus ditahan terus); angka ini juga dipakai planner agar roster tipis tetap memprioritaskan bangunan bernilai tinggi.
 const FOUNDRY_MIN = {
     1: { proto1: 2, proto2: 2, rep1: 2, rep2: 2, rep3: 2, rep4: 2, boiler: 2, transit: 2 },
-    2: { foundry: 4, proto1: 2, proto2: 2, rep1: 2, rep2: 2, rep3: 2, rep4: 2, boiler: 1, muni: 1, merc: 1, transit: 1 },
-    3: { foundry: 4, proto1: 2, proto2: 2, rep1: 2, rep2: 2, rep3: 2, rep4: 2, boiler: 1, muni: 1, merc: 1, transit: 1, workshop: 2 }
+    2: { foundry: 4, proto1: 2, proto2: 2, rep1: 2, rep2: 2, rep3: 2, rep4: 2, boiler: 2, muni: 1, merc: 1, transit: 2 },
+    3: { foundry: 4, proto1: 2, proto2: 2, rep1: 2, rep2: 2, rep3: 2, rep4: 2, boiler: 2, muni: 1, merc: 1, transit: 1, workshop: 2 }
 };
 const FOUNDRY_ROLES = ['Commander', 'Rally Leader', 'Joiner', 'Holder', 'Mobile', 'Collector'];
 const FOUNDRY_ROLE_COLOR = { Commander: '#f59e0b', 'Rally Leader': '#ef4444', Joiner: '#fb923c', Holder: '#38bdf8', Mobile: '#4ade80', Collector: '#c084fc' };
@@ -556,11 +556,11 @@ function foundryNullPatch() {
 // lalu Joiner, Mobile, Holder sisa, Collector.
 // Tujuannya: mulai dari ~16 pemain semua bangunan kritis (Proto + 4 Repair + Boiler + Transit)
 // selalu punya minimal 2 penjaga stationary, bukan hanya mengandalkan march Joiner.
-const FOUNDRY_PRIORITY = [1, 22, 25, 2, 3, 8, 9, 14, 15, 16, 17, 18, 19, 20, 21, 23, 4, 5, 6, 7, 10, 11, 12, 13, 24, 26, 27, 28, 29, 30];
+const FOUNDRY_PRIORITY = [1, 22, 25, 2, 3, 8, 9, 14, 15, 16, 17, 18, 19, 20, 21, 23, 26, 24, 4, 5, 6, 7, 10, 11, 12, 13, 27, 28, 29, 30];
 // Slot yang selalu diambil lebih dulu (sebelum greedy skor) — 16 slot minimum untuk menutup min stationary P1:
 // 1=Commander (Transit), 22=Boiler utama, 25=Transit ke-2, 2/3=Rally Leader (Proto), 8/9=Holder Proto,
-// 14–21=2 Holder tiap Repair, 23=Boiler ke-2.
-const FOUNDRY_PLAN_FIRST = [1, 22, 25, 2, 3, 8, 9, 14, 15, 16, 17, 18, 19, 20, 21, 23];
+// 14–21=2 Holder tiap Repair, 23=Boiler ke-2 (P1), 26=Boiler ke-2 di P2/P3 (Ruang Ketel tetap 2 penjaga).
+const FOUNDRY_PLAN_FIRST = [1, 22, 25, 2, 3, 8, 9, 14, 15, 16, 17, 18, 19, 20, 21, 23, 26, 24];
 const FOUNDRY_PHASE_MINUTES = [15, 15, 30];   // P1 0-15, P2 15-30, P3 30-60
 const FOUNDRY_WORKSHOP_VALUE = 400;           // nilai efektif Workshop (tidak ada m di map; diasumsikan tinggi)
 // Multiplier strategis: bangunan yang mengubah tempo battle lebih berharga dari poin mentahnya.
@@ -634,7 +634,9 @@ function foundryPlanScore(positions) {
     const critical = [
         [1, 'boiler'], [1, 'transit'], [1, 'proto1'], [1, 'proto2'],
         [1, 'rep1'], [1, 'rep2'], [1, 'rep3'], [1, 'rep4'],
-        [2, 'foundry'], [3, 'foundry']
+        [2, 'foundry'], [3, 'foundry'],
+        [2, 'boiler'], [3, 'boiler'],   // Ruang Ketel (kontrol bangunan lebih cepat) tetap digarnisun kuat di P2/P3
+        [2, 'transit']                // Pos Transit (teleport lebih sering) 2 penjaga di P2, sama seperti P1
     ];
     // Bangunan penghasil poin tanpa penjaga sendiri (hanya mengandalkan march) kehilangan separuh nilainya.
     [1, 2, 3].forEach(ph => Object.keys(FOUNDRY_MIN[ph]).forEach(k => {
