@@ -33,7 +33,7 @@
 				<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 				<link rel="icon" href="icons/favicon.ico" sizes="any">
 				<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-				<link rel="stylesheet" href="style.css?v=54">
+				<link rel="stylesheet" href="style.css?v=55">
 
 
 
@@ -282,11 +282,12 @@
 				<p class="page-subtitle">IDN Alliance · 2 Legion · 30 Battle + 10 Substitutes per Legion</p>
 				<div id="foundry-admin-bar" class="fy-admin hidden">
 					<button class="btn-apply" type="button" onclick="openFoundryBulkAssign()">➕ Bulk Assign</button>
+					<button class="btn-apply btn-danger" type="button" onclick="openFoundryBulkRemove()">🗑️ Bulk Remove</button>
 					<button class="btn-apply" type="button" onclick="foundryAutoFill()">⚡ Isi Otomatis (by Power)</button>
 					<select id="foundry-copy-legion" class="btn-apply" aria-label="Legion untuk disalin" style="min-height:44px"><option style="background:#0f172a;color:#f8fafc" value="all">Semua Legion</option><option style="background:#0f172a;color:#f8fafc" value="Legion 1">Legion 1</option><option style="background:#0f172a;color:#f8fafc" value="Legion 2">Legion 2</option></select>
 					<select id="foundry-copy-mode" class="btn-apply" aria-label="Fase untuk disalin" style="min-height:44px"><option style="background:#0f172a;color:#f8fafc" value="all">Semua fase (per slot)</option><option style="background:#0f172a;color:#f8fafc" value="1">Phase 1 (per bangunan)</option><option style="background:#0f172a;color:#f8fafc" value="2">Phase 2 (per bangunan)</option><option style="background:#0f172a;color:#f8fafc" value="3">Phase 3 (per bangunan)</option></select>
 					<button class="btn-apply" type="button" onclick="foundryCopyText()">📋 Salin untuk Discord</button>
-					<button class="btn-apply btn-danger" type="button" onclick="foundryClearAll()">Kosongkan Roster</button>
+					<button class="btn-apply btn-danger" type="button" onclick="openFoundryClearMenu()">Kosongkan Roster</button>
 				</div>
 				<div class="fy-tabs" role="tablist">
 					<button class="fy-tab btn-apply" data-tab="Legion 1" onclick="foundrySetTab('Legion 1')">Legion 1</button>
@@ -756,6 +757,65 @@
 			</div>
 		</div>
 
+
+		<!-- FOUNDRY CLEAR ROSTER: Battle or Substitute -->
+		<div id="fy-clear-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="fy-clear-title">
+			<div class="modal-content custom-form-modal">
+				<span class="close-modal" onclick="closeFoundryClearMenu()">&times;</span>
+				<h2 id="fy-clear-title" class="modal-title">Clear Roster</h2>
+				<p class="modal-subtitle" id="fy-clear-subtitle">Choose which group to clear from the current legion roster.</p>
+				<p class="fy-note" id="fy-clear-scope"></p>
+				<div class="fy-clear-actions">
+					<button type="button" class="btn-apply btn-danger fy-clear-opt" onclick="foundryClearByStatus('Battle')">⚔️ Clear Battle</button>
+					<button type="button" class="btn-apply btn-danger fy-clear-opt" onclick="foundryClearByStatus('Substitute')">🛡️ Clear Substitute</button>
+				</div>
+				<div class="form-actions" style="margin-top:16px">
+					<button class="btn-back" type="button" onclick="closeFoundryClearMenu()">Cancel</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- FOUNDRY BULK REMOVE MODAL -->
+		<div id="fy-bulk-remove-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="fy-bulk-remove-title">
+			<div class="modal-content custom-form-modal">
+				<span class="close-modal" onclick="closeFoundryBulkRemove()">&times;</span>
+				<h2 id="fy-bulk-remove-title" class="modal-title">Bulk Remove</h2>
+				<p class="modal-subtitle">Select players currently on the roster to remove them.</p>
+
+				<div class="fy-bulk-row">
+					<div class="form-group">
+						<label for="fy-rm-legion">Legion</label>
+						<select id="fy-rm-legion" onchange="foundryBulkRemoveFilter()"></select>
+					</div>
+					<div class="form-group">
+						<label for="fy-rm-status">Status</label>
+						<select id="fy-rm-status" onchange="foundryBulkRemoveFilter()">
+							<option value="">All (Battle + Substitute)</option>
+							<option value="Battle">Battle</option>
+							<option value="Substitute">Substitute</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="fy-rm-search">Search Game ID / Nickname</label>
+					<input type="text" id="fy-rm-search" placeholder="Type game ID or nickname..." autocomplete="off" oninput="foundryBulkRemoveFilter()">
+				</div>
+
+				<div class="bulk-remove-toolbar">
+					<label class="bulk-remove-all"><input type="checkbox" id="fy-rm-all" onchange="foundryBulkRemoveToggleAll(this.checked)"> Select all shown</label>
+					<span id="fy-rm-count" class="legion-assign-count">0 selected</span>
+				</div>
+				<div id="fy-rm-list" class="bulk-remove-list"></div>
+				<p id="fy-rm-info" class="fy-note"></p>
+
+				<div class="form-actions">
+					<button class="btn-back" type="button" onclick="closeFoundryBulkRemove()">Cancel</button>
+					<button id="fy-rm-submit" class="btn-apply btn-danger primary-action" type="button" onclick="foundryBulkRemoveSubmit()" disabled>Remove Selected</button>
+				</div>
+			</div>
+		</div>
+
 		<!-- FOUNDRY BULK ASSIGN MODAL -->
 		<div id="fy-bulk-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="fy-bulk-title">
 			<div class="modal-content custom-form-modal">
@@ -1152,7 +1212,7 @@
 </div>
 
 	<script src="frostdragon.js?v=16"></script>
-	<script src="foundry.js?v=35"></script>
+	<script src="foundry.js?v=36"></script>
 	<script>
 	  // Register the service worker only on HTTPS or localhost.
 	  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

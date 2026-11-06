@@ -906,7 +906,7 @@ if (typeof I18N !== 'undefined' && typeof I18N.onChange === 'function') {
 // Pasangan terjemahan [Indonesia, English]. Satu entri bekerja dua arah, jadi tidak ada lagi
 // teks yang salah diterjemahkan ke arah sebaliknya. Teks yang tidak ada di daftar dibiarkan apa adanya.
 const FOUNDRY_I18N_PAIRS = [
-  ['Kembali ke Menu','Back to Menu'],['Penugasan Massal','Bulk Assign'],['Kosongkan Roster','Clear Roster'],
+  ['Kembali ke Menu','Back to Menu'],['Penugasan Massal','Bulk Assign'],['Kosongkan Roster','Clear Roster'],['Bulk Remove','Bulk Remove'],['Hapus Terpilih','Remove Selected'],['Clear Battle','Clear Battle'],['Clear Substitute','Clear Substitute'],['Pilih semua yang tampil','Select all shown'],
   ['Pemain','Player'],['Cadangan','Substitute'],['Pemain Cadangan','Substitute Players'],
   ['Peta','Map'],['🗺️ Peta','🗺️ Map'],['Strategi','Strategy'],['📖 Strategi','📖 Strategy'],
   ['Roster Foundry Battle','Foundry Battle Roster'],['Aliansi IDN','IDN Alliance'],
@@ -991,7 +991,7 @@ function foundryApplyLanguage(root = document.getElementById('foundry-page')) {
     const v = el.getAttribute(a); if (!v) return; const t = foundryT(v); if (t !== v) el.setAttribute(a, t);
   }));
   // Modal Bulk Assign berada di luar #foundry-page, jadi diterjemahkan juga.
-  if (root.id === 'foundry-page') { const m = document.getElementById('fy-bulk-modal'); if (m) foundryApplyLanguage(m); }
+  if (root.id === 'foundry-page') { ['fy-bulk-modal','fy-bulk-remove-modal','fy-clear-modal'].forEach(id => { const m = document.getElementById(id); if (m) foundryApplyLanguage(m); }); }
   foundryBrandDom(root);
   const btn = document.getElementById('foundry-language-toggle');
   if (btn) btn.innerHTML = foundryLanguage === 'en' ? '<span class="flag flag-id"></span> Bahasa Indonesia' : (foundryLanguage === 'id' ? '<span class="flag flag-cn"></span> 中文' : '<span class="flag flag-gb"></span> English');
@@ -1667,13 +1667,240 @@ async function foundryAutoFill() {
     foundryRender();
 }
 
-async function foundryClearAll() {
+function foundryClearScopeLegions() {
+    if (foundryLockedLegion) return [foundryLockedLegion];
+    return foundryLegionList();
+}
+
+function openFoundryClearMenu() {
+    if (!foundryCanEdit()) { showToast(foundryDenied(), 'warning'); return; }
+    const legs = foundryClearScopeLegions();
+    const scopeEl = document.getElementById('fy-clear-scope');
+    if (scopeEl) {
+        scopeEl.textContent = foundryL(
+            `Target: ${legs.join(', ')}`,
+            `Target: ${legs.join(', ')}`
+        );
+    }
+    const sub = document.getElementById('fy-clear-subtitle');
+    if (sub) {
+        sub.textContent = foundryL(
+            'Pilih grup yang akan dikosongkan dari roster legion saat ini.',
+            'Choose which group to clear from the current legion roster.'
+        );
+    }
+    document.getElementById('fy-clear-modal').classList.remove('hidden');
+    if (typeof foundryApplyLanguage === 'function') foundryApplyLanguage(document.getElementById('fy-clear-modal'));
+}
+
+function closeFoundryClearMenu() {
+    const m = document.getElementById('fy-clear-modal');
+    if (m) m.classList.add('hidden');
+}
+
+/** Clear only Battle or only Substitute players for the current legion scope. */
+async function foundryClearByStatus(status) {
     if (!foundryCanEdit()) return;
-    if (!await showCustomConfirmAsync(foundryMode === 'tundra' ? foundryL('Kosongkan seluruh roster Tundra?', 'Clear the entire Tundra roster?') : foundryL('Kosongkan seluruh roster Foundry IDN?', 'Clear the entire IDN Foundry roster?'))) return;
-    try { for (const p of foundryPlayers.filter(foundryInRoster)) await foundryClear(p); }
-    catch (e) { showToast(foundryL('Gagal mengosongkan roster.', 'Failed to clear the roster.'), 'error'); }
+    if (status !== 'Battle' && status !== 'Substitute') return;
+    const legs = foundryClearScopeLegions();
+    const targets = foundryPlayers.filter(p =>
+        foundryInRoster(p) &&
+        p.foundry_status === status &&
+        legs.includes(p.foundry_legion)
+    );
+    if (!targets.length) {
+        showToast(foundryL(
+            `Tidak ada pemain ${status === 'Battle' ? 'Battle' : 'Cadangan'} di ${legs.join(', ')}.`,
+            `No ${status === 'Battle' ? 'Battle' : 'Substitute'} players in ${legs.join(', ')}.`
+        ), 'info');
+        closeFoundryClearMenu();
+        return;
+    }
+    const label = status === 'Battle' ? 'Battle' : foundryL('Cadangan', 'Substitute');
+    const ok = await showCustomConfirmAsync(
+        foundryL(
+            `Kosongkan ${targets.length} pemain ${label} dari ${legs.join(', ')}?`,
+            `Clear ${targets.length} ${label} player(s) from ${legs.join(', ')}?`
+        ),
+        '#ef4444'
+    );
+    if (!ok) return;
+    closeFoundryClearMenu();
+    let done = 0;
+    try {
+        for (const p of targets) {
+            await foundryClear(p);
+            done++;
+        }
+        showToast(foundryL(
+            `${done} pemain ${label} dihapus dari roster.`,
+            `${done} ${label} player(s) removed from the roster.`
+        ), 'success');
+    } catch (e) {
+        console.warn('foundryClearByStatus failed', e);
+        showToast(foundryL('Gagal mengosongkan roster.', 'Failed to clear the roster.') + (typeof foundryErrMsg === 'function' ? foundryErrMsg(e) : ''), 'error');
+    }
     foundryRender();
 }
+
+/** @deprecated use openFoundryClearMenu + foundryClearByStatus */
+async function foundryClearAll() {
+    openFoundryClearMenu();
+}
+
+// ---------- BULK REMOVE (players already on roster) ----------
+const foundryBulkRemoveSel = new Set();
+
+function foundryBulkRemoveCandidates() {
+    const legionEl = document.getElementById('fy-rm-legion');
+    const statusEl = document.getElementById('fy-rm-status');
+    const legion = legionEl ? legionEl.value : '';
+    const status = statusEl ? statusEl.value : '';
+    return foundryPlayers.filter(p => {
+        if (!foundryInRoster(p)) return false;
+        if (legion && p.foundry_legion !== legion) return false;
+        if (status && p.foundry_status !== status) return false;
+        return true;
+    }).sort((a, b) => {
+        if (a.foundry_status !== b.foundry_status) return a.foundry_status === 'Battle' ? -1 : 1;
+        return (Number(a.foundry_slot) || 0) - (Number(b.foundry_slot) || 0);
+    });
+}
+
+function foundryBulkRemoveShown() {
+    const q = (document.getElementById('fy-rm-search') || {}).value || '';
+    const qq = q.trim().toLowerCase();
+    return foundryBulkRemoveCandidates().filter(p => {
+        if (!qq) return true;
+        return (p.nickname || '').toLowerCase().includes(qq)
+            || String(p.game_id || '').toLowerCase().includes(qq);
+    });
+}
+
+function openFoundryBulkRemove() {
+    if (!foundryCanEdit()) { showToast(foundryDenied(), 'warning'); return; }
+    foundryBulkRemoveSel.clear();
+    const legs = foundryClearScopeLegions();
+    const defLegion = foundryLockedLegion
+        || (FOUNDRY_LEGIONS.includes(foundryTab) || TUNDRA_ALLIANCE_B_LEGIONS.includes(foundryTab) ? foundryTab : legs[0]);
+    const legionEl = document.getElementById('fy-rm-legion');
+    if (legionEl) {
+        legionEl.innerHTML = legs.map(l =>
+            `<option value="${escapeHtml(l)}" ${l === defLegion ? 'selected' : ''}>${escapeHtml(l)}</option>`
+        ).join('');
+    }
+    const statusEl = document.getElementById('fy-rm-status');
+    if (statusEl) statusEl.value = '';
+    const searchEl = document.getElementById('fy-rm-search');
+    if (searchEl) searchEl.value = '';
+    document.getElementById('fy-bulk-remove-modal').classList.remove('hidden');
+    foundryBulkRemoveFilter();
+    if (typeof foundryApplyLanguage === 'function') foundryApplyLanguage(document.getElementById('fy-bulk-remove-modal'));
+}
+
+function closeFoundryBulkRemove() {
+    const m = document.getElementById('fy-bulk-remove-modal');
+    if (m) m.classList.add('hidden');
+    foundryBulkRemoveSel.clear();
+}
+
+function foundryBulkRemoveFilter() {
+    const shown = foundryBulkRemoveShown();
+    const list = document.getElementById('fy-rm-list');
+    if (!list) return;
+    list.innerHTML = shown.length === 0
+        ? `<div class="bulk-remove-empty">${foundryL('Tidak ada pemain yang cocok.', 'No matching players.')}</div>`
+        : shown.map(p => {
+            const id = String(p.id);
+            const gid = (typeof canViewSensitive === 'function' && canViewSensitive()) ? escapeHtml(p.game_id) : (typeof MASKED_TEXT !== 'undefined' ? MASKED_TEXT : '••••');
+            const st = p.foundry_status === 'Battle' ? 'Battle' : foundryL('Cadangan', 'Sub');
+            const slot = p.foundry_slot != null ? `#${p.foundry_slot}` : '';
+            return `<label class="bulk-remove-item">
+                <input type="checkbox" value="${escapeHtml(id)}" ${foundryBulkRemoveSel.has(id) ? 'checked' : ''} onchange="foundryBulkRemoveToggle(this)">
+                <span class="bulk-remove-name">${escapeHtml(p.nickname)}</span>
+                <span class="bulk-remove-meta">${escapeHtml(p.alliance || '')} · ${gid} · ${st} ${slot} · ${foundryPower(p)}</span>
+            </label>`;
+        }).join('');
+    foundryBulkRemoveSummary();
+}
+
+function foundryBulkRemoveToggle(cb) {
+    const id = String(cb.value);
+    if (cb.checked) foundryBulkRemoveSel.add(id); else foundryBulkRemoveSel.delete(id);
+    foundryBulkRemoveSummary();
+}
+
+function foundryBulkRemoveToggleAll(checked) {
+    foundryBulkRemoveShown().forEach(p => {
+        const id = String(p.id);
+        if (checked) foundryBulkRemoveSel.add(id); else foundryBulkRemoveSel.delete(id);
+    });
+    foundryBulkRemoveFilter();
+}
+
+function foundryBulkRemoveSummary() {
+    const n = foundryBulkRemoveSel.size;
+    const countEl = document.getElementById('fy-rm-count');
+    if (countEl) countEl.textContent = foundryL(`${n} dipilih`, `${n} selected`);
+    const info = document.getElementById('fy-rm-info');
+    if (info) {
+        info.textContent = n
+            ? foundryL(`${n} pemain akan dihapus dari roster.`, `${n} player(s) will be removed from the roster.`)
+            : foundryL('Pilih pemain yang akan dihapus dari roster.', 'Select players to remove from the roster.');
+    }
+    const btn = document.getElementById('fy-rm-submit');
+    if (btn) {
+        btn.disabled = n === 0;
+        btn.textContent = n > 0
+            ? `${foundryL('Hapus Terpilih', 'Remove Selected')} (${n})`
+            : foundryL('Hapus Terpilih', 'Remove Selected');
+    }
+    const all = document.getElementById('fy-rm-all');
+    const shown = foundryBulkRemoveShown();
+    if (all) {
+        const sel = shown.filter(p => foundryBulkRemoveSel.has(String(p.id))).length;
+        all.checked = shown.length > 0 && sel === shown.length;
+        all.indeterminate = sel > 0 && sel < shown.length;
+    }
+}
+
+async function foundryBulkRemoveSubmit() {
+    if (!foundryCanEdit()) { showToast(foundryDenied(), 'warning'); return; }
+    const chosen = foundryPlayers.filter(p => foundryBulkRemoveSel.has(String(p.id)) && foundryInRoster(p));
+    if (!chosen.length) return;
+    const ok = await showCustomConfirmAsync(
+        foundryL(
+            `Hapus ${chosen.length} pemain dari roster?`,
+            `Remove ${chosen.length} player(s) from the roster?`
+        ),
+        '#ef4444'
+    );
+    if (!ok) return;
+    const btn = document.getElementById('fy-rm-submit');
+    if (btn) btn.disabled = true;
+    let done = 0;
+    try {
+        for (const p of chosen) {
+            await foundryClear(p);
+            done++;
+        }
+        showToast(foundryL(
+            `${done} pemain dihapus dari roster.`,
+            `${done} player(s) removed from the roster.`
+        ), 'success');
+        closeFoundryBulkRemove();
+    } catch (e) {
+        console.warn('foundryBulkRemoveSubmit failed', e);
+        showToast(
+            foundryL(`Sebagian gagal (${done}/${chosen.length} dihapus).`, `Partly failed (${done}/${chosen.length} removed).`)
+            + (typeof foundryErrMsg === 'function' ? foundryErrMsg(e) : ''),
+            'error'
+        );
+        foundryBulkRemoveFilter();
+    }
+    foundryRender();
+}
+
 
 // Salin roster untuk Discord. Mode: 'all' (per slot, semua fase) atau 1/2/3 (dikelompokkan per bangunan).
 async function foundryCopyText() {

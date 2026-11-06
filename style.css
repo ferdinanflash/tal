@@ -2731,3 +2731,31 @@ body.state-tracker-modal-open { overflow: hidden; }
   .fy-live-hub-page .fy-live-hub-body { padding: 14px 10px 24px; }
   .fy-live-hub-section { padding: 14px; }
 }
+
+/* Foundry Clear Roster choice + Bulk Remove */
+#fy-clear-modal .modal-content,
+#fy-bulk-remove-modal .modal-content {
+  max-width: min(720px, 96vw);
+  width: min(720px, 96vw);
+  max-height: 92vh;
+  overflow-y: auto;
+}
+.fy-clear-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+.fy-clear-opt {
+  min-height: 52px;
+  font-weight: 800 !important;
+  font-size: 0.95rem !important;
+}
+#fy-bulk-remove-modal .bulk-remove-list { max-height: min(420px, 50vh); }
+#fy-bulk-remove-modal .bulk-remove-item input[type="checkbox"],
+#fy-bulk-remove-modal .bulk-remove-all input[type="checkbox"] { accent-color: #ef4444; }
+@media (max-width: 480px) {
+  .fy-clear-actions { grid-template-columns: 1fr; }
+  #fy-clear-modal .modal-content,
+  #fy-bulk-remove-modal .modal-content { max-width: 100%; width: 100%; }
+}
