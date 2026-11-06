@@ -63,9 +63,18 @@ function filterLegionAssignPlayers() {
 
     const matches = legionAssignCandidates.filter(p => {
         if (alliance && p.alliance !== alliance) return false;
+        // Prefer players marked Can Join; still list others with a tag so staff can override.
         if (!q) return true;
         return String(p.nickname || '').toLowerCase().includes(q)
             || String(p.game_id || '').toLowerCase().includes(q);
+    });
+
+    // Sort: Can Join first, then power desc
+    matches.sort((a, b) => {
+        const aj = a.can_join === false ? 1 : 0;
+        const bj = b.can_join === false ? 1 : 0;
+        if (aj !== bj) return aj - bj;
+        return (Number(b.troops_power) || 0) - (Number(a.troops_power) || 0);
     });
 
     selectEl.innerHTML = "";
@@ -77,13 +86,16 @@ function filterLegionAssignPlayers() {
             option.value = p.id;
             const currentLegionTag = p.legion ? ` (${p.legion})` : '';
             const prefTimeTag = p.preferred_time ? ` [Time: ${p.preferred_time}]` : '';
-            option.text = `[${p.alliance}] ${p.nickname} (ID: ${p.game_id}) - Power: ${Number(p.troops_power).toLocaleString('en-US')}${prefTimeTag}${currentLegionTag}`;
+            const cannotTag = p.can_join === false ? ' [Cannot Join]' : '';
+            option.text = `[${p.alliance}] ${p.nickname} (ID: ${p.game_id}) - Power: ${Number(p.troops_power).toLocaleString('en-US')}${prefTimeTag}${currentLegionTag}${cannotTag}`;
+            if (p.can_join === false) option.style.color = '#f87171';
             selectEl.add(option);
         });
         // Keep the previous pick if it is still in the list, else first match.
         if (previous && matches.some(p => String(p.id) === String(previous))) selectEl.value = previous;
     }
-    document.getElementById('legion-assign-count').innerText = `(${matches.length} found)`;
+    const canJoinCount = matches.filter(p => p.can_join !== false).length;
+    document.getElementById('legion-assign-count').innerText = `(${matches.length} found · ${canJoinCount} can join)`;
     onLegionAssignPlayerChange();
 }
 
@@ -510,7 +522,12 @@ function getBulkAssignShown() {
 }
 
 function filterBulkAssignPlayers() {
-    const shown = getBulkAssignShown();
+    const shown = getBulkAssignShown().slice().sort((a, b) => {
+        const aj = a.can_join === false ? 1 : 0;
+        const bj = b.can_join === false ? 1 : 0;
+        if (aj !== bj) return aj - bj;
+        return (Number(b.troops_power) || 0) - (Number(a.troops_power) || 0);
+    });
     const list = document.getElementById('bulk-assign-list');
     list.innerHTML = shown.length === 0
         ? '<div class="bulk-remove-empty">No players match.</div>'
@@ -518,10 +535,11 @@ function filterBulkAssignPlayers() {
             const id = Number(p.id);
             const power = Number(p.troops_power || 0).toLocaleString('en-US');
             const legionTag = p.legion ? ` · ${escapeHtml(p.legion)}` : '';
-            return `<label class="bulk-remove-item">
+            const cannotTag = p.can_join === false ? ' · Cannot Join' : '';
+            return `<label class="bulk-remove-item${p.can_join === false ? ' bulk-cannot-join' : ''}">
                 <input type="checkbox" value="${id}" ${bulkAssignSelected.has(id) ? 'checked' : ''} onchange="onBulkAssignToggle(this)">
                 <span class="bulk-remove-name">${escapeHtml(p.nickname)}</span>
-                <span class="bulk-remove-meta">${escapeHtml(p.alliance)} · ${escapeHtml(p.game_id)} · ${power}${legionTag}</span>
+                <span class="bulk-remove-meta">${escapeHtml(p.alliance)} · ${escapeHtml(p.game_id)} · ${power}${legionTag}${cannotTag}</span>
             </label>`;
         }).join('');
     updateBulkAssignSummary();

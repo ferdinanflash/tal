@@ -30,12 +30,24 @@ function exportToCSV() {
     const isLegion = viewMode === 'LEGION';
     const frost = typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon';
     const roleField = frost ? 'frostdragon_role' : 'legion_role';
-    const headers = isLegion 
-        ? (frost ? ["Rank", "Alliance", "Nickname", "Game ID", "Troops Power", "Preferred Time", "Frostdragon Role", "Frostdragon Task"] : ["Rank", "Alliance", "Nickname", "Game ID", "Troops Power", "Preferred Time", "Legion Status"])
-        : ["Rank", "Alliance", "Nickname", "Game ID", "Troops Power", "Preferred Time"];
+    // Can Join is always exported so filtered roster snapshots stay useful offline.
+    const headers = isLegion
+        ? (frost
+            ? ["Rank", "Alliance", "Nickname", "Game ID", "Troops Power", "Preferred Time", "Can Join", "Frostdragon Role", "Frostdragon Task"]
+            : ["Rank", "Alliance", "Nickname", "Game ID", "Troops Power", "Preferred Time", "Can Join", "Legion Status"])
+        : ["Rank", "Alliance", "Nickname", "Game ID", "Troops Power", "Preferred Time", "Can Join"];
 
     const rows = exportData.map((p) => {
-        const base = [csvSafeField(p.__rank || '-'), csvSafeField(p.alliance), csvSafeField(p.nickname), csvSafeField(p.game_id), csvSafeField(p.troops_power), csvSafeField(p.preferred_time || '-')];
+        const canJoinLabel = p.can_join === false ? 'No' : 'Yes';
+        const base = [
+            csvSafeField(p.__rank || '-'),
+            csvSafeField(p.alliance),
+            csvSafeField(p.nickname),
+            csvSafeField(p.game_id),
+            csvSafeField(p.troops_power),
+            csvSafeField(p.preferred_time || '-'),
+            csvSafeField(canJoinLabel)
+        ];
         if (isLegion) {
             base.push(csvSafeField(p[roleField] || '-'));
             if (frost) {

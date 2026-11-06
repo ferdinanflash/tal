@@ -182,6 +182,8 @@ let editingScheduleLegion = null;
 // ================= SEARCH / SORT / PAGINATION STATE =================
 let searchQuery = '';
 let fdtAllianceFilter = ''; // Frostdragon roster: '' = all, or 'Alliance A' / 'Alliance B'
+/** '' | 'yes' | 'no' — filter by can_join on alliance & legion roster tables */
+let canJoinFilter = '';
 let currentSortField = null; // null = use default fetch order
 let currentSortDirection = 'asc';
 let currentPage = 1;

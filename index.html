@@ -41,13 +41,13 @@
                     <script src="i18n.js?v=12" defer></script>
                     <script src="i18n-dict.js?v=20261031-total-players" defer></script>
 					<!-- Modular application scripts: load in dependency order. -->
-					<script src="core.js?v=24" defer></script>
+					<script src="core.js?v=25" defer></script>
 					<script src="navigation.js?v=23" defer></script>
 					<script src="schedule.js?v=8" defer></script>
-					<script src="leaderboard.js?v=15" defer></script>
-					<script src="player.js?v=22" defer></script>
-					<script src="legion.js?v=23" defer></script>
-					<script src="export.js?v=20" defer></script>
+					<script src="leaderboard.js?v=16" defer></script>
+					<script src="player.js?v=23" defer></script>
+					<script src="legion.js?v=24" defer></script>
+					<script src="export.js?v=21" defer></script>
 					<script src="footer.js?v=18" defer></script>
 					<script src="effects.js?v=18" defer></script>
 					<script src="president-panel.js?v=12" defer></script>
@@ -340,6 +340,14 @@
 					<div class="search-bar-container">
 						<input type="text" id="search-input" class="search-input" placeholder="🔍 Search nickname or Game ID..." oninput="handleSearchInput(this.value)">
 					</div>
+					<div id="can-join-filter-wrap" class="alliance-filter-container">
+						<label for="can-join-filter">Can Join</label>
+						<select id="can-join-filter" class="alliance-filter-select" onchange="handleCanJoinFilter(this.value)">
+							<option value="">All</option>
+							<option value="yes">Can Join</option>
+							<option value="no">Cannot Join</option>
+						</select>
+					</div>
 					<div id="fdt-alliance-filter-wrap" class="alliance-filter-container hidden">
 						<label for="fdt-alliance-filter">View by Alliance</label>
 						<select id="fdt-alliance-filter" class="alliance-filter-select" onchange="handleFdtAllianceFilter(this.value)">
@@ -393,6 +401,7 @@
 								<th class="sortable" onclick="handleSortClick('game_id')">GAME ID <span class="sort-arrow" id="sort-arrow-game_id"></span></th>
 								<th class="sortable" onclick="handleSortClick('troops_power')">TROOPS POWER <span class="sort-arrow" id="sort-arrow-troops_power"></span></th>
 								<th class="sortable" onclick="handleSortClick('preferred_time')">PREFERRED TIME <span class="sort-arrow" id="sort-arrow-preferred_time"></span></th>
+								<th class="sortable" onclick="handleSortClick('can_join')">CAN JOIN <span class="sort-arrow" id="sort-arrow-can_join"></span></th>
                                 <th id="th-frostdragon-task" class="hidden-table-column">FROSTDRAGON TASK</th>
 								<th id="th-status" class="hidden-table-column">STATUS</th>
 								<th id="th-action" class="hidden-table-column">ACTION</th>
@@ -525,6 +534,15 @@
 						<option value="14:00 UTC">14:00 UTC</option>
 						<option value="19:00 UTC">19:00 UTC</option>
 					</select>
+				</div>
+
+				<!-- CAN JOIN — eligible for roster assignment -->
+				<div class="form-group form-group-checkbox">
+					<label class="checkbox-label" for="input-can-join">
+						<input type="checkbox" id="input-can-join" checked>
+						<span>Can Join</span>
+					</label>
+					<small class="form-hint">Uncheck if this member cannot join battle rosters (filterable in roster views).</small>
 				</div>
 
 				<div class="form-actions">

@@ -15,6 +15,8 @@ function openAddModal() {
     document.getElementById('input-gameid').value = "";
     document.getElementById('input-power').value = "";
     document.getElementById('input-preferred-time').value = "";
+    const canJoinAdd = document.getElementById('input-can-join');
+    if (canJoinAdd) canJoinAdd.checked = true;
 
     const allianceLabel = document.getElementById('form-alliance-label');
     const allianceSelectGroup = document.getElementById('group-alliance-select');
@@ -53,6 +55,9 @@ function openEditModal(id, playerOverride = null) {
     document.getElementById('input-gameid').value = player.game_id;
     document.getElementById('input-power').value = player.troops_power;
     document.getElementById('input-preferred-time').value = player.preferred_time || "";
+    const canJoinEl = document.getElementById('input-can-join');
+    // Default true when column is missing / null (older rows before migration)
+    if (canJoinEl) canJoinEl.checked = player.can_join !== false;
 
     document.getElementById('form-alliance-label').innerText = player.alliance;
     document.getElementById('group-alliance-select').style.display = "flex";
@@ -92,6 +97,8 @@ async function submitPlayerData() {
     const gameId = document.getElementById('input-gameid').value.trim();
     const power = parseInt(document.getElementById('input-power').value.trim()) || 0;
     const preferredTime = document.getElementById('input-preferred-time').value;
+    const canJoinEl = document.getElementById('input-can-join');
+    const canJoin = canJoinEl ? !!canJoinEl.checked : true;
 
     if (!nickname) { showToast("Please enter Nickname!", "warning"); return; }
     if (!gameId) { showToast("Please enter Game ID!", "warning"); return; }
@@ -127,7 +134,8 @@ async function submitPlayerData() {
             nickname: nickname,
             game_id: gameId,
             troops_power: power,
-            preferred_time: preferredTime
+            preferred_time: preferredTime,
+            can_join: canJoin
         });
 
         if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = originalLabel; }
@@ -146,6 +154,7 @@ async function submitPlayerData() {
             game_id: gameId,
             troops_power: power,
             preferred_time: preferredTime,
+            can_join: canJoin,
             updated_at: new Date().toISOString()
         }).eq('id', editingPlayerId);
 

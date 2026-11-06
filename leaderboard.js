@@ -99,7 +99,11 @@ function showTableError(message = "Unable to load data right now.") {
     if (pagination) pagination.style.display = "none";
     if (!tbody) return;
 
-    const totalColumns = viewMode === 'LEGION' ? (isAdmin ? 8 : 7) : (isAdmin ? 7 : 6);
+    // RANK…PREF + CAN JOIN (+ STATUS if legion) (+ FDT task if frost) (+ ACTION if admin)
+    let totalColumns = 7;
+    if (viewMode === 'LEGION') totalColumns++;
+    if (viewMode === 'LEGION' && typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') totalColumns++;
+    if (isAdmin) totalColumns++;
     tbody.innerHTML = `
         <tr class="table-state-row table-error-row">
             <td colspan="${totalColumns}">
@@ -140,6 +144,13 @@ function getDisplayData() {
         );
     }
 
+    // can_join: treat null/undefined as true (pre-migration rows)
+    if (canJoinFilter === 'yes') {
+        data = data.filter(p => p.can_join !== false);
+    } else if (canJoinFilter === 'no') {
+        data = data.filter(p => p.can_join === false);
+    }
+
     if (typeof isFdtAllianceFilterActive === 'function' && isFdtAllianceFilterActive()) {
         data = getFdtAllianceScoped(data);
     }
@@ -153,6 +164,10 @@ function getDisplayData() {
             if (currentSortField === 'troops_power') {
                 valA = Number(valA) || 0;
                 valB = Number(valB) || 0;
+            } else if (currentSortField === 'can_join') {
+                // true first when asc
+                valA = a.can_join === false ? 0 : 1;
+                valB = b.can_join === false ? 0 : 1;
             } else {
                 valA = (valA || '').toString().toLowerCase();
                 valB = (valB || '').toString().toLowerCase();
@@ -165,6 +180,41 @@ function getDisplayData() {
     }
 
     return data;
+}
+
+function handleCanJoinFilter(value) {
+    canJoinFilter = value || '';
+    currentPage = 1;
+    renderTable();
+}
+
+/** Toggle can_join for a player from the table checkbox (alliance staff). */
+async function togglePlayerCanJoin(id, checked) {
+    if (!isAdmin) return;
+    const player = loadedTroopsData.find(p => p.id === id);
+    if (!player) return;
+    if (!canEditAlliance(player.alliance)) {
+        showToast("You don't have permission to edit this player.", "warning");
+        return;
+    }
+    const client = getSupabase();
+    if (!client) return;
+
+    const next = !!checked;
+    const { error } = await client.from('troops_power')
+        .update({ can_join: next, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+    if (error) {
+        showToast("Failed to update Can Join: " + error.message, "error");
+        // Revert UI by re-render
+        renderTable();
+        return;
+    }
+    player.can_join = next;
+    showToast(next ? `${player.nickname} can join.` : `${player.nickname} marked as cannot join.`, "success");
+    // Keep filter in sync if active
+    if (canJoinFilter) renderTable();
 }
 
 let searchDebounceId = null;
@@ -194,7 +244,7 @@ function handleSortClick(field) {
 }
 
 function updateSortArrows() {
-    ['alliance', 'nickname', 'game_id', 'troops_power', 'preferred_time'].forEach(f => {
+    ['alliance', 'nickname', 'game_id', 'troops_power', 'preferred_time', 'can_join'].forEach(f => {
         const el = document.getElementById('sort-arrow-' + f);
         if (!el) return;
         el.innerText = (f === currentSortField) ? (currentSortDirection === 'asc' ? '▲' : '▼') : '';
@@ -350,8 +400,10 @@ function renderTable() {
     }
     // =========================================================
 
-    let totalColumns = 6;
+    // RANK + ALLIANCE + NICKNAME + GAME ID + POWER + PREF TIME + CAN JOIN = 7 base
+    let totalColumns = 7;
     if (viewMode === 'LEGION') totalColumns++;
+    if (viewMode === 'LEGION' && typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') totalColumns++; // FDT task
     if (isAdmin) totalColumns++;
 
     if (loadedTroopsData.length === 0) {
@@ -453,6 +505,12 @@ function renderTable() {
         else if (player.alliance === 'ZXC') allianceTextColor = '#ef4444';
         else if (player.alliance === 'CAT') allianceTextColor = '#ec4899';
 
+        const canJoin = player.can_join !== false;
+        const canToggleJoin = isAdmin && canEditAlliance(player.alliance);
+        const canJoinCell = canToggleJoin
+            ? `<td data-label="Can Join" class="can-join-cell"><label class="can-join-toggle" title="Toggle Can Join"><input type="checkbox" ${canJoin ? 'checked' : ''} onchange="togglePlayerCanJoin(${playerId}, this.checked)"><span>${canJoin ? 'Yes' : 'No'}</span></label></td>`
+            : `<td data-label="Can Join"><span class="can-join-badge ${canJoin ? 'can-join-yes' : 'can-join-no'}">${canJoin ? 'Yes' : 'No'}</span></td>`;
+
         row.innerHTML = `
             <td data-label="Rank"><strong style="color: ${rank !== '-' && rank <= 20 ? '#f59e0b' : '#f1f5f9'};">#${rank}</strong></td>
             <td data-label="Alliance"><span style="background: #1e2230; padding: 2px 8px; border-radius: 4px; font-weight: bold; color: ${allianceTextColor}; border: 1px solid ${allianceTextColor}40;">${safeAlliance}</span></td>
@@ -464,6 +522,7 @@ function renderTable() {
                 ? `<strong style="color: #22c55e;">${formattedPower}</strong>`
                 : `<span class="masked-value" title="Login to view">${MASKED_TEXT}</span>`}</td>
             <td data-label="Pref. Time"><span style="color: #f59e0b; font-weight: 600;">${safePrefTime}</span></td>
+            ${canJoinCell}
             ${taskCellHtml}
             ${statusCellHtml}
             ${actionCellHtml}
