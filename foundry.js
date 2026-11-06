@@ -825,9 +825,31 @@ async function foundryEnsureCandidates() {
 
 /** Persist a foundry_* shaped patch; remaps columns when mode is tundra. */
 async function foundryDbUpdate(id, patch) {
-    const dbPatch = foundryDbPatch(patch);
-    const { error } = await getSupabase().from('troops_power').update(dbPatch).eq('id', id);
+    let dbPatch = foundryDbPatch(patch);
+    let { error } = await getSupabase().from('troops_power').update(dbPatch).eq('id', id);
+    // If optional Phase-3 / cover columns are missing, drop them and retry once.
+    if (error && /column|does not exist|42703/i.test(String(error.message || error))) {
+        const stripped = { ...dbPatch };
+        delete stripped.foundry_p3; delete stripped.foundry_cover; delete stripped.foundry_ready;
+        delete stripped.tundra_p3; delete stripped.tundra_cover; delete stripped.tundra_ready;
+        if (Object.keys(stripped).length && Object.keys(stripped).length < Object.keys(dbPatch).length) {
+            foundryExt = false;
+            const retry = await getSupabase().from('troops_power').update(stripped).eq('id', id);
+            error = retry.error;
+            dbPatch = stripped;
+        }
+    }
     return { error, dbPatch };
+}
+
+function foundrySaveHint() {
+    return foundryMode === 'tundra'
+        ? foundryL('Pastikan supabase_tundra_foundry.sql sudah dijalankan di Supabase.', 'Make sure supabase_tundra_foundry.sql has been run in Supabase.')
+        : foundryL('Pastikan supabase_foundry_roster.sql dan supabase_foundry_p3.sql sudah dijalankan.', 'Make sure supabase_foundry_roster.sql and supabase_foundry_p3.sql have been run.');
+}
+function foundryErrMsg(e) {
+    const raw = (e && (e.message || e.details || e.hint)) ? String(e.message || e.details || e.hint) : '';
+    return raw ? ` ${raw}` : '';
 }
 
 function foundryInRoster(p) { return !!p.foundry_legion && !!p.foundry_status; }
@@ -840,7 +862,7 @@ function foundrySetTab(tab) {
     // Jangan izinkan pindah ke legion lain saat UI dikunci (buka dari LEGION 1/2)
     if (foundryLockedLegion && FOUNDRY_LEGIONS.includes(tab) && tab !== foundryLockedLegion) return;
     foundryTab = tab;
-    if (FOUNDRY_LEGIONS.includes(tab)) {
+    if (FOUNDRY_LEGIONS.includes(tab) || TUNDRA_ALLIANCE_B_LEGIONS.includes(tab)) {
         foundryMapLegion = tab;
         foundryChartLegion = tab;
     }
@@ -1244,7 +1266,7 @@ async function foundryRecalcTasks(legion) {
     try {
         const client = getSupabase();
         for (let i = 0; i < jobs.length; i += 20) {
-            const res = await Promise.all(jobs.slice(i, i + 20).map(j => client.from('troops_power').update(foundryDbPatch(j.patch)).eq('id', j.p.id)));
+            const res = await Promise.all(jobs.slice(i, i + 20).map(j => foundryDbUpdate(j.p.id, j.patch)));
             const bad = res.find(r => r.error);
             if (bad) throw bad.error;
         }
@@ -1386,10 +1408,8 @@ async function foundryAssign(legion, status, slot, idValue) {
             if (foundryMode === 'tundra') Object.assign(p, foundryDbPatch(patch));
         }
     } catch (e) {
-        const hint = foundryMode === 'tundra'
-            ? foundryL('Gagal menyimpan. Pastikan supabase_tundra_foundry.sql sudah dijalankan.', 'Save failed. Make sure supabase_tundra_foundry.sql has been run.')
-            : foundryL('Gagal menyimpan. Pastikan supabase_foundry_roster.sql (dan supabase_foundry_p3.sql) sudah dijalankan.', 'Save failed. Make sure supabase_foundry_roster.sql (and supabase_foundry_p3.sql) have been run.');
-        showToast(hint, 'error');
+        console.warn('foundryAssign failed', e);
+        showToast(foundryL('Gagal menyimpan.', 'Save failed.') + ' ' + foundrySaveHint() + foundryErrMsg(e), 'error');
     }
     foundryRender();
 }
@@ -1565,8 +1585,14 @@ async function foundryBulkSubmit() {
         const client = getSupabase();
         for (let i = 0; i < jobs.length; i += 20) {
             const batch = jobs.slice(i, i + 20);
-            const res = await Promise.all(batch.map(j => client.from('troops_power').update(foundryDbPatch(j.patch)).eq('id', j.p.id)));
-            res.forEach((r, k) => { if (!r.error) { Object.assign(batch[k].p, batch[k].patch); done++; } });
+            const res = await Promise.all(batch.map(j => foundryDbUpdate(j.p.id, j.patch)));
+            res.forEach((r, k) => {
+                if (!r.error) {
+                    Object.assign(batch[k].p, batch[k].patch);
+                    if (foundryMode === 'tundra') Object.assign(batch[k].p, foundryDbPatch(batch[k].patch));
+                    done++;
+                }
+            });
             const bad = res.find(r => r.error);
             if (bad) throw bad.error;
         }
@@ -1574,7 +1600,8 @@ async function foundryBulkSubmit() {
         closeFoundryBulkAssign();
         foundryTab = legion;
     } catch (e) {
-        showToast(foundryL(`Sebagian gagal (${done}/${jobs.length} tersimpan). Pastikan supabase_foundry_roster.sql dan supabase_foundry_p3.sql sudah dijalankan.`, `Partly failed (${done}/${jobs.length} saved). Make sure supabase_foundry_roster.sql and supabase_foundry_p3.sql have been run.`), 'error');
+        console.warn('foundryBulkSubmit failed', e);
+        showToast(foundryL(`Sebagian gagal (${done}/${jobs.length} tersimpan).`, `Partly failed (${done}/${jobs.length} saved).`) + ' ' + foundrySaveHint() + foundryErrMsg(e), 'error');
         foundryBulkSel.clear(); foundryBulkFilter(); foundryBulkUpdate();
     }
     foundryRender();
@@ -1633,7 +1660,8 @@ async function foundryAutoFill() {
         jobs.forEach(j => { Object.assign(j.p, j.patch); if (foundryMode === 'tundra') Object.assign(j.p, foundryDbPatch(j.patch)); });
         showToast(foundryL(`Roster Foundry dihitung ulang (${jobs.length} pemain diperbarui; Legion & status tetap).`, `Foundry roster recalculated (${jobs.length} players updated; Legion & status unchanged).`), gaps.length ? 'warning' : 'success');
     } catch (e) {
-        showToast(foundryL('Gagal mengisi otomatis. Pastikan supabase_foundry_roster.sql dan supabase_foundry_p3.sql sudah dijalankan.', 'Auto-fill failed. Make sure supabase_foundry_roster.sql and supabase_foundry_p3.sql have been run.'), 'error');
+        console.warn('foundryAutoFill failed', e);
+        showToast(foundryL('Gagal mengisi otomatis.', 'Auto-fill failed.') + ' ' + foundrySaveHint() + foundryErrMsg(e), 'error');
         await foundryLoad(); return;
     }
     foundryRender();
