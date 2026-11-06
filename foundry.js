@@ -1364,7 +1364,7 @@ function foundryRosterHtml(legion) {
     };
     battle += overRows('Battle', battleRow);
     subs += overRows('Substitute', subRow);
-    return `${foundryExtNotice()}${foundryWarningsHtml(legion)}${foundryTopBattlePowerHtml(legion, 20)}${foundryToolsHtml(legion)}${foundrySummaryHtml(legion)}${foundryRallyHtml(legion)}
+    return `${foundryExportBarHtml(legion)}${foundryExtNotice()}${foundryWarningsHtml(legion)}${foundryTopBattlePowerHtml(legion, 20)}${foundryToolsHtml(legion)}${foundrySummaryHtml(legion)}${foundryRallyHtml(legion)}
         <div class="fy-counter"><span class="fy-badge fy-b-battle">Battle ${nb} / ${foundryBattleMax()}</span><span class="fy-badge fy-b-sub">${foundryL('Cadangan', 'Substitutes')} ${ns} / ${foundrySubMax()}</span>${overB + overS ? `<span class="fy-badge fy-b-undeploy">⏸ Undeploy ${overB + overS}</span>` : ''}<span class="fy-badge fy-b-top20">TOP 20 Power: ${canViewSensitive() ? foundryFmtPower(foundryTopBattlePower(legion, 20).total) : (typeof MASKED_TEXT !== 'undefined' ? MASKED_TEXT : '••••')}</span></div>
         <div class="table-container"><table class="fy-table fy-table-battle">${battleHead}<tbody>${battle}</tbody></table></div>
         <h3 class="fy-h">Pemain Cadangan</h3>
@@ -1384,6 +1384,71 @@ async function foundryClear(p) {
         p.tundra_p1 = null; p.tundra_p2 = null; p.tundra_p3 = null;
         p.tundra_cover = null; p.tundra_ready = 0;
     }
+}
+
+// ---------- EXPORT CSV (per Legion / per roster Battle & Cadangan / semua Legion) ----------
+function foundryExportBarHtml(legion) {
+    const legs = foundryMode === 'tundra' ? foundryMoveTargets() : FOUNDRY_LEGIONS;
+    const opt = (v, id, en) => `<option value="${escapeHtml(v)}" style="background:#0f172a;color:#f8fafc">${foundryL(id, en)}</option>`;
+    return `<div class="fy-controls fy-export-bar">
+        <select id="fy-export-scope" class="btn-apply" aria-label="${foundryL('Cakupan export CSV', 'CSV export scope')}" style="min-height:44px">
+            ${opt('cur:all', `${legion}: Battle + Cadangan`, `${legion}: Battle + Substitute`)}
+            ${opt('cur:Battle', `${legion}: Battle saja`, `${legion}: Battle only`)}
+            ${opt('cur:Substitute', `${legion}: Cadangan saja`, `${legion}: Substitute only`)}
+            ${legs.filter(l => l !== legion).map(l => opt('leg:' + l, `${l}: Battle + Cadangan`, `${l}: Battle + Substitute`)).join('')}
+            ${opt('all:all', 'Semua Legion', 'All Legions')}
+        </select>
+        <button class="btn-apply export-btn" type="button" onclick="foundryExportCsv()">⬇ Export CSV</button>
+    </div>`;
+}
+function foundryCsvDate() { return new Date().toISOString().slice(0, 10); }
+function foundryExportCsv() {
+    if (!canViewSensitive()) { showToast(foundryL('Login untuk export roster.', 'Login to export the roster.'), 'warning'); return; }
+    const sel = document.getElementById('fy-export-scope');
+    const [kind, arg] = (sel ? sel.value : 'cur:all').split(/:(.*)/s);
+    const cur = foundryActiveLegion();
+    const allLegs = foundryMode === 'tundra' ? foundryMoveTargets() : FOUNDRY_LEGIONS;
+    let legs, status = null, tag;
+    if (kind === 'all') { legs = allLegs; tag = 'All_Legions'; }
+    else if (kind === 'leg') { legs = [arg]; tag = arg; }
+    else { legs = [cur]; status = arg === 'all' ? null : arg; tag = cur + (status ? '_' + status : ''); }
+    const order = Object.fromEntries(legs.map((l, i) => [l, i]));
+    const list = foundryPlayers.filter(p => foundryInRoster(p) && legs.includes(p.foundry_legion) && (!status || p.foundry_status === status))
+        .sort((a, b) => order[a.foundry_legion] - order[b.foundry_legion]
+            || (a.foundry_status === b.foundry_status ? 0 : a.foundry_status === 'Battle' ? -1 : 1)
+            || (Number(a.foundry_slot) || 0) - (Number(b.foundry_slot) || 0));
+    if (!list.length) { showToast(foundryL('Tidak ada pemain di roster untuk diexport.', 'No roster players to export.'), 'warning'); return; }
+    const headers = ['Legion', 'Roster', 'Slot', 'Alliance', 'Nickname', 'Game ID', 'Troops Power', 'Role', 'Phase 1', 'Phase 2', 'Phase 3', 'Joins Rally Leader', 'Can Join'];
+    const rallyOf = p => { if (p.foundry_role !== 'Joiner' || p.foundry_status !== 'Battle' || foundryIsOver(p)) return ''; const L = foundryJoinerOf(p, p.foundry_legion); return L ? foundryPlainNick(L) : ''; };
+    const rows = list.map(p => {
+        const battle = p.foundry_status === 'Battle';
+        const over = foundryIsOver(p);
+        const ph = n => (battle && !over && foundryTarget(p, n)) ? foundryName(foundryTarget(p, n)) : '';
+        return [
+            p.foundry_legion,
+            (battle ? 'Battle' : 'Substitute') + (over ? ' (Undeploy)' : ''),
+            p.foundry_slot == null ? '' : p.foundry_slot,
+            p.alliance || '',
+            foundryPlainNick(p),
+            p.game_id || '',
+            p.troops_power == null ? '' : p.troops_power,
+            battle && !over ? (p.foundry_role || '') : (battle ? '' : 'Substitute'),
+            ph(1), ph(2), ph(3),
+            rallyOf(p),
+            p.can_join === false ? 'No' : 'Yes'
+        ].map(csvSafeField).join(',');
+    });
+    // CRLF + UTF-8 BOM supaya Excel menampilkan nama non-Latin dengan benar (sama seperti export.js)
+    const csv = [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `3475_${foundryMode === 'tundra' ? 'TAL' : 'Foundry_IDN'}_${tag.replace(/\s+/g, '_')}_${foundryCsvDate()}.csv`;
+    a.style.visibility = 'hidden';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast(foundryL(`CSV berhasil diunduh (${list.length} pemain).`, `CSV downloaded (${list.length} players).`), 'success');
 }
 
 /** Hapus satu pemain dari roster (slot jadi kosong; data pemain di tabel tetap ada). */
@@ -2138,39 +2203,31 @@ async function foundryBulkRemoveSubmit() {
 
 // Salin roster untuk Discord. Mode: 'all' (per slot, semua fase) atau 1/2/3 (dikelompokkan per bangunan).
 async function foundryCopyText() {
-    const mode = (document.getElementById('foundry-copy-mode') || {}).value || 'all';
+    // Hanya nama pemain yang terdaftar di roster (tanpa tugas, fase, atau info lain).
     const which = (document.getElementById('foundry-copy-legion') || {}).value || 'all';
-    const legions = which === 'all' ? FOUNDRY_LEGIONS : [which];
-    const lines = [(foundryMode === 'tundra' ? '**TUNDRA ARM LEAGUE (TAL) — BATTLE PLAN**' : `**FOUNDRY BATTLE ROSTER — ${foundryTag()}**`) + (mode === 'all' ? '' : ` — Phase ${mode} (${FOUNDRY_PHASE_RANGE[Number(mode) - 1]} ${foundryL('mnt', 'min')})`)];
+    const legions = foundryLockedLegion ? [foundryLockedLegion]
+        : (which === 'all' ? foundryLegionList() : [which]);
+    const bySlot = (a, b) => (Number(a.foundry_slot) || 0) - (Number(b.foundry_slot) || 0);
+    const lines = [];
     legions.forEach(l => {
-        lines.push('', `__${l}__`);
-        if (mode === 'all') {
-            for (let i = 1; i <= foundryBattleMax(); i++) {
-                const p = foundryFind(l, 'Battle', i);
-                const jl = p && p.foundry_role === 'Joiner' ? foundryJoinerOf(p, l) : null;
-                if (p) lines.push(`${i}. ${foundryNick(p)} — ${p.foundry_role}${jl ? ' → ' + foundryNick(jl) : ''} | P1: ${foundryName(foundryTarget(p, 1))} | P2: ${foundryName(foundryTarget(p, 2))} | P3: ${foundryName(foundryTarget(p, 3))}`);
-            }
-        } else {
-            const ph = Number(mode);
-            FOUNDRY_KEYS.forEach(k => {
-                const ps = foundryAssigned(l, k, ph);
-                if (ps.length) lines.push(`**${foundryName(k)}** (${ps.length}): ` + ps.map(p => `#${p.foundry_slot} ${foundryNick(p)}`).join(', '));
-            });
+        const inLegion = status => foundryPlayers.filter(p => p.foundry_legion === l && p.foundry_status === status).sort(bySlot);
+        const battle = inLegion('Battle'), subs = inLegion('Substitute');
+        if (!battle.length && !subs.length) return;
+        if (lines.length) lines.push('');
+        lines.push(`**${l}**`);
+        battle.forEach((p, i) => lines.push(`${i + 1}. ${foundryNick(p)}`));
+        if (subs.length) {
+            lines.push('', `**${foundryL('Cadangan', 'Substitute')}**`);
+            subs.forEach((p, i) => lines.push(`${i + 1}. ${foundryNick(p)}`));
         }
-        if (mode === '2' || mode === 2) foundryRallyTeams(l).teams.forEach(t => lines.push(`**Rally ${foundryNick(t.leader)}** (${foundryFmtPower(t.power)}): ${t.joiners.map(j => foundryNick(j)).join(', ') || '-'}`));
-        const subs = [];
-        for (let i = 1; i <= foundrySubMax(); i++) {
-            const p = foundryFind(l, 'Substitute', i);
-            if (p) subs.push(foundryNick(p));
-        }
-        if (subs.length) lines.push(`${foundryL('Cadangan (masuk setelah menit 3)', 'Substitutes (enter after minute 3)')}: ${subs.join(', ')}`);
     });
+    if (!lines.length) { showToast(foundryL('Belum ada pemain di roster.', 'No players in the roster yet.'), 'warning'); return; }
     const text = lines.join('\n');
     const ok = typeof fdtCopyText === 'function' ? await fdtCopyText(text)
         : (navigator.clipboard && window.isSecureContext ? navigator.clipboard.writeText(text).then(() => true, () => false) : false);
     if (!ok) { showToast(foundryL('Browser tidak mengizinkan salin otomatis.', 'Your browser does not allow automatic copying.'), 'warning'); return; }
     showToast(text.length > 1900
-        ? foundryL(`Roster disalin (${text.length} karakter, lebih dari batas 2000 Discord: kirim per Legion atau per Phase).`, `Roster copied (${text.length} characters, over Discord's 2000 limit: send per Legion or per Phase).`)
+        ? foundryL(`Roster disalin (${text.length} karakter, lebih dari batas 2000 Discord: kirim per Legion).`, `Roster copied (${text.length} characters, over Discord's 2000 limit: send per Legion).`)
         : foundryL('Roster disalin (siap tempel ke Discord).', 'Roster copied (ready to paste into Discord).'), text.length > 1900 ? 'warning' : 'success');
 }
 
