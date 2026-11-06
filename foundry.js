@@ -995,6 +995,38 @@ function foundryWarningsHtml(legion, phase) {
     const counts = [nWarn ? `${nWarn} ${foundryL('peringatan', 'warning(s)')}` : '', nInfo ? `${nInfo} info` : ''].filter(Boolean).join(' · ');
     return `<details class="fy-warn-box" open><summary><strong>⚠️ ${foundryL('Peringatan roster', 'Roster warnings')} · ${legion}${phase ? ' · Phase ' + phase : ''}</strong> <span class="fy-warn-count">${counts}</span></summary><ul>${w.map(x => `<li class="fy-w-${x.lvl}">${escapeHtml(x.msg)}</li>`).join('')}</ul></details>`;
 }
+
+/** Top N Battle players by troops_power for a legion; returns { count, total, avg }. */
+function foundryTopBattlePower(legion, n = 20) {
+    const battle = foundryPlayers
+        .filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle')
+        .sort((a, b) => (Number(b.troops_power) || 0) - (Number(a.troops_power) || 0));
+    const top = battle.slice(0, n);
+    const total = top.reduce((s, p) => s + (Number(p.troops_power) || 0), 0);
+    return { count: top.length, total, avg: top.length ? total / top.length : 0, allCount: battle.length };
+}
+function foundryTopBattlePowerHtml(legion, n = 20) {
+    const { count, total, avg, allCount } = foundryTopBattlePower(legion, n);
+    if (!allCount) return '';
+    const label = foundryL(
+        `TOP ${n} Troops Power (Battle)`,
+        `TOP ${n} Troops Power (Battle)`
+    );
+    const detail = canViewSensitive()
+        ? foundryL(
+            `${foundryFmtPower(total)} dari ${count} pemain teratas${count < n && allCount < n ? ` (hanya ${allCount} Battle)` : ''}`,
+            `${foundryFmtPower(total)} from top ${count} player(s)${count < n && allCount < n ? ` (only ${allCount} Battle)` : ''}`
+          )
+        : (typeof MASKED_TEXT !== 'undefined' ? MASKED_TEXT : '••••');
+    const avgPart = canViewSensitive() && count
+        ? ` · ${foundryL('rata-rata', 'avg')} ${foundryFmtPower(avg)}`
+        : '';
+    return `<div class="fy-top20-box" title="${escapeHtml(label)}">
+        <span class="fy-top20-label">⚔️ ${escapeHtml(label)}</span>
+        <span class="fy-top20-value"><strong>${detail}</strong>${avgPart}</span>
+    </div>`;
+}
+
 function foundryExtNotice() {
     return foundryExt ? '' : `<div class="fy-warn-box"><strong>ℹ️ ${foundryL('Kolom baru belum ada', 'New columns missing')}</strong><p>${foundryL('Jalankan supabase_foundry_p3.sql di Supabase SQL Editor agar target Phase 3, cadangan pengganti, dan checklist aktif.', 'Run supabase_foundry_p3.sql in the Supabase SQL Editor to enable Phase 3 targets, substitute cover and the checklist.')}</p></div>`;
 }
@@ -1154,8 +1186,12 @@ function foundrySummaryHtml(legion) {
             if (foundryAssigned(legion, k, ph).length >= (FOUNDRY_MIN[ph][k] || 1)) have += b.m; });
         return `<td><b>${have.toLocaleString('en-US')}</b> / ${max.toLocaleString('en-US')}</td>`;
     }).join('');
+    const top20 = foundryTopBattlePower(legion, 20);
+    const top20Badge = top20.count
+        ? `<span class="fy-badge fy-b-top20">TOP 20 Power: ${canViewSensitive() ? foundryFmtPower(top20.total) : (typeof MASKED_TEXT !== 'undefined' ? MASKED_TEXT : '••••')} · ${top20.count} ${foundryL('pemain', 'players')}</span>`
+        : '';
     return `<details class="fy-sum" open><summary>🧮 ${foundryL('Ringkasan tugas & kalkulasi', 'Task summary & calculation')} · ${legion}</summary>
-        <div class="fy-counter">${roleBadges}</div>
+        <div class="fy-counter">${top20Badge}${roleBadges}</div>
         <div class="table-container"><table class="fy-table fy-sum-table"><thead><tr><th>${foundryL('Bangunan', 'Building')}</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th></tr></thead>
         <tbody>${rows}<tr class="fy-sum-total"><td>${foundryL('Potensi poin/menit (bangunan yang terjaga cukup)', 'Potential points/min (buildings with enough players)')}</td>${pot}</tr></tbody></table></div>
         <p class="fy-note">${foundryL('Format sel: jumlah pemain / minimal, lalu total Power pemain di bangunan itu. Merah = kurang dari minimal.', 'Cell format: players / minimum, then total power of players there. Red = below minimum.')}</p></details>`;
@@ -1254,8 +1290,8 @@ function foundryRosterHtml(legion) {
     let battle = '', subs = '';
     for (let i = 1; i <= foundryBattleMax(); i++) battle += battleRow(i);
     for (let i = 1; i <= foundrySubMax(); i++) subs += subRow(i);
-    return `${foundryExtNotice()}${foundryWarningsHtml(legion)}${foundryToolsHtml(legion)}${foundrySummaryHtml(legion)}${foundryRallyHtml(legion)}
-        <div class="fy-counter"><span class="fy-badge fy-b-battle">Battle ${nb} / ${foundryBattleMax()}</span><span class="fy-badge fy-b-sub">${foundryL('Cadangan', 'Substitutes')} ${ns} / ${foundrySubMax()}</span></div>
+    return `${foundryExtNotice()}${foundryWarningsHtml(legion)}${foundryTopBattlePowerHtml(legion, 20)}${foundryToolsHtml(legion)}${foundrySummaryHtml(legion)}${foundryRallyHtml(legion)}
+        <div class="fy-counter"><span class="fy-badge fy-b-battle">Battle ${nb} / ${foundryBattleMax()}</span><span class="fy-badge fy-b-sub">${foundryL('Cadangan', 'Substitutes')} ${ns} / ${foundrySubMax()}</span><span class="fy-badge fy-b-top20">TOP 20 Power: ${canViewSensitive() ? foundryFmtPower(foundryTopBattlePower(legion, 20).total) : (typeof MASKED_TEXT !== 'undefined' ? MASKED_TEXT : '••••')}</span></div>
         <div class="table-container"><table class="fy-table fy-table-battle">${battleHead}<tbody>${battle}</tbody></table></div>
         <h3 class="fy-h">Pemain Cadangan</h3>
         <p class="fy-note">${foundryL('Cadangan baru bisa masuk battlefield setelah menit 3. Tentukan slot yang akan digantikan sebelum battle.', 'Substitutes can only enter the battlefield after minute 3. Decide which slot each one replaces before the battle.')}</p>
