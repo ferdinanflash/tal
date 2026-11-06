@@ -478,6 +478,8 @@ function updateAdminUI() {
     if (scheduleBtn1b) scheduleBtn1b.classList.toggle('hidden', !canManageLegion('Legion 1 - Alliance B') || !(typeof isAllianceBEnabled === 'function' && isAllianceBEnabled()));
     if (scheduleBtn2b) scheduleBtn2b.classList.toggle('hidden', !canManageLegion('Legion 2 - Alliance B') || !(typeof isAllianceBEnabled === 'function' && isAllianceBEnabled()));
 
+    if (typeof updateResetJoinCheckBtn === 'function') updateResetJoinCheckBtn();
+
     // "Edit President Info" is only for full-access staff.
     const editPresidentBtn = document.getElementById('edit-president-btn');
     if (editPresidentBtn) editPresidentBtn.classList.toggle('hidden', !canEditPresidentInfo());

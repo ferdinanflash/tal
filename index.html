@@ -33,7 +33,7 @@
 				<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 				<link rel="icon" href="icons/favicon.ico" sizes="any">
 				<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-				<link rel="stylesheet" href="style.css?v=56">
+				<link rel="stylesheet" href="style.css?v=60">
 
 
 
@@ -41,10 +41,10 @@
                     <script src="i18n.js?v=12" defer></script>
                     <script src="i18n-dict.js?v=20261031-total-players" defer></script>
 					<!-- Modular application scripts: load in dependency order. -->
-					<script src="core.js?v=25" defer></script>
+					<script src="core.js?v=26" defer></script>
 					<script src="navigation.js?v=23" defer></script>
 					<script src="schedule.js?v=8" defer></script>
-					<script src="leaderboard.js?v=17" defer></script>
+					<script src="leaderboard.js?v=18" defer></script>
 					<script src="player.js?v=23" defer></script>
 					<script src="legion.js?v=24" defer></script>
 					<script src="export.js?v=21" defer></script>
@@ -349,6 +349,7 @@
 							<option value="no">Cannot Join</option>
 						</select>
 					</div>
+					<button id="reset-join-check-btn" class="btn-apply reset-join-check-btn hidden" type="button" onclick="resetJoinCheck()" title="Uncheck Can Join for every player in this alliance">↺ Reset Join Check</button>
 					<div id="fdt-alliance-filter-wrap" class="alliance-filter-container hidden">
 						<label for="fdt-alliance-filter">View by Alliance</label>
 						<select id="fdt-alliance-filter" class="alliance-filter-select" onchange="handleFdtAllianceFilter(this.value)">
@@ -1212,7 +1213,7 @@
 </div>
 
 	<script src="frostdragon.js?v=16"></script>
-	<script src="foundry.js?v=37"></script>
+	<script src="foundry.js?v=40"></script>
 	<script>
 	  // Register the service worker only on HTTPS or localhost.
 	  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

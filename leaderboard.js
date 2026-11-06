@@ -182,6 +182,61 @@ function getDisplayData() {
     return data;
 }
 
+// ---------- RESET JOIN CHECK ----------
+// Tombol per aliansi: menghapus (un-check) status centang Can Join semua pemain di aliansi yang sedang dibuka.
+// Nilai hasil reset: false = tanpa centang (tampil "No"). Ubah ke true bila ingin reset = centang semua.
+const JOIN_RESET_VALUE = false;
+
+/** Tampilkan tombol Reset Join Check hanya di halaman satu aliansi, untuk staff yang boleh mengedit aliansi itu. */
+function updateResetJoinCheckBtn() {
+    const btn = document.getElementById('reset-join-check-btn');
+    if (!btn) return;
+    const show = isAdmin && viewMode === 'ALLIANCE' && currentSelection && currentSelection !== 'ALL' && canEditAlliance(currentSelection);
+    btn.classList.toggle('hidden', !show);
+    if (show) btn.textContent = `↺ Reset Join Check (${currentSelection})`;
+}
+
+async function resetJoinCheck() {
+    if (!isAdmin || viewMode !== 'ALLIANCE' || !currentSelection || currentSelection === 'ALL') return;
+    const alliance = currentSelection;
+    if (!canEditAlliance(alliance)) {
+        showToast("You don't have permission to edit this alliance.", "warning");
+        return;
+    }
+    const target = JOIN_RESET_VALUE;
+    const affected = loadedTroopsData.filter(p => p.alliance === alliance && (p.can_join !== false) !== target);
+    if (!affected.length) {
+        showToast(target ? `All ${alliance} players are already checked.` : `No checked Can Join in ${alliance}.`, "info");
+        return;
+    }
+    const ok = await showCustomConfirmAsync(
+        target
+            ? `Check Can Join for ${affected.length} player(s) in ${alliance}?`
+            : `Reset Join Check for ${alliance}? ${affected.length} player(s) will be unchecked (Can Join = No). This cannot be undone.`,
+        '#f59e0b');
+    if (!ok) return;
+    const client = getSupabase();
+    if (!client) return;
+    const btn = document.getElementById('reset-join-check-btn');
+    if (btn) btn.disabled = true;
+    try {
+        let q = client.from('troops_power')
+            .update({ can_join: target, updated_at: new Date().toISOString() })
+            .eq('alliance', alliance);
+        q = target ? q.eq('can_join', false) : q.or('can_join.is.null,can_join.eq.true');
+        const { error } = await q;
+        if (error) throw error;
+        loadedTroopsData.forEach(p => { if (p.alliance === alliance) p.can_join = target; });
+        showToast(`Join Check reset for ${alliance} (${affected.length} player(s)).`, "success");
+        renderTable();
+    } catch (e) {
+        console.warn('resetJoinCheck failed', e);
+        showToast("Failed to reset Join Check: " + (e && e.message ? e.message : e), "error");
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
 function handleCanJoinFilter(value) {
     canJoinFilter = value || '';
     currentPage = 1;
@@ -317,6 +372,7 @@ function renderTable() {
         thAction.style.display = isAdmin ? "table-cell" : "none";
     }
     updateSensitiveUiState();
+    updateResetJoinCheckBtn();
 
     const taskHeader = document.getElementById('th-frostdragon-task');
     if (taskHeader) taskHeader.style.display = (viewMode === 'LEGION' && typeof getBattleTheme === 'function' && getBattleTheme() === 'frostdragon') ? 'table-cell' : 'none';

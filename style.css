@@ -2277,19 +2277,19 @@ select.btn-apply option:checked,
   #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)), #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) { table-layout: fixed; min-width: 0 !important; width: 100%; }
   #foundry-body .table-container:has(> .fy-table:not(.fy-sum-table)) { overflow-x: visible; }
   #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th, #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td, #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) th, #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) td { padding: 8px 6px; min-width: 0 !important; overflow: hidden; text-overflow: ellipsis; }
-  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(1), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(1) { width: 4%; }
-  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(2), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(2) { width: 18%; }
-  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(3), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(3) { width: 11%; }
-  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(4), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(4) { width: 8%; }
-  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(5), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(5) { width: 15%; }
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(1), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(1) { width: 3%; }
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(2), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(2) { width: 27%; }
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(3), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(3) { width: 10%; }
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(4), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(4) { width: 7%; }
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(5), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(5) { width: 14%; }
   #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(6), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(6),
   #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(7), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(7),
-  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(8), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(8) { width: 14.67%; }
+  #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) th:nth-child(8), #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td:nth-child(8) { width: 13%; }
   #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) th:nth-child(1), #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) td:nth-child(1) { width: 4%; }
-  #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) th:nth-child(2), #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) td:nth-child(2) { width: 24%; }
+  #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) th:nth-child(2), #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) td:nth-child(2) { width: 32%; }
   #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) th:nth-child(3), #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) td:nth-child(3) { width: 14%; }
   #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) th:nth-child(4), #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) td:nth-child(4) { width: 10%; }
-  #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) th:nth-child(5), #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) td:nth-child(5) { width: 48%; }
+  #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) th:nth-child(5), #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) td:nth-child(5) { width: 40%; }
   #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) td select, #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) td select,
   #foundry-body .fy-table:not(.fy-sum-table):has(thead th:nth-child(6)) .fy-manual-task, #foundry-body .fy-table:not(.fy-sum-table):not(:has(thead th:nth-child(6))) .fy-manual-task {
     width: 100% !important; min-width: 0 !important; max-width: 100%; font-size: .8rem; padding: 6px 4px; text-overflow: ellipsis;
@@ -2794,11 +2794,27 @@ body.state-tracker-modal-open { overflow: hidden; }
 .fy-move-actions { display: flex; gap: 8px; margin-top: 12px; }
 .fy-move-actions .btn-apply { flex: 1; }
 .fy-move-actions .btn-apply:disabled { opacity: 0.45; cursor: not-allowed; }
-.fy-move-pending {
-  margin: 10px 0; padding: 10px 12px;
-  border: 1px solid rgba(251, 191, 36, 0.5);
-  background: rgba(251, 191, 36, 0.08);
-  border-radius: 10px; color: #fde68a; font-size: 0.85rem;
+
+/* Kolom nama pemain: tampilkan nickname + (ALIANSI) selengkapnya */
+@media (min-width: 701px) {
+  #foundry-body .fy-who select { font-size: .76rem; padding: 6px 2px; text-overflow: clip; }
 }
-.fy-move-pending ul { margin: 6px 0 8px; padding-left: 18px; }
-.fy-move-x { background: none; border: none; color: #f87171; cursor: pointer; font-size: 1rem; padding: 0 4px; }
+
+/* Undeploy: pemain di luar batas 30 Battle / 20 Substitute */
+.fy-over-head td { background: rgba(251, 191, 36, 0.1) !important; color: #fbbf24; font-weight: 700; font-size: .8rem; text-align: left !important; }
+.fy-row-over > td:first-child { box-shadow: inset 3px 0 0 #f59e0b; }
+.fy-row-over { background: rgba(251, 191, 36, 0.04); }
+.fy-badge.fy-b-undeploy { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.5); }
+
+/* Reset Join Check (per aliansi) */
+.reset-join-check-btn { white-space: nowrap; border-color: rgba(245, 158, 11, 0.6); color: #fcd34d; }
+.reset-join-check-btn.hidden { display: none; }
+
+/* Nama pemain di roster ditampilkan penuh (teks, boleh turun baris); dropdown ganti pemain dibuat kecil */
+.fy-who-name { flex: 1 1 auto; min-width: 0; white-space: normal; overflow-wrap: anywhere; font-weight: 600; font-size: .85rem; line-height: 1.25; color: #f8fafc; text-align: left; }
+#foundry-body .fy-table.fy-table td .fy-who select.fy-who-sel.fy-who-sel {
+  flex: 0 0 28px !important; width: 28px !important; min-width: 28px !important; max-width: 28px !important;
+  height: 32px; padding: 0 !important; color: transparent !important; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  background: #121316 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23e2e8f0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / 12px;
+}
