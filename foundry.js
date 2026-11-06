@@ -2185,7 +2185,140 @@ async function openFoundrySharedMap(legion, phase) {
     await load(); timer=setInterval(load,30000);
     window.addEventListener('pagehide',()=>{if(timer)clearInterval(timer);},{once:true});
 }
-document.addEventListener('DOMContentLoaded',()=>{const q=new URLSearchParams(location.search);if(q.get('foundry')==='map'){foundryMode=q.get('mode')==='tundra'?'tundra':'foundry';openFoundrySharedMap(q.get('legion')||'Legion 1',q.get('phase')||1);}});
+
+// ---------- LIVE HUB (?live) — public index of Map / Chart share links ----------
+function buildFoundryLiveHubUrl() {
+    const u = new URL(location.href); u.search = ''; u.hash = '';
+    u.searchParams.set('live', '1');
+    u.searchParams.set('lang', foundryLanguage === 'en' ? 'en' : (foundryLanguage || 'id'));
+    return u.toString();
+}
+
+function openFoundryLiveHub() {
+    const old = document.getElementById('foundry-shared-map');
+    if (old) old.remove();
+    if (typeof foundryChartShareTimer !== 'undefined' && foundryChartShareTimer) {
+        clearInterval(foundryChartShareTimer);
+        foundryChartShareTimer = null;
+    }
+
+    const urlLang = new URLSearchParams(location.search).get('lang');
+    if (urlLang === 'en' || urlLang === 'id' || urlLang === 'zh') foundryLanguage = urlLang;
+    const en = () => foundryLanguage === 'en';
+
+    // Force tundra mode for TAL hub links; IDN Foundry is a separate section.
+    const prevMode = foundryMode;
+    foundryMode = 'tundra';
+
+    const mainLegs = FOUNDRY_LEGIONS.slice();
+    const bLegs = TUNDRA_ALLIANCE_B_LEGIONS.slice();
+
+    const card = (title, subtitle, items) => {
+        const links = items.map(it => {
+            const mapUrl = (() => {
+                foundryMode = it.mode;
+                return buildFoundryShareUrl(it.legion, it.phase || 1);
+            })();
+            const chartUrl = (() => {
+                foundryMode = it.mode;
+                return buildFoundryChartShareUrl(it.legion, it.phase || 1);
+            })();
+            return `<div class="fy-live-hub-item">
+                <div class="fy-live-hub-item-title">${escapeHtml(it.label)}</div>
+                <div class="fy-live-hub-item-actions">
+                    <a class="btn-apply fy-live-hub-link" href="${escapeHtml(mapUrl)}">🗺️ ${en() ? 'Live Map' : 'Live Map'}</a>
+                    <a class="btn-apply fy-live-hub-link" href="${escapeHtml(chartUrl)}">📊 ${en() ? 'Live Chart' : 'Live Chart'}</a>
+                </div>
+            </div>`;
+        }).join('');
+        return `<section class="fy-live-hub-section">
+            <h2>${escapeHtml(title)}</h2>
+            ${subtitle ? `<p class="fy-live-hub-sub">${escapeHtml(subtitle)}</p>` : ''}
+            <div class="fy-live-hub-grid">${links}</div>
+        </section>`;
+    };
+
+    const tundraMain = mainLegs.map(l => ({
+        mode: 'tundra', legion: l, phase: 1,
+        label: l
+    }));
+    const tundraB = bLegs.map(l => ({
+        mode: 'tundra', legion: l, phase: 1,
+        label: foundryShareLegionShortLabel(l)
+    }));
+    const idnFoundry = mainLegs.map(l => ({
+        mode: 'foundry', legion: l, phase: 1,
+        label: `${l} (IDN)`
+    }));
+
+    // restore mode after URL builds (build functions read foundryMode)
+    foundryMode = 'tundra';
+    const mainHtml = card(
+        en() ? 'Tundra Arm League — Main' : 'Tundra Arm League — Utama',
+        en() ? 'Primary Legion 1 & Legion 2 battle plans' : 'Rencana battle Legion 1 & Legion 2 utama',
+        tundraMain
+    );
+    const bHtml = card(
+        en() ? 'Tundra Arm League — Alliance B' : 'Tundra Arm League — Alliance B',
+        en() ? 'Alliance B Legion 1 & Legion 2 battle plans' : 'Rencana battle Legion 1 & Legion 2 Alliance B',
+        tundraB
+    );
+    foundryMode = 'foundry';
+    const idnHtml = card(
+        en() ? 'Foundry Battle — IDN' : 'Foundry Battle — IDN',
+        en() ? 'IDN Foundry Legion 1 & Legion 2' : 'Foundry IDN Legion 1 & Legion 2',
+        idnFoundry
+    );
+    foundryMode = prevMode;
+
+    const wrap = document.createElement('div');
+    wrap.id = 'foundry-shared-map';
+    wrap.className = 'fy-live-hub-page';
+    wrap.innerHTML = `
+      <div class="fdt-shared-bar fy-live-hub-bar">
+        <strong>📡 ${en() ? 'TAL Live Share Hub' : 'TAL Live Share Hub'}</strong>
+        <span class="fdt-shared-actions">
+          <button type="button" id="fy-live-hub-lang">${en()
+            ? '<span class="flag flag-id"></span> Bahasa Indonesia'
+            : '<span class="flag flag-gb"></span> English'}</button>
+          <button type="button" id="fy-live-hub-site">${en() ? 'Open site' : 'Buka situs'}</button>
+        </span>
+      </div>
+      <div class="fdt-shared-body fy-live-hub-body">
+        <p class="fy-live-hub-intro">${en()
+            ? 'Open a live, read-only Map or Chart for each roster. Links refresh from the database every 30 seconds.'
+            : 'Buka Map atau Chart live (hanya baca) untuk setiap roster. Link memuat ulang data dari database setiap 30 detik.'}</p>
+        ${mainHtml}
+        ${bHtml}
+        ${idnHtml}
+      </div>
+      <div class="fy-share-foot">${en()
+        ? 'Public hub · Bookmark https://tal.3475.web.id/?live'
+        : 'Hub publik · Bookmark https://tal.3475.web.id/?live'}</div>`;
+
+    document.body.appendChild(wrap);
+    document.body.classList.add('fy-shared-open');
+
+    wrap.querySelector('#fy-live-hub-lang').onclick = () => {
+        foundryLanguage = foundryLanguage === 'en' ? 'id' : 'en';
+        localStorage.setItem('foundry-language', foundryLanguage);
+        const u = new URL(location.href);
+        u.searchParams.set('live', '1');
+        u.searchParams.set('lang', foundryLanguage);
+        history.replaceState({}, '', u);
+        openFoundryLiveHub();
+    };
+    wrap.querySelector('#fy-live-hub-site').onclick = () => {
+        location.href = location.origin + location.pathname;
+    };
+}
+
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const q=new URLSearchParams(location.search);
+  if (q.has('live')) { openFoundryLiveHub(); return; }
+  if(q.get('foundry')==='map'){foundryMode=q.get('mode')==='tundra'?'tundra':'foundry';openFoundrySharedMap(q.get('legion')||'Legion 1',q.get('phase')||1);}
+});
 
 
 // ---------- VIEW AS CHART (+ LIVE SHARE) ----------
@@ -2444,6 +2577,7 @@ async function openFoundrySharedChart(legion, phase) {
 }
 document.addEventListener('DOMContentLoaded', () => {
     const q = new URLSearchParams(location.search);
+    if (q.has('live')) return;
     if (q.get('foundry') === 'chart') {
         foundryMode = q.get('mode') === 'tundra' ? 'tundra' : 'foundry';
         openFoundrySharedChart(q.get('legion') || 'Legion 1', Number(q.get('phase') || 1));
