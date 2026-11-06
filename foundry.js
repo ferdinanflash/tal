@@ -907,6 +907,8 @@ const FOUNDRY_I18N_PAIRS = [
 ['Cari Game ID / Nickname','Search Game ID / Nickname'],['Ketik game ID atau nickname...','Type game ID or nickname...'],
 ['Pilih semua yang tampil (sampai slot penuh)','Select all shown (until slots are full)'],
 ['Assign Terpilih','Assign Selected'],['0 dipilih','0 selected'],
+['Show only Can Join','Show only Can Join'],
+['Tidak bisa join','Cannot Join'],
 ['Alliance Category','Alliance Category'],['Kategori Aliansi','Alliance Category'],
 ['Semua Aliansi','All Alliances']
 ];
@@ -1354,8 +1356,11 @@ function foundryBulkShown() {
     const allianceEl = document.getElementById('fy-bulk-alliance');
     const alliance = allianceEl ? allianceEl.value : '';
     const q = document.getElementById('fy-bulk-search').value.trim().toLowerCase();
+    const onlyCanJoin = !!(document.getElementById('fy-bulk-only-can-join') || {}).checked;
     return foundryBulkCandidates().filter(p => {
         if (alliance && p.alliance !== alliance) return false;
+        // can_join null/undefined treated as true (pre-migration); only filter out explicit false
+        if (onlyCanJoin && p.can_join === false) return false;
         if (!q) return true;
         return (p.nickname || '').toLowerCase().includes(q) || String(p.game_id || '').toLowerCase().includes(q);
     });
@@ -1400,6 +1405,8 @@ async function openFoundryBulkAssign() {
     }
 
     document.getElementById('fy-bulk-search').value = '';
+    const onlyCanJoinEl = document.getElementById('fy-bulk-only-can-join');
+    if (onlyCanJoinEl) onlyCanJoinEl.checked = false;
     document.getElementById('fy-bulk-modal').classList.remove('hidden');
     foundryBulkUpdate();
     foundryBulkFilter();
@@ -1415,10 +1422,11 @@ function foundryBulkFilter() {
             const id = String(p.id);
             const gid = canViewSensitive() ? escapeHtml(p.game_id) : MASKED_TEXT;
             const alliance = p.alliance ? `${escapeHtml(p.alliance)} · ` : '';
-            return `<label class="bulk-remove-item">
+            const cannotTag = p.can_join === false ? ` · ${foundryL('Tidak bisa join', 'Cannot Join')}` : '';
+            return `<label class="bulk-remove-item${p.can_join === false ? ' bulk-cannot-join' : ''}">
                 <input type="checkbox" value="${escapeHtml(id)}" ${foundryBulkSel.has(id) ? 'checked' : ''} onchange="foundryBulkToggle(this)">
                 <span class="bulk-remove-name">${escapeHtml(p.nickname)}</span>
-                <span class="bulk-remove-meta">${alliance}${gid} · ${foundryPower(p)}</span>
+                <span class="bulk-remove-meta">${alliance}${gid} · ${foundryPower(p)}${cannotTag}</span>
             </label>`;
         }).join('');
     foundryBulkSummary();
