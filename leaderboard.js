@@ -189,31 +189,52 @@ function handleCanJoinFilter(value) {
 }
 
 /** Toggle can_join for a player from the table checkbox (alliance staff). */
-async function togglePlayerCanJoin(id, checked) {
+async function togglePlayerCanJoin(id, checked, checkboxEl) {
     if (!isAdmin) return;
-    const player = loadedTroopsData.find(p => p.id === id);
+    const player = loadedTroopsData.find(p => Number(p.id) === Number(id) || String(p.id) === String(id));
     if (!player) return;
     if (!canEditAlliance(player.alliance)) {
         showToast("You don't have permission to edit this player.", "warning");
+        if (checkboxEl) checkboxEl.checked = player.can_join !== false;
         return;
     }
     const client = getSupabase();
     if (!client) return;
 
     const next = !!checked;
+    const prev = player.can_join !== false;
+
+    // Optimistic UI: update label immediately
+    const labelSpan = checkboxEl
+        ? (checkboxEl.closest('label') || checkboxEl.parentElement)?.querySelector('.can-join-label')
+        : null;
+    if (labelSpan) {
+        labelSpan.textContent = next ? 'Yes' : 'No';
+        labelSpan.classList.toggle('can-join-yes', next);
+        labelSpan.classList.toggle('can-join-no', !next);
+    }
+    if (checkboxEl) checkboxEl.disabled = true;
+
     const { error } = await client.from('troops_power')
         .update({ can_join: next, updated_at: new Date().toISOString() })
         .eq('id', id);
 
+    if (checkboxEl) checkboxEl.disabled = false;
+
     if (error) {
         showToast("Failed to update Can Join: " + error.message, "error");
-        // Revert UI by re-render
-        renderTable();
+        // Revert optimistic UI
+        if (checkboxEl) checkboxEl.checked = prev;
+        if (labelSpan) {
+            labelSpan.textContent = prev ? 'Yes' : 'No';
+            labelSpan.classList.toggle('can-join-yes', prev);
+            labelSpan.classList.toggle('can-join-no', !prev);
+        }
         return;
     }
     player.can_join = next;
     showToast(next ? `${player.nickname} can join.` : `${player.nickname} marked as cannot join.`, "success");
-    // Keep filter in sync if active
+    // If a Can Join filter is active, row may need to leave/enter the view
     if (canJoinFilter) renderTable();
 }
 
@@ -508,7 +529,7 @@ function renderTable() {
         const canJoin = player.can_join !== false;
         const canToggleJoin = isAdmin && canEditAlliance(player.alliance);
         const canJoinCell = canToggleJoin
-            ? `<td data-label="Can Join" class="can-join-cell"><label class="can-join-toggle" title="Toggle Can Join"><input type="checkbox" ${canJoin ? 'checked' : ''} onchange="togglePlayerCanJoin(${playerId}, this.checked)"><span>${canJoin ? 'Yes' : 'No'}</span></label></td>`
+            ? `<td data-label="Can Join" class="can-join-cell"><label class="can-join-toggle" title="Toggle Can Join"><input type="checkbox" ${canJoin ? 'checked' : ''} onchange="togglePlayerCanJoin(${playerId}, this.checked, this)"><span class="can-join-label ${canJoin ? 'can-join-yes' : 'can-join-no'}">${canJoin ? 'Yes' : 'No'}</span></label></td>`
             : `<td data-label="Can Join"><span class="can-join-badge ${canJoin ? 'can-join-yes' : 'can-join-no'}">${canJoin ? 'Yes' : 'No'}</span></td>`;
 
         row.innerHTML = `
