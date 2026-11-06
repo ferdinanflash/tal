@@ -390,11 +390,12 @@ function foundryOpenLiveEditor(playerId, clientX, clientY) {
         document.body.appendChild(pop);
     }
     pop.innerHTML = `<div class="fy-live-editor-head">
-      <strong>#${p.foundry_slot || '—'} ${escapeHtml(p.nickname || '')}</strong>
+      <strong>#${p.foundry_slot || '—'} ${escapeHtml(foundryNick(p))}</strong>
       <button type="button" class="fy-live-editor-close" onclick="foundryCloseLiveEditor()" aria-label="Close">×</button>
     </div>
     <p class="fy-live-editor-meta">${escapeHtml(p.foundry_legion || '')} · ${escapeHtml(p.foundry_status || '')}${canViewSensitive() && p.game_id ? ' · ID ' + escapeHtml(p.game_id) : ''}</p>
     ${foundryLiveEditorFieldsHtml(p)}
+    ${foundryInRoster(p) ? `<button type="button" class="btn-apply fy-move-live-btn" onclick="foundryOpenMove('${p.id}')">⇄ ${foundryL('Pindah roster', 'Move roster')}</button>` : ''}
     <p class="fy-live-editor-note">${foundryL('Perubahan disimpan langsung.', 'Changes save instantly.')}</p>`;
     pop.classList.add('open');
     // Position near click, keep on-screen
@@ -425,6 +426,21 @@ document.addEventListener('click', e => {
     if (e.target.closest && e.target.closest('.fy-task-mark')) return;
     foundryCloseLiveEditor();
 });
+// Tag aliansi di samping nama pemain: "nick (ARX)". Hanya mode Tundra (TAL), karena pemain berasal dari banyak aliansi.
+// Ubah FOUNDRY_SHOW_ALLIANCE_TAG ke false untuk mematikan.
+const FOUNDRY_SHOW_ALLIANCE_TAG = true;
+function foundryAllianceTag(p) {
+    if (!FOUNDRY_SHOW_ALLIANCE_TAG || foundryMode !== 'tundra' || !p) return '';
+    return p.alliance == null ? '' : String(p.alliance).trim();
+}
+/** Nama tampil: nick + (ALIANSI). `max` hanya memotong bagian nick, tag aliansi selalu utuh. Teks mentah (belum di-escape). */
+function foundryNick(p, max) {
+    if (!p) return '-';
+    let n = String(p.nickname == null ? '' : p.nickname).trim();
+    if (max && n.length > max) n = n.slice(0, Math.max(1, max - 1)) + '…';
+    const a = foundryAllianceTag(p);
+    return a ? `${n} (${a})` : n;
+}
 function foundryName(key) { return (FOUNDRY_B[key] || {}).n || '-'; }
 function foundryPower(p) { return canViewSensitive() ? Number(p.troops_power || 0).toLocaleString('en-US') : MASKED_TEXT; }
 function foundrySetPlayers(data) {
@@ -1160,7 +1176,7 @@ function foundryJoinerMarchHtml(legion) {
     const M = foundryJoinerMarches;
     const opt = [4, 5, 6].map(n => `<option value="${n}" ${n === M ? 'selected' : ''}>${n}</option>`).join('');
     const sel = `<label class="fy-note">${foundryL('March per pemain', 'Marches per player')}: <select onchange="foundrySetJoinerMarches(this.value)">${opt}</select></label>`;
-    const rows = plan.joiners.map(j => `<tr><td style="text-align:left">#${j.foundry_slot} ${escapeHtml(j.nickname)}<small>${j.foundry_role} · ${foundryPower(j)}</small></td>${[1, 2, 3].map(ph => {
+    const rows = plan.joiners.map(j => `<tr><td style="text-align:left">#${j.foundry_slot} ${escapeHtml(foundryNick(j))}<small>${j.foundry_role} · ${foundryPower(j)}</small></td>${[1, 2, 3].map(ph => {
         const a = plan.phases[ph].asg.get(j.id);
         return `<td>${a.length ? a.map(k => escapeHtml(foundryName(k))).join('<br>') : '–'}<small>${a.length}/${M} march</small></td>`;
     }).join('')}</tr>`).join('');
@@ -1191,13 +1207,13 @@ function foundryRallyHtml(legion) {
     const { teams, orphans } = foundryRallyTeams(legion);
     if (!teams.length && !orphans.length) return '';
     const total = teams.reduce((t, x) => t + x.power, 0) || 1;
-    const nm = p => `#${p.foundry_slot} ${escapeHtml(p.nickname)}`;
+    const nm = p => `#${p.foundry_slot} ${escapeHtml(foundryNick(p))}`;
     const rows = teams.map(t => {
         const js = t.joiners.length ? t.joiners.map(j => `${nm(j)} <small>${foundryPower(j)}</small>`).join('<br>') : '<span class="fy-empty">–</span>';
         return `<tr><td style="text-align:left">${nm(t.leader)}<small>${foundryPower(t.leader)} · P1 ${escapeHtml(foundryName(t.leader.foundry_p1))}</small></td>
             <td style="text-align:left">${js}</td><td>${t.joiners.length}</td><td><b>${foundryFmtPower(t.power)}</b><small>${Math.round(t.power / total * 100)}%</small></td></tr>`;
     }).join('');
-    const warn = orphans.length ? `<p class="fy-note fy-w-warn">⚠️ ${foundryL(`${orphans.length} Joiner belum punya Rally Leader: ${orphans.map(p => p.nickname).join(', ')}.`, `${orphans.length} Joiner(s) have no Rally Leader: ${orphans.map(p => p.nickname).join(', ')}.`)}</p>` : '';
+    const warn = orphans.length ? `<p class="fy-note fy-w-warn">⚠️ ${foundryL(`${orphans.length} Joiner belum punya Rally Leader: ${orphans.map(p => foundryNick(p)).join(', ')}.`, `${orphans.length} Joiner(s) have no Rally Leader: ${orphans.map(p => foundryNick(p)).join(', ')}.`)}</p>` : '';
     const body = teams.length ? `<div class="table-container"><table class="fy-table fy-sum-table"><thead><tr><th>Rally Leader</th><th>Joiner</th><th>${foundryL('Jumlah', 'Count')}</th><th>${foundryL('Power tim', 'Team power')}</th></tr></thead><tbody>${rows}</tbody></table></div>` : '';
     return `<details class="fy-sum" open><summary>🤝 ${foundryL('Kalkulasi Joiner otomatis (garrison)', 'Automatic Joiner calculation (garrison)')} · ${legion}</summary>${foundryGarrisonHtml(legion)}${body}${warn}
         <p class="fy-note">${foundryL('Joiner diurutkan dari Power tertinggi, dipasangkan ke Rally Leader dengan target Phase 1 yang sama, lalu diseimbangkan menurut total Power tim (Power Rally Leader ikut dihitung). Diperbarui otomatis saat roster atau role berubah.', 'Joiners are ranked by power, matched to Rally Leaders with the same Phase 1 target, then balanced by total team power (the Rally Leader\'s power is included). Updates automatically when the roster or roles change.')}</p></details>`;
@@ -1284,15 +1300,15 @@ function foundryRosterHtml(legion) {
     const edit = foundryCanEdit();
     const free = foundryPlayers.filter(p => !foundryInRoster(p));
     const opts = (cur) => '<option value="">— kosong —</option>' +
-        (cur ? `<option value="${cur.id}" selected>${escapeHtml(cur.nickname)}</option>` : '') +
-        free.map(p => `<option value="${p.id}">${escapeHtml(p.nickname)}</option>`).join('');
+        (cur ? `<option value="${cur.id}" selected>${escapeHtml(foundryNick(cur))}</option>` : '') +
+        free.map(p => `<option value="${p.id}">${escapeHtml(foundryNick(p))}</option>`).join('');
     const buildingOptions = (current) => '<option value="">— kosong —</option>' + FOUNDRY_KEYS.map(k => `<option value="${k}" ${current === k ? 'selected' : ''}>${escapeHtml(FOUNDRY_B[k].n)}</option>`).join('');
     const targetCell = (p, field, cur, label) => edit && p
         ? `<select class="fy-manual-task" aria-label="${label} ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','${field}',this.value)">${buildingOptions(cur)}</select>`
         : escapeHtml(foundryName(cur));
     const who = (p, status, slot) => edit
-        ? `<select aria-label="Player slot ${slot}" onchange="foundryAssign('${legion}','${status}',${slot},this.value)">${opts(p)}</select>`
-        : (p ? escapeHtml(p.nickname) : '<span class="fy-empty">kosong</span>');
+        ? `<div class="fy-who"><select aria-label="Player slot ${slot}" onchange="foundryAssign('${legion}','${status}',${slot},this.value)">${opts(p)}</select>${p ? `<button type="button" class="fy-move-btn" title="${foundryL('Pindahkan ke roster lain', 'Move to another roster')}" aria-label="${foundryL('Pindahkan ke roster lain', 'Move to another roster')}" onclick="foundryOpenMove('${p.id}')">⇄</button>` : ''}</div>`
+        : (p ? escapeHtml(foundryNick(p)) : '<span class="fy-empty">kosong</span>');
     const idCell = p => p && canViewSensitive() ? escapeHtml(p.game_id) : (p ? MASKED_TEXT : '');
 
     const battleRow = (slot) => {
@@ -1303,7 +1319,7 @@ function foundryRosterHtml(legion) {
             ? `<select class="fy-manual-task" aria-label="Task for ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_role',this.value)">${[...FOUNDRY_ROLES, 'Substitute'].map(r => `<option value="${r}" ${role === r ? 'selected' : ''}>${escapeHtml(r)}</option>`).join('')}</select>`
             : escapeHtml(role);
         let rallyTag = '';
-        if (p && role === 'Joiner') { const L = foundryJoinerOf(p, legion); rallyTag = L ? `<small class="fy-rally-tag">→ #${L.foundry_slot} ${escapeHtml(L.nickname)}</small>` : `<small class="fy-rally-tag fy-w-warn">${foundryL('belum ada Rally Leader', 'no Rally Leader')}</small>`; }
+        if (p && role === 'Joiner') { const L = foundryJoinerOf(p, legion); rallyTag = L ? `<small class="fy-rally-tag">→ #${L.foundry_slot} ${escapeHtml(foundryNick(L))}</small>` : `<small class="fy-rally-tag fy-w-warn">${foundryL('belum ada Rally Leader', 'no Rally Leader')}</small>`; }
         else if (p && role === 'Rally Leader') { const T = foundryRallyTeams(legion).teams.find(x => x.leader.id === p.id); if (T) rallyTag = `<small class="fy-rally-tag">${T.joiners.length} Joiner · ${foundryFmtPower(T.power)}</small>`; }
         if (p && (role === 'Joiner' || role === 'Rally Leader')) { const a = foundryJoinerPlan(legion).phases; const n = [1, 2, 3].map(ph => (a[ph].asg.get(p.id) || []).length); rallyTag += `<small class="fy-rally-tag">${foundryL('Penguatan', 'Reinforce')}: ${n.join('/')} march</small>`; }
         return `<tr class="${p ? '' : 'fy-row-empty'}"><td>${slot}</td><td>${who(p, 'Battle', slot)}</td><td>${idCell(p)}</td><td>${p ? foundryPower(p) : ''}</td><td>${roleCell}${rallyTag}</td><td>${targetCell(p, 'foundry_p1', k1, 'Phase 1')}</td><td>${targetCell(p, 'foundry_p2', k2, 'Phase 2')}</td>${foundryExt ? `<td>${targetCell(p, 'foundry_p3', k3, 'Phase 3')}</td>` : ''}</tr>`;
@@ -1317,12 +1333,12 @@ function foundryRosterHtml(legion) {
                 let o = `<option value="">— ${foundryL('belum ditentukan', 'not set')} —</option>`;
                 for (let i = 1; i <= foundryBattleMax(); i++) {
                     const b = foundryFind(legion, 'Battle', i);
-                    o += `<option value="${i}" ${c === i ? 'selected' : ''}>#${i} ${b ? escapeHtml(b.nickname) + ' (' + escapeHtml(b.foundry_role || '-') + ')' : foundryL('(kosong)', '(empty)')}</option>`;
+                    o += `<option value="${i}" ${c === i ? 'selected' : ''}>#${i} ${b ? escapeHtml(foundryNick(b)) + ' (' + escapeHtml(b.foundry_role || '-') + ')' : foundryL('(kosong)', '(empty)')}</option>`;
                 }
                 cover = `<select class="fy-manual-task" aria-label="Cover for ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_cover',this.value)">${o}</select>`;
             } else {
                 const b = c ? foundryFind(legion, 'Battle', c) : null;
-                cover = c ? `#${c}${b ? ' ' + escapeHtml(b.nickname) + ' (' + escapeHtml(b.foundry_role || '-') + ')' : ''}` : '-';
+                cover = c ? `#${c}${b ? ' ' + escapeHtml(foundryNick(b)) + ' (' + escapeHtml(b.foundry_role || '-') + ')' : ''}` : '-';
             }
         }
         return `<tr class="${p ? '' : 'fy-row-empty'}"><td>${slot}</td><td>${who(p, 'Substitute', slot)}</td><td>${idCell(p)}</td><td>${p ? foundryPower(p) : ''}</td>${foundryExt ? `<td>${cover}</td>` : ''}</tr>`;
@@ -1334,7 +1350,7 @@ function foundryRosterHtml(legion) {
     let battle = '', subs = '';
     for (let i = 1; i <= foundryBattleMax(); i++) battle += battleRow(i);
     for (let i = 1; i <= foundrySubMax(); i++) subs += subRow(i);
-    return `${foundryExtNotice()}${foundryWarningsHtml(legion)}${foundryTopBattlePowerHtml(legion, 20)}${foundryToolsHtml(legion)}${foundrySummaryHtml(legion)}${foundryRallyHtml(legion)}
+    return `${foundryMovePendingHtml()}${foundryExtNotice()}${foundryWarningsHtml(legion)}${foundryTopBattlePowerHtml(legion, 20)}${foundryToolsHtml(legion)}${foundrySummaryHtml(legion)}${foundryRallyHtml(legion)}
         <div class="fy-counter"><span class="fy-badge fy-b-battle">Battle ${nb} / ${foundryBattleMax()}</span><span class="fy-badge fy-b-sub">${foundryL('Cadangan', 'Substitutes')} ${ns} / ${foundrySubMax()}</span><span class="fy-badge fy-b-top20">TOP 20 Power: ${canViewSensitive() ? foundryFmtPower(foundryTopBattlePower(legion, 20).total) : (typeof MASKED_TEXT !== 'undefined' ? MASKED_TEXT : '••••')}</span></div>
         <div class="table-container"><table class="fy-table fy-table-battle">${battleHead}<tbody>${battle}</tbody></table></div>
         <h3 class="fy-h">Pemain Cadangan</h3>
@@ -1411,6 +1427,199 @@ async function foundryAssign(legion, status, slot, idValue) {
         console.warn('foundryAssign failed', e);
         showToast(foundryL('Gagal menyimpan.', 'Save failed.') + ' ' + foundrySaveHint() + foundryErrMsg(e), 'error');
     }
+    foundryRender();
+}
+
+
+// ---------- PINDAH PEMAIN (swap 1 pemain antar roster) ----------
+// Satu pemain bisa dipindahkan dari roster mana saja ke roster mana saja: Legion 1, Legion 2 dan
+// (bila Alliance B aktif di President Panel) Legion 1 - Alliance B, Legion 2 - Alliance B.
+// Batas per roster: 30 Battle / foundrySubMax() Substitute (Tundra = 20). Bila roster tujuan sudah penuh,
+// pemain DILEWATI SEMENTARA: tetap di roster asal dan masuk daftar "Tertunda" (hanya di sesi ini)
+// yang bisa dicoba lagi dengan tombol "Coba lagi" setelah ada slot kosong.
+let foundryMovePendingList = [];   // [{ id, legion, status }]
+
+function foundryMoveTargets() {
+    const extra = (foundryMode === 'tundra' && typeof isAllianceBEnabled === 'function' && isAllianceBEnabled()) ? TUNDRA_ALLIANCE_B_LEGIONS : [];
+    return [...FOUNDRY_LEGIONS, ...extra];
+}
+function foundryMoveCount(legion, status) {
+    return foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === status).length;
+}
+function foundryMoveMax(status) { return status === 'Battle' ? foundryBattleMax() : foundrySubMax(); }
+/** Nomor slot kosong pada legion+status (pemain `ignoreId` dianggap tidak ada). */
+function foundryMoveFreeSlots(legion, status, ignoreId) {
+    const max = foundryMoveMax(status);
+    const used = new Set(foundryPlayers
+        .filter(p => p.foundry_legion === legion && p.foundry_status === status && String(p.id) !== String(ignoreId))
+        .map(p => Number(p.foundry_slot)));
+    const free = [];
+    for (let i = 1; i <= max; i++) if (!used.has(i)) free.push(i);
+    // slot belum bernomor tetap memakan kapasitas
+    const unnumbered = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === status
+        && String(p.id) !== String(ignoreId) && !(Number(p.foundry_slot) >= 1 && Number(p.foundry_slot) <= max)).length;
+    return free.slice(0, Math.max(0, free.length - unnumbered));
+}
+
+/** Pindahkan satu pemain. Mengembalikan { ok, reason?, slot? }. reason: 'full' | 'same'. */
+async function foundryMovePlayer(p, legion, status, slot) {
+    if (p.foundry_legion === legion && p.foundry_status === status) return { ok: false, reason: 'same' };
+    const free = foundryMoveFreeSlots(legion, status, p.id);
+    if (!free.length) return { ok: false, reason: 'full' };
+    const useSlot = slot && free.includes(Number(slot)) ? Number(slot) : free[0];
+    const patch = foundryPatchFor(legion, status, useSlot);
+    const { error } = await foundryDbUpdate(p.id, patch);
+    if (error) throw error;
+    Object.assign(p, patch);
+    if (foundryMode === 'tundra') Object.assign(p, foundryDbPatch(patch));
+    return { ok: true, slot: useSlot };
+}
+
+function foundryMovePendingSet(id, legion, status) {
+    foundryMovePendingList = foundryMovePendingList.filter(x => String(x.id) !== String(id));
+    foundryMovePendingList.push({ id: String(id), legion, status });
+}
+function foundryMovePendingDrop(id) {
+    foundryMovePendingList = foundryMovePendingList.filter(x => String(x.id) !== String(id));
+}
+
+function foundryCloseMove() {
+    const m = document.getElementById('fy-move-modal');
+    if (m) m.remove();
+}
+
+function foundryOpenMove(playerId) {
+    if (!foundryCanEdit()) { showToast(foundryDenied(), 'warning'); return; }
+    const p = foundryPlayers.find(x => String(x.id) === String(playerId));
+    if (!p || !foundryInRoster(p)) return;
+    foundryCloseMove();
+    const targets = foundryMoveTargets();
+    const cur = p.foundry_legion;
+    const pair = cur.endsWith(' - Alliance B') ? cur.replace(' - Alliance B', '') : cur + ' - Alliance B';
+    const others = targets.filter(l => l !== cur);
+    const defLegion = others.includes(pair) ? pair : (others[0] || cur);
+    const legOpts = targets.map(l => {
+        const here = l === cur ? ` (${foundryL('sekarang', 'current')})` : '';
+        return `<option value="${escapeHtml(l)}" ${l === defLegion ? 'selected' : ''}>${escapeHtml(l)}${here} — Battle ${foundryMoveCount(l, 'Battle')}/${foundryBattleMax()} · ${foundryL('Cadangan', 'Sub')} ${foundryMoveCount(l, 'Substitute')}/${foundrySubMax()}</option>`;
+    }).join('');
+    const stOpts = ['Battle', 'Substitute'].map(st =>
+        `<option value="${st}" ${st === p.foundry_status ? 'selected' : ''}>${st === 'Battle' ? 'Battle' : foundryL('Cadangan (Substitute)', 'Substitute')}</option>`).join('');
+    const m = document.createElement('div');
+    m.id = 'fy-move-modal';
+    m.className = 'fy-move-modal';
+    m.dataset.pid = String(p.id);
+    m.innerHTML = `<div class="fy-move-backdrop" onclick="foundryCloseMove()"></div>
+      <div class="fy-move-box" role="dialog" aria-modal="true" aria-label="${foundryL('Pindah pemain', 'Move player')}">
+        <div class="fy-live-editor-head"><strong>⇄ ${foundryL('Pindah pemain', 'Move player')}</strong>
+          <button type="button" class="fy-live-editor-close" onclick="foundryCloseMove()" aria-label="Close">×</button></div>
+        <p class="fy-live-editor-meta"><b>${escapeHtml(foundryNick(p))}</b><br>${foundryL('Dari', 'From')}: ${escapeHtml(cur)} · ${escapeHtml(p.foundry_status)} #${escapeHtml(p.foundry_slot || '—')}</p>
+        <div class="fy-live-fields">
+          <label class="fy-live-field-full">${foundryL('Roster tujuan', 'Target roster')}<select id="fy-move-legion" onchange="foundryMoveRefresh()">${legOpts}</select></label>
+          <label>${foundryL('Status', 'Status')}<select id="fy-move-status" onchange="foundryMoveRefresh()">${stOpts}</select></label>
+          <label>${foundryL('Slot', 'Slot')}<select id="fy-move-slot"></select></label>
+        </div>
+        <p id="fy-move-hint" class="fy-move-hint"></p>
+        <div class="fy-move-actions">
+          <button type="button" class="btn-apply" id="fy-move-go" onclick="foundryMoveSubmit()">⇄ ${foundryL('Pindahkan', 'Move')}</button>
+          <button type="button" class="btn-apply" onclick="foundryCloseMove()">${foundryL('Batal', 'Cancel')}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(m);
+    foundryMoveRefresh();
+}
+
+/** Perbarui pilihan slot + keterangan kapasitas sesuai roster tujuan & status. */
+function foundryMoveRefresh() {
+    const m = document.getElementById('fy-move-modal');
+    if (!m) return;
+    const p = foundryPlayers.find(x => String(x.id) === m.dataset.pid);
+    if (!p) return;
+    const legion = document.getElementById('fy-move-legion').value;
+    const status = document.getElementById('fy-move-status').value;
+    const slotSel = document.getElementById('fy-move-slot');
+    const hint = document.getElementById('fy-move-hint');
+    const same = legion === p.foundry_legion && status === p.foundry_status;
+    const free = foundryMoveFreeSlots(legion, status, p.id);
+    const max = foundryMoveMax(status);
+    if (same) {
+        slotSel.innerHTML = '<option value="">—</option>';
+        hint.className = 'fy-move-hint fy-move-hint-warn';
+        hint.textContent = foundryL('Pilih roster atau status yang berbeda dari posisi sekarang.', 'Pick a roster or status different from the current one.');
+    } else if (!free.length) {
+        slotSel.innerHTML = `<option value="">${foundryL('Penuh', 'Full')}</option>`;
+        hint.className = 'fy-move-hint fy-move-hint-warn';
+        hint.textContent = foundryL(
+            `⚠️ ${legion} · ${status} sudah penuh (${max}/${max}). Pemain dilewati sementara dan tetap di roster asal; bisa dicoba lagi nanti.`,
+            `⚠️ ${legion} · ${status} is full (${max}/${max}). The player is skipped for now and stays in the current roster; you can retry later.`);
+    } else {
+        slotSel.innerHTML = `<option value="">${foundryL('Otomatis', 'Auto')} (#${free[0]})</option>` + free.map(n => `<option value="${n}">#${n}</option>`).join('');
+        hint.className = 'fy-move-hint';
+        hint.textContent = foundryL(`Slot kosong: ${free.length} dari ${max}. Role & target mengikuti template slot; gunakan Hitung Tugas / Isi Otomatis untuk menghitung ulang.`,
+            `Free slots: ${free.length} of ${max}. Role & targets follow the slot template; use Calculate Tasks / Auto-fill to recalculate.`);
+    }
+    const go = document.getElementById('fy-move-go');
+    if (go) go.disabled = same;
+}
+
+async function foundryMoveSubmit() {
+    const m = document.getElementById('fy-move-modal');
+    if (!m) return;
+    if (!foundryCanEdit()) { showToast(foundryDenied(), 'warning'); return; }
+    const p = foundryPlayers.find(x => String(x.id) === m.dataset.pid);
+    if (!p) { foundryCloseMove(); return; }
+    const legion = document.getElementById('fy-move-legion').value;
+    const status = document.getElementById('fy-move-status').value;
+    const slot = Number(document.getElementById('fy-move-slot').value) || 0;
+    if (foundryMode === 'tundra' && typeof canManageLegion === 'function' && !canManageLegion(legion)) {
+        showToast(foundryL(`Anda tidak punya izin untuk ${legion}.`, `You do not have permission for ${legion}.`), 'warning');
+        return;
+    }
+    const from = `${p.foundry_legion} · ${p.foundry_status}`;
+    try {
+        const r = await foundryMovePlayer(p, legion, status, slot);
+        if (r.ok) {
+            foundryMovePendingDrop(p.id);
+            showToast(foundryL(`${foundryNick(p)} dipindah: ${from} → ${legion} · ${status} #${r.slot}.`, `${foundryNick(p)} moved: ${from} → ${legion} · ${status} #${r.slot}.`), 'success');
+        } else if (r.reason === 'full') {
+            foundryMovePendingSet(p.id, legion, status);
+            showToast(foundryL(`${legion} · ${status} penuh. ${foundryNick(p)} dilewati sementara (tetap di ${from}).`, `${legion} · ${status} is full. ${foundryNick(p)} skipped for now (stays in ${from}).`), 'warning');
+        }
+    } catch (e) {
+        console.warn('foundryMovePlayer failed', e);
+        showToast(foundryL('Gagal memindahkan pemain.', 'Failed to move player.') + ' ' + foundrySaveHint() + foundryErrMsg(e), 'error');
+    }
+    foundryCloseMove();
+    foundryRender();
+}
+
+function foundryMovePendingHtml() {
+    if (!foundryMovePendingList.length || !foundryCanEdit()) return '';
+    const items = foundryMovePendingList.map(it => {
+        const p = foundryPlayers.find(x => String(x.id) === String(it.id));
+        if (!p) return '';
+        return `<li>${escapeHtml(foundryNick(p))} <small>(${escapeHtml(p.foundry_legion || '')} · ${escapeHtml(p.foundry_status || '')})</small> → <b>${escapeHtml(it.legion)} · ${escapeHtml(it.status)}</b>
+          <button type="button" class="fy-move-x" onclick="foundryMovePendingDrop('${it.id}');foundryRender()" aria-label="${foundryL('Batalkan', 'Cancel')}">×</button></li>`;
+    }).join('');
+    if (!items.trim()) return '';
+    return `<div class="fy-move-pending"><strong>⏳ ${foundryL('Pindah tertunda (roster tujuan penuh)', 'Pending moves (target roster full)')}</strong>
+      <ul>${items}</ul>
+      <button type="button" class="btn-apply" onclick="foundryMoveRetryPending()">↻ ${foundryL('Coba lagi', 'Retry')}</button></div>`;
+}
+
+async function foundryMoveRetryPending() {
+    if (!foundryCanEdit()) { showToast(foundryDenied(), 'warning'); return; }
+    let moved = 0, waiting = 0;
+    for (const it of foundryMovePendingList.slice()) {
+        const p = foundryPlayers.find(x => String(x.id) === String(it.id));
+        if (!p || !foundryInRoster(p)) { foundryMovePendingDrop(it.id); continue; }
+        try {
+            const r = await foundryMovePlayer(p, it.legion, it.status, 0);
+            if (r.ok) { foundryMovePendingDrop(it.id); moved++; }
+            else if (r.reason === 'same') foundryMovePendingDrop(it.id);
+            else waiting++;
+        } catch (e) { console.warn('retry move failed', e); waiting++; }
+    }
+    showToast(foundryL(`${moved} pemain dipindah, ${waiting} masih menunggu slot kosong.`, `${moved} player(s) moved, ${waiting} still waiting for a free slot.`), moved ? 'success' : 'warning');
     foundryRender();
 }
 
@@ -1914,20 +2123,20 @@ async function foundryCopyText() {
             for (let i = 1; i <= foundryBattleMax(); i++) {
                 const p = foundryFind(l, 'Battle', i);
                 const jl = p && p.foundry_role === 'Joiner' ? foundryJoinerOf(p, l) : null;
-                if (p) lines.push(`${i}. ${p.nickname} — ${p.foundry_role}${jl ? ' → ' + jl.nickname : ''} | P1: ${foundryName(foundryTarget(p, 1))} | P2: ${foundryName(foundryTarget(p, 2))} | P3: ${foundryName(foundryTarget(p, 3))}`);
+                if (p) lines.push(`${i}. ${foundryNick(p)} — ${p.foundry_role}${jl ? ' → ' + foundryNick(jl) : ''} | P1: ${foundryName(foundryTarget(p, 1))} | P2: ${foundryName(foundryTarget(p, 2))} | P3: ${foundryName(foundryTarget(p, 3))}`);
             }
         } else {
             const ph = Number(mode);
             FOUNDRY_KEYS.forEach(k => {
                 const ps = foundryAssigned(l, k, ph);
-                if (ps.length) lines.push(`**${foundryName(k)}** (${ps.length}): ` + ps.map(p => `#${p.foundry_slot} ${p.nickname}`).join(', '));
+                if (ps.length) lines.push(`**${foundryName(k)}** (${ps.length}): ` + ps.map(p => `#${p.foundry_slot} ${foundryNick(p)}`).join(', '));
             });
         }
-        if (mode === '2' || mode === 2) foundryRallyTeams(l).teams.forEach(t => lines.push(`**Rally ${t.leader.nickname}** (${foundryFmtPower(t.power)}): ${t.joiners.map(j => j.nickname).join(', ') || '-'}`));
+        if (mode === '2' || mode === 2) foundryRallyTeams(l).teams.forEach(t => lines.push(`**Rally ${foundryNick(t.leader)}** (${foundryFmtPower(t.power)}): ${t.joiners.map(j => foundryNick(j)).join(', ') || '-'}`));
         const subs = [];
         for (let i = 1; i <= foundrySubMax(); i++) {
             const p = foundryFind(l, 'Substitute', i);
-            if (p) subs.push(p.nickname + (p.foundry_cover ? ` (→#${p.foundry_cover})` : ''));
+            if (p) subs.push(foundryNick(p) + (p.foundry_cover ? ` (→#${p.foundry_cover})` : ''));
         }
         if (subs.length) lines.push(`${foundryL('Cadangan (masuk setelah menit 3)', 'Substitutes (enter after minute 3)')}: ${subs.join(', ')}`);
     });
@@ -1986,8 +2195,10 @@ function foundryComputeTaskMarks(L, ph, filters) {
         ps.forEach((p, i) => {
             const col = FOUNDRY_ROLE_COLOR[p.foundry_role] || '#e5e7eb';
             const rawName = (p.nickname || '?').trim();
-            const label = rawName.length > 8 ? rawName.slice(0, 7) + '…' : rawName;
-            const tw = Math.max(28, Math.min(72, label.length * 7 + 12));
+            const _tag = foundryAllianceTag(p);
+            const _nick = rawName.length > 8 ? rawName.slice(0, 7) + '…' : rawName;
+            const label = _tag ? `${_nick} (${_tag})` : _nick;
+            const tw = Math.max(28, Math.min(_tag ? 112 : 72, label.length * 7 + 12));
             const slot = SLOT_RING[i % SLOT_RING.length];
             const ring = Math.floor(i / SLOT_RING.length);
             const scale = 1 + ring * 0.55;
@@ -2074,7 +2285,7 @@ function foundryMapSvgInner(L, ph, opts = {}) {
                 ? ` onclick="foundryOnMapMarkClick('${p.id}',event)" style="cursor:pointer"`
                 : '';
             const role = live ? 'button' : 'img';
-            return `<g class="fy-task-mark${live ? ' fy-task-mark--edit' : ''}" tabindex="0" role="${role}" aria-label="#${p.foundry_slot} ${escapeHtml(p.nickname)} — ${escapeHtml(p.foundry_role || 'Task')}" transform="translate(${x},${y})"${click}><title>#${p.foundry_slot} · ${escapeHtml(p.nickname)} · ${escapeHtml(p.foundry_role || 'Task')} · ${escapeHtml(b.n)}${live ? ' · click to edit' : ''}</title><rect x="${-tw / 2}" y="${-markH / 2}" width="${tw}" height="${markH}" rx="6" fill="${col}" stroke="${live ? '#fcd34d' : '#111827'}" stroke-width="${live ? 2.5 : 2}"/><text x="0" y="4" text-anchor="middle" class="fy-task-mark-text">${escapeHtml(label)}</text></g>`;
+            return `<g class="fy-task-mark${live ? ' fy-task-mark--edit' : ''}" tabindex="0" role="${role}" aria-label="#${p.foundry_slot} ${escapeHtml(foundryNick(p))} — ${escapeHtml(p.foundry_role || 'Task')}" transform="translate(${x},${y})"${click}><title>#${p.foundry_slot} · ${escapeHtml(foundryNick(p))} · ${escapeHtml(p.foundry_role || 'Task')} · ${escapeHtml(b.n)}${live ? ' · click to edit' : ''}</title><rect x="${-tw / 2}" y="${-markH / 2}" width="${tw}" height="${markH}" rx="6" fill="${col}" stroke="${live ? '#fcd34d' : '#111827'}" stroke-width="${live ? 2.5 : 2}"/><text x="0" y="4" text-anchor="middle" class="fy-task-mark-text">${escapeHtml(label)}</text></g>`;
         }).join('');
         marks = `<g class="fy-task-lines" pointer-events="none">${lines}</g>${labels}`;
     }
@@ -2106,12 +2317,12 @@ function foundryMapHtml() {
         if (!ps.length) return '<li class="fy-empty">belum ada</li>';
         if (live) {
             return ps.map(p => `<li class="fy-live-list-item">
-                <button type="button" class="fy-live-name" onclick="foundryOpenLiveEditor('${p.id}', event.clientX, event.clientY)">#${p.foundry_slot} ${escapeHtml(p.nickname)}</button>
+                <button type="button" class="fy-live-name" onclick="foundryOpenLiveEditor('${p.id}', event.clientX, event.clientY)">#${p.foundry_slot} ${escapeHtml(foundryNick(p))}</button>
                 <small>(${escapeHtml(p.foundry_role || '—')})</small>
                 ${foundryLiveEditorFieldsHtml(p)}
             </li>`).join('');
         }
-        return ps.map(p => `<li>#${p.foundry_slot} ${escapeHtml(p.nickname)} <small>(${escapeHtml(p.foundry_role)})</small></li>`).join('');
+        return ps.map(p => `<li>#${p.foundry_slot} ${escapeHtml(foundryNick(p))} <small>(${escapeHtml(p.foundry_role)})</small></li>`).join('');
     };
     const pts = b.m ? `<p><b>${b.f.toLocaleString('en-US')}</b> ${foundryL('poin first capture', 'first-capture points')} + <b>${b.m.toLocaleString('en-US')}</b> ${foundryL('poin/menit', 'points/min')}</p>` : '';
     const liveBadge = live ? `<p class="fy-live-banner"><b class="fy-edit-badge">✏️ Live Edit on</b> — ${foundryL('Ketuk mark nama di peta atau pemain di daftar untuk mengubah peran & target. Perubahan langsung tersimpan.', 'Tap a name mark on the map or a player in the list to change role & targets. Changes save instantly.')}</p>` : '';
@@ -2211,7 +2422,7 @@ async function foundryExportPng(legion = foundryMapLegion, phase = foundryPhase)
             const cx = 12 + (!all && i >= half ? W / 2 : 0), cy = ly + (i % half) * LH + 8;
             x.fillStyle = FOUNDRY_ROLE_COLOR[p.foundry_role] || '#e5e7eb'; x.fillRect(cx, cy - 5, 9, 10);
             const tn = ph => { const kk = foundryTarget(p, ph); return kk && FOUNDRY_B[kk] ? FOUNDRY_B[kk].n : '-'; };
-            let t = `#${p.foundry_slot} ${p.nickname || '-'} · ${p.foundry_role || '-'} → ` + (all ? `P1 ${tn(1)} · P2 ${tn(2)} · P3 ${tn(3)}` : FOUNDRY_B[k].n);
+            let t = `#${p.foundry_slot} ${foundryNick(p)} · ${p.foundry_role || '-'} → ` + (all ? `P1 ${tn(1)} · P2 ${tn(2)} · P3 ${tn(3)}` : FOUNDRY_B[k].n);
             while (t.length > 4 && x.measureText(t).width > colW - 14) t = t.slice(0, -2) + '…';
             x.fillStyle = '#e2e8f0'; x.fillText(t, cx + 14, cy);
         });
@@ -2402,13 +2613,13 @@ async function openFoundrySharedMap(legion, phase) {
           .sort((a,b) => Number(a.player.foundry_slot)-Number(b.player.foundry_slot));
         const taskTitle = en() ? 'Players & assigned tasks' : 'Pemain & tugas yang ditetapkan';
         const noPlayers = en() ? 'No battle players assigned for this phase.' : 'Belum ada pemain Battle yang ditugaskan pada phase ini.';
-        const taskRowsSingle = assignedRows.length ? `<div class="fy-share-roster-wrap"><h3>${taskTitle}</h3><div class="fy-share-roster-scroll"><table class="fy-share-roster"><thead><tr><th>Slot</th><th>${en()?'Player':'Pemain'}</th><th>${en()?'Task / Role':'Tugas / Peran'}</th><th>Target</th></tr></thead><tbody>${assignedRows.map(({building,player:p})=>`<tr><td>#${escapeHtml(p.foundry_slot)}</td><td>${escapeHtml(p.nickname || '-')}</td><td>${escapeHtml(p.foundry_role || (en()?'Unassigned':'Belum ditentukan'))}</td><td>${escapeHtml(building.n)}</td></tr>`).join('')}</tbody></table></div></div>` : `<p class="fy-note">${noPlayers}</p>`;
+        const taskRowsSingle = assignedRows.length ? `<div class="fy-share-roster-wrap"><h3>${taskTitle}</h3><div class="fy-share-roster-scroll"><table class="fy-share-roster"><thead><tr><th>Slot</th><th>${en()?'Player':'Pemain'}</th><th>${en()?'Task / Role':'Tugas / Peran'}</th><th>Target</th></tr></thead><tbody>${assignedRows.map(({building,player:p})=>`<tr><td>#${escapeHtml(p.foundry_slot)}</td><td>${escapeHtml(foundryNick(p))}</td><td>${escapeHtml(p.foundry_role || (en()?'Unassigned':'Belum ditentukan'))}</td><td>${escapeHtml(building.n)}</td></tr>`).join('')}</tbody></table></div></div>` : `<p class="fy-note">${noPlayers}</p>`;
         const tgtName = (p, ph) => { const kk = foundryTarget(p, ph); return kk && FOUNDRY_B[kk] ? FOUNDRY_B[kk].n : '-'; };
         const allBattle = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle').sort((a, b) => Number(a.foundry_slot) - Number(b.foundry_slot));
-        const taskRowsAll = allBattle.length ? `<div class="fy-share-roster-wrap"><h3>${taskTitle}</h3><div class="fy-share-roster-scroll"><table class="fy-share-roster"><thead><tr><th>Slot</th><th>${en()?'Player':'Pemain'}</th><th>${en()?'Task / Role':'Tugas / Peran'}</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th></tr></thead><tbody>${allBattle.map(p => `<tr><td>#${escapeHtml(p.foundry_slot)}</td><td>${escapeHtml(p.nickname || '-')}</td><td>${escapeHtml(p.foundry_role || (en()?'Unassigned':'Belum ditentukan'))}</td><td>${escapeHtml(tgtName(p, 1))}</td><td>${escapeHtml(tgtName(p, 2))}</td><td>${escapeHtml(tgtName(p, 3))}</td></tr>`).join('')}</tbody></table></div></div>` : `<p class="fy-note">${noPlayers}</p>`;
+        const taskRowsAll = allBattle.length ? `<div class="fy-share-roster-wrap"><h3>${taskTitle}</h3><div class="fy-share-roster-scroll"><table class="fy-share-roster"><thead><tr><th>Slot</th><th>${en()?'Player':'Pemain'}</th><th>${en()?'Task / Role':'Tugas / Peran'}</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th></tr></thead><tbody>${allBattle.map(p => `<tr><td>#${escapeHtml(p.foundry_slot)}</td><td>${escapeHtml(foundryNick(p))}</td><td>${escapeHtml(p.foundry_role || (en()?'Unassigned':'Belum ditentukan'))}</td><td>${escapeHtml(tgtName(p, 1))}</td><td>${escapeHtml(tgtName(p, 2))}</td><td>${escapeHtml(tgtName(p, 3))}</td></tr>`).join('')}</tbody></table></div></div>` : `<p class="fy-note">${noPlayers}</p>`;
         const taskRows = phase === 'all' ? taskRowsAll : taskRowsSingle;
         const subs = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Substitute').sort((a,b) => a.foundry_slot - b.foundry_slot);
-        const subRows = subs.length ? `<div class="fy-share-roster-wrap"><h3>${en()?'Substitutes (enter after minute 3)':'Cadangan (masuk setelah menit 3)'}</h3><div class="fy-share-roster-scroll"><table class="fy-share-roster"><thead><tr><th>#</th><th>${en()?'Player':'Pemain'}</th><th>${en()?'Replaces slot':'Menggantikan slot'}</th></tr></thead><tbody>${subs.map(p => { const c = Number(p.foundry_cover) || 0, b = c ? foundryFind(legion, 'Battle', c) : null; return `<tr><td>C${escapeHtml(p.foundry_slot)}</td><td>${escapeHtml(p.nickname || '-')}</td><td>${c ? '#' + c + (b ? ' ' + escapeHtml(b.nickname) + ' (' + escapeHtml(b.foundry_role || '-') + ')' : '') : '-'}</td></tr>`; }).join('')}</tbody></table></div></div>` : '';
+        const subRows = subs.length ? `<div class="fy-share-roster-wrap"><h3>${en()?'Substitutes (enter after minute 3)':'Cadangan (masuk setelah menit 3)'}</h3><div class="fy-share-roster-scroll"><table class="fy-share-roster"><thead><tr><th>#</th><th>${en()?'Player':'Pemain'}</th><th>${en()?'Replaces slot':'Menggantikan slot'}</th></tr></thead><tbody>${subs.map(p => { const c = Number(p.foundry_cover) || 0, b = c ? foundryFind(legion, 'Battle', c) : null; return `<tr><td>C${escapeHtml(p.foundry_slot)}</td><td>${escapeHtml(p.nickname || '-')}</td><td>${c ? '#' + c + (b ? ' ' + escapeHtml(foundryNick(b)) + ' (' + escapeHtml(b.foundry_role || '-') + ')' : '') : '-'}</td></tr>`; }).join('')}</tbody></table></div></div>` : '';
         // strategyGuide remains defined below in the original load flow — kept inside load after fetch
         return { taskRows, subRows };
     };
@@ -2646,7 +2857,7 @@ function foundryChartSvg(legion, phase) {
             const col = FOUNDRY_ROLE_COLOR[p.foundry_role] || '#e5e7eb';
             const w = showPw ? Math.max(3, pw(p) / maxPw * pmax) : pmax;
             out.push(T(PAD, y + 13, `#${p.foundry_slot}`, { fill: '#94a3b8', size: 11 }));
-            out.push(T(PAD + 34, y + 13, foundryTrunc(p.nickname, 18), { size: 12 }));
+            out.push(T(PAD + 34, y + 13, foundryTrunc(foundryNick(p, 14), 24), { size: 12 }));
             out.push(R(pbx, y + 3, w, 12, col, 3, showPw ? '' : 'fill-opacity=".35"'));
             if (showPw) out.push(T(pbx + w + 6, y + 13, foundryFmtPower(p.troops_power), { fill: '#cbd5e1', size: 11 }));
             const role = en ? (p.foundry_role || '-') : (FOUNDRY_ROLE_ID[p.foundry_role] || p.foundry_role || '-');
@@ -2660,7 +2871,7 @@ function foundryChartSvg(legion, phase) {
             const half = Math.ceil(subs.length / 2);
             subs.forEach((p, i) => {
                 const col = i < half ? 0 : 1, row = i < half ? i : i - half;
-                out.push(T(PAD + col * 370, y + 13 + row * 18, `S${p.foundry_slot} ${foundryTrunc(p.nickname, 18)}` + (p.foundry_cover ? ` (→ #${p.foundry_cover})` : ''), { size: 12 }));
+                out.push(T(PAD + col * 370, y + 13 + row * 18, `S${p.foundry_slot} ${foundryNick(p, 14)}` + (p.foundry_cover ? ` (→ #${p.foundry_cover})` : ''), { size: 12 }));
             });
             y += half * 18;
         }
@@ -2690,7 +2901,7 @@ function foundryChartLiveTableHtml(legion, phase) {
         const tgtName = tgt ? foundryName(tgt) : '—';
         return `<tr>
           <td>${p.foundry_slot || '—'}</td>
-          <td><button type="button" class="fy-live-name" onclick="foundryOpenLiveEditor('${p.id}', event.clientX, event.clientY)">${escapeHtml(p.nickname || '-')}</button></td>
+          <td><button type="button" class="fy-live-name" onclick="foundryOpenLiveEditor('${p.id}', event.clientX, event.clientY)">${escapeHtml(foundryNick(p))}</button></td>
           <td>${canViewSensitive() ? escapeHtml(p.game_id || '') : ''}</td>
           <td><select class="fy-manual-task" aria-label="Role ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_role',this.value)">${foundryRoleOptionsHtml(p.foundry_role || '')}</select></td>
           <td><select class="fy-manual-task" aria-label="P1 ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_p1',this.value)">${foundryBuildingOptionsHtml(p.foundry_p1 || '')}</select></td>
