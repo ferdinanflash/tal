@@ -9,6 +9,24 @@ function canOpenPresidentPanel() {
 let globalBattleTheme = 'tundra';
 let globalAllianceBEnabled = false;
 let battleThemePollId = null;
+
+// ----- Legion visibility on the main menu (global, stored in footer_settings.hidden_legions) -----
+// Keys: l1 = Legion 1, l2 = Legion 2, l1b / l2b = the Alliance B reserve legions. Stored as a comma list of HIDDEN keys.
+const LEGION_MENU_ITEMS = [
+    { key: 'l1',  name: 'Legion 1',               id: 'legion-btn-1' },
+    { key: 'l2',  name: 'Legion 2',               id: 'legion-btn-2' },
+    { key: 'l1b', name: 'Legion 1 - Alliance B',  id: 'legion-btn-1b' },
+    { key: 'l2b', name: 'Legion 2 - Alliance B',  id: 'legion-btn-2b' }
+];
+let globalHiddenLegions = new Set();
+function parseHiddenLegions(v) {
+    return new Set(String(v == null ? '' : v).split(',').map(x => x.trim()).filter(k => LEGION_MENU_ITEMS.some(i => i.key === k)));
+}
+function isLegionHidden(key) { return globalHiddenLegions.has(key); }
+function isLegionNameHidden(name) {
+    const it = LEGION_MENU_ITEMS.find(i => i.name === name);
+    return !!it && isLegionHidden(it.key);
+}
 let battleThemeLoading = false;
 
 function isAllianceBEnabled() { return !!globalAllianceBEnabled; }
@@ -46,6 +64,14 @@ async function loadGlobalBattleTheme({silent = true, forceApply = true} = {}) {
         const changed = nextTheme !== globalBattleTheme || nextB !== globalAllianceBEnabled;
         globalBattleTheme = nextTheme;
         globalAllianceBEnabled = nextB;
+        // Separate query so a missing hidden_legions column (SQL not run yet) never breaks theme / Alliance B loading.
+        try {
+            const vis = await client.from('footer_settings').select('hidden_legions').eq('id', 'main').single();
+            if (!vis.error) {
+                const nextHidden = parseHiddenLegions(vis.data && vis.data.hidden_legions);
+                if ([...nextHidden].sort().join() !== [...globalHiddenLegions].sort().join()) { globalHiddenLegions = nextHidden; forceApply = true; }
+            }
+        } catch (_) { /* column not created yet */ }
         if (changed || forceApply) {
             applyBattleTheme();
             applyAllianceBVisibility();
@@ -84,6 +110,14 @@ function startGlobalBattleThemeSync() {
                     const nextTheme = payload?.new?.battle_theme === 'frostdragon' ? 'frostdragon' : 'tundra';
                     const nextB = !!payload?.new?.alliance_b_enabled;
                     let msg = null;
+                    if (payload?.new && typeof payload.new.hidden_legions !== 'undefined') {
+                        const nextHidden = parseHiddenLegions(payload.new.hidden_legions);
+                        if ([...nextHidden].sort().join() !== [...globalHiddenLegions].sort().join()) {
+                            globalHiddenLegions = nextHidden;
+                            applyAllianceBVisibility();
+                            msg = 'Legion visibility on the main menu was updated';
+                        }
+                    }
                     if (nextTheme !== globalBattleTheme) {
                         globalBattleTheme = nextTheme;
                         applyBattleTheme();
@@ -253,10 +287,25 @@ function switchBattleTheme(theme) {
 function applyAllianceBVisibility() {
     const frost = getBattleTheme() === 'frostdragon';
     const show = !frost && isAllianceBEnabled();
-    ['legion-btn-1b', 'legion-btn-2b'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.toggle('hidden', !show);
+    // Main-menu legion cards: Alliance B cards need the master switch AND not be hidden; Frostdragon ignores the per-legion
+    // setting (single Battle Group, Legion 2 is always hidden there).
+    const shown = {
+        l1: frost || !isLegionHidden('l1'),
+        l2: !frost && !isLegionHidden('l2'),
+        l1b: show && !isLegionHidden('l1b'),
+        l2b: show && !isLegionHidden('l2b')
+    };
+    LEGION_MENU_ITEMS.forEach(it => {
+        const el = document.getElementById(it.id);
+        if (el) el.classList.toggle('hidden', !shown[it.key]);
+        const cb = document.getElementById('pp-legion-vis-' + it.key);
+        if (cb) {
+            cb.checked = !isLegionHidden(it.key);
+            cb.disabled = frost || ((it.key === 'l1b' || it.key === 'l2b') && !isAllianceBEnabled());
+        }
     });
+    const visCard = document.getElementById('pp-legion-visibility-card');
+    if (visCard) visCard.classList.toggle('pp-disabled-theme', frost);
     const cb = document.getElementById('pp-alliance-b-enabled');
     if (cb) cb.checked = isAllianceBEnabled();
     const st = document.getElementById('pp-alliance-b-status');
@@ -266,8 +315,34 @@ function applyAllianceBVisibility() {
     // Schedule buttons for Alliance B
     const s1b = document.getElementById('edit-schedule-legion-1b');
     const s2b = document.getElementById('edit-schedule-legion-2b');
-    if (s1b) s1b.classList.toggle('hidden', !show || !canManageLegion('Legion 1 - Alliance B'));
-    if (s2b) s2b.classList.toggle('hidden', !show || !canManageLegion('Legion 2 - Alliance B'));
+    if (s1b) s1b.classList.toggle('hidden', !shown.l1b || !canManageLegion('Legion 1 - Alliance B'));
+    if (s2b) s2b.classList.toggle('hidden', !shown.l2b || !canManageLegion('Legion 2 - Alliance B'));
+}
+
+async function presidentToggleLegionVisible(key, visible) {
+    if (!canOpenPresidentPanel()) {
+        showToast('President Panel only.', 'warning');
+        applyAllianceBVisibility();
+        return;
+    }
+    const item = LEGION_MENU_ITEMS.find(i => i.key === key);
+    const client = getSupabase();
+    if (!item || !client) return;
+    const next = new Set(globalHiddenLegions);
+    if (visible) next.delete(key); else next.add(key);
+    const csv = LEGION_MENU_ITEMS.map(i => i.key).filter(k => next.has(k)).join(',');
+    const { error } = await client.from('footer_settings').update({ hidden_legions: csv }).eq('id', 'main');
+    if (error) {
+        const missing = /hidden_legions|column|42703/i.test(String(error.message || error));
+        showToast(missing
+            ? 'Column hidden_legions not found. Run supabase_legion_visibility.sql in the Supabase SQL Editor first.'
+            : 'Failed to update legion visibility: ' + (error.message || error), 'error');
+        applyAllianceBVisibility();
+        return;
+    }
+    globalHiddenLegions = next;
+    applyAllianceBVisibility();
+    showToast(`${item.name} ${visible ? 'shown on' : 'hidden from'} the main menu`, 'success');
 }
 
 async function presidentToggleAllianceB(enabled) {

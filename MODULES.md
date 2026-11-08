@@ -93,3 +93,10 @@ Fitur Foundry: peringatan roster per Legion/Phase (`FOUNDRY_MIN`), target 3 fase
 - Chart & gambar: tab Grafik (`foundryChartSvg`) menampilkan bar putus-putus transparan "+N cad" per bangunan dan daftar Cadangan dengan role -> target phase; Live Share Chart ikut otomatis. Ekspor PNG Peta (`foundryExportPng`) menambah blok daftar Cadangan (All Phase = P1/P2/P3). Tab Peta menampilkan Cadangan per bangunan, Live Share Map menampilkan role + target Cadangan, Export CSV mengisi Role + Phase 1-3 untuk Cadangan.
 - Auto-fill / Hitung Tugas Battle tidak menimpa task Cadangan; Battle yang tergeser jadi Cadangan dikosongkan tasknya (jalankan Auto Calculate Task Substitute Only setelahnya).
 - Service worker naik ke `tal-foundry-sw-v45`; cache-bust `foundry.js?v=47`, `style.css?v=62`.
+
+## Legion Visibility di Main Menu (v46)
+
+- President Panel punya kartu **👁️ Legion Visibility — Main Menu**: checklist Legion 1, Legion 2, Legion 1 — Alliance B, Legion 2 — Alliance B. Centang = tampil di menu utama; dicabut = kartu disembunyikan untuk semua pengunjung (global, realtime + polling seperti Battle Theme). Data roster tidak berubah dan legion tetap bisa dibuka dari President Panel.
+- Disimpan di `footer_settings.hidden_legions` (daftar key yang disembunyikan: `l1,l2,l1b,l2b`). Jalankan `supabase_legion_visibility.sql` sekali. Dibaca lewat query terpisah di `loadGlobalBattleTheme`, jadi kolom yang belum dibuat tidak mengganggu Battle Theme / Alliance B (semua legion tetap tampil).
+- Alliance B tetap butuh saklar "Legion Cadangan — Alliance B"; kartu Alliance B tampil bila saklar aktif DAN tidak disembunyikan. Tema Frostdragon mengabaikan pengaturan ini.
+- Logika ada di `applyAllianceBVisibility` (`LEGION_MENU_ITEMS`, `presidentToggleLegionVisible`). Menu utama memakai id `legion-btn-1` / `legion-btn-2` / `legion-btn-1b` / `legion-btn-2b`. SW `tal-foundry-sw-v46`, `president-panel.js?v=13`, `style.css?v=63`.

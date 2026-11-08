@@ -33,7 +33,7 @@
 				<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 				<link rel="icon" href="icons/favicon.ico" sizes="any">
 				<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-				<link rel="stylesheet" href="style.css?v=62">
+				<link rel="stylesheet" href="style.css?v=63">
 
 
 
@@ -50,7 +50,7 @@
 					<script src="export.js?v=21" defer></script>
 					<script src="footer.js?v=18" defer></script>
 					<script src="effects.js?v=18" defer></script>
-					<script src="president-panel.js?v=12" defer></script>
+					<script src="president-panel.js?v=13" defer></script>
 					<script src="redeem.js?v=4" defer></script>
 					<script src="statetracker.js?v=35" defer></script>
 				</head>
@@ -149,7 +149,7 @@
 
 				<div class="list-container menu-list-container">
 					<!-- LEGION 1 BUTTON -->
-					<div class="list-item legion-btn legion-btn-1" onclick="selectLegion('Legion 1')" role="button" tabindex="0" aria-label="Legion 1 roster">
+					<div class="list-item legion-btn legion-btn-1" id="legion-btn-1" onclick="selectLegion('Legion 1')" role="button" tabindex="0" aria-label="Legion 1 roster">
 						<div class="legion-btn-header">
 							<span class="legion-btn-label">
 								<svg class="clash-svg legion-icon-blue" viewBox="0 0 100 100">
@@ -168,7 +168,7 @@
 					</div>
 
 					<!-- LEGION 2 BUTTON -->
-					<div class="list-item legion-btn legion-btn-2" onclick="selectLegion('Legion 2')" role="button" tabindex="0" aria-label="Legion 2 roster">
+					<div class="list-item legion-btn legion-btn-2" id="legion-btn-2" onclick="selectLegion('Legion 2')" role="button" tabindex="0" aria-label="Legion 2 roster">
 						<div class="legion-btn-header">
 							<span class="legion-btn-label">
 								<svg class="clash-svg legion-icon-red" viewBox="0 0 100 100">
@@ -616,6 +616,18 @@
 					<h3><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#swords-icon"></use></svg> Battle / Legion Management</h3>
 					<p id="pp-battle-description">Manage the existing Legion rosters and player assignments.</p>
 					<div class="pp-actions-row"><button class="btn-apply legion-action-btn" onclick="presidentOpenBattle('Legion 1')">Open Battle 1</button><button id="pp-legion2-btn" class="btn-apply legion-action-btn" onclick="presidentOpenBattle('Legion 2')">Open Battle 2</button></div>
+				</div>
+
+				<div class="pp-card" id="pp-legion-visibility-card">
+					<h3>👁️ Legion Visibility — Main Menu</h3>
+					<p>Choose which Legion cards are <b>shown</b> on the main menu. Hidden legions disappear for every visitor; their roster data is kept and you can still open them from this panel.</p>
+					<div class="pp-legion-vis-list">
+						<label class="pp-legion-vis-item"><input type="checkbox" id="pp-legion-vis-l1" onchange="presidentToggleLegionVisible('l1', this.checked)"><span>Legion 1</span></label>
+						<label class="pp-legion-vis-item"><input type="checkbox" id="pp-legion-vis-l2" onchange="presidentToggleLegionVisible('l2', this.checked)"><span>Legion 2</span></label>
+						<label class="pp-legion-vis-item"><input type="checkbox" id="pp-legion-vis-l1b" onchange="presidentToggleLegionVisible('l1b', this.checked)"><span>Legion 1 — Alliance B</span></label>
+						<label class="pp-legion-vis-item"><input type="checkbox" id="pp-legion-vis-l2b" onchange="presidentToggleLegionVisible('l2b', this.checked)"><span>Legion 2 — Alliance B</span></label>
+					</div>
+					<div class="pp-feature-note" id="pp-legion-vis-note">Alliance B legions also need the “Legion Cadangan — Alliance B” switch below to be enabled. Applies to Tundra Arm League only.</div>
 				</div>
 
 				<div class="pp-card" id="pp-alliance-b-card">

@@ -2848,3 +2848,10 @@ body.state-tracker-modal-open { overflow: hidden; }
   #fy-sub-modal .modal-content { max-width: 100%; width: 100%; }
   .fy-sub-tools .btn-apply { flex: 1 1 100%; }
 }
+
+/* ===== President Panel: Legion Visibility (v46) ===== */
+.pp-legion-vis-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; margin: 10px 0; }
+.pp-legion-vis-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #2d3039; border-radius: 10px; background: #14161b; cursor: pointer; font-weight: 700; }
+.pp-legion-vis-item input { width: 18px; height: 18px; accent-color: #22c55e; }
+.pp-legion-vis-item:has(input:disabled) { opacity: .5; cursor: not-allowed; }
+#pp-legion-visibility-card.pp-disabled-theme { opacity: .55; pointer-events: none; }
