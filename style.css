@@ -2829,3 +2829,22 @@ body.state-tracker-modal-open { overflow: hidden; }
 }
 .fy-move-btn.fy-remove-btn:hover { background: rgba(239, 68, 68, 0.3); }
 .fy-who-filled { gap: 6px; }
+
+/* ===== Task Cadangan (Substitute) — v45 ===== */
+.fy-sub-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 10px; }
+#fy-sub-modal { z-index: 2500; }
+#fy-sub-modal .modal-content {
+  max-width: min(880px, 96vw);
+  width: min(880px, 96vw);
+  max-height: 92vh;
+  overflow-y: auto;
+}
+.fy-sub-modal-table td, .fy-sub-modal-table th { text-align: center; }
+.fy-sub-modal-table td:nth-child(2), .fy-sub-modal-table th:nth-child(2) { text-align: left; }
+.fy-sub-modal-table small { display: block; color: #94a3b8; font-size: .7rem; }
+.fy-sub-h { margin: 10px 0 2px; font-size: .74rem; color: #7dd3fc; font-weight: 700; }
+.fy-sub-ul li { color: #cbd5e1; }
+@media (max-width: 600px) {
+  #fy-sub-modal .modal-content { max-width: 100%; width: 100%; }
+  .fy-sub-tools .btn-apply { flex: 1 1 100%; }
+}

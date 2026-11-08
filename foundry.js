@@ -1006,7 +1006,7 @@ function foundryApplyLanguage(root = document.getElementById('foundry-page')) {
     const v = el.getAttribute(a); if (!v) return; const t = foundryT(v); if (t !== v) el.setAttribute(a, t);
   }));
   // Modal Bulk Assign berada di luar #foundry-page, jadi diterjemahkan juga.
-  if (root.id === 'foundry-page') { ['fy-bulk-modal','fy-bulk-remove-modal','fy-clear-modal'].forEach(id => { const m = document.getElementById(id); if (m) foundryApplyLanguage(m); }); }
+  if (root.id === 'foundry-page') { ['fy-bulk-modal','fy-bulk-remove-modal','fy-clear-modal','fy-sub-modal'].forEach(id => { const m = document.getElementById(id); if (m) foundryApplyLanguage(m); }); }
   foundryBrandDom(root);
   const btn = document.getElementById('foundry-language-toggle');
   if (btn) btn.innerHTML = foundryLanguage === 'en' ? '<span class="flag flag-id"></span> Bahasa Indonesia' : (foundryLanguage === 'id' ? '<span class="flag flag-cn"></span> 中文' : '<span class="flag flag-gb"></span> English');
@@ -1040,6 +1040,8 @@ function foundryWarnings(legion, phase) {
         // satu baris ringkas per phase, bukan satu baris per bangunan
         if (low.length) out.push({ lvl: 'warn', msg: foundryL(`Phase ${ph}: ${low.length} bangunan di bawah minimum pemain — ${low.join(', ')}.`, `Phase ${ph}: ${low.length} building(s) below minimum players — ${low.join(', ')}.`) });
     });
+    const subNoTask = subs.filter(p => !p.foundry_p1 || !p.foundry_p2).length;
+    if (subNoTask) out.push({ lvl: 'info', msg: foundryL(`${subNoTask} Cadangan belum punya task. Gunakan Auto Calculate Task Substitute Only atau Atur Task Substitute.`, `${subNoTask} substitute(s) have no task yet. Use Auto Calculate Task Substitute Only or Manage Substitute Tasks.`) });
     if (subs.length < foundrySubMax()) out.push({ lvl: 'info', msg: foundryL(`Cadangan baru terisi ${subs.length} dari ${foundrySubMax()}.`, `Only ${subs.length} of ${foundrySubMax()} substitutes are filled.`) });
     return out;
 }
@@ -1242,7 +1244,7 @@ function foundryRallyHtml(legion) {
 // ---------- KALKULASI TUGAS ----------
 function foundryToolsHtml(legion) {
     if (!foundryCanEdit()) return '';
-    return `<div class="fy-controls"><button class="btn-apply" type="button" onclick="foundryRecalcTasks('${legion}')">🧮 ${foundryL('Hitung Tugas Otomatis', 'Auto-calculate tasks')}</button></div>`;
+    return `<div class="fy-controls"><button class="btn-apply" type="button" onclick="foundryRecalcTasks('${legion}')">🧮 ${foundryL('Hitung Tugas Otomatis', 'Auto-calculate tasks')}</button>${foundrySubToolsInnerHtml(legion)}</div>`;
 }
 function foundrySummaryHtml(legion) {
     const battle = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle' && !foundryIsOver(p));
@@ -1310,6 +1312,178 @@ async function foundryRecalcTasks(legion) {
     foundryRender();
 }
 
+// ---------- TASK CADANGAN (SUBSTITUTE) ----------
+// Cadangan memakai kolom role + target Phase 1-3 yang sama dengan Battle (tanpa kolom DB baru).
+// Cadangan TIDAK dihitung di foundryAssigned / ringkasan / garrison Battle, jadi mengatur task mereka
+// tidak mengubah hitungan Battle. Task ini tampil di tabel Cadangan, peta (daftar bangunan), chart, dan gambar PNG.
+function foundrySubsOf(legion) {
+    return foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Substitute' && !foundryIsOver(p))
+        .sort((a, b) => (Number(a.foundry_slot) || 0) - (Number(b.foundry_slot) || 0));
+}
+function foundrySubAssigned(legion, key, phase) {
+    return foundrySubsOf(legion).filter(p => foundryTarget(p, phase) === key);
+}
+function foundrySubTaskText(p, phase) {   // phase: 1|2|3|'all'
+    const role = p.foundry_role && p.foundry_role !== 'Substitute' ? p.foundry_role : '';
+    const tn = ph => { const k = foundryTarget(p, ph); return k && FOUNDRY_B[k] ? FOUNDRY_B[k].n : '-'; };
+    if (phase === 'all') return `${role || 'Substitute'} → P1 ${tn(1)} · P2 ${tn(2)} · P3 ${tn(3)}`;
+    return `${role || 'Substitute'} → ${tn(phase)}`;
+}
+function foundrySubToolsInnerHtml(legion) {
+    if (!foundryCanEdit()) return '';
+    return `<button class="btn-apply" type="button" onclick="foundrySubTasksOpen('${legion}')">🎯 ${foundryL('Atur Task Substitute', 'Manage Substitute Tasks')}</button>`
+        + `<button class="btn-apply" type="button" onclick="foundrySubRecalcTasks('${legion}')">🧮 ${foundryL('Auto Calculate Task Substitute Only', 'Auto Calculate Task Substitute Only')}</button>`;
+}
+
+// Hitung task Cadangan saja: Battle tidak disentuh. Cadangan diurutkan menurut Power (tertinggi dulu); tiap Phase,
+// Cadangan ditaruh di bangunan yang paling kekurangan penjaga (selisih terhadap FOUNDRY_MIN x poin/menit), dengan
+// memperhitungkan penjaga Battle + march penguatan Rally Leader/Joiner dan Cadangan yang sudah dipasang lebih dulu.
+// Bila semua minimum sudah tertutup, Cadangan disebar ke bangunan bernilai tinggi (poin/menit dibagi jumlah penjaga + 1).
+function foundrySubPlanCalc(legion) {
+    const subs = foundrySubsOf(legion).slice()
+        .sort((a, b) => (Number(b.troops_power) || 0) - (Number(a.troops_power) || 0) || (Number(a.foundry_slot) || 0) - (Number(b.foundry_slot) || 0));
+    const jplan = foundryJoinerPlan(legion);
+    const have = { 1: {}, 2: {}, 3: {} };
+    [1, 2, 3].forEach(ph => FOUNDRY_KEYS.forEach(k => { have[ph][k] = foundryAssigned(legion, k, ph).length + (jplan.phases[ph].add[k] || 0); }));
+    const picks = subs.map(p => {
+        const t = {};
+        [1, 2, 3].forEach(ph => {
+            // Kekurangan penjaga (di bawah FOUNDRY_MIN) selalu menang; selain itu pilih bangunan yang tambahan 1 penjaganya
+            // paling bernilai (poin/menit dibagi jumlah penjaga + 1), jadi Cadangan menyebar ke bangunan bernilai tinggi.
+            let best = null, bestScore = -1;
+            FOUNDRY_KEYS.forEach(k => {
+                const b = FOUNDRY_B[k];
+                const val = b.m || (k === 'workshop' ? FOUNDRY_WORKSHOP_VALUE : 0);   // Workshop tidak punya m di peta: pakai nilai efektif
+                if (!val || b.ph > ph) return;
+                const n = have[ph][k] || 0, def = Math.max(0, (FOUNDRY_MIN[ph][k] || 0) - n);
+                const score = (def ? 1e6 + def * val : 0) + val / (n + 1);
+                if (score > bestScore) { bestScore = score; best = k; }
+            });
+            const key = best || (ph === 1 ? 'roam' : 'foundry');
+            t[ph] = key;
+            have[ph][key] = (have[ph][key] || 0) + 1;
+        });
+        // Menetap di satu bangunan sepanjang battle = Holder; pindah-pindah antar bangunan = Mobile.
+        const patch = { foundry_role: new Set([t[1], t[2], t[3]]).size === 1 ? 'Holder' : 'Mobile', foundry_p1: t[1], foundry_p2: t[2] };
+        if (foundryExt) patch.foundry_p3 = t[3];
+        return { p, patch };
+    });
+    const short = [];
+    [1, 2, 3].forEach(ph => Object.entries(FOUNDRY_MIN[ph]).forEach(([k, min]) => {
+        if ((have[ph][k] || 0) < min) short.push(`P${ph} ${foundryName(k)} ${have[ph][k] || 0}/${min}`);
+    }));
+    const jobs = picks.filter(j => Object.keys(j.patch).some(k => (j.p[k] ?? null) !== (j.patch[k] ?? null)));
+    return { jobs, short, total: subs.length };
+}
+function foundrySubCheckPerm(legion) {
+    if (!foundryCanEdit()) { showToast(foundryDenied(), 'warning'); return false; }
+    if (foundryMode === 'tundra' && typeof canManageLegion === 'function' && !canManageLegion(legion)) {
+        showToast(foundryL(`Anda tidak punya izin untuk ${legion}.`, `You do not have permission for ${legion}.`), 'warning');
+        return false;
+    }
+    return true;
+}
+async function foundrySubApplyJobs(jobs) {
+    for (let i = 0; i < jobs.length; i += 20) {
+        const res = await Promise.all(jobs.slice(i, i + 20).map(j => foundryDbUpdate(j.p.id, j.patch)));
+        const bad = res.find(r => r && r.error);
+        if (bad) throw bad.error;
+    }
+    jobs.forEach(j => { Object.assign(j.p, j.patch); if (foundryMode === 'tundra') Object.assign(j.p, foundryDbPatch(j.patch)); });
+}
+async function foundrySubRecalcTasks(legion) {
+    legion = legion || foundryActiveLegion();
+    if (!foundrySubCheckPerm(legion)) return;
+    const plan = foundrySubPlanCalc(legion);
+    if (!plan.total) { showToast(foundryL(`${legion} belum punya pemain Cadangan.`, `${legion} has no substitute players.`), 'info'); return; }
+    if (!plan.jobs.length) { showToast(foundryL('Task Cadangan sudah sesuai hasil hitung.', 'Substitute tasks already match the calculation.'), 'info'); return; }
+    const msg = foundryL(
+        `Hitung ulang task Cadangan ${legion}? ${plan.total} Cadangan diurutkan berdasarkan Power; role dan target Phase 1–3 mereka akan ditimpa. Pemain Battle TIDAK berubah. ` + (plan.short.length ? `Masih kurang penjaga: ${plan.short.slice(0, 6).join(', ')}${plan.short.length > 6 ? ` +${plan.short.length - 6} lagi` : ''}.` : 'Semua bangunan minimum tertutup.'),
+        `Recalculate ${legion} substitute tasks? ${plan.total} substitutes are ranked by power; their role and Phase 1–3 targets will be overwritten. Battle players are NOT changed. ` + (plan.short.length ? `Still short: ${plan.short.slice(0, 6).join(', ')}${plan.short.length > 6 ? ` +${plan.short.length - 6} more` : ''}.` : 'Every minimum is covered.'));
+    if (!await showCustomConfirmAsync(msg, '#f59e0b')) return;
+    try {
+        await foundrySubApplyJobs(plan.jobs);
+        showToast(foundryL(`Task Cadangan ${legion} dihitung untuk ${plan.total} pemain.`, `${legion} substitute tasks calculated for ${plan.total} players.`), plan.short.length ? 'warning' : 'success');
+    } catch (e) {
+        console.warn('foundrySubRecalcTasks failed', e);
+        showToast(foundryL('Gagal menghitung task Cadangan.', 'Could not calculate substitute tasks.') + ' ' + foundrySaveHint() + foundryErrMsg(e), 'error');
+        await foundryLoad(); foundrySubTasksRender(); return;
+    }
+    foundryRender();
+    foundrySubTasksRender();
+}
+async function foundrySubClearTasks(legion) {
+    legion = legion || foundryActiveLegion();
+    if (!foundrySubCheckPerm(legion)) return;
+    const subs = foundrySubsOf(legion).filter(p => p.foundry_p1 || p.foundry_p2 || p.foundry_p3 || (p.foundry_role && p.foundry_role !== 'Substitute'));
+    if (!subs.length) { showToast(foundryL('Tidak ada task Cadangan untuk direset.', 'No substitute tasks to reset.'), 'info'); return; }
+    if (!await showCustomConfirmAsync(foundryL(`Reset task ${subs.length} Cadangan ${legion}? Role kembali ke Substitute dan target Phase 1–3 dikosongkan.`, `Reset tasks of ${subs.length} ${legion} substitutes? Role goes back to Substitute and Phase 1–3 targets are cleared.`), '#ef4444')) return;
+    const jobs = subs.map(p => { const patch = { foundry_role: 'Substitute', foundry_p1: null, foundry_p2: null }; if (foundryExt) patch.foundry_p3 = null; return { p, patch }; });
+    try {
+        await foundrySubApplyJobs(jobs);
+        showToast(foundryL('Task Cadangan direset.', 'Substitute tasks reset.'), 'success');
+    } catch (e) {
+        showToast(foundryL('Gagal mereset task Cadangan.', 'Could not reset substitute tasks.') + ' ' + foundrySaveHint() + foundryErrMsg(e), 'error');
+        await foundryLoad(); foundrySubTasksRender(); return;
+    }
+    foundryRender();
+    foundrySubTasksRender();
+}
+
+// Modal "Atur Task Substitute": satu tabel semua Cadangan satu Legion (role + target Phase 1-3), tersimpan langsung.
+let foundrySubModalLegion = null;
+function foundrySubTasksOpen(legion) {
+    legion = legion || foundryActiveLegion();
+    if (!foundrySubCheckPerm(legion)) return;
+    foundrySubModalLegion = legion;
+    let m = document.getElementById('fy-sub-modal');
+    if (!m) {
+        m = document.createElement('div');
+        m.id = 'fy-sub-modal';
+        m.className = 'modal hidden';
+        m.setAttribute('role', 'dialog');
+        m.setAttribute('aria-modal', 'true');
+        m.innerHTML = '<div class="modal-content custom-form-modal"><span class="close-modal" onclick="foundrySubTasksClose()">&times;</span><div class="fy-sub-body"></div></div>';
+        m.addEventListener('mousedown', e => { if (e.target === m) foundrySubTasksClose(); });
+        document.body.appendChild(m);
+    }
+    m.classList.remove('hidden');
+    foundrySubTasksRender();
+}
+function foundrySubTasksClose() {
+    const m = document.getElementById('fy-sub-modal');
+    if (m) m.classList.add('hidden');
+    foundrySubModalLegion = null;
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') foundrySubTasksClose(); });
+function foundrySubTasksRender() {
+    const m = document.getElementById('fy-sub-modal');
+    if (!m || m.classList.contains('hidden') || !foundrySubModalLegion) return;
+    const legion = foundrySubModalLegion, subs = foundrySubsOf(legion);
+    const roleOpts = cur => `<option value="" ${cur ? '' : 'selected'}>—</option>` + foundryRoleOptionsHtml(cur);
+    const sel = (p, field, cur, label, opts) => `<select class="fy-manual-task" aria-label="${label} ${escapeHtml(p.nickname)}" onchange="foundrySubSetTask('${p.id}','${field}',this.value)">${opts(cur)}</select>`;
+    const rows = subs.map(p => `<tr><td>S${escapeHtml(p.foundry_slot)}</td>
+        <td style="text-align:left">${escapeHtml(foundryNick(p))}<small>${foundryPower(p)}</small></td>
+        <td>${sel(p, 'foundry_role', p.foundry_role || '', 'Role', roleOpts)}</td>
+        <td>${sel(p, 'foundry_p1', p.foundry_p1 || '', 'Phase 1', foundryBuildingOptionsHtml)}</td>
+        <td>${sel(p, 'foundry_p2', p.foundry_p2 || '', 'Phase 2', foundryBuildingOptionsHtml)}</td>
+        ${foundryExt ? `<td>${sel(p, 'foundry_p3', p.foundry_p3 || p.foundry_p2 || '', 'Phase 3', foundryBuildingOptionsHtml)}</td>` : ''}</tr>`).join('');
+    m.querySelector('.fy-sub-body').innerHTML = `<h2 class="modal-title">🎯 ${foundryL('Atur Task Substitute', 'Manage Substitute Tasks')} · ${escapeHtml(legion)}</h2>
+        <p class="modal-subtitle">${foundryL('Atur role dan target Phase 1–3 tiap Cadangan. Perubahan langsung tersimpan dan ikut tampil di chart & gambar.', 'Set each substitute\'s role and Phase 1–3 targets. Changes save instantly and appear in the chart & images.')}</p>
+        <div class="fy-sub-tools">
+            <button class="btn-apply" type="button" onclick="foundrySubRecalcTasks('${legion}')">🧮 Auto Calculate Task Substitute Only</button>
+            <button class="btn-apply btn-danger" type="button" onclick="foundrySubClearTasks('${legion}')">↺ ${foundryL('Reset task Cadangan', 'Reset substitute tasks')}</button>
+        </div>
+        ${subs.length ? `<div class="table-container"><table class="fy-table fy-sub-modal-table"><thead><tr><th>#</th><th>${foundryL('Pemain', 'Player')}</th><th>Role</th><th>Phase 1</th><th>${foundryExt ? 'Phase 2' : 'Phase 2/3'}</th>${foundryExt ? '<th>Phase 3</th>' : ''}</tr></thead><tbody>${rows}</tbody></table></div>`
+            : `<p class="fy-empty">${foundryL('Belum ada pemain Cadangan di legion ini.', 'No substitute players in this legion yet.')}</p>`}
+        <p class="fy-note">${foundryL('Cadangan baru bisa masuk battlefield setelah menit 3.', 'Substitutes can only enter the battlefield after minute 3.')}</p>`;
+    if (typeof foundryApplyLanguage === 'function') foundryApplyLanguage(m);
+}
+async function foundrySubSetTask(playerId, field, value) {
+    await foundryUpdateTask(playerId, field, value);
+    foundrySubTasksRender();
+}
+
 // ---------- ROSTER ----------
 function foundryRosterHtml(legion) {
     const edit = foundryCanEdit();
@@ -1344,10 +1518,15 @@ function foundryRosterHtml(legion) {
     };
     const subRow = (slot) => {
         const p = foundryFind(legion, 'Substitute', slot);
-        return `<tr class="${p ? '' : 'fy-row-empty'}"><td>${slot}</td><td>${who(p, 'Substitute', slot)}</td><td>${idCell(p)}</td><td>${p ? foundryPower(p) : ''}</td></tr>`;
+        const role = p ? (p.foundry_role || '') : '';
+        const roleCell = !p ? '' : (edit
+            ? `<select class="fy-manual-task" aria-label="Task for ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_role',this.value)">${role ? '' : '<option value="" selected>—</option>'}${[...FOUNDRY_ROLES, 'Substitute'].map(r => `<option value="${r}" ${role === r ? 'selected' : ''}>${escapeHtml(r)}</option>`).join('')}</select>`
+            : escapeHtml(role || '-'));
+        const tc = (field, cur, label) => p ? targetCell(p, field, cur, label) : '';
+        return `<tr class="${p ? '' : 'fy-row-empty'}"><td>${slot}</td><td>${who(p, 'Substitute', slot)}</td><td>${idCell(p)}</td><td>${p ? foundryPower(p) : ''}</td><td>${roleCell}</td><td>${tc('foundry_p1', p && p.foundry_p1, 'Phase 1')}</td><td>${tc('foundry_p2', p && p.foundry_p2, 'Phase 2')}</td>${foundryExt ? `<td>${tc('foundry_p3', p && (p.foundry_p3 || p.foundry_p2), 'Phase 3')}</td>` : ''}</tr>`;
     };
     const battleHead = `<thead><tr><th>#</th><th>Pemain</th><th>Game ID</th><th>Power</th><th>Role</th><th>Phase 1</th><th>${foundryExt ? 'Phase 2' : 'Phase 2/3'}</th>${foundryExt ? '<th>Phase 3</th>' : ''}</tr></thead>`;
-    const subHead = `<thead><tr><th>#</th><th>Pemain</th><th>Game ID</th><th>Power</th></tr></thead>`;
+    const subHead = `<thead><tr><th>#</th><th>Pemain</th><th>Game ID</th><th>Power</th><th>Role</th><th>Phase 1</th><th>${foundryExt ? 'Phase 2' : 'Phase 2/3'}</th>${foundryExt ? '<th>Phase 3</th>' : ''}</tr></thead>`;
     const nb = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle' && !foundryIsOver(p)).length;
     const ns = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Substitute' && !foundryIsOver(p)).length;
     const overB = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle' && foundryIsOver(p)).length;
@@ -1360,7 +1539,7 @@ function foundryRosterHtml(legion) {
         const list = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === status && foundryIsOver(p))
             .sort((a, b) => Number(a.foundry_slot) - Number(b.foundry_slot));
         if (!list.length) return '';
-        const cols = status === 'Battle' ? (foundryExt ? 8 : 7) : 4;
+        const cols = foundryExt ? 8 : 7;
         const head = `<tr class="fy-over-head"><td colspan="${cols}">⏸ Undeploy · ${list.length} ${foundryL('pemain di luar batas', 'player(s) over the limit')} (${status === 'Battle' ? foundryBattleMax() : foundrySubMax()}) — ${foundryL('belum dihitung di chart, peta & Hitung Tugas. Pindahkan ke slot kosong lewat ⇄ bila sudah siap.', 'not counted in chart, map & task calculation. Move into a free slot with ⇄ when ready.')}</td></tr>`;
         return head + list.map(p => rowFn(Number(p.foundry_slot)).replace('<tr class="', '<tr class="fy-row-over ')).join('');
     };
@@ -1371,6 +1550,7 @@ function foundryRosterHtml(legion) {
         <div class="table-container"><table class="fy-table fy-table-battle">${battleHead}<tbody>${battle}</tbody></table></div>
         <h3 class="fy-h">Pemain Cadangan</h3>
         <p class="fy-note">${foundryL('Cadangan baru bisa masuk battlefield setelah menit 3.', 'Substitutes can only enter the battlefield after minute 3.')}</p>
+        ${edit ? `<div class="fy-sub-tools">${foundrySubToolsInnerHtml(legion)}</div>` : ''}
         <div class="table-container"><table class="fy-table fy-table-sub">${subHead}<tbody>${subs}</tbody></table></div>`;
 }
 
@@ -1425,7 +1605,7 @@ function foundryExportCsv() {
     const rows = list.map(p => {
         const battle = p.foundry_status === 'Battle';
         const over = foundryIsOver(p);
-        const ph = n => (battle && !over && foundryTarget(p, n)) ? foundryName(foundryTarget(p, n)) : '';
+        const ph = n => (!over && foundryTarget(p, n)) ? foundryName(foundryTarget(p, n)) : '';
         return [
             p.foundry_legion,
             (battle ? 'Battle' : 'Substitute') + (over ? ' (Undeploy)' : ''),
@@ -1434,7 +1614,7 @@ function foundryExportCsv() {
             foundryPlainNick(p),
             p.game_id || '',
             p.troops_power == null ? '' : p.troops_power,
-            battle && !over ? (p.foundry_role || '') : (battle ? '' : 'Substitute'),
+            battle && !over ? (p.foundry_role || '') : (battle ? '' : (p.foundry_role || 'Substitute')),
             ph(1), ph(2), ph(3),
             rallyOf(p),
             p.can_join === false ? 'No' : 'Yes'
@@ -2406,6 +2586,14 @@ function foundryMapHtml() {
         }
         return ps.map(p => `<li>#${p.foundry_slot} ${escapeHtml(foundryPlainNick(p))} <small>(${escapeHtml(p.foundry_role)})</small></li>`).join('');
     };
+    const subList = (phase) => {
+        const ps = foundrySubAssigned(L, foundrySelected, phase);
+        if (!ps.length) return '';
+        const li = ps.map(p => live
+            ? `<li><button type="button" class="fy-live-name" onclick="foundryOpenLiveEditor('${p.id}', event.clientX, event.clientY)">S${escapeHtml(p.foundry_slot)} ${escapeHtml(foundryPlainNick(p))}</button> <small>(${escapeHtml(p.foundry_role || '—')})</small></li>`
+            : `<li>S${escapeHtml(p.foundry_slot)} ${escapeHtml(foundryPlainNick(p))} <small>(${escapeHtml(p.foundry_role || '—')})</small></li>`).join('');
+        return `<h5 class="fy-sub-h">${foundryL('Cadangan (masuk setelah menit 3)', 'Substitutes (after minute 3)')}</h5><ul class="fy-sub-ul">${li}</ul>`;
+    };
     const pts = b.m ? `<p><b>${b.f.toLocaleString('en-US')}</b> ${foundryL('poin first capture', 'first-capture points')} + <b>${b.m.toLocaleString('en-US')}</b> ${foundryL('poin/menit', 'points/min')}</p>` : '';
     const liveBadge = live ? `<p class="fy-live-banner"><b class="fy-edit-badge">✏️ Live Edit on</b> — ${foundryL('Ketuk mark nama di peta atau pemain di daftar untuk mengubah peran & target. Perubahan langsung tersimpan.', 'Tap a name mark on the map or a player in the list to change role & targets. Changes save instantly.')}</p>` : '';
     return `${foundryExtNotice()}<div class="fy-controls">
@@ -2428,7 +2616,7 @@ function foundryMapHtml() {
         <p class="fy-note">Angka di lingkaran = jumlah pemain yang ditugaskan pada bangunan untuk phase terpilih. Mark kecil = nama pemain; gunakan filter tugas untuk menampilkan peran tertentu.</p>
         ${foundryMapLegendHtml(false)}
         <div class="fy-detail"><h3>${escapeHtml(b.n)}</h3>${pts}<p>${escapeHtml(b.tip)}</p>
-            <div class="fy-cols"><div><h4>Phase 1</h4><ul>${list(1)}</ul></div><div><h4>Phase 2</h4><ul>${list(2)}</ul></div><div><h4>Phase 3</h4><ul>${list(3)}</ul></div></div></div>`;
+            <div class="fy-cols"><div><h4>Phase 1</h4><ul>${list(1)}</ul>${subList(1)}</div><div><h4>Phase 2</h4><ul>${list(2)}</ul>${subList(2)}</div><div><h4>Phase 3</h4><ul>${list(3)}</ul>${subList(3)}</div></div></div>`;
 }
 
 // ---------- EKSPOR PNG ----------
@@ -2448,7 +2636,11 @@ async function foundryExportPng(legion = foundryMapLegion, phase = foundryPhase)
             : FOUNDRY_KEYS.flatMap(k => foundryAssigned(legion, k, phase).map(p => ({ k, p }))).sort((a, b) => a.p.foundry_slot - b.p.foundry_slot);
         const half = all ? rows.length : Math.ceil(rows.length / 2), LH = 17;
         const listH = rows.length ? half * LH + 16 : 24;
-        const H = HEAD + BLOCK * phases.length + listH + FOOT;
+        // Cadangan: All Phase = semua Cadangan + target tiap phase; satu phase = Cadangan yang punya target pada phase itu.
+        const subRows = foundrySubsOf(legion).filter(p => all || foundryTarget(p, phase));
+        const subHalf = all ? subRows.length : Math.ceil(subRows.length / 2);
+        const subH = subRows.length ? 26 + subHalf * LH : 0;
+        const H = HEAD + BLOCK * phases.length + listH + subH + FOOT;
         const c = document.createElement('canvas'); c.width = W * S; c.height = H * S;
         const x = c.getContext('2d'); x.scale(S, S);
         const font = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
@@ -2508,6 +2700,20 @@ async function foundryExportPng(legion = foundryMapLegion, phase = foundryPhase)
             while (t.length > 4 && x.measureText(t).width > colW - 14) t = t.slice(0, -2) + '…';
             x.fillStyle = '#e2e8f0'; x.fillText(t, cx + 14, cy);
         });
+        // daftar Cadangan & task
+        if (subRows.length) {
+            const sy = HEAD + BLOCK * phases.length + listH;
+            x.textAlign = 'left'; x.fillStyle = '#7dd3fc'; x.font = `bold 12px ${font}`;
+            x.fillText(foundryL('Cadangan (masuk setelah menit 3)', 'Substitutes (enter after minute 3)'), 12, sy + 10);
+            x.font = `11px ${font}`;
+            subRows.forEach((p, i) => {
+                const cx = 12 + (!all && i >= subHalf ? W / 2 : 0), cy = sy + 26 + (i % subHalf) * LH;
+                x.fillStyle = FOUNDRY_ROLE_COLOR[p.foundry_role] || '#e5e7eb'; x.fillRect(cx, cy - 5, 9, 10);
+                let t = `S${p.foundry_slot} ${foundryPlainNick(p)} · ${foundrySubTaskText(p, all ? 'all' : phase)}`;
+                while (t.length > 4 && x.measureText(t).width > colW - 14) t = t.slice(0, -2) + '…';
+                x.fillStyle = '#e2e8f0'; x.fillText(t, cx + 14, cy);
+            });
+        }
         // legenda + footer
         const fy = H - FOOT / 2 - 6;
         let lx = 12; x.font = `10px ${font}`;
@@ -2701,7 +2907,7 @@ async function openFoundrySharedMap(legion, phase) {
         const taskRowsAll = allBattle.length ? `<div class="fy-share-roster-wrap"><h3>${taskTitle}</h3><div class="fy-share-roster-scroll"><table class="fy-share-roster"><thead><tr><th>Slot</th><th>${en()?'Player':'Pemain'}</th><th>${en()?'Task / Role':'Tugas / Peran'}</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th></tr></thead><tbody>${allBattle.map(p => `<tr><td>#${escapeHtml(p.foundry_slot)}</td><td>${escapeHtml(foundryPlainNick(p))}</td><td>${escapeHtml(p.foundry_role || (en()?'Unassigned':'Belum ditentukan'))}</td><td>${escapeHtml(tgtName(p, 1))}</td><td>${escapeHtml(tgtName(p, 2))}</td><td>${escapeHtml(tgtName(p, 3))}</td></tr>`).join('')}</tbody></table></div></div>` : `<p class="fy-note">${noPlayers}</p>`;
         const taskRows = phase === 'all' ? taskRowsAll : taskRowsSingle;
         const subs = foundryPlayers.filter(p => p.foundry_legion === legion && p.foundry_status === 'Substitute' && !foundryIsOver(p)).sort((a,b) => a.foundry_slot - b.foundry_slot);
-        const subRows = subs.length ? `<div class="fy-share-roster-wrap"><h3>${en()?'Substitutes (enter after minute 3)':'Cadangan (masuk setelah menit 3)'}</h3><div class="fy-share-roster-scroll"><table class="fy-share-roster"><thead><tr><th>#</th><th>${en()?'Player':'Pemain'}</th></tr></thead><tbody>${subs.map(p => `<tr><td>C${escapeHtml(p.foundry_slot)}</td><td>${escapeHtml(p.nickname || '-')}</td></tr>`).join('')}</tbody></table></div></div>` : '';
+        const subRows = subs.length ? `<div class="fy-share-roster-wrap"><h3>${en()?'Substitutes (enter after minute 3)':'Cadangan (masuk setelah menit 3)'}</h3><div class="fy-share-roster-scroll"><table class="fy-share-roster"><thead><tr><th>#</th><th>${en()?'Player':'Pemain'}</th><th>${en()?'Task / Role':'Tugas / Peran'}</th>${phase === 'all' ? '<th>Phase 1</th><th>Phase 2</th><th>Phase 3</th>' : '<th>Target</th>'}</tr></thead><tbody>${subs.map(p => `<tr><td>C${escapeHtml(p.foundry_slot)}</td><td>${escapeHtml(p.nickname || '-')}</td><td>${escapeHtml(p.foundry_role && p.foundry_role !== 'Substitute' ? p.foundry_role : (en()?'No task yet':'Belum ada task'))}</td>${phase === 'all' ? `<td>${escapeHtml(tgtName(p, 1))}</td><td>${escapeHtml(tgtName(p, 2))}</td><td>${escapeHtml(tgtName(p, 3))}</td>` : `<td>${escapeHtml(tgtName(p, phase))}</td>`}</tr>`).join('')}</tbody></table></div></div>` : '';
         // strategyGuide remains defined below in the original load flow — kept inside load after fetch
         return { taskRows, subRows };
     };
@@ -2905,17 +3111,18 @@ function foundryChartSvg(legion, phase) {
     } else {
         // 1. Cakupan bangunan
         section(en ? 'Building coverage (players assigned · white tick = minimum)' : 'Cakupan bangunan (pemain ditugaskan · garis putih = minimal)');
-        const keys = FOUNDRY_KEYS.filter(k => FOUNDRY_B[k].ph <= phase && (FOUNDRY_MIN[phase][k] || foundryAssigned(legion, k, phase).length));
-        const rows = keys.map(k => ({ k, b: FOUNDRY_B[k], ps: foundryAssigned(legion, k, phase), min: FOUNDRY_MIN[phase][k] || 0 }));
-        const maxN = Math.max(4, ...rows.map(r => Math.max(r.ps.length, r.min)));
+        const keys = FOUNDRY_KEYS.filter(k => FOUNDRY_B[k].ph <= phase && (FOUNDRY_MIN[phase][k] || foundryAssigned(legion, k, phase).length || foundrySubAssigned(legion, k, phase).length));
+        const rows = keys.map(k => ({ k, b: FOUNDRY_B[k], ps: foundryAssigned(legion, k, phase), sub: foundrySubAssigned(legion, k, phase), min: FOUNDRY_MIN[phase][k] || 0 }));
+        const maxN = Math.max(4, ...rows.map(r => Math.max(r.ps.length + r.sub.length, r.min)));
         const bx = 190, bw = 360;
         rows.forEach(r => {
             const n = r.ps.length, low = r.min && n < r.min;
             out.push(T(PAD, y + 14, foundryTrunc(r.b.n, 26), { size: 12 }));
             out.push(R(bx, y + 3, bw, 14, '#1e293b'));
             if (n) out.push(R(bx, y + 3, n / maxN * bw, 14, low ? '#ef4444' : r.b.c));
+            if (r.sub.length) out.push(R(bx + n / maxN * bw, y + 3, r.sub.length / maxN * bw, 14, r.b.c, 4, 'fill-opacity=".35" stroke-dasharray="3 2" stroke="#ffffff" stroke-opacity=".6"'));
             if (r.min) out.push(`<line x1="${bx + r.min / maxN * bw}" y1="${y + 1}" x2="${bx + r.min / maxN * bw}" y2="${y + 19}" stroke="#ffffff" stroke-width="2"/>`);
-            out.push(T(bx + bw + 10, y + 14, `${n}${r.min ? '/' + r.min : ''}` + (showPw && n ? ` · ${foundryFmtPower(sum(r.ps))}` : ''), { fill: low ? '#fca5a5' : '#e2e8f0', size: 12, weight: low ? 700 : 400 }));
+            out.push(T(bx + bw + 10, y + 14, `${n}${r.min ? '/' + r.min : ''}` + (r.sub.length ? ` (+${r.sub.length} ${en ? 'sub' : 'cad'})` : '') + (showPw && n ? ` · ${foundryFmtPower(sum(r.ps))}` : ''), { fill: low ? '#fca5a5' : '#e2e8f0', size: 12, weight: low ? 700 : 400 }));
             y += 24;
         });
 
@@ -2949,13 +3156,19 @@ function foundryChartSvg(legion, phase) {
 
         // 4. Cadangan
         if (subs.length) {
-            section(en ? 'Substitutes (enter after minute 3)' : 'Cadangan (masuk setelah menit 3)');
-            const half = Math.ceil(subs.length / 2);
-            subs.forEach((p, i) => {
-                const col = i < half ? 0 : 1, row = i < half ? i : i - half;
-                out.push(T(PAD + col * 370, y + 13 + row * 18, `S${p.foundry_slot} ${foundryNick(p, 14)}`, { size: 12 }));
+            section(en ? `Substitutes (enter after minute 3) · Phase ${phase} task` : `Cadangan (masuk setelah menit 3) · task Phase ${phase}`);
+            subs.forEach(p => {
+                const col = FOUNDRY_ROLE_COLOR[p.foundry_role] || '#e5e7eb';
+                const w = showPw ? Math.min(pmax, Math.max(3, pw(p) / maxPw * pmax)) : pmax;
+                const hasTask = !!foundryTarget(p, phase);
+                const role = p.foundry_role && p.foundry_role !== 'Substitute' ? (en ? p.foundry_role : (FOUNDRY_ROLE_ID[p.foundry_role] || p.foundry_role)) : 'Substitute';
+                out.push(T(PAD, y + 13, `S${p.foundry_slot}`, { fill: '#94a3b8', size: 11 }));
+                out.push(T(PAD + 34, y + 13, foundryTrunc(foundryNick(p, 14), 24), { size: 12 }));
+                out.push(R(pbx, y + 3, w, 12, col, 3, showPw ? '' : 'fill-opacity=".35"'));
+                if (showPw) out.push(T(pbx + w + 6, y + 13, foundryFmtPower(p.troops_power), { fill: '#cbd5e1', size: 11 }));
+                out.push(T(400, y + 13, foundryTrunc(hasTask ? `${role} → ${foundryName(foundryTarget(p, phase))}` : (en ? 'No task yet' : 'Belum ada task'), 42), { fill: hasTask ? '#cbd5e1' : '#64748b', size: 11 }));
+                y += 20;
             });
-            y += half * 18;
         }
     }
     y += 16;
@@ -2966,8 +3179,8 @@ function foundryChartSvg(legion, phase) {
 }
 
 function foundryChartNote() {
-    return foundryL('Bar bangunan = jumlah pemain ditugaskan (garis putih = minimal, merah = kurang dari minimal). Bar roster = Troops Power (terlihat setelah login).',
-        'Building bars = players assigned (white tick = minimum, red = below minimum). Roster bars = Troops Power (visible after login).');
+    return foundryL('Bar bangunan = jumlah pemain ditugaskan (garis putih = minimal, merah = kurang dari minimal). Bar roster = Troops Power (terlihat setelah login). Bar putus-putus transparan = Cadangan yang ditugaskan ke bangunan itu (+N cad).',
+        'Building bars = players assigned (white tick = minimum, red = below minimum). Roster bars = Troops Power (visible after login). Dashed translucent bar = substitutes assigned to that building (+N sub).');
 }
 
 function foundryChartLiveTableHtml(legion, phase) {
@@ -2975,14 +3188,15 @@ function foundryChartLiveTableHtml(legion, phase) {
     const battle = foundryPlayers
         .filter(p => p.foundry_legion === legion && p.foundry_status === 'Battle' && !foundryIsOver(p))
         .sort((a, b) => Number(a.foundry_slot) - Number(b.foundry_slot));
-    if (!battle.length) {
+    const subsLive = foundrySubsOf(legion);
+    if (!battle.length && !subsLive.length) {
         return `<div class="fy-live-chart-panel"><p class="fy-empty">${foundryL('Belum ada pemain Battle di legion ini.', 'No Battle players in this legion yet.')}</p></div>`;
     }
-    const rows = battle.map(p => {
+    const mkRow = (p, pre) => {
         const tgt = foundryTarget(p, phase);
         const tgtName = tgt ? foundryName(tgt) : '—';
         return `<tr>
-          <td>${p.foundry_slot || '—'}</td>
+          <td>${pre}${p.foundry_slot || '—'}</td>
           <td><button type="button" class="fy-live-name" onclick="foundryOpenLiveEditor('${p.id}', event.clientX, event.clientY)">${escapeHtml(foundryNick(p))}</button></td>
           <td>${canViewSensitive() ? escapeHtml(p.game_id || '') : ''}</td>
           <td><select class="fy-manual-task" aria-label="Role ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_role',this.value)">${foundryRoleOptionsHtml(p.foundry_role || '')}</select></td>
@@ -2991,7 +3205,8 @@ function foundryChartLiveTableHtml(legion, phase) {
           ${foundryExt ? `<td><select class="fy-manual-task" aria-label="P3 ${escapeHtml(p.nickname)}" onchange="foundryUpdateTask('${p.id}','foundry_p3',this.value)">${foundryBuildingOptionsHtml(p.foundry_p3 || p.foundry_p2 || '')}</select></td>` : ''}
           <td><span class="fy-live-phase-tgt" style="border-color:${(FOUNDRY_B[tgt]||{}).c||'#64748b'}">${escapeHtml(tgtName)}</span></td>
         </tr>`;
-    }).join('');
+    };
+    const rows = battle.map(p => mkRow(p, '')).join('') + subsLive.map(p => mkRow(p, 'S')).join('');
     return `<div class="fy-live-chart-panel">
       <div class="fy-live-chart-head"><b class="fy-edit-badge">✏️ Live Edit on</b>
         <small>${foundryL('Ubah peran & target di tabel; chart di atas ikut terbarui. Perubahan langsung tersimpan.', 'Change role & targets in the table; the chart above updates. Changes save instantly.')}</small>
