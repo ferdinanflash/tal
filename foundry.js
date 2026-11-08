@@ -1363,8 +1363,10 @@ function foundrySubPlanCalc(legion) {
             t[ph] = key;
             have[ph][key] = (have[ph][key] || 0) + 1;
         });
-        // Menetap di satu bangunan sepanjang battle = Holder; pindah-pindah antar bangunan = Mobile.
-        const patch = { foundry_role: new Set([t[1], t[2], t[3]]).size === 1 ? 'Holder' : 'Mobile', foundry_p1: t[1], foundry_p2: t[2] };
+        // Selaras template Battle: Holder boleh berpindah bangunan antar phase (mis. slot 24), Mobile hanya bila ada
+        // target roam / Weapon Workshop.
+        const roamish = [1, 2, 3].some(ph => t[ph] === 'roam' || t[ph] === 'workshop');
+        const patch = { foundry_role: roamish ? 'Mobile' : 'Holder', foundry_p1: t[1], foundry_p2: t[2] };
         if (foundryExt) patch.foundry_p3 = t[3];
         return { p, patch };
     });
