@@ -33,7 +33,7 @@
 				<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 				<link rel="icon" href="icons/favicon.ico" sizes="any">
 				<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-				<link rel="stylesheet" href="style.css?v=63">
+				<link rel="stylesheet" href="style.css?v=65">
 
 
 
@@ -50,7 +50,7 @@
 					<script src="export.js?v=21" defer></script>
 					<script src="footer.js?v=18" defer></script>
 					<script src="effects.js?v=18" defer></script>
-					<script src="president-panel.js?v=13" defer></script>
+					<script src="president-panel.js?v=14" defer></script>
 					<script src="redeem.js?v=4" defer></script>
 					<script src="statetracker.js?v=35" defer></script>
 				</head>
@@ -162,8 +162,11 @@
 								<span class="arrow legion-btn-arrow">&gt;</span>
 							</div>
 						</div>
-						<div id="display-schedule-legion-1" class="schedule-display schedule-display-l1">
+						<div class="legion-sched-row">
+							<div id="display-schedule-legion-1" class="schedule-display schedule-display-l1">
 							⏰ Match Time: <span class="schedule-time-val">-</span>
+						</div>
+							<span class="legion-alliance-tags" id="legion-tags-l1" aria-label="Alliances"></span>
 						</div>
 					</div>
 
@@ -181,8 +184,11 @@
 								<span class="arrow legion-btn-arrow">&gt;</span>
 							</div>
 						</div>
-						<div id="display-schedule-legion-2" class="schedule-display schedule-display-l2">
+						<div class="legion-sched-row">
+							<div id="display-schedule-legion-2" class="schedule-display schedule-display-l2">
 							⏰ Match Time: <span class="schedule-time-val">-</span>
+						</div>
+							<span class="legion-alliance-tags" id="legion-tags-l2" aria-label="Alliances"></span>
 						</div>
 					</div>
 
@@ -200,8 +206,11 @@
 								<span class="arrow legion-btn-arrow">&gt;</span>
 							</div>
 						</div>
-						<div id="display-schedule-legion-1b" class="schedule-display schedule-display-l1b" style="display:none">
+						<div class="legion-sched-row">
+							<div id="display-schedule-legion-1b" class="schedule-display schedule-display-l1b" style="display:none">
 							⏰ Match Time: <span class="schedule-time-val">-</span>
+						</div>
+							<span class="legion-alliance-tags" id="legion-tags-l1b" aria-label="Alliances"></span>
 						</div>
 					</div>
 
@@ -219,8 +228,11 @@
 								<span class="arrow legion-btn-arrow">&gt;</span>
 							</div>
 						</div>
-						<div id="display-schedule-legion-2b" class="schedule-display schedule-display-l2b" style="display:none">
+						<div class="legion-sched-row">
+							<div id="display-schedule-legion-2b" class="schedule-display schedule-display-l2b" style="display:none">
 							⏰ Match Time: <span class="schedule-time-val">-</span>
+						</div>
+							<span class="legion-alliance-tags" id="legion-tags-l2b" aria-label="Alliances"></span>
 						</div>
 					</div>
 
@@ -628,6 +640,17 @@
 						<label class="pp-legion-vis-item"><input type="checkbox" id="pp-legion-vis-l2b" onchange="presidentToggleLegionVisible('l2b', this.checked)"><span>Legion 2 — Alliance B</span></label>
 					</div>
 					<div class="pp-feature-note" id="pp-legion-vis-note">Alliance B legions also need the “Legion Cadangan — Alliance B” switch below to be enabled. Applies to Tundra Arm League only.</div>
+				</div>
+
+				<div class="pp-card" id="pp-legion-tags-card">
+					<h3>🏷️ Legion Alliance Tags</h3>
+					<p>Choose which alliance(s) each legion belongs to. The tags appear on the main menu, to the right of the match schedule. Leave all unchecked to show no tag.</p>
+					<div class="pp-tag-list">
+						<div class="pp-tag-row"><b>Legion 1</b><div class="pp-tag-chips"><label class="pp-tag-chip pp-tag-arx"><input type="checkbox" id="pp-tag-l1-ARX" onchange="presidentToggleLegionTag('l1','ARX',this.checked)"><span>ARX</span></label><label class="pp-tag-chip pp-tag-idn"><input type="checkbox" id="pp-tag-l1-IDN" onchange="presidentToggleLegionTag('l1','IDN',this.checked)"><span>IDN</span></label><label class="pp-tag-chip pp-tag-vnx"><input type="checkbox" id="pp-tag-l1-VNX" onchange="presidentToggleLegionTag('l1','VNX',this.checked)"><span>VNX</span></label><label class="pp-tag-chip pp-tag-zxc"><input type="checkbox" id="pp-tag-l1-ZXC" onchange="presidentToggleLegionTag('l1','ZXC',this.checked)"><span>ZXC</span></label><label class="pp-tag-chip pp-tag-cat"><input type="checkbox" id="pp-tag-l1-CAT" onchange="presidentToggleLegionTag('l1','CAT',this.checked)"><span>CAT</span></label></div></div>
+						<div class="pp-tag-row"><b>Legion 2</b><div class="pp-tag-chips"><label class="pp-tag-chip pp-tag-arx"><input type="checkbox" id="pp-tag-l2-ARX" onchange="presidentToggleLegionTag('l2','ARX',this.checked)"><span>ARX</span></label><label class="pp-tag-chip pp-tag-idn"><input type="checkbox" id="pp-tag-l2-IDN" onchange="presidentToggleLegionTag('l2','IDN',this.checked)"><span>IDN</span></label><label class="pp-tag-chip pp-tag-vnx"><input type="checkbox" id="pp-tag-l2-VNX" onchange="presidentToggleLegionTag('l2','VNX',this.checked)"><span>VNX</span></label><label class="pp-tag-chip pp-tag-zxc"><input type="checkbox" id="pp-tag-l2-ZXC" onchange="presidentToggleLegionTag('l2','ZXC',this.checked)"><span>ZXC</span></label><label class="pp-tag-chip pp-tag-cat"><input type="checkbox" id="pp-tag-l2-CAT" onchange="presidentToggleLegionTag('l2','CAT',this.checked)"><span>CAT</span></label></div></div>
+						<div class="pp-tag-row"><b>Legion 1 — Alliance B</b><div class="pp-tag-chips"><label class="pp-tag-chip pp-tag-arx"><input type="checkbox" id="pp-tag-l1b-ARX" onchange="presidentToggleLegionTag('l1b','ARX',this.checked)"><span>ARX</span></label><label class="pp-tag-chip pp-tag-idn"><input type="checkbox" id="pp-tag-l1b-IDN" onchange="presidentToggleLegionTag('l1b','IDN',this.checked)"><span>IDN</span></label><label class="pp-tag-chip pp-tag-vnx"><input type="checkbox" id="pp-tag-l1b-VNX" onchange="presidentToggleLegionTag('l1b','VNX',this.checked)"><span>VNX</span></label><label class="pp-tag-chip pp-tag-zxc"><input type="checkbox" id="pp-tag-l1b-ZXC" onchange="presidentToggleLegionTag('l1b','ZXC',this.checked)"><span>ZXC</span></label><label class="pp-tag-chip pp-tag-cat"><input type="checkbox" id="pp-tag-l1b-CAT" onchange="presidentToggleLegionTag('l1b','CAT',this.checked)"><span>CAT</span></label></div></div>
+						<div class="pp-tag-row"><b>Legion 2 — Alliance B</b><div class="pp-tag-chips"><label class="pp-tag-chip pp-tag-arx"><input type="checkbox" id="pp-tag-l2b-ARX" onchange="presidentToggleLegionTag('l2b','ARX',this.checked)"><span>ARX</span></label><label class="pp-tag-chip pp-tag-idn"><input type="checkbox" id="pp-tag-l2b-IDN" onchange="presidentToggleLegionTag('l2b','IDN',this.checked)"><span>IDN</span></label><label class="pp-tag-chip pp-tag-vnx"><input type="checkbox" id="pp-tag-l2b-VNX" onchange="presidentToggleLegionTag('l2b','VNX',this.checked)"><span>VNX</span></label><label class="pp-tag-chip pp-tag-zxc"><input type="checkbox" id="pp-tag-l2b-ZXC" onchange="presidentToggleLegionTag('l2b','ZXC',this.checked)"><span>ZXC</span></label><label class="pp-tag-chip pp-tag-cat"><input type="checkbox" id="pp-tag-l2b-CAT" onchange="presidentToggleLegionTag('l2b','CAT',this.checked)"><span>CAT</span></label></div></div>
+					</div>
 				</div>
 
 				<div class="pp-card" id="pp-alliance-b-card">

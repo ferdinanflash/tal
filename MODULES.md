@@ -100,3 +100,14 @@ Fitur Foundry: peringatan roster per Legion/Phase (`FOUNDRY_MIN`), target 3 fase
 - Disimpan di `footer_settings.hidden_legions` (daftar key yang disembunyikan: `l1,l2,l1b,l2b`). Jalankan `supabase_legion_visibility.sql` sekali. Dibaca lewat query terpisah di `loadGlobalBattleTheme`, jadi kolom yang belum dibuat tidak mengganggu Battle Theme / Alliance B (semua legion tetap tampil).
 - Alliance B tetap butuh saklar "Legion Cadangan — Alliance B"; kartu Alliance B tampil bila saklar aktif DAN tidak disembunyikan. Tema Frostdragon mengabaikan pengaturan ini.
 - Logika ada di `applyAllianceBVisibility` (`LEGION_MENU_ITEMS`, `presidentToggleLegionVisible`). Menu utama memakai id `legion-btn-1` / `legion-btn-2` / `legion-btn-1b` / `legion-btn-2b`. SW `tal-foundry-sw-v46`, `president-panel.js?v=13`, `style.css?v=63`.
+
+## Fix navbar mobile (v47)
+
+- Tombol **President Panel** terpotong di HP (<= 600px) karena 5 tombol navbar dipaksa satu baris dengan `nowrap` + `overflow:hidden`. Kini baris navbar boleh wrap dan tombol President Panel memakai satu baris penuh sendiri (`style.css`, blok "Mobile nav fix"). Desktop tidak berubah. SW `tal-foundry-sw-v47`, `style.css?v=64`.
+
+## Legion Alliance Tags (v48)
+
+- Menu utama: tiap kartu legion punya baris tag aliansi di kanan jadwal (`.legion-sched-row` + `#legion-tags-l1|l2|l1b|l2b`). Tag tetap tampil walau jadwal belum diisi.
+- President Panel: kartu **🏷️ Legion Alliance Tags** — per legion pilih satu atau lebih aliansi (ARX, IDN, VNX, ZXC, CAT), tersimpan langsung dan global (realtime + polling seperti Battle Theme).
+- Disimpan di `footer_settings.legion_tags` (teks JSON, mis. `{"l1":["ARX","CAT"],"l2":["IDN"]}`). Jalankan `supabase_legion_tags.sql` sekali. Dibaca lewat query terpisah di `loadGlobalBattleTheme`, jadi kolom yang belum dibuat tidak mengganggu fitur lain.
+- Kode: `LEGION_TAG_ALLIANCES`, `parseLegionTags`, `applyLegionTags`, `presidentToggleLegionTag` di `president-panel.js`. SW `tal-foundry-sw-v48`, `president-panel.js?v=14`, `style.css?v=65`.

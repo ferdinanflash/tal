@@ -23,6 +23,56 @@ function parseHiddenLegions(v) {
     return new Set(String(v == null ? '' : v).split(',').map(x => x.trim()).filter(k => LEGION_MENU_ITEMS.some(i => i.key === k)));
 }
 function isLegionHidden(key) { return globalHiddenLegions.has(key); }
+
+// ----- Alliance tags shown to the right of each legion's schedule (footer_settings.legion_tags, JSON text) -----
+// e.g. {"l1":["ARX","CAT"],"l2":["IDN"]}. Empty / missing = no tag.
+const LEGION_TAG_ALLIANCES = ['ARX', 'IDN', 'VNX', 'ZXC', 'CAT'];
+let globalLegionTags = {};
+function parseLegionTags(v) {
+    let obj = {};
+    try { obj = JSON.parse(v || '{}') || {}; } catch (_) { obj = {}; }
+    const out = {};
+    LEGION_MENU_ITEMS.forEach(it => {
+        const a = Array.isArray(obj[it.key]) ? obj[it.key] : [];
+        const list = LEGION_TAG_ALLIANCES.filter(x => a.includes(x));
+        if (list.length) out[it.key] = list;
+    });
+    return out;
+}
+function legionTagsJson(o) { return JSON.stringify(parseLegionTags(JSON.stringify(o || {}))); }
+function applyLegionTags() {
+    LEGION_MENU_ITEMS.forEach(it => {
+        const box = document.getElementById('legion-tags-' + it.key);
+        if (box) box.innerHTML = (globalLegionTags[it.key] || []).map(a => `<span class="legion-tag legion-tag-${a.toLowerCase()}">${a}</span>`).join('');
+        LEGION_TAG_ALLIANCES.forEach(a => {
+            const cb = document.getElementById(`pp-tag-${it.key}-${a}`);
+            if (cb) cb.checked = (globalLegionTags[it.key] || []).includes(a);
+        });
+    });
+}
+async function presidentToggleLegionTag(key, alliance, on) {
+    if (!canOpenPresidentPanel()) { showToast('President Panel only.', 'warning'); applyLegionTags(); return; }
+    const client = getSupabase();
+    if (!client || !LEGION_TAG_ALLIANCES.includes(alliance)) return;
+    const next = JSON.parse(JSON.stringify(globalLegionTags));
+    const set = new Set(next[key] || []);
+    if (on) set.add(alliance); else set.delete(alliance);
+    next[key] = LEGION_TAG_ALLIANCES.filter(a => set.has(a));
+    const json = legionTagsJson(next);
+    const { error } = await client.from('footer_settings').update({ legion_tags: json }).eq('id', 'main');
+    if (error) {
+        const missing = /legion_tags|column|42703/i.test(String(error.message || error));
+        showToast(missing
+            ? 'Column legion_tags not found. Run supabase_legion_tags.sql in the Supabase SQL Editor first.'
+            : 'Failed to update legion tags: ' + (error.message || error), 'error');
+        applyLegionTags();
+        return;
+    }
+    globalLegionTags = parseLegionTags(json);
+    applyLegionTags();
+    const name = (LEGION_MENU_ITEMS.find(i => i.key === key) || {}).name || key;
+    showToast(`${name} tags: ${(globalLegionTags[key] || []).join(', ') || 'none'}`, 'success');
+}
 function isLegionNameHidden(name) {
     const it = LEGION_MENU_ITEMS.find(i => i.name === name);
     return !!it && isLegionHidden(it.key);
@@ -72,6 +122,13 @@ async function loadGlobalBattleTheme({silent = true, forceApply = true} = {}) {
                 if ([...nextHidden].sort().join() !== [...globalHiddenLegions].sort().join()) { globalHiddenLegions = nextHidden; forceApply = true; }
             }
         } catch (_) { /* column not created yet */ }
+        try {
+            const tg = await client.from('footer_settings').select('legion_tags').eq('id', 'main').single();
+            if (!tg.error) {
+                const nextTags = parseLegionTags(tg.data && tg.data.legion_tags);
+                if (JSON.stringify(nextTags) !== JSON.stringify(globalLegionTags)) { globalLegionTags = nextTags; forceApply = true; }
+            }
+        } catch (_) { /* column not created yet */ }
         if (changed || forceApply) {
             applyBattleTheme();
             applyAllianceBVisibility();
@@ -110,6 +167,10 @@ function startGlobalBattleThemeSync() {
                     const nextTheme = payload?.new?.battle_theme === 'frostdragon' ? 'frostdragon' : 'tundra';
                     const nextB = !!payload?.new?.alliance_b_enabled;
                     let msg = null;
+                    if (payload?.new && typeof payload.new.legion_tags !== 'undefined') {
+                        const nextTags = parseLegionTags(payload.new.legion_tags);
+                        if (JSON.stringify(nextTags) !== JSON.stringify(globalLegionTags)) { globalLegionTags = nextTags; applyLegionTags(); }
+                    }
                     if (payload?.new && typeof payload.new.hidden_legions !== 'undefined') {
                         const nextHidden = parseHiddenLegions(payload.new.hidden_legions);
                         if ([...nextHidden].sort().join() !== [...globalHiddenLegions].sort().join()) {
@@ -304,6 +365,7 @@ function applyAllianceBVisibility() {
             cb.disabled = frost || ((it.key === 'l1b' || it.key === 'l2b') && !isAllianceBEnabled());
         }
     });
+    applyLegionTags();
     const visCard = document.getElementById('pp-legion-visibility-card');
     if (visCard) visCard.classList.toggle('pp-disabled-theme', frost);
     const cb = document.getElementById('pp-alliance-b-enabled');

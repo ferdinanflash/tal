@@ -2855,3 +2855,52 @@ body.state-tracker-modal-open { overflow: hidden; }
 .pp-legion-vis-item input { width: 18px; height: 18px; accent-color: #22c55e; }
 .pp-legion-vis-item:has(input:disabled) { opacity: .5; cursor: not-allowed; }
 #pp-legion-visibility-card.pp-disabled-theme { opacity: .55; pointer-events: none; }
+
+/* ===== Mobile nav fix (v47): tombol President Panel tidak lagi terpotong ===== */
+@media (max-width: 600px) {
+  .navbar .navbar-main-btns,
+  .navbar-main-btns { flex-wrap: wrap !important; }
+  .navbar-main-btns > .president-panel-top-btn {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    order: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 8px 10px !important;
+    font-size: 0.85rem !important;
+    letter-spacing: normal;
+    overflow: visible !important;
+  }
+  .navbar-main-btns > .president-panel-top-btn.hidden { display: none !important; }
+  .navbar-main-btns > .president-panel-top-btn .pp-panel-word { display: inline !important; }
+}
+
+/* ===== Legion Alliance Tags (v48) ===== */
+.legion-sched-row { display: flex; align-items: center; justify-content: space-between; gap: 6px 10px; flex-wrap: wrap; margin-top: 2px; }
+.legion-sched-row .schedule-display { margin: 0; }
+.legion-alliance-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; margin-left: auto; }
+.legion-alliance-tags:empty { display: none; }
+.legion-tag { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: .72rem; font-weight: 800; letter-spacing: .04em; color: #fff; border: 1px solid rgba(255,255,255,.35); text-shadow: 0 1px 2px rgba(0,0,0,.45); }
+.legion-tag-arx { background: linear-gradient(160deg,#fb7185,#be123c); }
+.legion-tag-idn { background: linear-gradient(160deg,#fcd34d,#d97706); color: #1c1100; text-shadow: none; }
+.legion-tag-vnx { background: linear-gradient(160deg,#c4b5fd,#6d28d9); }
+.legion-tag-zxc { background: linear-gradient(160deg,#67e8f9,#0e7490); }
+.legion-tag-cat { background: linear-gradient(160deg,#86efac,#15803d); }
+.pp-tag-list { display: grid; gap: 10px; margin-top: 10px; }
+.pp-tag-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 12px; border: 1px solid #2d3039; border-radius: 10px; background: #14161b; }
+.pp-tag-row > b { min-width: 170px; }
+.pp-tag-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pp-tag-chip { cursor: pointer; }
+.pp-tag-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.pp-tag-chip span { display: inline-block; padding: 5px 13px; border-radius: 999px; border: 1px solid #3a3f4b; color: #94a3b8; font-weight: 800; font-size: .8rem; transition: .15s; }
+.pp-tag-chip input:checked + span { color: #fff; border-color: rgba(255,255,255,.5); }
+.pp-tag-arx input:checked + span { background: linear-gradient(160deg,#fb7185,#be123c); }
+.pp-tag-idn input:checked + span { background: linear-gradient(160deg,#fcd34d,#d97706); color: #1c1100; }
+.pp-tag-vnx input:checked + span { background: linear-gradient(160deg,#c4b5fd,#6d28d9); }
+.pp-tag-zxc input:checked + span { background: linear-gradient(160deg,#67e8f9,#0e7490); }
+.pp-tag-cat input:checked + span { background: linear-gradient(160deg,#86efac,#15803d); }
+.pp-tag-chip input:focus-visible + span { outline: 2px solid #fcd34d; outline-offset: 2px; }
+@media (max-width: 600px) { .pp-tag-row > b { min-width: 100%; } .legion-alliance-tags { margin-left: 0; justify-content: flex-start; } }
