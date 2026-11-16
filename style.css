@@ -378,23 +378,51 @@ td:first-child, th:first-child {
     }
 }
 
-/* ==================== SNOWFLAKE EFFECT STYLE ==================== */
-.snowflake {
-    position: fixed; 
-    top: -10px; 
-    background-color: #ffffff; 
-    border-radius: 50%; 
-    pointer-events: none; 
-    z-index: 9999; 
-    animation-name: fall;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-    animation-duration: 12s; 
+/* ==================== CHRISTMAS ORNAMENTS ==================== */
+.christmas-ornament {
+    position: fixed;
+    top: -52px;
+    z-index: 9999;
+    pointer-events: none;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 32% 25%, rgba(255,255,255,.95) 0 5%, rgba(255,255,255,.42) 12%, transparent 29%),
+        radial-gradient(circle at 38% 32%, color-mix(in srgb, var(--ornament-color), white 18%), var(--ornament-color) 58%, color-mix(in srgb, var(--ornament-color), black 42%) 100%);
+    border: 1px solid rgba(255,255,255,.48);
+    box-shadow: inset -3px -4px 7px rgba(0,0,0,.28), 0 2px 9px rgba(0,0,0,.18), 0 0 8px color-mix(in srgb, var(--ornament-color), transparent 58%);
+    animation: ornament-fall 18s linear forwards;
 }
-
-@keyframes fall {
-    0% { transform: translateY(0) translateX(0); }
-    100% { transform: translateY(105vh) translateX(20px); }
+.christmas-ornament::before {
+    content: "";
+    position: absolute;
+    left: 36%;
+    top: -5px;
+    width: 28%;
+    height: 6px;
+    border: 1px solid #d6b86c;
+    border-radius: 3px 3px 1px 1px;
+    background: linear-gradient(90deg, #8d6e35, #f8e4a2, #8d6e35);
+}
+.christmas-ornament::after {
+    content: "";
+    position: absolute;
+    left: 47%;
+    top: -13px;
+    width: 2px;
+    height: 9px;
+    border: 1px solid #d6b86c;
+    border-bottom: 0;
+    border-radius: 5px 5px 0 0;
+}
+@keyframes ornament-fall {
+    0% { transform: translate3d(0, -5vh, 0) rotate(-18deg); }
+    25% { transform: translate3d(18px, 27vh, 0) rotate(24deg); }
+    50% { transform: translate3d(-14px, 54vh, 0) rotate(-20deg); }
+    75% { transform: translate3d(16px, 81vh, 0) rotate(22deg); }
+    100% { transform: translate3d(-8px, 110vh, 0) rotate(-16deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .christmas-ornament { animation-duration: 28s !important; }
 }
 
 /* ==================== OPTIMISASI TAMPILAN MOBILE (HP) ==================== */
