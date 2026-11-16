@@ -11,11 +11,20 @@ function resetTableControls() {
     updateSortArrows();
 }
 
+function showIdnAllianceMenu() {
+    document.getElementById('alliance-menu-page').classList.add('hidden');
+    document.getElementById('troops-table-page').classList.add('hidden');
+    document.getElementById('foundry-page').classList.add('hidden');
+    document.getElementById('idn-alliance-menu-page').classList.remove('hidden');
+}
+
 function selectAlliance(alliance) {
     viewMode = 'ALLIANCE';
     currentSelection = alliance;
     resetTableControls();
     document.getElementById('alliance-menu-page').classList.add('hidden');
+    const idnMenu = document.getElementById('idn-alliance-menu-page');
+    if (idnMenu) idnMenu.classList.add('hidden');
     document.getElementById('troops-table-page').classList.remove('hidden');
 
     document.getElementById('th-status').style.display = "none";
@@ -60,6 +69,8 @@ function selectLegion(legionName) {
     currentSelection = legionName;
     resetTableControls();
     document.getElementById('alliance-menu-page').classList.add('hidden');
+    const idnMenu = document.getElementById('idn-alliance-menu-page');
+    if (idnMenu) idnMenu.classList.add('hidden');
     document.getElementById('troops-table-page').classList.remove('hidden');
 
     document.getElementById('th-status').style.display = "table-cell";
@@ -80,6 +91,8 @@ function showAllianceMenu() {
     document.getElementById('troops-table-page').classList.add('hidden');
     const foundryPage = document.getElementById('foundry-page');
     if (foundryPage) foundryPage.classList.add('hidden');
+    const idnMenu = document.getElementById('idn-alliance-menu-page');
+    if (idnMenu) idnMenu.classList.add('hidden');
     document.getElementById('alliance-menu-page').classList.remove('hidden');
     if (typeof syncFdtUi === 'function') syncFdtUi();
 }
