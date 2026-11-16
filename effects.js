@@ -17,28 +17,27 @@ function initOpeningAnimation() {
 }
 
 function createSnowEffect() {
-    const maxOrnaments = 22;
+    const maxOrnaments = 24;
     if (document.querySelectorAll('.christmas-ornament').length >= maxOrnaments) return;
 
+    // Mix several small Christmas decorations instead of repeating one bauble.
+    const decorations = ['🎄', '⭐', '🔔', '🎁', '🍬', '❄️', '🦌', '🧦'];
     const ornament = document.createElement('span');
     ornament.className = 'christmas-ornament';
+    ornament.textContent = decorations[Math.floor(Math.random() * decorations.length)];
     ornament.setAttribute('aria-hidden', 'true');
     ornament.style.left = Math.random() * 100 + 'vw';
 
-    const size = Math.round(Math.random() * 12 + 16);
-    ornament.style.width = size + 'px';
-    ornament.style.height = size + 'px';
-
-    const colors = ['#e53935', '#16a34a', '#d4a017', '#2563eb', '#c026d3'];
-    ornament.style.setProperty('--ornament-color', colors[Math.floor(Math.random() * colors.length)]);
-    const durationSeconds = Math.random() * 7 + 13;
+    const size = Math.round(Math.random() * 7 + 12);
+    ornament.style.setProperty('--ornament-size', size + 'px');
+    const durationSeconds = Math.random() * 8 + 14;
     ornament.style.animationDuration = durationSeconds + 's';
-    ornament.style.opacity = (Math.random() * 0.28 + 0.62).toFixed(2);
+    ornament.style.animationDelay = (Math.random() * -4).toFixed(2) + 's';
+    ornament.style.opacity = (Math.random() * 0.25 + 0.62).toFixed(2);
 
     document.body.appendChild(ornament);
     setTimeout(() => ornament.remove(), durationSeconds * 1000);
 }
-
 function startSnowEffect() {
     if (snowIntervalId) return;
     snowIntervalId = setInterval(createSnowEffect, 650);
