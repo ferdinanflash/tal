@@ -3157,3 +3157,22 @@ body.state-tracker-modal-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .christmas-light-drop { animation: none; }
 }
+
+
+/* Keep navbar controls fully below the Christmas header decoration. */
+.navbar {
+    padding: 104px 20px 15px;
+}
+@media screen and (max-width: 600px) {
+    .navbar {
+        padding: 68px 12px 15px;
+    }
+}
+
+/* Christmas lights stay hidden until the opening intro has completely finished. */
+.christmas-lights-decoration {
+    visibility: hidden;
+}
+body.christmas-intro-complete .christmas-lights-decoration {
+    visibility: visible;
+}
