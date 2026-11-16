@@ -3176,3 +3176,12 @@ body.state-tracker-modal-open { overflow: hidden; }
 body.christmas-intro-complete .christmas-lights-decoration {
     visibility: visible;
 }
+
+
+/* Center both lines of the Battle Command Center heading. */
+#alliance-menu-page .page-title {
+    text-align: center;
+}
+#alliance-menu-page .page-title::before {
+    text-align: center;
+}
