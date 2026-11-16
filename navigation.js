@@ -26,6 +26,9 @@ function selectAlliance(alliance) {
     const idnMenu = document.getElementById('idn-alliance-menu-page');
     if (idnMenu) idnMenu.classList.add('hidden');
     document.getElementById('troops-table-page').classList.remove('hidden');
+    // Pastikan halaman Foundry ditutup saat berpindah ke IDN Troops Power.
+    const foundryPage = document.getElementById('foundry-page');
+    if (foundryPage) foundryPage.classList.add('hidden');
 
     document.getElementById('th-status').style.display = "none";
     document.getElementById('legion-counter-bar').style.display = "none";
