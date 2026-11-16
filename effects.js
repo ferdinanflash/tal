@@ -1,9 +1,18 @@
 // ================= OPENING ANIMATION =================
 // A short 2.5-second intro shown on every full page refresh.
+let openingAnimationFinished = false;
+
 function initOpeningAnimation() {
     const overlay = document.getElementById('opening-animation');
-    if (!overlay) return;
+    if (!overlay) {
+        openingAnimationFinished = true;
+        document.body.classList.add('christmas-intro-complete');
+        if (typeof snowEnabled !== 'undefined' && snowEnabled) startSnowEffect();
+        return;
+    }
 
+    openingAnimationFinished = false;
+    document.body.classList.remove('christmas-intro-complete');
     document.body.classList.add('opening-active');
     overlay.classList.remove('opening-animation-hidden');
     overlay.setAttribute('aria-hidden', 'false');
@@ -12,6 +21,9 @@ function initOpeningAnimation() {
         overlay.classList.add('opening-animation-hidden');
         document.body.classList.remove('opening-active');
         overlay.setAttribute('aria-hidden', 'true');
+        openingAnimationFinished = true;
+        document.body.classList.add('christmas-intro-complete');
+        if (typeof snowEnabled !== 'undefined' && snowEnabled) startSnowEffect();
         window.setTimeout(() => overlay.remove(), 300);
     }, 2500);
 }
@@ -39,7 +51,8 @@ function createSnowEffect() {
     setTimeout(() => ornament.remove(), durationSeconds * 1000);
 }
 function startSnowEffect() {
-    if (snowIntervalId) return;
+    // Do not start or show ornaments while the opening animation is active.
+    if (!openingAnimationFinished || snowIntervalId) return;
     snowIntervalId = setInterval(createSnowEffect, 2200);
 }
 
