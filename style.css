@@ -2904,3 +2904,157 @@ body.state-tracker-modal-open { overflow: hidden; }
 .pp-tag-cat input:checked + span { background: linear-gradient(160deg,#86efac,#15803d); }
 .pp-tag-chip input:focus-visible + span { outline: 2px solid #fcd34d; outline-offset: 2px; }
 @media (max-width: 600px) { .pp-tag-row > b { min-width: 100%; } .legion-alliance-tags { margin-left: 0; justify-content: flex-start; } }
+
+
+/* ==================== BATTLE COMMAND CENTER MENU ==================== */
+/* Visual-only layout: existing menu nodes, IDs, handlers and access rules stay intact. */
+.container:has(#alliance-menu-page:not(.hidden)) {
+  width: min(1080px, calc(100% - 28px));
+  max-width: 1080px;
+  margin-top: 28px;
+}
+#alliance-menu-page .page-title {
+  font-size: clamp(1.65rem, 4vw, 2.35rem);
+  letter-spacing: .025em;
+  line-height: 1.15;
+  margin-bottom: 7px;
+  text-shadow: 0 3px 24px rgba(59,130,246,.2);
+}
+#alliance-menu-page .page-title::before {
+  content: "STATE 3475  •  BATTLE COMMAND CENTER";
+  display: block;
+  margin-bottom: 10px;
+  color: #7dd3fc;
+  font-size: .66rem;
+  font-weight: 800;
+  letter-spacing: .2em;
+  text-shadow: none;
+}
+#alliance-menu-page .page-subtitle {
+  margin-bottom: 22px;
+  color: #9ca3af;
+  font-size: .9rem;
+}
+#alliance-menu-page .menu-list-container {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 13px;
+  margin-top: 0;
+  align-items: stretch;
+}
+#alliance-menu-page .menu-list-container > .legion-btn {
+  grid-column: span 5;
+  min-height: 112px;
+  justify-content: center;
+  padding: 17px 19px;
+  border-radius: 15px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.08);
+}
+#alliance-menu-page .legion-btn-header { min-height: 34px; }
+#alliance-menu-page .legion-btn-label {
+  gap: 9px;
+  font-size: 1.03rem;
+  letter-spacing: .025em;
+}
+#alliance-menu-page .legion-btn .clash-svg { width: 34px; height: 34px; flex: none; }
+#alliance-menu-page .legion-sched-row { margin-top: 5px; }
+#alliance-menu-page .schedule-display { font-size: .8rem; }
+#alliance-menu-page .legion-btn-1 { box-shadow: 0 8px 26px rgba(37,99,235,.16), inset 0 1px 0 rgba(255,255,255,.1); }
+#alliance-menu-page .legion-btn-2 { box-shadow: 0 8px 26px rgba(220,38,38,.14), inset 0 1px 0 rgba(255,255,255,.1); }
+#alliance-menu-page #legion-btn-1b,
+#alliance-menu-page #legion-btn-2b { min-height: 82px; }
+#alliance-menu-page #fdt-guide-menu-btn,
+#alliance-menu-page #foundry-menu-btn,
+#alliance-menu-page #all-troops-power-btn,
+#alliance-menu-page .all-troops-btn {
+  grid-column: 1 / -1;
+  min-height: 64px;
+  border-radius: 14px;
+}
+#alliance-menu-page #fdt-guide-menu-btn {
+  border-radius: 14px;
+  padding: 16px 20px;
+}
+#alliance-menu-page #foundry-menu-btn {
+  min-height: 76px;
+  padding: 18px 20px;
+  border-color: rgba(245,158,11,.55);
+  background: linear-gradient(110deg, rgba(120,53,15,.38), rgba(30,24,18,.94) 58%, rgba(180,83,9,.16));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 8px 22px rgba(217,119,6,.08);
+}
+#alliance-menu-page #foundry-menu-btn .alliance-name {
+  font-size: 1rem;
+  letter-spacing: .015em;
+}
+#alliance-menu-page .list-spacer { display: none; }
+#alliance-menu-page .alliance-item {
+  grid-column: span 2;
+  min-height: 82px;
+  padding: 12px 9px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 13px;
+  background: linear-gradient(155deg, #222938, #151821 75%);
+}
+#alliance-menu-page .alliance-item .alliance-name {
+  flex-direction: column;
+  gap: 6px;
+  font-size: .83rem;
+  letter-spacing: .035em;
+}
+#alliance-menu-page .alliance-item .alliance-crest {
+  width: 34px;
+  height: 36px;
+}
+#alliance-menu-page .alliance-item .arrow { display: none; }
+#alliance-menu-page .all-troops-btn {
+  justify-content: center;
+  min-height: 62px;
+  border-color: rgba(59,130,246,.55);
+  background: linear-gradient(105deg, rgba(30,64,175,.42), rgba(30,27,75,.9));
+}
+#alliance-menu-page .all-troops-label {
+  justify-content: center;
+  letter-spacing: .055em;
+  font-size: .9rem;
+}
+#alliance-menu-page .all-troops-btn .arrow { margin-left: 12px; }
+#alliance-menu-page .menu-list-container > .list-item { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+#alliance-menu-page .menu-list-container > .list-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0,0,0,.28);
+}
+@media (max-width: 680px) {
+  .container:has(#alliance-menu-page:not(.hidden)) {
+    width: calc(100% - 20px);
+    margin-top: 20px;
+    padding: 0;
+  }
+  #alliance-menu-page .page-title::before {
+    font-size: .58rem;
+    letter-spacing: .14em;
+  }
+  #alliance-menu-page .page-subtitle { margin-bottom: 17px; font-size: .8rem; }
+  #alliance-menu-page .menu-list-container { gap: 9px; }
+  #alliance-menu-page .menu-list-container > .legion-btn {
+    min-height: 108px;
+    padding: 13px 11px;
+  }
+  #alliance-menu-page .legion-btn-label { gap: 5px; font-size: .83rem; }
+  #alliance-menu-page .legion-btn .clash-svg { width: 27px; height: 27px; }
+  #alliance-menu-page .schedule-display { font-size: .7rem; }
+  #alliance-menu-page .admin-schedule-btn { font-size: .65rem; padding: 3px 5px; }
+  #alliance-menu-page .legion-btn-arrow { font-size: .8rem; }
+  #alliance-menu-page .alliance-item { min-height: 76px; }
+  #alliance-menu-page .alliance-item .alliance-name { font-size: .76rem; }
+}
+@media (max-width: 380px) {
+  #alliance-menu-page .menu-list-container > .legion-btn { padding: 11px 8px; }
+  #alliance-menu-page .legion-btn-label { font-size: .74rem; }
+  #alliance-menu-page .legion-btn .clash-svg { width: 23px; height: 23px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #alliance-menu-page .menu-list-container > .list-item { transition: none; }
+  #alliance-menu-page .menu-list-container > .list-item:hover { transform: none; }
+}
