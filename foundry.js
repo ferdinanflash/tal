@@ -759,7 +759,8 @@ async function foundryQuery(client, build) {
 function closeFoundry() {
     document.getElementById('foundry-page').classList.add('hidden');
     foundryCloseLiveEditor();
-    showAllianceMenu();
+    if (foundryMode === 'foundry' && typeof showIdnAllianceMenu === 'function') showIdnAllianceMenu();
+    else showAllianceMenu();
 }
 
 /**
