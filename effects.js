@@ -17,31 +17,31 @@ function initOpeningAnimation() {
 }
 
 function createSnowEffect() {
-    const maxSnowflakes = 30; 
-    if (document.querySelectorAll('.snowflake').length >= maxSnowflakes) return;
+    const maxOrnaments = 22;
+    if (document.querySelectorAll('.christmas-ornament').length >= maxOrnaments) return;
 
-    const snowflake = document.createElement('div');
-    snowflake.classList.add('snowflake');
-    snowflake.style.left = Math.random() * 100 + 'vw';
+    const ornament = document.createElement('span');
+    ornament.className = 'christmas-ornament';
+    ornament.setAttribute('aria-hidden', 'true');
+    ornament.style.left = Math.random() * 100 + 'vw';
 
-    const size = Math.random() * 3 + 2 + 'px';
-    snowflake.style.width = size;
-    snowflake.style.height = size;
+    const size = Math.round(Math.random() * 12 + 16);
+    ornament.style.width = size + 'px';
+    ornament.style.height = size + 'px';
 
-    const durationSeconds = Math.random() * 5 + 10; 
-    snowflake.style.animationDuration = durationSeconds + 's';
-    snowflake.style.opacity = Math.random() * 0.5 + 0.2;
+    const colors = ['#e53935', '#16a34a', '#d4a017', '#2563eb', '#c026d3'];
+    ornament.style.setProperty('--ornament-color', colors[Math.floor(Math.random() * colors.length)]);
+    const durationSeconds = Math.random() * 7 + 13;
+    ornament.style.animationDuration = durationSeconds + 's';
+    ornament.style.opacity = (Math.random() * 0.28 + 0.62).toFixed(2);
 
-    document.body.appendChild(snowflake);
-
-    setTimeout(() => {
-        snowflake.remove();
-    }, durationSeconds * 1000);
+    document.body.appendChild(ornament);
+    setTimeout(() => ornament.remove(), durationSeconds * 1000);
 }
 
 function startSnowEffect() {
     if (snowIntervalId) return;
-    snowIntervalId = setInterval(createSnowEffect, 200);
+    snowIntervalId = setInterval(createSnowEffect, 650);
 }
 
 function stopSnowEffect() {
@@ -49,7 +49,7 @@ function stopSnowEffect() {
         clearInterval(snowIntervalId);
         snowIntervalId = null;
     }
-    document.querySelectorAll('.snowflake').forEach(el => el.remove());
+    document.querySelectorAll('.christmas-ornament').forEach(el => el.remove());
 }
 
 function toggleSnowEffect() {
@@ -66,6 +66,6 @@ function toggleSnowEffect() {
 function updateSnowToggleUI() {
     const btn = document.getElementById('snow-toggle-btn');
     if (!btn) return;
-    btn.innerHTML = '<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#tundra-snow-icon"></use></svg> <span class="snow-label">Snow</span> <span class="snow-state">' + (snowEnabled ? 'ON' : 'OFF') + '</span>';
+    btn.innerHTML = '<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#christmas-ornament-icon"></use></svg> <span class="snow-label">Christmas</span> <span class="snow-state">' + (snowEnabled ? 'ON' : 'OFF') + '</span>';
     btn.classList.toggle('snow-off', !snowEnabled);
 }
