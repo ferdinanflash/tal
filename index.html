@@ -33,7 +33,7 @@
 				<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 				<link rel="icon" href="icons/favicon.ico" sizes="any">
 				<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-				<link rel="stylesheet" href="style.css?v=66">
+				<link rel="stylesheet" href="style.css?v=67">
 
 
 
@@ -42,7 +42,7 @@
                     <script src="i18n-dict.js?v=20261031-total-players" defer></script>
 					<!-- Modular application scripts: load in dependency order. -->
 					<script src="core.js?v=26" defer></script>
-					<script src="navigation.js?v=23" defer></script>
+					<script src="navigation.js?v=24" defer></script>
 					<script src="schedule.js?v=8" defer></script>
 					<script src="leaderboard.js?v=18" defer></script>
 					<script src="player.js?v=23" defer></script>
@@ -242,13 +242,6 @@
 						<span class="arrow">&gt;</span>
 					</div>
 
-					<!-- FOUNDRY BATTLE ROSTER (IDN) -->
-					<div class="list-item foundry-menu-btn" id="foundry-menu-btn" onclick="openFoundry()" role="button" tabindex="0" aria-label="Foundry Battle Roster IDN" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openFoundry()}">
-						<span class="alliance-name">🏭 Foundry Battle Roster (IDN)</span>
-						<span class="arrow">&gt;</span>
-					</div>
-
-
 					<div class="list-spacer"></div>
 
 					<!-- ALLIANCE & GLOBAL BUTTONS -->
@@ -260,7 +253,7 @@
 						<span class="alliance-name"><span class="alliance-crest crest-cat" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#emb-cat"></use></svg></span>CAT Alliance</span>
 						<span class="arrow">&gt;</span>
 					</div>
-					<div class="list-item alliance-item" onclick="selectAlliance('IDN')" role="button" tabindex="0" aria-label="IDN Alliance">
+					<div class="list-item alliance-item" onclick="showIdnAllianceMenu()" role="button" tabindex="0" aria-label="IDN Alliance" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showIdnAllianceMenu()}">
 						<span class="alliance-name"><span class="alliance-crest crest-idn" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#emb-idn"></use></svg></span>IDN Alliance</span>
 						<span class="arrow">&gt;</span>
 					</div>
@@ -280,6 +273,24 @@
 							ALL TROOPS POWER (GLOBAL RANK)
 						</span>
 						<span class="arrow legion-btn-arrow">&gt;</span>
+					</div>
+				</div>
+			</section>
+
+
+			<!-- IDN ALLIANCE SUBMENU -->
+			<section id="idn-alliance-menu-page" class="hidden">
+				<div class="schedule-actions">
+					<button class="btn-back no-bottom-margin" onclick="showAllianceMenu()">&lt; Back to Alliances</button>
+				</div>
+				<h1 class="page-title">🇮🇩 IDN Alliance</h1>
+				<p class="page-subtitle">Select IDN Troops Power or Foundry Battle Roster</p>
+				<div class="list-container idn-alliance-menu-list">
+					<div class="list-item idn-submenu-card" onclick="selectAlliance('IDN')" role="button" tabindex="0" aria-label="IDN Alliance Troops Power" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectAlliance('IDN')}">
+						<span class="alliance-name">📊 IDN Troops Power</span><span class="arrow">&gt;</span>
+					</div>
+					<div class="list-item idn-submenu-card idn-foundry-card" onclick="openFoundry()" role="button" tabindex="0" aria-label="Foundry Battle Roster IDN" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openFoundry()}">
+						<span class="alliance-name">🏭 Foundry Battle Roster</span><span class="arrow">&gt;</span>
 					</div>
 				</div>
 			</section>
@@ -1248,7 +1259,7 @@
 </div>
 
 	<script src="frostdragon.js?v=16"></script>
-	<script src="foundry.js?v=48"></script>
+	<script src="foundry.js?v=49"></script>
 	<script>
 	  // Register the service worker only on HTTPS or localhost.
 	  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
