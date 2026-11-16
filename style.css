@@ -3185,3 +3185,20 @@ body.christmas-intro-complete .christmas-lights-decoration {
 #alliance-menu-page .page-title::before {
     text-align: center;
 }
+
+
+/* Explicitly center both lines of the main Battle Command Center heading. */
+#alliance-menu-page #battle-theme-page-title {
+    display: block;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center !important;
+}
+#alliance-menu-page #battle-theme-page-title::before {
+    display: block;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center !important;
+}
