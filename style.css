@@ -3058,3 +3058,27 @@ body.state-tracker-modal-open { overflow: hidden; }
   #alliance-menu-page .menu-list-container > .list-item { transition: none; }
   #alliance-menu-page .menu-list-container > .list-item:hover { transform: none; }
 }
+
+
+/* IDN Alliance submenu */
+#idn-alliance-menu-page { max-width: 720px; margin: 0 auto; }
+#idn-alliance-menu-page .page-title { margin-top: 14px; }
+.idn-alliance-menu-list { margin-top: 20px; gap: 12px; }
+.idn-submenu-card {
+  min-height: 76px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: linear-gradient(120deg, rgba(30,41,59,.96), rgba(17,24,39,.98));
+  border-color: rgba(245,158,11,.25);
+}
+.idn-submenu-card .alliance-name { gap: 10px; font-weight: 750; }
+.idn-foundry-card {
+  border-color: rgba(245,158,11,.55);
+  background: linear-gradient(110deg, rgba(120,53,15,.4), rgba(30,24,18,.96) 60%, rgba(180,83,9,.18));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 8px 22px rgba(217,119,6,.08);
+}
+#foundry-page .schedule-actions .btn-back { white-space: nowrap; }
+@media(max-width:600px) {
+  #idn-alliance-menu-page { width: 100%; }
+  .idn-submenu-card { min-height: 68px; padding: 15px; }
+}
