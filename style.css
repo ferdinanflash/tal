@@ -445,31 +445,33 @@ td:first-child, th:first-child {
     white-space: nowrap;
 }
 .navbar-main-btns .president-panel-top-btn { flex: 1 1 100%; }
-.btn-snow-toggle .snow-state { font-weight: 800; }
-.btn-snow-toggle { display: inline-flex; align-items: center; gap: 5px; }
-
+/* Compact Christmas switch sits with the other navbar controls. */
 .btn-snow-toggle {
-    background: rgba(59, 130, 246, 0.15);
-    border: 1px solid rgba(59, 130, 246, 0.4);
-    color: #93c5fd;
-    padding: 7px 12px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.8rem;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    width: 42px;
+    min-width: 42px;
+    height: 36px;
+    padding: 4px 5px;
+    border-radius: 9px;
+    background: rgba(245, 158, 11, .10);
+    border: 1px solid rgba(245, 158, 11, .32);
+    color: #fcd34d;
+    font-size: .62rem;
+    font-weight: 800;
     cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
+    transition: background .2s ease, border-color .2s ease;
 }
-
-.btn-snow-toggle:hover {
-    background: rgba(59, 130, 246, 0.25);
-    transform: scale(1.02);
-}
-
+.btn-snow-toggle .ui-icon { width: 18px; height: 18px; flex: none; }
+.btn-snow-toggle .snow-state { font-size: .52rem; line-height: 1; font-weight: 900; }
+.btn-snow-toggle:hover { background: rgba(245, 158, 11, .2); }
 .btn-snow-toggle.snow-off {
-    background: rgba(148, 163, 184, 0.1);
-    border-color: rgba(148, 163, 184, 0.3);
-    color: #64748b;
+    background: rgba(148, 163, 184, .08);
+    border-color: rgba(148, 163, 184, .22);
+    color: #94a3b8;
 }
 
 /* ==================== LEGION BUTTON HELPERS ==================== */
